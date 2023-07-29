@@ -1,0 +1,110 @@
+accessWidener v1 named
+
+# BlockStateBase.ShapeCache
+accessible class net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache
+accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache lightBlock I
+accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache collisionShape Lnet/minecraft/world/phys/shapes/VoxelShape;
+accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache occlusionShapes [Lnet/minecraft/world/phys/shapes/VoxelShape;
+
+# LevelChunkSection
+accessible field net/minecraft/world/level/chunk/LevelChunkSection states Lnet/minecraft/world/level/chunk/PalettedContainer;
+
+
+# PalettedContainer
+accessible method net/minecraft/world/level/chunk/PalettedContainer get (I)Ljava/lang/Object;
+
+
+# ChunkMap
+accessible field net/minecraft/server/level/ChunkMap level Lnet/minecraft/server/level/ServerLevel;
+accessible field net/minecraft/server/level/ChunkMap mainThreadExecutor Lnet/minecraft/util/thread/BlockableEventLoop;
+
+accessible method net/minecraft/server/level/ChunkMap getUpdatingChunkIfPresent (J)Lnet/minecraft/server/level/ChunkHolder;
+accessible method net/minecraft/server/level/ChunkMap getVisibleChunkIfPresent (J)Lnet/minecraft/server/level/ChunkHolder;
+accessible method net/minecraft/server/level/ChunkMap getChunkQueueLevel (J)Ljava/util/function/IntSupplier;
+accessible method net/minecraft/server/level/ChunkMap releaseLightTicket (Lnet/minecraft/world/level/ChunkPos;)V
+
+
+# ChunkHolder
+accessible field net/minecraft/server/level/ChunkHolder chunkToSave Ljava/util/concurrent/CompletableFuture;
+
+# LevelLightEngine
+mutable field net/minecraft/world/level/lighting/LevelLightEngine blockEngine Lnet/minecraft/world/level/lighting/LightEngine;
+mutable field net/minecraft/world/level/lighting/LevelLightEngine skyEngine Lnet/minecraft/world/level/lighting/LightEngine;
+
+# ThreadedLevelLightEngine
+accessible class net/minecraft/server/level/ThreadedLevelLightEngine$TaskType
+
+
+# SectionStorage
+accessible field net/minecraft/world/level/chunk/storage/SectionStorage levelHeightAccessor Lnet/minecraft/world/level/LevelHeightAccessor;
+accessible method net/minecraft/world/level/chunk/storage/SectionStorage get (J)Ljava/util/Optional;
+accessible method net/minecraft/world/level/chunk/storage/SectionStorage getOrLoad (J)Ljava/util/Optional;
+
+
+# PoiSection
+accessible field net/minecraft/world/entity/ai/village/poi/PoiSection byType Ljava/util/Map;
+
+
+# PoiRecord
+accessible method net/minecraft/world/entity/ai/village/poi/PoiRecord acquireTicket ()Z
+accessible method net/minecraft/world/entity/ai/village/poi/PoiRecord releaseTicket ()Z
+
+
+# OffsetDoubleList
+accessible field net/minecraft/world/phys/shapes/OffsetDoubleList delegate Lit/unimi/dsi/fastutil/doubles/DoubleList;
+accessible field net/minecraft/world/phys/shapes/OffsetDoubleList offset D
+
+
+# VoxelShapeArray
+accessible method net/minecraft/world/phys/shapes/ArrayVoxelShape <init> (Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;Lit/unimi/dsi/fastutil/doubles/DoubleList;Lit/unimi/dsi/fastutil/doubles/DoubleList;Lit/unimi/dsi/fastutil/doubles/DoubleList;)V
+
+
+# VoxelShape
+accessible field net/minecraft/world/phys/shapes/VoxelShape shape Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;
+accessible method net/minecraft/world/phys/shapes/VoxelShape getCoords (Lnet/minecraft/core/Direction$Axis;)Lit/unimi/dsi/fastutil/doubles/DoubleList;
+
+
+# AABB
+accessible method net/minecraft/world/phys/AABB getDirection (Lnet/minecraft/world/phys/AABB;Lnet/minecraft/world/phys/Vec3;[DLnet/minecraft/core/Direction;DDD)Lnet/minecraft/core/Direction;
+
+
+# PersistentEntitySectionManager
+accessible class net/minecraft/world/level/entity/PersistentEntitySectionManager$Callback
+
+
+# TransientEntitySectionManager
+accessible class net/minecraft/world/level/entity/TransientEntitySectionManager$Callback
+
+
+# BitSetDiscreteVoxelShape
+accessible field net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape storage Ljava/util/BitSet;
+accessible field net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape xMin I
+accessible field net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape yMin I
+accessible field net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape zMin I
+accessible field net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape xMax I
+accessible field net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape yMax I
+accessible field net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape zMax I
+accessible method net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape join (Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;Lnet/minecraft/world/phys/shapes/IndexMerger;Lnet/minecraft/world/phys/shapes/IndexMerger;Lnet/minecraft/world/phys/shapes/IndexMerger;Lnet/minecraft/world/phys/shapes/BooleanOp;)Lnet/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape;
+
+
+# IndexMerger
+accessible class net/minecraft/world/phys/shapes/IndexMerger
+
+
+# CubeVoxelShape
+accessible method net/minecraft/world/phys/shapes/CubeVoxelShape <init> (Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;)V
+
+
+# ServerGamePacketListenerImpl
+accessible method net/minecraft/server/network/ServerGamePacketListenerImpl isSingleplayerOwner ()Z
+
+
+
+# ClipContext
+accessible field net/minecraft/world/level/ClipContext block Lnet/minecraft/world/level/ClipContext$Block;
+accessible field net/minecraft/world/level/ClipContext fluid Lnet/minecraft/world/level/ClipContext$Fluid;
+
+
+# Fluid
+accessible method net/minecraft/world/level/material/Fluid isEmpty ()Z
+accessible method net/minecraft/world/level/material/Fluid createLegacyBlock (Lnet/minecraft/world/level/material/FluidState;)Lnet/minecraft/world/level/block/state/BlockState;
