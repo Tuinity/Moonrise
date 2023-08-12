@@ -57,17 +57,17 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
     private int maxSection;
 
     @Override
-    public EntityLookup getCollisionLookup() {
+    public final EntityLookup getCollisionLookup() {
         return this.collisionLookup;
     }
 
     @Override
-    public int getMinSectionMoonrise() {
+    public final int getMinSectionMoonrise() {
         return this.minSection;
     }
 
     @Override
-    public int getMaxSectionMoonrise() {
+    public final int getMaxSectionMoonrise() {
         return this.maxSection;
     }
 

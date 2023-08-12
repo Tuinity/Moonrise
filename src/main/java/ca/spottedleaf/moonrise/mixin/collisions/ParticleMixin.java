@@ -123,9 +123,9 @@ public abstract class ParticleMixin {
 
         final StarLightInterface lightEngine = ((StarLightLightingProvider)this.level.getLightEngine()).getLightEngine();
 
-        final int blockLight = Math.max(lightEngine.getBlockLightValue(pos, chunk), blockState == null ? 0 : blockState.getLightEmission());
-        final int skyLight = lightEngine.getSkyLightValue(pos, chunk);
+        final int skyLight = chunk == null ? 0 : lightEngine.getSkyLightValue(pos, chunk);
+        final int blockLight = Math.max(chunk == null ? 0 : lightEngine.getBlockLightValue(pos, chunk), blockState == null ? 0 : blockState.getLightEmission());
 
-        return blockLight << 20 | skyLight << 4;
+        return skyLight << 20 | blockLight << 4;
     }
 }
