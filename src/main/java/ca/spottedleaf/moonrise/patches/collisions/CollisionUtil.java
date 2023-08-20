@@ -1,6 +1,5 @@
 package ca.spottedleaf.moonrise.patches.collisions;
 
-import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.entity.CollisionEntity;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CachedShapeData;
@@ -13,9 +12,6 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerChunkCache;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
@@ -26,12 +22,12 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.ArrayVoxelShape;
 import net.minecraft.world.phys.shapes.BitSetDiscreteVoxelShape;
@@ -1643,47 +1639,6 @@ public final class CollisionUtil {
         return x > y ? x : y;
     }
 
-    /**
-     * @param box Bounding volume to check
-     * @param fromX Starting x-coordinate of ray
-     * @param fromY Starting y-coordinate of ray
-     * @param fromZ Starting z-coordinate of ray
-     * @param directionInvX 1.0 / ray x-direction
-     * @param directionInvY 1.0 / ray y-direction
-     * @param directionInvZ 1.0 / ray z-direction
-     * @param tMax Maximum distance along ray direction that the ray can clip
-     */
-    public static boolean clips(final AABB box,
-                                final double fromX, final double fromY, final double fromZ,
-                                final double directionInvX, final double directionInvY, final double directionInvZ,
-                                double tMax) {
-        /* https://tavianator.com/2022/ray_box_boundary.html */
-
-        double tMin = 0.0;
-
-        double t1, t2;
-
-        t1 = (box.minX - fromX) * directionInvX;
-        t2 = (box.maxX - fromX) * directionInvX;
-
-        tMin = min(max(t1, tMin), max(t2, tMin));
-        tMax = max(min(t1, tMax), min(t2, tMax));
-
-        t1 = (box.minY - fromY) * directionInvY;
-        t2 = (box.maxY - fromY) * directionInvY;
-
-        tMin = min(max(t1, tMin), max(t2, tMin));
-        tMax = max(min(t1, tMax), min(t2, tMax));
-
-        t1 = (box.minZ - fromZ) * directionInvZ;
-        t2 = (box.maxZ - fromZ) * directionInvZ;
-
-        tMin = min(max(t1, tMin), max(t2, tMin));
-        tMax = max(min(t1, tMax), min(t2, tMax));
-
-        return tMin <= tMax;
-    }
-
     public static final int COLLISION_FLAG_LOAD_CHUNKS = 1 << 0;
     public static final int COLLISION_FLAG_COLLIDE_WITH_UNLOADED_CHUNKS = 1 << 1;
     public static final int COLLISION_FLAG_CHECK_BORDER = 1 << 2;
@@ -1700,7 +1655,6 @@ public final class CollisionUtil {
                 if (checkOnly) {
                     return true;
                 } else {
-                    // the collision shape is basically always voxel, don't check it
                     final VoxelShape borderShape = world.getWorldBorder().getCollisionShape();
                     intoVoxel.add(borderShape);
                     ret = true;
@@ -1738,10 +1692,11 @@ public final class CollisionUtil {
         final int maxChunkZ = maxBlockZ >> 4;
 
         final boolean loadChunks = (collisionFlags & COLLISION_FLAG_LOAD_CHUNKS) != 0;
+        final ChunkSource chunkSource = world.getChunkSource();
 
         for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
             for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
-                final ChunkAccess chunk = (ChunkAccess)world.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, loadChunks);
+                final ChunkAccess chunk = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, loadChunks);
 
                 if (chunk == null) {
                     if ((collisionFlags & COLLISION_FLAG_COLLIDE_WITH_UNLOADED_CHUNKS) != 0) {
@@ -1768,10 +1723,11 @@ public final class CollisionUtil {
                         // empty
                         continue;
                     }
-                    final PalettedContainer<BlockState> blocks = section.states;
 
                     final boolean hasSpecial = ((CollisionLevelChunkSection)section).getSpecialCollidingBlocks() != 0;
                     final int sectionAdjust = !hasSpecial ? 1 : 0;
+
+                    final PalettedContainer<BlockState> blocks = section.states;
 
                     final int minXIterate = currChunkX == minChunkX ? (minBlockX & 15) + sectionAdjust : 0;
                     final int maxXIterate = currChunkX == maxChunkX ? (maxBlockX & 15) - sectionAdjust : 15;
@@ -1809,10 +1765,6 @@ public final class CollisionUtil {
                                         blockCollision = blockData.getCollisionShape(world, mutablePos, collisionShape);
                                     }
 
-                                    if (blockCollision.isEmpty()) {
-                                        continue;
-                                    }
-
                                     AABB singleAABB = ((CollisionVoxelShape)blockCollision).getSingleAABBRepresentation();
                                     if (singleAABB != null) {
                                         singleAABB = singleAABB.move((double)blockX, (double)blockY, (double)blockZ);
@@ -1834,6 +1786,10 @@ public final class CollisionUtil {
                                             intoAABB.add(singleAABB);
                                             continue;
                                         }
+                                    }
+
+                                    if (blockCollision.isEmpty()) {
+                                        continue;
                                     }
 
                                     final VoxelShape blockCollisionOffset = blockCollision.move((double)blockX, (double)blockY, (double)blockZ);

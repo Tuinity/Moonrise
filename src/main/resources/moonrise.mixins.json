@@ -6,6 +6,7 @@
   "mixins": [
     "bitstorage.SimpleBitStorageMixin",
     "bitstorage.ZeroBitStorageMixin",
+    "chunk_getblock.ChunkAccessMixin",
     "chunk_getblock.LevelChunkMixin",
     "collisions.ArmorStandMixin",
     "collisions.ArrayVoxelShapeMixin",
@@ -51,6 +52,7 @@
     "starlight.world.LevelMixin",
     "starlight.world.ServerWorldMixin",
     "util_thread_counts.UtilMixin",
+    "util_threading_detector.ThreadingDetectorMixin",
     "util_time_source.UtilMixin"
   ],
   "client": [

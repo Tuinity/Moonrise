@@ -12,6 +12,13 @@ accessible field net/minecraft/world/level/chunk/LevelChunkSection states Lnet/m
 
 # PalettedContainer
 accessible method net/minecraft/world/level/chunk/PalettedContainer get (I)Ljava/lang/Object;
+accessible field net/minecraft/world/level/chunk/PalettedContainer data Lnet/minecraft/world/level/chunk/PalettedContainer$Data;
+
+
+# PalettedContainer.Data
+accessible class net/minecraft/world/level/chunk/PalettedContainer$Data
+accessible field net/minecraft/world/level/chunk/PalettedContainer$Data storage Lnet/minecraft/util/BitStorage;
+accessible field net/minecraft/world/level/chunk/PalettedContainer$Data palette Lnet/minecraft/world/level/chunk/Palette;
 
 
 # ChunkMap
@@ -108,3 +115,9 @@ accessible field net/minecraft/world/level/ClipContext fluid Lnet/minecraft/worl
 # Fluid
 accessible method net/minecraft/world/level/material/Fluid isEmpty ()Z
 accessible method net/minecraft/world/level/material/Fluid createLegacyBlock (Lnet/minecraft/world/level/material/FluidState;)Lnet/minecraft/world/level/block/state/BlockState;
+accessible method net/minecraft/world/level/material/Fluid isRandomlyTicking ()Z
+
+
+# VisibilitySet
+accessible field net/minecraft/client/renderer/chunk/VisibilitySet FACINGS I
+accessible field net/minecraft/client/renderer/chunk/VisibilitySet data Ljava/util/BitSet;

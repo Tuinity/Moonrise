@@ -549,37 +549,6 @@ public abstract class VoxelShapeMixin implements CollisionVoxelShape {
         return AABB.clip(((VoxelShape)(Object)this).toAabbs(), from, to, offset);
     }
 
-    @Unique
-    private boolean multiAABBClips(final double fromX, final double fromY, final double fromZ,
-                                   final double directionInvX, final double directionInvY, final double directionInvZ,
-                                   final double tMax) {
-        final List<AABB> aabbs = this.toAabbs();
-        for (int i = 0, len = aabbs.size(); i < len; ++i) {
-            final AABB box = aabbs.get(i);
-            if (CollisionUtil.clips(box, fromX, fromY, fromZ, directionInvX, directionInvY, directionInvZ, tMax)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    public boolean doesClip(final double fromX, final double fromY, final double fromZ,
-                            final double directionInvX, final double directionInvY, final double directionInvZ,
-                            final double tMax) {
-        if (this.isEmpty) {
-            return false;
-        }
-
-        final AABB singleAABB = this.singleAABBRepresentation;
-        if (singleAABB != null) {
-            return CollisionUtil.clips(singleAABB, fromX, fromY, fromZ, directionInvX, directionInvY, directionInvZ, tMax);
-        }
-
-        return this.multiAABBClips(fromX, fromY, fromZ, directionInvX, directionInvY, directionInvZ, tMax);
-    }
-
     /**
      * @reason Cache bounds
      * @author Spottedleaf

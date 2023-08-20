@@ -33,10 +33,6 @@ public interface CollisionVoxelShape {
 
     public boolean isFullBlock();
 
-    public boolean doesClip(final double fromX, final double fromY, final double fromZ,
-                            final double directionInvX, final double directionInvY, final double directionInvZ,
-                            final double tMax);
-
     public boolean occludesFullBlock();
 
     public boolean occludesFullBlockIfCached();

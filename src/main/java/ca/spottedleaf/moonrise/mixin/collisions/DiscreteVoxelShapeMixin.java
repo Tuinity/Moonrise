@@ -5,11 +5,13 @@ import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionDiscreteVoxelSh
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(DiscreteVoxelShape.class)
 public abstract class DiscreteVoxelShapeMixin implements CollisionDiscreteVoxelShape {
 
     // ignore race conditions here: the shape is static, so it doesn't matter
+    @Unique
     private CachedShapeData cachedShapeData;
 
     @Override
@@ -31,12 +33,13 @@ public abstract class DiscreteVoxelShapeMixin implements CollisionDiscreteVoxelS
 
         final boolean isEmpty = discreteVoxelShape.isEmpty();
         if (!isEmpty) {
+            final int mulX = sizeZ * sizeY;
             for (int x = 0; x < sizeX; ++x) {
                 for (int y = 0; y < sizeY; ++y) {
                     for (int z = 0; z < sizeZ; ++z) {
                         if (discreteVoxelShape.isFull(x, y, z)) {
                             // index = z + y*size_z + x*(size_z*size_y)
-                            final int index = z + y * sizeZ + x * sizeZ * sizeY;
+                            final int index = z + y*sizeZ + x*mulX;
 
                             voxelSet[index >>> 6] |= 1L << index;
                         }

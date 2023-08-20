@@ -70,7 +70,7 @@ public abstract class FlowingFluidMixin extends Fluid {
 
 
     @Shadow
-    public static short getCacheKey(BlockPos blockPos, BlockPos blockPos2) {
+    private static short getCacheKey(BlockPos blockPos, BlockPos blockPos2) {
         return (short)0;
     }
 
@@ -452,6 +452,11 @@ public abstract class FlowingFluidMixin extends Fluid {
             final List<Direction> directionsWithout = new ArrayList<>(Arrays.asList(HORIZONTAL_ARRAY));
             directionsWithout.remove(direction);
             except[direction.ordinal()] = directionsWithout.toArray(new Direction[0]);
+        }
+        for (int i = 0; i < except.length; ++i) {
+            if (except[i] == null) {
+                except[i] = HORIZONTAL_ARRAY;
+            }
         }
         HORIZONTAL_EXCEPT = except;
     }

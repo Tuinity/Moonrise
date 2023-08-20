@@ -48,6 +48,9 @@ public abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> imp
     private float ownHeight;
 
     @Unique
+    private boolean isRandomlyTicking;
+
+    @Unique
     private BlockState legacyBlock;
 
     @Unique
@@ -68,6 +71,7 @@ public abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> imp
         this.isEmpty = this.getType().isEmpty();
         this.isSource = this.getType().isSource((FluidState)(Object)this);
         this.ownHeight = this.getType().getOwnHeight((FluidState)(Object)this);
+        this.isRandomlyTicking = this.getType().isRandomlyTicking();
 
         if (this.getType() instanceof EmptyFluid) {
             this.classification = FluidClassification.EMPTY;
@@ -138,6 +142,15 @@ public abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> imp
             return this.legacyBlock;
         }
         return this.legacyBlock = this.getType().createLegacyBlock((FluidState)(Object)this);
+    }
+
+    /**
+     * @reason Use cached result, avoiding indirection
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public boolean isRandomlyTicking() {
+        return this.isRandomlyTicking;
     }
 
     @Override

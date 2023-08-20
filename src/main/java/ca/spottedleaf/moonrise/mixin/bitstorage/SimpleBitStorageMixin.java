@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 
 @Mixin(SimpleBitStorage.class)
 public abstract class SimpleBitStorageMixin implements BitStorage {
@@ -27,6 +29,8 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
     @Final
     private int valuesPerLong;
 
+    @Unique
+    private static final VarHandle LONG_ARRAY_HANDLE = MethodHandles.arrayElementVarHandle(long[].class);
 
 
     /*
@@ -73,6 +77,7 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
     @Override
     public int getAndSet(final int index, final int value) {
         // assume index/value in range
+        // note: enforce atomic writes
         final long magic = this.magic;
         final int bits = this.bits;
         final long mul = magic >>> 32;
@@ -86,8 +91,9 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
 
         final int bitIndex = (index - (dataIndex * this.valuesPerLong)) * bits;
         final int prev = (int)(data >> bitIndex & mask);
+        final long write = data & ~(mask << bitIndex) | ((long)value & mask) << bitIndex;
 
-        dataArray[dataIndex] = data & ~(mask << bitIndex) | ((long)value & mask) << bitIndex;
+        LONG_ARRAY_HANDLE.setOpaque(dataArray, dataIndex, write);
 
         return prev;
     }
@@ -100,6 +106,8 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
     @Override
     public void set(final int index, final int value) {
         // assume index/value in range
+        // note: enforce atomic writes
+
         final long magic = this.magic;
         final int bits = this.bits;
         final long mul = magic >>> 32;
@@ -111,8 +119,9 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
         final long mask = (1L << bits) - 1; // avoid extra memory read
 
         final int bitIndex = (index - (dataIndex * this.valuesPerLong)) * bits;
+        final long write = data & ~(mask << bitIndex) | ((long)value & mask) << bitIndex;
 
-        dataArray[dataIndex] = data & ~(mask << bitIndex) | ((long)value & mask) << bitIndex;
+        LONG_ARRAY_HANDLE.setOpaque(dataArray, dataIndex, write);
     }
 
     /**
@@ -123,13 +132,14 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
     @Override
     public int get(final int index) {
         // assume index in range
+        // note: enforce atomic reads
         final long magic = this.magic;
         final int bits = this.bits;
         final long mul = magic >>> 32;
         final int dataIndex = (int)(((long)index * mul) >>> magic);
 
         final long mask = (1L << bits) - 1; // avoid extra memory read
-        final long data = this.data[dataIndex];
+        final long data = (long)LONG_ARRAY_HANDLE.getOpaque(this.data, dataIndex);
 
         final int bitIndex = (index - (dataIndex * this.valuesPerLong)) * bits;
 

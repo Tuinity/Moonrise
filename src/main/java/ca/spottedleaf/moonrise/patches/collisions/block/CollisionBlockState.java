@@ -26,5 +26,4 @@ public interface CollisionBlockState {
     public VoxelShape getConstantCollisionShape();
 
     public AABB getConstantCollisionAABB();
-
 }

@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
+import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import com.google.common.collect.ImmutableMap;
@@ -35,7 +36,7 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
     private static final Direction[] DIRECTIONS_CACHED = Direction.values();
 
     @Unique
-    private static final AtomicInteger ID_GENERATOR = new AtomicInteger(RANDOM_OFFSET);
+    private static final AtomicInteger ID_GENERATOR = new AtomicInteger();
 
     @Unique
     private int id1, id2;
@@ -83,8 +84,8 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
     )
     private void init(final CallbackInfo ci) {
         // note: murmurHash3 has an inverse, so the field is still unique
-        this.id1 = HashCommon.murmurHash3(ID_GENERATOR.getAndIncrement());
-        this.id2 = HashCommon.murmurHash3(ID_GENERATOR.getAndIncrement());
+        this.id1 = HashCommon.murmurHash3(HashCommon.murmurHash3(ID_GENERATOR.getAndIncrement()) + RANDOM_OFFSET);
+        this.id2 = HashCommon.murmurHash3(HashCommon.murmurHash3(ID_GENERATOR.getAndIncrement()) + RANDOM_OFFSET);
     }
 
     /**
