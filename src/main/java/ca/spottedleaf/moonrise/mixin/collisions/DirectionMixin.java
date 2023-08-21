@@ -69,7 +69,7 @@ public abstract class DirectionMixin implements CollisionDirection {
         for (final Direction direction : VALUES) {
             ((DirectionMixin)(Object)direction).opposite = from3DDataValue(((DirectionMixin)(Object)direction).oppositeIndex);
             ((DirectionMixin)(Object)direction).rotation = ((DirectionMixin)(Object)direction).getRotationUncached();
-            ((DirectionMixin)(Object)direction).id = HashCommon.murmurHash3(HashCommon.murmurHash3(direction.ordinal()) + RANDOM_OFFSET);
+            ((DirectionMixin)(Object)direction).id = HashCommon.murmurHash3(HashCommon.murmurHash3(direction.ordinal() + RANDOM_OFFSET) + RANDOM_OFFSET);
             ((DirectionMixin)(Object)direction).stepX = ((DirectionMixin)(Object)direction).normal.getX();
             ((DirectionMixin)(Object)direction).stepY = ((DirectionMixin)(Object)direction).normal.getY();
             ((DirectionMixin)(Object)direction).stepZ = ((DirectionMixin)(Object)direction).normal.getZ();
