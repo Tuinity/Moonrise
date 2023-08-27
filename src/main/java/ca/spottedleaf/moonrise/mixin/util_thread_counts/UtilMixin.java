@@ -10,7 +10,9 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinWorkerThread;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Mixin(Util.class)
@@ -62,20 +64,20 @@ public abstract class UtilMixin {
 
         final AtomicInteger workerCount = new AtomicInteger();
 
-        return Executors.newFixedThreadPool(threads, (final Runnable run) -> {
-            final Thread ret = new Thread(run);
-            ret.setName("Worker-" + name + "-" + workerCount.getAndIncrement());
+        return new ForkJoinPool(threads, (forkJoinPool) -> {
+            ForkJoinWorkerThread forkJoinWorkerThread = new ForkJoinWorkerThread(forkJoinPool) {
+                protected void onTermination(final Throwable throwable) {
+                    if (throwable != null) {
+                        LOGGER.error(this.getName() + " died", throwable);
+                    } else {
+                        LOGGER.debug(this.getName() + " shutdown");
+                    }
 
-            ret.setUncaughtExceptionHandler((final Thread thread, final Throwable thr) -> {
-                LOGGER.error(thread.getName() + "died", thr);
-
-                onThreadException(thread, thr);
-            });
-
-            ret.setDaemon(true); // forkjoin workers are daemon
-            ret.setPriority(Thread.NORM_PRIORITY - 1); // de-prioritise over main threads (render/server)
-
-            return ret;
-        });
+                    super.onTermination(throwable);
+                }
+            };
+            forkJoinWorkerThread.setName("Worker-" + name + "-" + workerCount.getAndIncrement());
+            return forkJoinWorkerThread;
+        }, UtilMixin::onThreadException, true, 0, Integer.MAX_VALUE, 1, null, 365, TimeUnit.DAYS);
     }
 }

@@ -1,9 +1,7 @@
 package ca.spottedleaf.moonrise.patches.collisions.shape;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public interface CollisionVoxelShape {

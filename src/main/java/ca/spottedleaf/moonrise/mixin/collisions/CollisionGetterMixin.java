@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
+import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
@@ -48,11 +49,25 @@ public interface CollisionGetterMixin extends BlockGetter {
 
         final Vec3 entityPos = entity.position();
 
+        BlockGetter lastChunk = null;
+        int lastChunkX = Integer.MIN_VALUE;
+        int lastChunkZ = Integer.MIN_VALUE;
+
         for (int currZ = minBlockZ; currZ <= maxBlockZ; ++currZ) {
+            pos.setZ(currZ);
             for (int currX = minBlockX; currX <= maxBlockX; ++currX) {
-                pos.set(currX, 0, currZ);
-                final BlockGetter chunk = this.getChunkForCollisions(currX >> 4, currZ >> 4);
-                if (chunk == null) {
+                pos.setX(currX);
+
+                final int newChunkX = currX >> 4;
+                final int newChunkZ = currZ >> 4;
+
+                final int chunkDiff = ((newChunkX ^ lastChunkX) | (newChunkZ ^ lastChunkZ));
+
+                if (chunkDiff != 0) {
+                    lastChunk = this.getChunkForCollisions(newChunkX, newChunkZ);
+                }
+
+                if (lastChunk == null) {
                     continue;
                 }
                 for (int currY = minBlockY; currY <= maxBlockY; ++currY) {
@@ -70,8 +85,8 @@ public interface CollisionGetterMixin extends BlockGetter {
                         continue;
                     }
 
-                    final BlockState state = chunk.getBlockState(pos);
-                    if (state.isAir()) {
+                    final BlockState state = lastChunk.getBlockState(pos);
+                    if (((CollisionBlockState)state).emptyCollisionShape()) {
                         continue;
                     }
 
@@ -79,7 +94,7 @@ public interface CollisionGetterMixin extends BlockGetter {
                         if (collisionContext == null) {
                             collisionContext = new CollisionUtil.LazyEntityCollisionContext(entity);
                         }
-                        final VoxelShape blockCollision = state.getCollisionShape(chunk, pos, collisionContext);
+                        final VoxelShape blockCollision = state.getCollisionShape(lastChunk, pos, collisionContext);
                         if (blockCollision.isEmpty()) {
                             continue;
                         }
