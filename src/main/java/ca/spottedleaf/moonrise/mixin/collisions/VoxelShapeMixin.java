@@ -13,6 +13,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -31,6 +32,7 @@ import org.spongepowered.asm.mixin.Unique;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Mixin(VoxelShape.class)
 public abstract class VoxelShapeMixin implements CollisionVoxelShape {
@@ -710,5 +712,35 @@ public abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
             return ret;
         }
+    }
+
+    /**
+     * @reason Use AABBs cache
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public Optional<Vec3> closestPointTo(final Vec3 point) {
+        if (this.isEmpty) {
+            return Optional.empty();
+        }
+
+        Vec3 ret = null;
+        double retDistance = Double.MAX_VALUE;
+
+        final List<AABB> aabbs = this.toAabbs();
+        for (int i = 0, len = aabbs.size(); i < len; ++i) {
+            final AABB aabb = aabbs.get(i);
+            final double x = Mth.clamp(point.x, aabb.minX, aabb.maxX);
+            final double y = Mth.clamp(point.y, aabb.minY, aabb.maxY);
+            final double z = Mth.clamp(point.z, aabb.minZ, aabb.maxZ);
+
+            double dist = point.distanceToSqr(x, y, z);
+            if (dist < retDistance) {
+                ret = new Vec3(x, y, z);
+                retDistance = dist;
+            }
+        }
+
+        return Optional.ofNullable(ret);
     }
 }

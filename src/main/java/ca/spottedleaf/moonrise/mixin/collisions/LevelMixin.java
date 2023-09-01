@@ -24,6 +24,8 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -34,6 +36,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 @Mixin(Level.class)
@@ -91,6 +94,7 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
      * @author Spottedleaf
      */
     @Overwrite
+    @Override
     public List<Entity> getEntities(final Entity entity, final AABB boundingBox, final Predicate<? super Entity> predicate) {
         this.getProfiler().incrementCounter("getEntities");
         final List<Entity> ret = new ArrayList<>();
@@ -171,7 +175,7 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
      * @author Spottedleaf
      */
     @Override
-    public <T extends Entity> List<T> getEntitiesOfClass(final Class<T> entityClass, final AABB boundingBox, final Predicate<? super T> predicate) {
+    public final <T extends Entity> List<T> getEntitiesOfClass(final Class<T> entityClass, final AABB boundingBox, final Predicate<? super T> predicate) {
         this.getProfiler().incrementCounter("getEntities");
         final List<T> ret = new ArrayList<>();
 
@@ -185,7 +189,7 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
      * @author Spottedleaf
      */
     @Override
-    public List<Entity> getHardCollidingEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate) {
+    public final List<Entity> getHardCollidingEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate) {
         this.getProfiler().incrementCounter("getEntities");
         final List<Entity> ret = new ArrayList<>();
 
@@ -200,7 +204,7 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
      * @author Spottedleaf
      */
     @Override
-    public boolean isUnobstructed(final Entity entity) {
+    public final boolean isUnobstructed(final Entity entity) {
         final AABB boundingBox = entity.getBoundingBox();
         if (CollisionUtil.isEmpty(boundingBox)) {
             return false;
@@ -370,7 +374,7 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
      * @author Spottedleaf
      */
     @Override
-    public BlockHitResult clip(final ClipContext clipContext) {
+    public final BlockHitResult clip(final ClipContext clipContext) {
         // can only do this in this class, as not everything that implements BlockGetter can retrieve chunks
         return fastClip(clipContext.getFrom(), clipContext.getTo(), (Level)(Object)this, clipContext);
     }
@@ -401,5 +405,67 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
                     return state.isSuffocating((Level)(Object)LevelMixin.this, pos);
                 }
         );
+    }
+
+    @Unique
+    private static VoxelShape inflateAABBToVoxel(final AABB aabb, final double x, final double y, final double z) {
+        return Shapes.create(
+                aabb.minX - x,
+                aabb.minY - y,
+                aabb.minZ - z,
+
+                aabb.maxX + x,
+                aabb.maxY + y,
+                aabb.maxZ + z
+        );
+    }
+
+    /**
+     * @reason Use optimised merge strategy, avoid streams
+     * @author Spottedleaf
+     */
+    @Override
+    public final Optional<Vec3> findFreePosition(final Entity entity, final VoxelShape boundsShape, final Vec3 fromPosition,
+                                                 final double rangeX, final double rangeY, final double rangeZ) {
+        if (boundsShape.isEmpty()) {
+            return Optional.empty();
+        }
+
+        final double expandByX = rangeX * 0.5;
+        final double expandByY = rangeY * 0.5;
+        final double expandByZ = rangeZ * 0.5;
+
+        // note: it is useless to look at shapes outside of range / 2.0
+        final AABB collectionVolume = boundsShape.bounds().inflate(expandByX, expandByY, expandByZ);
+
+        final List<AABB> aabbs = new ArrayList<>();
+        final List<VoxelShape> voxels = new ArrayList<>();
+
+        CollisionUtil.getCollisionsForBlocksOrWorldBorder(
+                (Level)(Object)this, entity, collectionVolume, voxels, aabbs,
+                CollisionUtil.COLLISION_FLAG_CHECK_BORDER,
+                null
+        );
+
+        // push voxels into aabbs
+        for (int i = 0, len = voxels.size(); i < len; ++i) {
+            aabbs.addAll(voxels.get(i).toAabbs());
+        }
+
+        // expand AABBs
+        final VoxelShape first = aabbs.isEmpty() ? Shapes.empty() : inflateAABBToVoxel(aabbs.get(0), expandByX, expandByY, expandByZ);
+        final VoxelShape[] rest = new VoxelShape[Math.max(0, aabbs.size() - 1)];
+
+        for (int i = 1, len = aabbs.size(); i < len; ++i) {
+            rest[i - 1] = inflateAABBToVoxel(aabbs.get(i), expandByX, expandByY, expandByZ);
+        }
+
+        // use optimized join
+        final VoxelShape joined = Shapes.or(first, rest);
+
+        // find free space
+        final VoxelShape freeSpace = Shapes.join(boundsShape, joined, BooleanOp.ONLY_FIRST);
+
+        return freeSpace.closestPointTo(fromPosition);
     }
 }
