@@ -13,7 +13,6 @@
     "collisions.BitSetDiscreteVoxelShapeMixin",
     "collisions.BlockMixin",
     "collisions.BlockStateBaseMixin",
-    "collisions.CollisionGetterMixin",
     "collisions.CubeVoxelShapeMixin",
     "collisions.DirectionMixin",
     "collisions.DiscreteVoxelShapeMixin",

@@ -1,7 +1,10 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
+import ca.spottedleaf.moonrise.patches.chunk_getblock.GetBlockChunk;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
+import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
+import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.slices.EntityLookup;
 import ca.spottedleaf.moonrise.patches.collisions.world.CollisionEntityGetter;
 import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevel;
@@ -14,7 +17,11 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -460,13 +467,117 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
             rest[i - 1] = inflateAABBToVoxel(aabbs.get(i), expandByX, expandByY, expandByZ);
         }
 
-        // use optimized join
+        // use optimized implementation of ORing the shapes together
         final VoxelShape joined = Shapes.or(first, rest);
 
         // find free space
-        // don't need optimized join, as closestPointTo uses toAabbs()
+        // can use unoptimized join here (instead of join()), as closestPointTo uses toAabbs()
         final VoxelShape freeSpace = Shapes.joinUnoptimized(boundsShape, joined, BooleanOp.ONLY_FIRST);
 
         return freeSpace.closestPointTo(fromPosition);
+    }
+
+    /**
+     * @reason Route to faster logic
+     * @author Spottedleaf
+     */
+    @Override
+    public final Optional<BlockPos> findSupportingBlock(final Entity entity, final AABB aabb) {
+        final int minBlockX = Mth.floor(aabb.minX - CollisionUtil.COLLISION_EPSILON) - 1;
+        final int maxBlockX = Mth.floor(aabb.maxX + CollisionUtil.COLLISION_EPSILON) + 1;
+
+        final int minBlockY = Mth.floor(aabb.minY - CollisionUtil.COLLISION_EPSILON) - 1;
+        final int maxBlockY = Mth.floor(aabb.maxY + CollisionUtil.COLLISION_EPSILON) + 1;
+
+        final int minBlockZ = Mth.floor(aabb.minZ - CollisionUtil.COLLISION_EPSILON) - 1;
+        final int maxBlockZ = Mth.floor(aabb.maxZ + CollisionUtil.COLLISION_EPSILON) + 1;
+
+        CollisionUtil.LazyEntityCollisionContext collisionContext = null;
+
+        final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockPos selected = null;
+        double selectedDistance = Double.MAX_VALUE;
+
+        final Vec3 entityPos = entity.position();
+
+        LevelChunk lastChunk = null;
+        int lastChunkX = Integer.MIN_VALUE;
+        int lastChunkZ = Integer.MIN_VALUE;
+
+        final ChunkSource chunkSource = this.getChunkSource();
+
+        for (int currZ = minBlockZ; currZ <= maxBlockZ; ++currZ) {
+            pos.setZ(currZ);
+            for (int currX = minBlockX; currX <= maxBlockX; ++currX) {
+                pos.setX(currX);
+
+                final int newChunkX = currX >> 4;
+                final int newChunkZ = currZ >> 4;
+
+                final int chunkDiff = ((newChunkX ^ lastChunkX) | (newChunkZ ^ lastChunkZ));
+
+                if (chunkDiff != 0) {
+                    lastChunk = (LevelChunk)chunkSource.getChunk(newChunkX, newChunkZ, ChunkStatus.FULL, false);
+                }
+
+                if (lastChunk == null) {
+                    continue;
+                }
+                for (int currY = minBlockY; currY <= maxBlockY; ++currY) {
+                    int edgeCount = ((currX == minBlockX || currX == maxBlockX) ? 1 : 0) +
+                            ((currY == minBlockY || currY == maxBlockY) ? 1 : 0) +
+                            ((currZ == minBlockZ || currZ == maxBlockZ) ? 1 : 0);
+                    if (edgeCount == 3) {
+                        continue;
+                    }
+
+                    pos.setY(currY);
+
+                    final double distance = pos.distToCenterSqr(entityPos);
+                    if (distance > selectedDistance || (distance == selectedDistance && selected.compareTo(pos) >= 0)) {
+                        continue;
+                    }
+
+                    final BlockState state = ((GetBlockChunk)lastChunk).getBlock(currX, currY, currZ);
+                    if (((CollisionBlockState)state).emptyCollisionShape()) {
+                        continue;
+                    }
+
+                    if ((edgeCount != 1 || state.hasLargeCollisionShape()) && (edgeCount != 2 || state.getBlock() == Blocks.MOVING_PISTON)) {
+                        if (collisionContext == null) {
+                            collisionContext = new CollisionUtil.LazyEntityCollisionContext(entity);
+                        }
+                        final VoxelShape blockCollision = state.getCollisionShape(lastChunk, pos, collisionContext);
+                        if (blockCollision.isEmpty()) {
+                            continue;
+                        }
+
+                        // avoid VoxelShape#move by shifting the entity collision shape instead
+                        final AABB shiftedAABB = aabb.move(-(double)currX, -(double)currY, -(double)currZ);
+
+                        final AABB singleAABB = ((CollisionVoxelShape)blockCollision).getSingleAABBRepresentation();
+                        if (singleAABB != null) {
+                            if (!CollisionUtil.voxelShapeIntersect(singleAABB, shiftedAABB)) {
+                                continue;
+                            }
+
+                            selected = pos.immutable();
+                            selectedDistance = distance;
+                            continue;
+                        }
+
+                        if (!CollisionUtil.voxelShapeIntersectNoEmpty(blockCollision, shiftedAABB)) {
+                            continue;
+                        }
+
+                        selected = pos.immutable();
+                        selectedDistance = distance;
+                        continue;
+                    }
+                }
+            }
+        }
+
+        return Optional.ofNullable(selected);
     }
 }
