@@ -10,6 +10,7 @@
     "chunk_getblock.LevelChunkMixin",
     "collisions.ArmorStandMixin",
     "collisions.ArrayVoxelShapeMixin",
+    "collisions.BitSetDiscreteVoxelShapeMixin",
     "collisions.BlockMixin",
     "collisions.BlockStateBaseMixin",
     "collisions.CollisionGetterMixin",

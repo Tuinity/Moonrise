@@ -168,7 +168,7 @@ public abstract class ShapesMixin {
                     final VoxelShape first = tmp[i];
                     final VoxelShape second = tmp[next];
 
-                    tmp[newSize++] = Shapes.join(first, second, BooleanOp.OR);
+                    tmp[newSize++] = Shapes.or(first, second);
                 }
             }
             size = newSize;
@@ -269,10 +269,11 @@ public abstract class ShapesMixin {
         final AABB bounds2 = shape2.bounds();
 
         final double minX = Math.min(bounds1.minX, bounds2.minX);
-        final double maxX = Math.max(bounds1.maxX, bounds2.maxX);
         final double minY = Math.min(bounds1.minY, bounds2.minY);
-        final double maxY = Math.max(bounds1.maxY, bounds2.maxY);
         final double minZ = Math.min(bounds1.minZ, bounds2.minZ);
+
+        final double maxX = Math.max(bounds1.maxX, bounds2.maxX);
+        final double maxY = Math.max(bounds1.maxY, bounds2.maxY);
         final double maxZ = Math.max(bounds1.maxZ, bounds2.maxZ);
 
         return (minX <= CollisionUtil.COLLISION_EPSILON && maxX >= (1 - CollisionUtil.COLLISION_EPSILON)) &&

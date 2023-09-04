@@ -283,7 +283,7 @@ public abstract class HopperBlockEntityMixin extends RandomizableContainerBlockE
         }
 
         if (changed) {
-            ((HopperBlockEntityMixin)(Object)hopperBlockEntity).setCooldown(8);
+            ((HopperBlockEntityMixin)(Object)hopperBlockEntity).setCooldown(HopperBlockEntity.MOVE_ITEM_SPEED);
             setChanged(level, blockPos, blockState);
             return true;
         }

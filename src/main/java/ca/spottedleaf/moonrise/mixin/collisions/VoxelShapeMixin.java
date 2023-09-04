@@ -657,6 +657,7 @@ public abstract class VoxelShapeMixin implements CollisionVoxelShape {
         }
 
         if (this.singleAABBRepresentation != null) {
+            // note: the isFullBlock() is fuzzy, and Shapes.create() is also fuzzy which would return block()
             return this.isFullBlock() ? Shapes.block() : (VoxelShape)(Object)this;
         }
 

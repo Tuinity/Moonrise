@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 public abstract class BlockMixin {
 
     /**
-     * @reason Replace with an implementation that does not use join AND one that caches the result
+     * @reason Replace with an implementation that does not use join AND one that caches the result per VoxelShape instance
      * @author Spottedleaf
      */
     @Overwrite

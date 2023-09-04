@@ -175,7 +175,7 @@ public final class VisibilityGraph {
             ret.setAll(true);
             return ret;
         }
-        if (this.opaqueEdgeCount >= (TOTAL_BLOCKS_FACES - 1)) {
+        if (this.opaqueEdgeCount == TOTAL_BLOCKS_FACES) {
             // impossible for there to be any visibility from one edge to another
             ret.setAll(false);
             return ret;
@@ -218,12 +218,13 @@ public final class VisibilityGraph {
                         final int directionOrdinal = Integer.numberOfTrailingZeros(negatedBitset);
                         final int add = INDEX_ADD_BY_DIRECTION_ORDINAL[directionOrdinal];
 
-                        negatedBitset ^= -negatedBitset & negatedBitset; // remove trailing bit
-
                         final int neighbourIndex = add + queuedIndex;
 
                         final long bitsetValue = opaque[neighbourIndex >>> LOG2_LONG];
                         final int directionBitsetForNeighbour = DIRECTIONS_BITSET_BY_INDEX[neighbourIndex];
+
+                        negatedBitset ^= -negatedBitset & negatedBitset; // remove trailing bit
+
                         final long neighbourMask = 1L << neighbourIndex;
 
                         final long newBitsetValue = bitsetValue | neighbourMask;

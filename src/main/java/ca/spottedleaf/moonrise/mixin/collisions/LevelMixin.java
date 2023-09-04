@@ -421,7 +421,7 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
     }
 
     /**
-     * @reason Use optimised merge strategy, avoid streams
+     * @reason Use optimised OR operator join strategy, avoid streams
      * @author Spottedleaf
      */
     @Override
@@ -464,7 +464,8 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
         final VoxelShape joined = Shapes.or(first, rest);
 
         // find free space
-        final VoxelShape freeSpace = Shapes.join(boundsShape, joined, BooleanOp.ONLY_FIRST);
+        // don't need optimized join, as closestPointTo uses toAabbs()
+        final VoxelShape freeSpace = Shapes.joinUnoptimized(boundsShape, joined, BooleanOp.ONLY_FIRST);
 
         return freeSpace.closestPointTo(fromPosition);
     }
