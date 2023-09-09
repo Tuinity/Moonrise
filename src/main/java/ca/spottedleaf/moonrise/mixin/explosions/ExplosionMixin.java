@@ -4,7 +4,6 @@ import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_getblock.GetBlockChunk;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
-import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import ca.spottedleaf.moonrise.patches.explosions.ExplosionBlockCache;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -357,12 +356,18 @@ public abstract class ExplosionMixin {
         this.chunkCache = new LevelChunk[CHUNK_CACHE_WIDTH * CHUNK_CACHE_WIDTH];
 
         ExplosionBlockCache[] blockCache = new ExplosionBlockCache[BLOCK_EXPLOSION_CACHE_WIDTH * BLOCK_EXPLOSION_CACHE_WIDTH * BLOCK_EXPLOSION_CACHE_WIDTH];
-        // avoid checking for initial state in loop by always defaulting to a position that will fail the first cache check
-        ExplosionBlockCache initialCache = new ExplosionBlockCache(
-                BlockPos.containing(this.x, this.y, this.z).above(2).asLong(),
-                null, null, null, 0f, true
-        );
-        ExplosionBlockCache cachedBlock;
+
+        // use initial cache value that is most likely to be used: the source position
+        final ExplosionBlockCache initialCache;
+        {
+            final int blockX = Mth.floor(this.x);
+            final int blockY = Mth.floor(this.y);
+            final int blockZ = Mth.floor(this.z);
+
+            final long key = BlockPos.asLong(blockX, blockY, blockZ);
+
+            initialCache = this.getOrCacheExplosionBlock(blockX, blockY, blockZ, key, true);
+        }
 
         // only ~1/3rd of the loop iterations in vanilla will result in a ray, as it is iterating the perimeter of
         // a 16x16x16 cube
@@ -371,24 +376,24 @@ public abstract class ExplosionMixin {
         // additional aggressive caching of block retrieval is very significant, as at low power (i.e tnt) most
         // block retrievals are not unique
         for (int ray = 0, len = CACHED_RAYS.length; ray < len;) {
-            cachedBlock = initialCache;
+            ExplosionBlockCache cachedBlock = initialCache;
 
             double currX = this.x;
             double currY = this.y;
             double currZ = this.z;
 
-            double incX = CACHED_RAYS[ray];
-            double incY = CACHED_RAYS[ray + 1];
-            double incZ = CACHED_RAYS[ray + 2];
+            final double incX = CACHED_RAYS[ray];
+            final double incY = CACHED_RAYS[ray + 1];
+            final double incZ = CACHED_RAYS[ray + 2];
 
             ray += 3;
 
             float power = this.radius * (0.7F + this.level.random.nextFloat() * 0.6F);
 
             do {
-                int blockX = Mth.floor(currX);
-                int blockY = Mth.floor(currY);
-                int blockZ = Mth.floor(currZ);
+                final int blockX = Mth.floor(currX);
+                final int blockY = Mth.floor(currY);
+                final int blockZ = Mth.floor(currZ);
 
                 final long key = BlockPos.asLong(blockX, blockY, blockZ);
 
@@ -432,13 +437,13 @@ public abstract class ExplosionMixin {
         // use null predicate to avoid indirection on test(), but we need to move the spectator check into the loop itself
         final List<Entity> entities = this.level.getEntities(this.source,
                 new AABB(
-                        Mth.floor(this.x - (diameter + 1.0)),
-                        Mth.floor(this.y - (diameter + 1.0)),
-                        Mth.floor(this.z - (diameter + 1.0)),
+                        (double)Mth.floor(this.x - (diameter + 1.0)),
+                        (double)Mth.floor(this.y - (diameter + 1.0)),
+                        (double)Mth.floor(this.z - (diameter + 1.0)),
 
-                        Mth.floor(this.x + (diameter + 1.0)),
-                        Mth.floor(this.y + (diameter + 1.0)),
-                        Mth.floor(this.z + (diameter + 1.0))
+                        (double)Mth.floor(this.x + (diameter + 1.0)),
+                        (double)Mth.floor(this.y + (diameter + 1.0)),
+                        (double)Mth.floor(this.z + (diameter + 1.0))
                 ),
                 null
         );

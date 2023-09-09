@@ -86,10 +86,11 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
         final long[] dataArray = this.data;
 
         final long data = dataArray[dataIndex];
+        final int valuesPerLong = this.valuesPerLong;
         final long mask = (1L << bits) - 1; // avoid extra memory read
 
 
-        final int bitIndex = (index - (dataIndex * this.valuesPerLong)) * bits;
+        final int bitIndex = (index - (dataIndex * valuesPerLong)) * bits;
         final int prev = (int)(data >> bitIndex & mask);
         final long write = data & ~(mask << bitIndex) | ((long)value & mask) << bitIndex;
 
@@ -116,9 +117,10 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
         final long[] dataArray = this.data;
 
         final long data = dataArray[dataIndex];
+        final int valuesPerLong = this.valuesPerLong;
         final long mask = (1L << bits) - 1; // avoid extra memory read
 
-        final int bitIndex = (index - (dataIndex * this.valuesPerLong)) * bits;
+        final int bitIndex = (index - (dataIndex * valuesPerLong)) * bits;
         final long write = data & ~(mask << bitIndex) | ((long)value & mask) << bitIndex;
 
         LONG_ARRAY_HANDLE.setOpaque(dataArray, dataIndex, write);
@@ -140,8 +142,9 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
 
         final long mask = (1L << bits) - 1; // avoid extra memory read
         final long data = (long)LONG_ARRAY_HANDLE.getOpaque(this.data, dataIndex);
+        final int valuesPerLong = this.valuesPerLong;
 
-        final int bitIndex = (index - (dataIndex * this.valuesPerLong)) * bits;
+        final int bitIndex = (index - (dataIndex * valuesPerLong)) * bits;
 
         return (int)(data >> bitIndex & mask);
     }
