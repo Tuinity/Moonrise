@@ -79,8 +79,8 @@ public final class FlatBitsetUtil {
         final int fromBitsetIdx = from >>> LOG2_LONG;
         final int toBitsetIdx = to >>> LOG2_LONG;
 
-        final long keepFirst = ALL_SET >>> ((BITS_PER_LONG - 1) ^ from);
-        final long keepLast = ALL_SET << to;
+        final long keepFirst = ~(ALL_SET << from);
+        final long keepLast = ~(ALL_SET >>> ((BITS_PER_LONG - 1) ^ to));
 
         Objects.checkFromToIndex(fromBitsetIdx, toBitsetIdx, bitset.length);
 
@@ -91,7 +91,7 @@ public final class FlatBitsetUtil {
             bitset[fromBitsetIdx] &= keepFirst;
 
             for (int i = fromBitsetIdx + 1; i < toBitsetIdx; ++i) {
-                bitset[toBitsetIdx] = 0L;
+                bitset[i] = 0L;
             }
 
             bitset[toBitsetIdx] &= keepLast;

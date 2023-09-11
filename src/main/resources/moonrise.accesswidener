@@ -92,7 +92,9 @@ accessible field net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape xMax I
 accessible field net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape yMax I
 accessible field net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape zMax I
 accessible method net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape join (Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;Lnet/minecraft/world/phys/shapes/IndexMerger;Lnet/minecraft/world/phys/shapes/IndexMerger;Lnet/minecraft/world/phys/shapes/IndexMerger;Lnet/minecraft/world/phys/shapes/BooleanOp;)Lnet/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape;
-
+accessible method net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape isZStripFull (IIII)Z
+accessible method net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape isXZRectangleFull (IIIII)Z
+accessible method net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape clearZStrip (IIII)V
 
 # IndexMerger
 accessible class net/minecraft/world/phys/shapes/IndexMerger
