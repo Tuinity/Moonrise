@@ -298,7 +298,7 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
         int lastChunkY = Integer.MIN_VALUE;
         int lastChunkZ = Integer.MIN_VALUE;
 
-        final int minSection = WorldUtil.getMinSection(level);
+        final int minSection = ((CollisionLevel)level).getMinSectionMoonrise();
 
         for (;;) {
             currPos.set(currX, currY, currZ);

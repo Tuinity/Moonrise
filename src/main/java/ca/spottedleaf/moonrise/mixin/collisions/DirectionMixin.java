@@ -153,7 +153,7 @@ public abstract class DirectionMixin implements CollisionDirection {
     }
 
     @Override
-    public int uniqueId() {
+    public final int uniqueId() {
         return this.id;
     }
 }

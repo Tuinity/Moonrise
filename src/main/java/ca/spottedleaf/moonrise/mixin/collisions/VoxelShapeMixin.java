@@ -259,7 +259,8 @@ public abstract class VoxelShapeMixin implements CollisionVoxelShape {
         final AABB singleAABB = this.singleAABBRepresentation;
         if (singleAABB != null) {
             // check if the bounding box encloses the full cube
-            final boolean ret = (singleAABB.minY <= CollisionUtil.COLLISION_EPSILON && singleAABB.maxY >= (1 - CollisionUtil.COLLISION_EPSILON)) &&
+            final boolean ret =
+                    (singleAABB.minY <= CollisionUtil.COLLISION_EPSILON && singleAABB.maxY >= (1 - CollisionUtil.COLLISION_EPSILON)) &&
                     (singleAABB.minX <= CollisionUtil.COLLISION_EPSILON && singleAABB.maxX >= (1 - CollisionUtil.COLLISION_EPSILON)) &&
                     (singleAABB.minZ <= CollisionUtil.COLLISION_EPSILON && singleAABB.maxZ >= (1 - CollisionUtil.COLLISION_EPSILON));
             this.occludesFullBlock = Boolean.valueOf(ret);

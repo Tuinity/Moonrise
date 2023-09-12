@@ -96,6 +96,7 @@ accessible method net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape isZSt
 accessible method net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape isXZRectangleFull (IIIII)Z
 accessible method net/minecraft/world/phys/shapes/BitSetDiscreteVoxelShape clearZStrip (IIII)V
 
+
 # IndexMerger
 accessible class net/minecraft/world/phys/shapes/IndexMerger
 

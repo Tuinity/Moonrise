@@ -28,6 +28,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Mixin(BlockBehaviour.BlockStateBase.class)
 public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implements CollisionBlockState {
 
+    @Shadow
+    protected BlockBehaviour.BlockStateBase.Cache cache;
+
+    @Shadow
+    public abstract VoxelShape getCollisionShape(BlockGetter blockGetter, BlockPos blockPos, CollisionContext collisionContext);
+
+    protected BlockStateBaseMixin(Block object, ImmutableMap<Property<?>, Comparable<?>> immutableMap, MapCodec<BlockState> mapCodec) {
+        super(object, immutableMap, mapCodec);
+    }
+
+
     @Unique
     private static final int RANDOM_OFFSET = 704237939;
 
@@ -39,19 +50,6 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
 
     @Unique
     private int id1, id2;
-
-    @Shadow
-    protected BlockBehaviour.BlockStateBase.Cache cache;
-
-    @Shadow
-    public abstract VoxelShape getCollisionShape(BlockGetter blockGetter, BlockPos blockPos, CollisionContext collisionContext);
-
-
-
-    protected BlockStateBaseMixin(Block object, ImmutableMap<Property<?>, Comparable<?>> immutableMap, MapCodec<BlockState> mapCodec) {
-        super(object, immutableMap, mapCodec);
-    }
-
 
     @Unique
     private boolean occludesFullBlock;

@@ -133,7 +133,7 @@ public abstract class ExplosionMixin {
     private static final Float ZERO_RESISTANCE = Float.valueOf(-0.3f);
 
     @Unique
-    private Long2ObjectOpenHashMap<ExplosionBlockCache> blockCache = new Long2ObjectOpenHashMap<>();
+    private Long2ObjectOpenHashMap<ExplosionBlockCache> blockCache = null;
 
     @Unique
     private long[] chunkPosCache = null;
@@ -350,12 +350,14 @@ public abstract class ExplosionMixin {
     public void explode() {
         this.level.gameEvent(this.source, GameEvent.EXPLODE, new Vec3(this.x, this.y, this.z));
 
+        this.blockCache = new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
+
         this.chunkPosCache = new long[CHUNK_CACHE_WIDTH * CHUNK_CACHE_WIDTH];
         Arrays.fill(this.chunkPosCache, ChunkPos.INVALID_CHUNK_POS);
 
         this.chunkCache = new LevelChunk[CHUNK_CACHE_WIDTH * CHUNK_CACHE_WIDTH];
 
-        ExplosionBlockCache[] blockCache = new ExplosionBlockCache[BLOCK_EXPLOSION_CACHE_WIDTH * BLOCK_EXPLOSION_CACHE_WIDTH * BLOCK_EXPLOSION_CACHE_WIDTH];
+        final ExplosionBlockCache[] blockCache = new ExplosionBlockCache[BLOCK_EXPLOSION_CACHE_WIDTH * BLOCK_EXPLOSION_CACHE_WIDTH * BLOCK_EXPLOSION_CACHE_WIDTH];
 
         // use initial cache value that is most likely to be used: the source position
         final ExplosionBlockCache initialCache;

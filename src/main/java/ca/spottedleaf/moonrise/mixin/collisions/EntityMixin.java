@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.collisions;
 
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
+import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.entity.CollisionEntity;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.util.EmptyStreamForMoveCall;
@@ -18,6 +19,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
@@ -331,6 +333,8 @@ public abstract class EntityMixin implements CollisionEntity {
         final int maxY = Mth.floor(box.maxY);
         final int maxZ = Mth.floor(box.maxZ);
 
+        final ChunkSource chunkProvider = this.level.getChunkSource();
+
         long lastChunkKey = ChunkPos.INVALID_CHUNK_POS;
         LevelChunk lastChunk = null;
         for (int fz = minZ; fz <= maxZ; ++fz) {
@@ -339,14 +343,14 @@ public abstract class EntityMixin implements CollisionEntity {
                 final int newChunkX = fx >> 4;
                 final int newChunkZ = fz >> 4;
                 final LevelChunk chunk = lastChunkKey == (lastChunkKey = CoordinateUtils.getChunkKey(newChunkX, newChunkZ)) ?
-                        lastChunk : (lastChunk = this.level.getChunk(fx >> 4, fz >> 4));
+                        lastChunk : (lastChunk = (LevelChunk)chunkProvider.getChunk(fx >> 4, fz >> 4, ChunkStatus.FULL, true));
                 tempPos.setX(fx);
                 for (int fy = minY; fy <= maxY; ++fy) {
                     tempPos.setY(fy);
 
                     final BlockState state = chunk.getBlockState(tempPos);
 
-                    if (state.isAir() || !state.isSuffocating(this.level, tempPos)) {
+                    if (((CollisionBlockState)state).emptyCollisionShape() || !state.isSuffocating(this.level, tempPos)) {
                         continue;
                     }
 
@@ -357,15 +361,17 @@ public abstract class EntityMixin implements CollisionEntity {
                         continue;
                     }
 
+                    final AABB toCollide = box.move(-(double)fx, -(double)fy, -(double)fz);
+
                     final AABB singleAABB = ((CollisionVoxelShape)collisionShape).getSingleAABBRepresentation();
                     if (singleAABB != null) {
-                        if (CollisionUtil.voxelShapeIntersect(box, singleAABB)) {
+                        if (CollisionUtil.voxelShapeIntersect(singleAABB, toCollide)) {
                             return true;
                         }
                         continue;
                     }
 
-                    if (CollisionUtil.voxelShapeIntersectNoEmpty(collisionShape, box)) {
+                    if (CollisionUtil.voxelShapeIntersectNoEmpty(collisionShape, toCollide)) {
                         return true;
                     }
                     continue;
