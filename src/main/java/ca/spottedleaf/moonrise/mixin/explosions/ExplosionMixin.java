@@ -294,7 +294,7 @@ public abstract class ExplosionMixin {
     }
 
     @Unique
-    private double getSeenFraction(final Vec3 source, final Entity target,
+    private float getSeenFraction(final Vec3 source, final Entity target,
                                    final ExplosionBlockCache[] blockCache,
                                    final BlockPos.MutableBlockPos blockPos) {
         final AABB boundingBox = target.getBoundingBox();
@@ -307,7 +307,7 @@ public abstract class ExplosionMixin {
         final double incZ = 1.0 / (diffZ * 2.0 + 1.0);
 
         if (incX < 0.0 || incY < 0.0 || incZ < 0.0) {
-            return 0.0;
+            return 0.0f;
         }
 
         final double offX = (1.0 - Math.floor(1.0 / incX) * incX) * 0.5 + boundingBox.minX;
@@ -339,7 +339,7 @@ public abstract class ExplosionMixin {
             }
         }
 
-        return (double)missedRays / (double)totalRays;
+        return (float)missedRays / (float)totalRays;
     }
 
     /**
@@ -475,7 +475,7 @@ public abstract class ExplosionMixin {
                 distZ /= distMag;
 
                 // route to new visible fraction calculation, using the existing block cache
-                final double visibleFraction = this.getSeenFraction(center, entity, blockCache, blockPos);
+                final double visibleFraction = (double)this.getSeenFraction(center, entity, blockCache, blockPos);
                 final double intensityFraction = (1.0 - normalizedDistanceToCenter) * visibleFraction;
 
                 entity.hurt(this.getDamageSource(), (float)((int)((intensityFraction * intensityFraction + intensityFraction) / 2.0 * 7.0 * diameter + 1.0)));
