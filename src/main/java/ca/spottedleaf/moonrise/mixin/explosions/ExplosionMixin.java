@@ -245,7 +245,7 @@ public abstract class ExplosionMixin {
             }
 
             final BlockState blockState = cachedBlock.blockState;
-            if (!((CollisionBlockState)blockState).emptyCollisionShape()) {
+            if (blockState != null && !((CollisionBlockState)blockState).emptyCollisionShape()) {
                 VoxelShape collision = cachedBlock.cachedCollisionShape;
                 if (collision == null) {
                     collision = ((CollisionBlockState)blockState).getConstantCollisionShape();

@@ -343,7 +343,7 @@ public abstract class EntityMixin implements CollisionEntity {
                 final int newChunkX = fx >> 4;
                 final int newChunkZ = fz >> 4;
                 final LevelChunk chunk = lastChunkKey == (lastChunkKey = CoordinateUtils.getChunkKey(newChunkX, newChunkZ)) ?
-                        lastChunk : (lastChunk = (LevelChunk)chunkProvider.getChunk(fx >> 4, fz >> 4, ChunkStatus.FULL, true));
+                        lastChunk : (lastChunk = (LevelChunk)chunkProvider.getChunk(newChunkX, newChunkZ, ChunkStatus.FULL, true));
                 tempPos.setX(fx);
                 for (int fy = minY; fy <= maxY; ++fy) {
                     tempPos.setY(fy);
