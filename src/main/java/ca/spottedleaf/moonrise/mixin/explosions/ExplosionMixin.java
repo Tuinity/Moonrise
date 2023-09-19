@@ -350,7 +350,7 @@ public abstract class ExplosionMixin {
     public void explode() {
         this.level.gameEvent(this.source, GameEvent.EXPLODE, new Vec3(this.x, this.y, this.z));
 
-        this.blockCache = new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
+        this.blockCache = new Long2ObjectOpenHashMap<>();
 
         this.chunkPosCache = new long[CHUNK_CACHE_WIDTH * CHUNK_CACHE_WIDTH];
         Arrays.fill(this.chunkPosCache, ChunkPos.INVALID_CHUNK_POS);

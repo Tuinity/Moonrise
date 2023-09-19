@@ -30,6 +30,11 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
@@ -131,45 +136,56 @@ public abstract class HopperBlockEntityMixin extends RandomizableContainerBlockE
     }
 
     /**
+     * @reason Forces a return false when container is not null so that the below mixin can inject its own return logic.
+     * @author Spottedleaf
+     */
+    @Redirect(
+            method = "suckInItems",
+            at = @At(
+                    target = "Lnet/minecraft/world/level/block/entity/HopperBlockEntity;isEmptyContainer(Lnet/minecraft/world/Container;Lnet/minecraft/core/Direction;)Z",
+                    value = "INVOKE"
+            )
+    )
+    private static boolean forceReturnFalseForContainer(final Container container, final Direction direction) {
+        return true;
+    }
+
+    /**
      * @reason Avoid checking for empty container and remove streams / indirection
      * @author Spottedleaf
      */
-    @Overwrite
-    public static boolean suckInItems(final Level level, final Hopper hopper) {
-        final Container aboveContainer = getSourceContainer(level, hopper);
-        if (aboveContainer != null) {
-            final Direction down = Direction.DOWN;
+    @Inject(
+            method = "suckInItems",
+            cancellable = true,
+            locals = LocalCapture.CAPTURE_FAILHARD,
+            at = @At(
+                    value = "RETURN",
+                    ordinal = 0
+            )
+    )
+    private static void handleContainerSuck(final Level level, final Hopper hopper, final CallbackInfoReturnable<Boolean> cir,
+                                            final Container aboveContainer) {
+        final Direction down = Direction.DOWN;
+        // don't bother checking for empty, because the same logic can be done by trying to move items - as
+        // that checks for an empty item.
 
-            // don't bother checking for empty, because the same logic can be done by trying to move items - as
-            // that checks for an empty item.
-
-            if (aboveContainer instanceof WorldlyContainer worldlyContainer) {
-                for (final int slot : worldlyContainer.getSlotsForFace(down)) {
-                    if (tryTakeInItemFromSlot(hopper, aboveContainer, slot, down)) {
-                        return true;
-                    }
+        if (aboveContainer instanceof WorldlyContainer worldlyContainer) {
+            for (final int slot : worldlyContainer.getSlotsForFace(down)) {
+                if (tryTakeInItemFromSlot(hopper, aboveContainer, slot, down)) {
+                    cir.setReturnValue(Boolean.TRUE);
+                    return;
                 }
-                return false;
-            } else {
-                for (int slot = 0, max = aboveContainer.getContainerSize(); slot < max; ++slot) {
-                    if (tryTakeInItemFromSlot(hopper, aboveContainer, slot, down)) {
-                        return true;
-                    }
-                }
-                return false;
             }
-
         } else {
-            final List<ItemEntity> items = getItemsAtAndAbove(level, hopper);
-
-            for (int i = 0, len = items.size(); i < len; ++i) {
-                if (addItem(hopper, items.get(i))) {
-                    return true;
+            for (int slot = 0, max = aboveContainer.getContainerSize(); slot < max; ++slot) {
+                if (tryTakeInItemFromSlot(hopper, aboveContainer, slot, down)) {
+                    cir.setReturnValue(Boolean.TRUE);
+                    return;
                 }
             }
-
-            return false;
         }
+        cir.setReturnValue(Boolean.FALSE);
+        return;
     }
 
     /**
@@ -309,6 +325,31 @@ public abstract class HopperBlockEntityMixin extends RandomizableContainerBlockE
             for (int slot = 0, max = container.getContainerSize(); slot < max; ++slot) {
                 final ItemStack stack = container.getItem(slot);
                 if (stack.getCount() < stack.getMaxStackSize()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    /**
+     * @reason Remove streams
+     * @author Spottedleaf
+     */
+    @Overwrite
+    private static boolean isEmptyContainer(final Container container, final Direction direction) {
+        if (container instanceof WorldlyContainer worldlyContainer) {
+            for (final int slot : worldlyContainer.getSlotsForFace(direction)) {
+                final ItemStack stack = container.getItem(slot);
+                if (!stack.isEmpty()) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            for (int slot = 0, max = container.getContainerSize(); slot < max; ++slot) {
+                final ItemStack stack = container.getItem(slot);
+                if (!stack.isEmpty()) {
                     return false;
                 }
             }
