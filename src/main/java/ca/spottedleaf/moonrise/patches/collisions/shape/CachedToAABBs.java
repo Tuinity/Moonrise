@@ -26,12 +26,14 @@ public record CachedToAABBs(
     }
 
     public static CachedToAABBs offset(final CachedToAABBs cache, final double offX, final double offY, final double offZ) {
+        if (offX == 0.0 && offY == 0.0 && offZ == 0.0) {
+            return cache;
+        }
+
         final double resX = cache.offX + offX;
         final double resY = cache.offY + offY;
         final double resZ = cache.offZ + offZ;
 
-        final boolean isOffset = resX != 0.0 || resY != 0.0 || resZ != 0.0;
-
-        return new CachedToAABBs(cache.aabbs, isOffset, resX, resY, resZ);
+        return new CachedToAABBs(cache.aabbs, true, resX, resY, resZ);
     }
 }
