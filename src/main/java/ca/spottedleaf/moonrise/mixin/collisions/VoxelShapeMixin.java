@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
+import ca.spottedleaf.moonrise.common.util.FlatBitsetUtil;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CachedShapeData;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CachedToAABBs;
@@ -458,7 +459,7 @@ public abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
     @Unique
     private boolean computeFullBlock() {
-        final Boolean ret;
+        Boolean ret;
         if (this.isEmpty) {
             ret = Boolean.FALSE;
         } else if ((VoxelShape)(Object)this == Shapes.block()) {
@@ -466,8 +467,45 @@ public abstract class VoxelShapeMixin implements CollisionVoxelShape {
         } else {
             final AABB singleAABB = this.singleAABBRepresentation;
             if (singleAABB == null) {
-                // note: Shapes.join(BLOCK, this, NOT_SAME) cannot be empty when voxelSize > 2
-                ret = Boolean.FALSE;
+                final CachedShapeData shapeData = this.cachedShapeData;
+                final int sMinX = shapeData.minFullX();
+                final int sMinY = shapeData.minFullY();
+                final int sMinZ = shapeData.minFullZ();
+
+                final int sMaxX = shapeData.maxFullX();
+                final int sMaxY = shapeData.maxFullY();
+                final int sMaxZ = shapeData.maxFullZ();
+
+                if (Math.abs(this.rootCoordinatesX[sMinX] + this.offsetX) <= CollisionUtil.COLLISION_EPSILON &&
+                    Math.abs(this.rootCoordinatesY[sMinY] + this.offsetY) <= CollisionUtil.COLLISION_EPSILON &&
+                    Math.abs(this.rootCoordinatesZ[sMinZ] + this.offsetZ) <= CollisionUtil.COLLISION_EPSILON &&
+
+                    Math.abs(1.0 - (this.rootCoordinatesX[sMaxX] + this.offsetX)) <= CollisionUtil.COLLISION_EPSILON &&
+                    Math.abs(1.0 - (this.rootCoordinatesY[sMaxY] + this.offsetY)) <= CollisionUtil.COLLISION_EPSILON &&
+                    Math.abs(1.0 - (this.rootCoordinatesZ[sMaxZ] + this.offsetZ)) <= CollisionUtil.COLLISION_EPSILON) {
+
+                    // index = z + y*sizeZ + x*(sizeZ*sizeY)
+
+                    final int sizeY = shapeData.sizeY();
+                    final int sizeZ = shapeData.sizeZ();
+
+                    final long[] bitset = shapeData.voxelSet();
+
+                    ret = Boolean.TRUE;
+
+                    check_full:
+                    for (int x = sMinX; x < sMaxX; ++x) {
+                        for (int y = sMinY; y < sMaxY; ++y) {
+                            final int baseIndex = y*sizeZ + x*(sizeZ*sizeY);
+                            if (!FlatBitsetUtil.isRangeSet(bitset, baseIndex + sMinZ, baseIndex + sMaxZ)) {
+                                ret = Boolean.FALSE;
+                                break check_full;
+                            }
+                        }
+                    }
+                } else {
+                    ret = Boolean.FALSE;
+                }
             } else {
                 ret = Boolean.valueOf(
                         Math.abs(singleAABB.minX) <= CollisionUtil.COLLISION_EPSILON &&
