@@ -105,11 +105,6 @@ accessible class net/minecraft/world/phys/shapes/IndexMerger
 accessible method net/minecraft/world/phys/shapes/CubeVoxelShape <init> (Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;)V
 
 
-# ServerGamePacketListenerImpl
-accessible method net/minecraft/server/network/ServerGamePacketListenerImpl isSingleplayerOwner ()Z
-
-
-
 # ClipContext
 accessible field net/minecraft/world/level/ClipContext block Lnet/minecraft/world/level/ClipContext$Block;
 accessible field net/minecraft/world/level/ClipContext fluid Lnet/minecraft/world/level/ClipContext$Fluid;
