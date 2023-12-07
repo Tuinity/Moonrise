@@ -34,7 +34,7 @@ public abstract class PropertyMixin<T extends Comparable<T>> implements Property
     }
 
     @Override
-    public final int getId() {
+    public final int moonrise$getId() {
         return this.id;
     }
 
@@ -50,5 +50,5 @@ public abstract class PropertyMixin<T extends Comparable<T>> implements Property
 
     // this is re-declared here so that calls to Property#getIdFor are a virtual method invoke, rather than an interface invoke
     @Override
-    public abstract int getIdFor(final T value);
+    public abstract int moonrise$getIdFor(final T value);
 }

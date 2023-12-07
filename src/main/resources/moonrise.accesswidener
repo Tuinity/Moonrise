@@ -119,3 +119,8 @@ accessible method net/minecraft/world/level/material/Fluid isRandomlyTicking ()Z
 # VisibilitySet
 accessible field net/minecraft/client/renderer/chunk/VisibilitySet FACINGS I
 accessible field net/minecraft/client/renderer/chunk/VisibilitySet data Ljava/util/BitSet;
+
+
+# Level
+mutable field net/minecraft/world/level/Level blockEntityTickers Ljava/util/List;
+mutable field net/minecraft/world/level/Level pendingBlockEntityTickers Ljava/util/List;

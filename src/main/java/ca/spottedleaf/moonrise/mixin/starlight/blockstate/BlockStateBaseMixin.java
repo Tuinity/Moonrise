@@ -53,12 +53,12 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
     }
 
     @Override
-    public final boolean isConditionallyFullOpaque() {
+    public final boolean starlight$isConditionallyFullOpaque() {
         return this.isConditionallyFullOpaque;
     }
 
     @Override
-    public final int getOpacityIfCached() {
+    public final int starlight$getOpacityIfCached() {
         return this.opacityIfCached;
     }
 }

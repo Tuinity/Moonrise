@@ -57,7 +57,7 @@ public abstract class LiquidBlockRendererMixin {
             );
         }
 
-        final VoxelShape stateShape = ((CollisionVoxelShape)state.getOcclusionShape(world, pos)).getFaceShapeClamped(direction.getOpposite());
+        final VoxelShape stateShape = ((CollisionVoxelShape)state.getOcclusionShape(world, pos)).moonrise$getFaceShapeClamped(direction.getOpposite());
 
         if (stateShape.isEmpty()) {
             // cannot occlude

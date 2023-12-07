@@ -15,8 +15,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.CollisionGetter;
-import net.minecraft.world.level.EntityGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -187,15 +185,15 @@ public final class CollisionUtil {
         // note: this function assumes that for any i in coords that coord[i + 1] - coord[i] > COLLISION_EPSILON is true
 
         // offsets that should be applied to coords
-        final double off_x = ((CollisionVoxelShape)voxel).offsetX();
-        final double off_y = ((CollisionVoxelShape)voxel).offsetY();
-        final double off_z = ((CollisionVoxelShape)voxel).offsetZ();
+        final double off_x = ((CollisionVoxelShape)voxel).moonrise$offsetX();
+        final double off_y = ((CollisionVoxelShape)voxel).moonrise$offsetY();
+        final double off_z = ((CollisionVoxelShape)voxel).moonrise$offsetZ();
 
-        final double[] coords_x = ((CollisionVoxelShape)voxel).rootCoordinatesX();
-        final double[] coords_y = ((CollisionVoxelShape)voxel).rootCoordinatesY();
-        final double[] coords_z = ((CollisionVoxelShape)voxel).rootCoordinatesZ();
+        final double[] coords_x = ((CollisionVoxelShape)voxel).moonrise$rootCoordinatesX();
+        final double[] coords_y = ((CollisionVoxelShape)voxel).moonrise$rootCoordinatesY();
+        final double[] coords_z = ((CollisionVoxelShape)voxel).moonrise$rootCoordinatesZ();
 
-        final CachedShapeData cached_shape_data = ((CollisionVoxelShape)voxel).getCachedVoxelData();
+        final CachedShapeData cached_shape_data = ((CollisionVoxelShape)voxel).moonrise$getCachedVoxelData();
 
         // note: size = coords.length - 1
         final int size_x = cached_shape_data.sizeX();
@@ -290,22 +288,22 @@ public final class CollisionUtil {
 
     // assume !target.isEmpty() && abs(source_move) >= COLLISION_EPSILON
     public static double collideX(final VoxelShape target, final AABB source, final double source_move) {
-        final AABB single_aabb = ((CollisionVoxelShape)target).getSingleAABBRepresentation();
+        final AABB single_aabb = ((CollisionVoxelShape)target).moonrise$getSingleAABBRepresentation();
         if (single_aabb != null) {
             return collideX(single_aabb, source, source_move);
         }
         // note: this function assumes that for any i in coords that coord[i + 1] - coord[i] > COLLISION_EPSILON is true
 
         // offsets that should be applied to coords
-        final double off_x = ((CollisionVoxelShape)target).offsetX();
-        final double off_y = ((CollisionVoxelShape)target).offsetY();
-        final double off_z = ((CollisionVoxelShape)target).offsetZ();
+        final double off_x = ((CollisionVoxelShape)target).moonrise$offsetX();
+        final double off_y = ((CollisionVoxelShape)target).moonrise$offsetY();
+        final double off_z = ((CollisionVoxelShape)target).moonrise$offsetZ();
 
-        final double[] coords_x = ((CollisionVoxelShape)target).rootCoordinatesX();
-        final double[] coords_y = ((CollisionVoxelShape)target).rootCoordinatesY();
-        final double[] coords_z = ((CollisionVoxelShape)target).rootCoordinatesZ();
+        final double[] coords_x = ((CollisionVoxelShape)target).moonrise$rootCoordinatesX();
+        final double[] coords_y = ((CollisionVoxelShape)target).moonrise$rootCoordinatesY();
+        final double[] coords_z = ((CollisionVoxelShape)target).moonrise$rootCoordinatesZ();
 
-        final CachedShapeData cached_shape_data = ((CollisionVoxelShape)target).getCachedVoxelData();
+        final CachedShapeData cached_shape_data = ((CollisionVoxelShape)target).moonrise$getCachedVoxelData();
 
         // note: size = coords.length - 1
         final int size_x = cached_shape_data.sizeX();
@@ -448,22 +446,22 @@ public final class CollisionUtil {
     }
 
     public static double collideY(final VoxelShape target, final AABB source, final double source_move) {
-        final AABB single_aabb = ((CollisionVoxelShape)target).getSingleAABBRepresentation();
+        final AABB single_aabb = ((CollisionVoxelShape)target).moonrise$getSingleAABBRepresentation();
         if (single_aabb != null) {
             return collideY(single_aabb, source, source_move);
         }
         // note: this function assumes that for any i in coords that coord[i + 1] - coord[i] > COLLISION_EPSILON is true
 
         // offsets that should be applied to coords
-        final double off_x = ((CollisionVoxelShape)target).offsetX();
-        final double off_y = ((CollisionVoxelShape)target).offsetY();
-        final double off_z = ((CollisionVoxelShape)target).offsetZ();
+        final double off_x = ((CollisionVoxelShape)target).moonrise$offsetX();
+        final double off_y = ((CollisionVoxelShape)target).moonrise$offsetY();
+        final double off_z = ((CollisionVoxelShape)target).moonrise$offsetZ();
 
-        final double[] coords_x = ((CollisionVoxelShape)target).rootCoordinatesX();
-        final double[] coords_y = ((CollisionVoxelShape)target).rootCoordinatesY();
-        final double[] coords_z = ((CollisionVoxelShape)target).rootCoordinatesZ();
+        final double[] coords_x = ((CollisionVoxelShape)target).moonrise$rootCoordinatesX();
+        final double[] coords_y = ((CollisionVoxelShape)target).moonrise$rootCoordinatesY();
+        final double[] coords_z = ((CollisionVoxelShape)target).moonrise$rootCoordinatesZ();
 
-        final CachedShapeData cached_shape_data = ((CollisionVoxelShape)target).getCachedVoxelData();
+        final CachedShapeData cached_shape_data = ((CollisionVoxelShape)target).moonrise$getCachedVoxelData();
 
         // note: size = coords.length - 1
         final int size_x = cached_shape_data.sizeX();
@@ -606,22 +604,22 @@ public final class CollisionUtil {
     }
 
     public static double collideZ(final VoxelShape target, final AABB source, final double source_move) {
-        final AABB single_aabb = ((CollisionVoxelShape)target).getSingleAABBRepresentation();
+        final AABB single_aabb = ((CollisionVoxelShape)target).moonrise$getSingleAABBRepresentation();
         if (single_aabb != null) {
             return collideZ(single_aabb, source, source_move);
         }
         // note: this function assumes that for any i in coords that coord[i + 1] - coord[i] > COLLISION_EPSILON is true
 
         // offsets that should be applied to coords
-        final double off_x = ((CollisionVoxelShape)target).offsetX();
-        final double off_y = ((CollisionVoxelShape)target).offsetY();
-        final double off_z = ((CollisionVoxelShape)target).offsetZ();
+        final double off_x = ((CollisionVoxelShape)target).moonrise$offsetX();
+        final double off_y = ((CollisionVoxelShape)target).moonrise$offsetY();
+        final double off_z = ((CollisionVoxelShape)target).moonrise$offsetZ();
 
-        final double[] coords_x = ((CollisionVoxelShape)target).rootCoordinatesX();
-        final double[] coords_y = ((CollisionVoxelShape)target).rootCoordinatesY();
-        final double[] coords_z = ((CollisionVoxelShape)target).rootCoordinatesZ();
+        final double[] coords_x = ((CollisionVoxelShape)target).moonrise$rootCoordinatesX();
+        final double[] coords_y = ((CollisionVoxelShape)target).moonrise$rootCoordinatesY();
+        final double[] coords_z = ((CollisionVoxelShape)target).moonrise$rootCoordinatesZ();
 
-        final CachedShapeData cached_shape_data = ((CollisionVoxelShape)target).getCachedVoxelData();
+        final CachedShapeData cached_shape_data = ((CollisionVoxelShape)target).moonrise$getCachedVoxelData();
 
         // note: size = coords.length - 1
         final int size_x = cached_shape_data.sizeX();
@@ -770,7 +768,7 @@ public final class CollisionUtil {
 
     // does not use epsilon
     public static boolean strictlyContains(final VoxelShape voxel, double x, double y, double z) {
-        final AABB single_aabb = ((CollisionVoxelShape)voxel).getSingleAABBRepresentation();
+        final AABB single_aabb = ((CollisionVoxelShape)voxel).moonrise$getSingleAABBRepresentation();
         if (single_aabb != null) {
             return single_aabb.contains(x, y, z);
         }
@@ -781,15 +779,15 @@ public final class CollisionUtil {
         }
 
         // offset input
-        x -= ((CollisionVoxelShape)voxel).offsetX();
-        y -= ((CollisionVoxelShape)voxel).offsetY();
-        z -= ((CollisionVoxelShape)voxel).offsetZ();
+        x -= ((CollisionVoxelShape)voxel).moonrise$offsetX();
+        y -= ((CollisionVoxelShape)voxel).moonrise$offsetY();
+        z -= ((CollisionVoxelShape)voxel).moonrise$offsetZ();
 
-        final double[] coords_x = ((CollisionVoxelShape)voxel).rootCoordinatesX();
-        final double[] coords_y = ((CollisionVoxelShape)voxel).rootCoordinatesY();
-        final double[] coords_z = ((CollisionVoxelShape)voxel).rootCoordinatesZ();
+        final double[] coords_x = ((CollisionVoxelShape)voxel).moonrise$rootCoordinatesX();
+        final double[] coords_y = ((CollisionVoxelShape)voxel).moonrise$rootCoordinatesY();
+        final double[] coords_z = ((CollisionVoxelShape)voxel).moonrise$rootCoordinatesZ();
 
-        final CachedShapeData cached_shape_data = ((CollisionVoxelShape)voxel).getCachedVoxelData();
+        final CachedShapeData cached_shape_data = ((CollisionVoxelShape)voxel).moonrise$getCachedVoxelData();
 
         // note: size = coords.length - 1
         final int size_x = cached_shape_data.sizeX();
@@ -983,8 +981,8 @@ public final class CollisionUtil {
 
         if (!tt) {
             // try to check for no intersection, since tt = false
-            final AABB aabbF = ((CollisionVoxelShape)first).getSingleAABBRepresentation();
-            final AABB aabbS = ((CollisionVoxelShape)second).getSingleAABBRepresentation();
+            final AABB aabbF = ((CollisionVoxelShape)first).moonrise$getSingleAABBRepresentation();
+            final AABB aabbS = ((CollisionVoxelShape)second).moonrise$getSingleAABBRepresentation();
 
             final boolean intersect;
 
@@ -1014,32 +1012,32 @@ public final class CollisionUtil {
         }
 
         final MergedVoxelCoordinateList mergedX = MergedVoxelCoordinateList.merge(
-                ((CollisionVoxelShape)first).rootCoordinatesX(), ((CollisionVoxelShape)first).offsetX(),
-                ((CollisionVoxelShape)second).rootCoordinatesX(), ((CollisionVoxelShape)second).offsetX(),
+                ((CollisionVoxelShape)first).moonrise$rootCoordinatesX(), ((CollisionVoxelShape)first).moonrise$offsetX(),
+                ((CollisionVoxelShape)second).moonrise$rootCoordinatesX(), ((CollisionVoxelShape)second).moonrise$offsetX(),
                 ft, tf
         );
         if (mergedX == MergedVoxelCoordinateList.EMPTY) {
             return Shapes.empty();
         }
         final MergedVoxelCoordinateList mergedY = MergedVoxelCoordinateList.merge(
-                ((CollisionVoxelShape)first).rootCoordinatesY(), ((CollisionVoxelShape)first).offsetY(),
-                ((CollisionVoxelShape)second).rootCoordinatesY(), ((CollisionVoxelShape)second).offsetY(),
+                ((CollisionVoxelShape)first).moonrise$rootCoordinatesY(), ((CollisionVoxelShape)first).moonrise$offsetY(),
+                ((CollisionVoxelShape)second).moonrise$rootCoordinatesY(), ((CollisionVoxelShape)second).moonrise$offsetY(),
                 ft, tf
         );
         if (mergedY == MergedVoxelCoordinateList.EMPTY) {
             return Shapes.empty();
         }
         final MergedVoxelCoordinateList mergedZ = MergedVoxelCoordinateList.merge(
-                ((CollisionVoxelShape)first).rootCoordinatesZ(), ((CollisionVoxelShape)first).offsetZ(),
-                ((CollisionVoxelShape)second).rootCoordinatesZ(), ((CollisionVoxelShape)second).offsetZ(),
+                ((CollisionVoxelShape)first).moonrise$rootCoordinatesZ(), ((CollisionVoxelShape)first).moonrise$offsetZ(),
+                ((CollisionVoxelShape)second).moonrise$rootCoordinatesZ(), ((CollisionVoxelShape)second).moonrise$offsetZ(),
                 ft, tf
         );
         if (mergedZ == MergedVoxelCoordinateList.EMPTY) {
             return Shapes.empty();
         }
 
-        final CachedShapeData shapeDataFirst = ((CollisionVoxelShape)first).getCachedVoxelData();
-        final CachedShapeData shapeDataSecond = ((CollisionVoxelShape)second).getCachedVoxelData();
+        final CachedShapeData shapeDataFirst = ((CollisionVoxelShape)first).moonrise$getCachedVoxelData();
+        final CachedShapeData shapeDataSecond = ((CollisionVoxelShape)second).moonrise$getCachedVoxelData();
 
         final BitSetDiscreteVoxelShape mergedShape = merge(
                 shapeDataFirst, shapeDataSecond,
@@ -1078,8 +1076,8 @@ public final class CollisionUtil {
         final boolean tf = operator.apply(true, false);
 
         // try to check intersection
-        final AABB aabbF = ((CollisionVoxelShape)first).getSingleAABBRepresentation();
-        final AABB aabbS = ((CollisionVoxelShape)second).getSingleAABBRepresentation();
+        final AABB aabbF = ((CollisionVoxelShape)first).moonrise$getSingleAABBRepresentation();
+        final AABB aabbS = ((CollisionVoxelShape)second).moonrise$getSingleAABBRepresentation();
 
         final boolean intersect;
 
@@ -1112,32 +1110,32 @@ public final class CollisionUtil {
         }
 
         final MergedVoxelCoordinateList mergedX = MergedVoxelCoordinateList.merge(
-                ((CollisionVoxelShape)first).rootCoordinatesX(), ((CollisionVoxelShape)first).offsetX(),
-                ((CollisionVoxelShape)second).rootCoordinatesX(), ((CollisionVoxelShape)second).offsetX(),
+                ((CollisionVoxelShape)first).moonrise$rootCoordinatesX(), ((CollisionVoxelShape)first).moonrise$offsetX(),
+                ((CollisionVoxelShape)second).moonrise$rootCoordinatesX(), ((CollisionVoxelShape)second).moonrise$offsetX(),
                 ft, tf
         );
         if (mergedX == MergedVoxelCoordinateList.EMPTY) {
             return false;
         }
         final MergedVoxelCoordinateList mergedY = MergedVoxelCoordinateList.merge(
-                ((CollisionVoxelShape)first).rootCoordinatesY(), ((CollisionVoxelShape)first).offsetY(),
-                ((CollisionVoxelShape)second).rootCoordinatesY(), ((CollisionVoxelShape)second).offsetY(),
+                ((CollisionVoxelShape)first).moonrise$rootCoordinatesY(), ((CollisionVoxelShape)first).moonrise$offsetY(),
+                ((CollisionVoxelShape)second).moonrise$rootCoordinatesY(), ((CollisionVoxelShape)second).moonrise$offsetY(),
                 ft, tf
         );
         if (mergedY == MergedVoxelCoordinateList.EMPTY) {
             return false;
         }
         final MergedVoxelCoordinateList mergedZ = MergedVoxelCoordinateList.merge(
-                ((CollisionVoxelShape)first).rootCoordinatesZ(), ((CollisionVoxelShape)first).offsetZ(),
-                ((CollisionVoxelShape)second).rootCoordinatesZ(), ((CollisionVoxelShape)second).offsetZ(),
+                ((CollisionVoxelShape)first).moonrise$rootCoordinatesZ(), ((CollisionVoxelShape)first).moonrise$offsetZ(),
+                ((CollisionVoxelShape)second).moonrise$rootCoordinatesZ(), ((CollisionVoxelShape)second).moonrise$offsetZ(),
                 ft, tf
         );
         if (mergedZ == MergedVoxelCoordinateList.EMPTY) {
             return false;
         }
 
-        final CachedShapeData shapeDataFirst = ((CollisionVoxelShape)first).getCachedVoxelData();
-        final CachedShapeData shapeDataSecond = ((CollisionVoxelShape)second).getCachedVoxelData();
+        final CachedShapeData shapeDataFirst = ((CollisionVoxelShape)first).moonrise$getCachedVoxelData();
+        final CachedShapeData shapeDataSecond = ((CollisionVoxelShape)second).moonrise$getCachedVoxelData();
 
         return !isMergeEmpty(
                 shapeDataFirst, shapeDataSecond,
@@ -1298,8 +1296,8 @@ public final class CollisionUtil {
     }
 
     public static boolean equals(final DiscreteVoxelShape shape1, final DiscreteVoxelShape shape2) {
-        final CachedShapeData cachedShapeData1 = ((CollisionDiscreteVoxelShape)shape1).getOrCreateCachedShapeData();
-        final CachedShapeData cachedShapeData2 = ((CollisionDiscreteVoxelShape)shape2).getOrCreateCachedShapeData();
+        final CachedShapeData cachedShapeData1 = ((CollisionDiscreteVoxelShape)shape1).moonrise$getOrCreateCachedShapeData();
+        final CachedShapeData cachedShapeData2 = ((CollisionDiscreteVoxelShape)shape2).moonrise$getOrCreateCachedShapeData();
 
         final boolean isEmpty1 = cachedShapeData1.isEmpty();
         final boolean isEmpty2 = cachedShapeData2.isEmpty();
@@ -1662,13 +1660,13 @@ public final class CollisionUtil {
             }
         }
 
-        final int minSection = ((CollisionLevel)world).getMinSectionMoonrise();
+        final int minSection = ((CollisionLevel)world).moonrise$getMinSection();
 
         final int minBlockX = Mth.floor(aabb.minX - COLLISION_EPSILON) - 1;
         final int maxBlockX = Mth.floor(aabb.maxX + COLLISION_EPSILON) + 1;
 
         final int minBlockY = Math.max((minSection << 4) - 1, Mth.floor(aabb.minY - COLLISION_EPSILON) - 1);
-        final int maxBlockY = Math.min((((CollisionLevel)world).getMaxSectionMoonrise() << 4) + 16, Mth.floor(aabb.maxY + COLLISION_EPSILON) + 1);
+        final int maxBlockY = Math.min((((CollisionLevel)world).moonrise$getMaxSection() << 4) + 16, Mth.floor(aabb.maxY + COLLISION_EPSILON) + 1);
 
         final int minBlockZ = Mth.floor(aabb.minZ - COLLISION_EPSILON) - 1;
         final int maxBlockZ = Mth.floor(aabb.maxZ + COLLISION_EPSILON) + 1;
@@ -1724,7 +1722,7 @@ public final class CollisionUtil {
                         continue;
                     }
 
-                    final boolean hasSpecial = ((CollisionLevelChunkSection)section).getSpecialCollidingBlocks() != 0;
+                    final boolean hasSpecial = ((CollisionLevelChunkSection)section).moonrise$getSpecialCollidingBlocks() != 0;
                     final int sectionAdjust = !hasSpecial ? 1 : 0;
 
                     final PalettedContainer<BlockState> blocks = section.states;
@@ -1753,19 +1751,19 @@ public final class CollisionUtil {
 
                                 final BlockState blockData = blocks.get(localBlockIndex);
 
-                                if (((CollisionBlockState)blockData).emptyCollisionShape()) {
+                                if (((CollisionBlockState)blockData).moonrise$emptyCollisionShape()) {
                                     continue;
                                 }
 
-                                if (edgeCount == 0 || ((edgeCount != 1 || blockData.hasLargeCollisionShape()) && (edgeCount != 2 || blockData.getBlock() == Blocks.MOVING_PISTON))) {
-                                    VoxelShape blockCollision = ((CollisionBlockState)blockData).getConstantCollisionShape();
+                                VoxelShape blockCollision = ((CollisionBlockState)blockData).moonrise$getConstantCollisionShape();
 
+                                if (edgeCount == 0 || ((edgeCount != 1 || blockData.hasLargeCollisionShape()) && (edgeCount != 2 || blockData.getBlock() == Blocks.MOVING_PISTON))) {
                                     if (blockCollision == null) {
                                         mutablePos.set(blockX, blockY, blockZ);
                                         blockCollision = blockData.getCollisionShape(world, mutablePos, collisionShape);
                                     }
 
-                                    AABB singleAABB = ((CollisionVoxelShape)blockCollision).getSingleAABBRepresentation();
+                                    AABB singleAABB = ((CollisionVoxelShape)blockCollision).moonrise$getSingleAABBRepresentation();
                                     if (singleAABB != null) {
                                         singleAABB = singleAABB.move((double)blockX, (double)blockY, (double)blockZ);
                                         if (!voxelShapeIntersect(aabb, singleAABB)) {
@@ -1823,12 +1821,9 @@ public final class CollisionUtil {
         return ret;
     }
 
-    public static boolean getEntityHardCollisions(final CollisionGetter getter, final Entity entity, AABB aabb,
+    public static boolean getEntityHardCollisions(final Level world, final Entity entity, AABB aabb,
                                                   final List<AABB> into, final int collisionFlags, final Predicate<Entity> predicate) {
         final boolean checkOnly = (collisionFlags & COLLISION_FLAG_CHECK_ONLY) != 0;
-        if (!(getter instanceof EntityGetter entityGetter)) {
-            return false;
-        }
 
         boolean ret = false;
 
@@ -1837,10 +1832,10 @@ public final class CollisionUtil {
         // specifically with boat collisions.
         aabb = aabb.inflate(-COLLISION_EPSILON, -COLLISION_EPSILON, -COLLISION_EPSILON);
         final List<Entity> entities;
-        if (entity != null && ((CollisionEntity)entity).isHardColliding()) {
-            entities = entityGetter.getEntities(entity, aabb, predicate);
+        if (entity != null && ((CollisionEntity)entity).moonrise$isHardColliding()) {
+            entities = world.getEntities(entity, aabb, predicate);
         } else {
-            entities = ((CollisionEntityGetter)entityGetter).getHardCollidingEntities(entity, aabb, predicate);
+            entities = ((CollisionEntityGetter)world).moonrise$getHardCollidingEntities(entity, aabb, predicate);
         }
 
         for (int i = 0, len = entities.size(); i < len; ++i) {

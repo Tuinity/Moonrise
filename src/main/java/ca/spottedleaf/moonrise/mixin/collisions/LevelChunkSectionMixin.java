@@ -118,7 +118,7 @@ public abstract class LevelChunkSectionMixin implements CollisionLevelChunkSecti
     }
 
     @Override
-    public final int getSpecialCollidingBlocks() {
+    public final int moonrise$getSpecialCollidingBlocks() {
         return this.specialCollidingBlocks;
     }
 }

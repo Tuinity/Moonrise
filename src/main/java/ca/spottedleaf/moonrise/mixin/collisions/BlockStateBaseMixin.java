@@ -65,8 +65,8 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
 
     @Unique
     private static void initCaches(final VoxelShape shape) {
-        ((CollisionVoxelShape)shape).isFullBlock();
-        ((CollisionVoxelShape)shape).occludesFullBlock();
+        ((CollisionVoxelShape)shape).moonrise$isFullBlock();
+        ((CollisionVoxelShape)shape).moonrise$occludesFullBlock();
         shape.toAabbs();
         if (!shape.isEmpty()) {
             shape.bounds();
@@ -100,12 +100,12 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
             final VoxelShape collisionShape = this.cache.collisionShape;
             try {
                 this.constantCollisionShape = this.getCollisionShape(null, null, null);
-                this.constantAABBCollision = this.constantCollisionShape == null ? null : ((CollisionVoxelShape)this.constantCollisionShape).getSingleAABBRepresentation();
+                this.constantAABBCollision = this.constantCollisionShape == null ? null : ((CollisionVoxelShape)this.constantCollisionShape).moonrise$getSingleAABBRepresentation();
             } catch (final Throwable throwable) {
                 this.constantCollisionShape = null;
                 this.constantAABBCollision = null;
             }
-            this.occludesFullBlock = ((CollisionVoxelShape)collisionShape).occludesFullBlock();
+            this.occludesFullBlock = ((CollisionVoxelShape)collisionShape).moonrise$occludesFullBlock();
             this.emptyCollisionShape = collisionShape.isEmpty();
             // init caches
             initCaches(collisionShape);
@@ -130,37 +130,37 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
     }
 
     @Override
-    public final boolean hasCache() {
+    public final boolean moonrise$hasCache() {
         return this.cache != null;
     }
 
     @Override
-    public final boolean occludesFullBlock() {
+    public final boolean moonrise$occludesFullBlock() {
         return this.occludesFullBlock;
     }
 
     @Override
-    public final boolean emptyCollisionShape() {
+    public final boolean moonrise$emptyCollisionShape() {
         return this.emptyCollisionShape;
     }
 
     @Override
-    public final int uniqueId1() {
+    public final int moonrise$uniqueId1() {
         return this.id1;
     }
 
     @Override
-    public final int uniqueId2() {
+    public final int moonrise$uniqueId2() {
         return this.id2;
     }
 
     @Override
-    public final VoxelShape getConstantCollisionShape() {
+    public final VoxelShape moonrise$getConstantCollisionShape() {
         return this.constantCollisionShape;
     }
 
     @Override
-    public final AABB getConstantCollisionAABB() {
+    public final AABB moonrise$getConstantCollisionAABB() {
         return this.constantAABBCollision;
     }
 }

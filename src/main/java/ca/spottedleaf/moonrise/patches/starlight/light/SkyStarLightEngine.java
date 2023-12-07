@@ -208,22 +208,22 @@ public final class SkyStarLightEngine extends StarLightEngine {
 
     @Override
     protected boolean[] getEmptinessMap(final ChunkAccess chunk) {
-        return ((StarlightChunk)chunk).getSkyEmptinessMap();
+        return ((StarlightChunk)chunk).starlight$getSkyEmptinessMap();
     }
 
     @Override
     protected void setEmptinessMap(final ChunkAccess chunk, final boolean[] to) {
-        ((StarlightChunk)chunk).setSkyEmptinessMap(to);
+        ((StarlightChunk)chunk).starlight$setSkyEmptinessMap(to);
     }
 
     @Override
     protected SWMRNibbleArray[] getNibblesOnChunk(final ChunkAccess chunk) {
-        return ((StarlightChunk)chunk).getSkyNibbles();
+        return ((StarlightChunk)chunk).starlight$getSkyNibbles();
     }
 
     @Override
     protected void setNibbles(final ChunkAccess chunk, final SWMRNibbleArray[] to) {
-        ((StarlightChunk)chunk).setSkyNibbles(to);
+        ((StarlightChunk)chunk).starlight$setSkyNibbles(to);
     }
 
     @Override
@@ -302,13 +302,13 @@ public final class SkyStarLightEngine extends StarLightEngine {
 
         final int sectionOffset = this.chunkSectionIndexOffset;
         final BlockState centerState = this.getBlockState(worldX, worldY, worldZ);
-        int opacity = ((StarlightAbstractBlockState)centerState).getOpacityIfCached();
+        int opacity = ((StarlightAbstractBlockState)centerState).starlight$getOpacityIfCached();
 
         final BlockState conditionallyOpaqueState;
         if (opacity < 0) {
             this.recalcCenterPos.set(worldX, worldY, worldZ);
             opacity = Math.max(1, centerState.getLightBlock(lightAccess.getLevel(), this.recalcCenterPos));
-            if (((StarlightAbstractBlockState)centerState).isConditionallyFullOpaque()) {
+            if (((StarlightAbstractBlockState)centerState).starlight$isConditionallyFullOpaque()) {
                 conditionallyOpaqueState = centerState;
             } else {
                 conditionallyOpaqueState = null;
@@ -336,7 +336,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
 
             final BlockState neighbourState = this.getBlockState(offX, offY, offZ);
 
-            if (((StarlightAbstractBlockState)neighbourState).isConditionallyFullOpaque()) {
+            if (((StarlightAbstractBlockState)neighbourState).starlight$isConditionallyFullOpaque()) {
                 // here the block can be conditionally opaque (i.e light cannot propagate from it), so we need to test that
                 // we don't read the blockstate because most of the time this is false, so using the faster
                 // known transparency lookup results in a net win
@@ -631,7 +631,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
             final BlockState current = this.getBlockState(worldX, startY, worldZ);
 
             final VoxelShape fromShape;
-            if (((StarlightAbstractBlockState)above).isConditionallyFullOpaque()) {
+            if (((StarlightAbstractBlockState)above).starlight$isConditionallyFullOpaque()) {
                 this.mutablePos2.set(worldX, startY + 1, worldZ);
                 fromShape = above.getFaceOcclusionShape(world, this.mutablePos2, AxisDirection.NEGATIVE_Y.nms);
                 if (Shapes.faceShapeOccludes(Shapes.empty(), fromShape)) {
@@ -642,7 +642,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
                 fromShape = Shapes.empty();
             }
 
-            final int opacityIfCached = ((StarlightAbstractBlockState)current).getOpacityIfCached();
+            final int opacityIfCached = ((StarlightAbstractBlockState)current).starlight$getOpacityIfCached();
             // does light propagate from the top down?
             if (opacityIfCached != -1) {
                 if (opacityIfCached != 0) {
@@ -660,7 +660,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
             } else {
                 mutablePos.set(worldX, startY, worldZ);
                 long flags = 0L;
-                if (((StarlightAbstractBlockState)current).isConditionallyFullOpaque()) {
+                if (((StarlightAbstractBlockState)current).starlight$isConditionallyFullOpaque()) {
                     final VoxelShape cullingFace = current.getFaceOcclusionShape(world, mutablePos, AxisDirection.POSITIVE_Y.nms);
 
                     if (Shapes.faceShapeOccludes(fromShape, cullingFace)) {

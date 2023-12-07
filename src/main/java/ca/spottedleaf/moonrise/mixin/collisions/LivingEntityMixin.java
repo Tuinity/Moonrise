@@ -33,7 +33,7 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
     public void pushEntities() {
         if (this.level().isClientSide()) {
             final List<Player> players = new ArrayList<>();
-            ((CollisionLevel)this.level()).getCollisionLookup().getEntities(Player.class, this, this.getBoundingBox(), players, EntitySelector.pushableBy(this));
+            ((CollisionLevel)this.level()).moonrise$getCollisionLookup().getEntities(Player.class, this, this.getBoundingBox(), players, EntitySelector.pushableBy(this));
             for (int i = 0, len = players.size(); i < len; ++i) {
                 this.doPush(players.get(i));
             }

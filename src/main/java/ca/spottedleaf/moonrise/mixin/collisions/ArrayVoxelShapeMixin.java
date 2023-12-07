@@ -25,6 +25,6 @@ public abstract class ArrayVoxelShapeMixin {
     private void initState(final DiscreteVoxelShape discreteVoxelShape,
                            final DoubleList xList, final DoubleList yList, final DoubleList zList,
                            final CallbackInfo ci) {
-        ((CollisionVoxelShape)this).initCache();
+        ((CollisionVoxelShape)this).moonrise$initCache();
     }
 }

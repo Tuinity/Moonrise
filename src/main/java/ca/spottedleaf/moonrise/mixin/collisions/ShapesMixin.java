@@ -259,7 +259,7 @@ public abstract class ShapesMixin {
      */
     @Overwrite
     public static VoxelShape getFaceShape(final VoxelShape shape, final Direction direction) {
-        return ((CollisionVoxelShape)shape).getFaceShapeClamped(direction);
+        return ((CollisionVoxelShape)shape).moonrise$getFaceShapeClamped(direction);
     }
 
     @Unique
@@ -288,7 +288,7 @@ public abstract class ShapesMixin {
     @Overwrite
     public static boolean mergedFaceOccludes(final VoxelShape first, final VoxelShape second, final Direction direction) {
         // see if any of the shapes on their own occludes, only if cached
-        if (((CollisionVoxelShape)first).occludesFullBlockIfCached() || ((CollisionVoxelShape)second).occludesFullBlockIfCached()) {
+        if (((CollisionVoxelShape)first).moonrise$occludesFullBlockIfCached() || ((CollisionVoxelShape)second).moonrise$occludesFullBlockIfCached()) {
             return true;
         }
 
@@ -298,11 +298,11 @@ public abstract class ShapesMixin {
 
         // we optimise getOpposite, so we can use it
         // secondly, use our cache to retrieve sliced shape
-        final VoxelShape newFirst = ((CollisionVoxelShape)first).getFaceShapeClamped(direction);
-        final VoxelShape newSecond = ((CollisionVoxelShape)second).getFaceShapeClamped(direction.getOpposite());
+        final VoxelShape newFirst = ((CollisionVoxelShape)first).moonrise$getFaceShapeClamped(direction);
+        final VoxelShape newSecond = ((CollisionVoxelShape)second).moonrise$getFaceShapeClamped(direction.getOpposite());
 
         // see if any of the shapes on their own occludes, only if cached
-        if (((CollisionVoxelShape)newFirst).occludesFullBlockIfCached() || ((CollisionVoxelShape)newSecond).occludesFullBlockIfCached()) {
+        if (((CollisionVoxelShape)newFirst).moonrise$occludesFullBlockIfCached() || ((CollisionVoxelShape)newSecond).moonrise$occludesFullBlockIfCached()) {
             return true;
         }
 
@@ -314,14 +314,14 @@ public abstract class ShapesMixin {
         }
 
         if (firstEmpty | secondEmpty) {
-            return secondEmpty ? ((CollisionVoxelShape)newFirst).occludesFullBlock() : ((CollisionVoxelShape)newSecond).occludesFullBlock();
+            return secondEmpty ? ((CollisionVoxelShape)newFirst).moonrise$occludesFullBlock() : ((CollisionVoxelShape)newSecond).moonrise$occludesFullBlock();
         }
 
         if (newFirst == newSecond) {
-            return ((CollisionVoxelShape)newFirst).occludesFullBlock();
+            return ((CollisionVoxelShape)newFirst).moonrise$occludesFullBlock();
         }
 
-        return mergedMayOccludeBlock(newFirst, newSecond) && ((CollisionVoxelShape)((CollisionVoxelShape)newFirst).orUnoptimized(newSecond)).occludesFullBlock();
+        return mergedMayOccludeBlock(newFirst, newSecond) && ((CollisionVoxelShape)((CollisionVoxelShape)newFirst).moonrise$orUnoptimized(newSecond)).moonrise$occludesFullBlock();
     }
 
     /**
@@ -343,11 +343,11 @@ public abstract class ShapesMixin {
 
         // we optimise getOpposite, so we can use it
         // secondly, use our cache to retrieve sliced shape
-        final VoxelShape newFirst = ((CollisionVoxelShape)first).getFaceShapeClamped(direction);
+        final VoxelShape newFirst = ((CollisionVoxelShape)first).moonrise$getFaceShapeClamped(direction);
         if (newFirst.isEmpty()) {
             return false;
         }
-        final VoxelShape newSecond = ((CollisionVoxelShape)second).getFaceShapeClamped(direction.getOpposite());
+        final VoxelShape newSecond = ((CollisionVoxelShape)second).moonrise$getFaceShapeClamped(direction.getOpposite());
         if (newSecond.isEmpty()) {
             return false;
         }
@@ -361,7 +361,7 @@ public abstract class ShapesMixin {
      */
     @Overwrite
     public static boolean faceShapeOccludes(final VoxelShape shape1, final VoxelShape shape2) {
-        if (((CollisionVoxelShape)shape1).occludesFullBlockIfCached() || ((CollisionVoxelShape)shape2).occludesFullBlockIfCached()) {
+        if (((CollisionVoxelShape)shape1).moonrise$occludesFullBlockIfCached() || ((CollisionVoxelShape)shape2).moonrise$occludesFullBlockIfCached()) {
             return true;
         }
 
@@ -372,13 +372,13 @@ public abstract class ShapesMixin {
         }
 
         if (s1Empty | s2Empty) {
-            return s2Empty ? ((CollisionVoxelShape)shape1).occludesFullBlock() : ((CollisionVoxelShape)shape2).occludesFullBlock();
+            return s2Empty ? ((CollisionVoxelShape)shape1).moonrise$occludesFullBlock() : ((CollisionVoxelShape)shape2).moonrise$occludesFullBlock();
         }
 
         if (shape1 == shape2) {
-            return ((CollisionVoxelShape)shape1).occludesFullBlock();
+            return ((CollisionVoxelShape)shape1).moonrise$occludesFullBlock();
         }
 
-        return mergedMayOccludeBlock(shape1, shape2) && ((CollisionVoxelShape)((CollisionVoxelShape)shape1).orUnoptimized(shape2)).occludesFullBlock();
+        return mergedMayOccludeBlock(shape1, shape2) && ((CollisionVoxelShape)((CollisionVoxelShape)shape1).moonrise$orUnoptimized(shape2)).moonrise$occludesFullBlock();
     }
 }

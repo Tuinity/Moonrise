@@ -23,6 +23,6 @@ public abstract class SliceShapeMixin {
             )
     )
     private void initState(final VoxelShape parent, final Direction.Axis forAxis, final int forIndex, final CallbackInfo ci) {
-        ((CollisionVoxelShape)this).initCache();
+        ((CollisionVoxelShape)this).moonrise$initCache();
     }
 }

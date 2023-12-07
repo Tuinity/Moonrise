@@ -19,7 +19,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -67,17 +66,17 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
     private int maxSection;
 
     @Override
-    public final EntityLookup getCollisionLookup() {
+    public final EntityLookup moonrise$getCollisionLookup() {
         return this.collisionLookup;
     }
 
     @Override
-    public final int getMinSectionMoonrise() {
+    public final int moonrise$getMinSection() {
         return this.minSection;
     }
 
     @Override
-    public final int getMaxSectionMoonrise() {
+    public final int moonrise$getMaxSection() {
         return this.maxSection;
     }
 
@@ -196,7 +195,7 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
      * @author Spottedleaf
      */
     @Override
-    public final List<Entity> getHardCollidingEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate) {
+    public final List<Entity> moonrise$getHardCollidingEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate) {
         this.getProfiler().incrementCounter("getEntities");
         final List<Entity> ret = new ArrayList<>();
 
@@ -298,7 +297,7 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
         int lastChunkY = Integer.MIN_VALUE;
         int lastChunkZ = Integer.MIN_VALUE;
 
-        final int minSection = ((CollisionLevel)level).getMinSectionMoonrise();
+        final int minSection = ((CollisionLevel)level).moonrise$getMinSection();
 
         for (;;) {
             currPos.set(currX, currY, currZ);
@@ -514,9 +513,7 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
                 final int newChunkX = currX >> 4;
                 final int newChunkZ = currZ >> 4;
 
-                final int chunkDiff = ((newChunkX ^ lastChunkX) | (newChunkZ ^ lastChunkZ));
-
-                if (chunkDiff != 0) {
+                if (((newChunkX ^ lastChunkX) | (newChunkZ ^ lastChunkZ)) != 0) {
                     lastChunk = (LevelChunk)chunkSource.getChunk(newChunkX, newChunkZ, ChunkStatus.FULL, false);
                 }
 
@@ -538,16 +535,22 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
                         continue;
                     }
 
-                    final BlockState state = ((GetBlockChunk)lastChunk).getBlock(currX, currY, currZ);
-                    if (((CollisionBlockState)state).emptyCollisionShape()) {
+                    final BlockState state = ((GetBlockChunk)lastChunk).moonrise$getBlock(currX, currY, currZ);
+                    if (((CollisionBlockState)state).moonrise$emptyCollisionShape()) {
                         continue;
                     }
+
+                    VoxelShape blockCollision = ((CollisionBlockState)state).moonrise$getConstantCollisionShape();
 
                     if ((edgeCount != 1 || state.hasLargeCollisionShape()) && (edgeCount != 2 || state.getBlock() == Blocks.MOVING_PISTON)) {
                         if (collisionContext == null) {
                             collisionContext = new CollisionUtil.LazyEntityCollisionContext(entity);
                         }
-                        final VoxelShape blockCollision = state.getCollisionShape(lastChunk, pos, collisionContext);
+
+                        if (blockCollision == null) {
+                            blockCollision = state.getCollisionShape((Level)(Object)this, pos, collisionContext);
+                        }
+
                         if (blockCollision.isEmpty()) {
                             continue;
                         }
@@ -555,7 +558,7 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
                         // avoid VoxelShape#move by shifting the entity collision shape instead
                         final AABB shiftedAABB = aabb.move(-(double)currX, -(double)currY, -(double)currZ);
 
-                        final AABB singleAABB = ((CollisionVoxelShape)blockCollision).getSingleAABBRepresentation();
+                        final AABB singleAABB = ((CollisionVoxelShape)blockCollision).moonrise$getSingleAABBRepresentation();
                         if (singleAABB != null) {
                             if (!CollisionUtil.voxelShapeIntersect(singleAABB, shiftedAABB)) {
                                 continue;

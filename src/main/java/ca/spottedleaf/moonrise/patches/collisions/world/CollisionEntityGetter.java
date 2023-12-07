@@ -7,6 +7,6 @@ import java.util.function.Predicate;
 
 public interface CollisionEntityGetter {
 
-    public List<Entity> getHardCollidingEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate);
+    public List<Entity> moonrise$getHardCollidingEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate);
 
 }

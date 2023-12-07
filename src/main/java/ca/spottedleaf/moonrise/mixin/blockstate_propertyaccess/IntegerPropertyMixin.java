@@ -34,7 +34,7 @@ public abstract class IntegerPropertyMixin extends Property<Integer> implements 
     }
 
     @Override
-    public final int getIdFor(final Integer value) {
+    public final int moonrise$getIdFor(final Integer value) {
         final int val = value.intValue();
         final int ret = val - this.min;
 

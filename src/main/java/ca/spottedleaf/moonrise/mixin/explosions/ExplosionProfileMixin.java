@@ -18,7 +18,7 @@ public abstract class ExplosionProfileMixin implements LevelAccessor, AutoClosea
     private int count;
 
     @Redirect(
-            method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;Z)Lnet/minecraft/world/level/Explosion;",
+            method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;ZLnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/sounds/SoundEvent;)Lnet/minecraft/world/level/Explosion;",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/Explosion;explode()V"
@@ -32,6 +32,10 @@ public abstract class ExplosionProfileMixin implements LevelAccessor, AutoClosea
         this.time += (end - start);
     }
 
+    /**
+     * @author Spottedleaf
+     * @reason print profile info
+     */
     @Overwrite
     @Override
     public void close() throws Exception {

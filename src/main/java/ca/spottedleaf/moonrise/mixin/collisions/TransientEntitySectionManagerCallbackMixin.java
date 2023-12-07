@@ -37,7 +37,7 @@ public abstract class TransientEntitySectionManagerCallbackMixin<T extends Entit
 
         final long currentChunk = this.currentSectionKey;
 
-        ((CollisionLevel)entity.level()).getCollisionLookup().moveEntity(entity, currentChunk);
+        ((CollisionLevel)entity.level()).moonrise$getCollisionLookup().moveEntity(entity, currentChunk);
     }
 
     /**
@@ -54,6 +54,6 @@ public abstract class TransientEntitySectionManagerCallbackMixin<T extends Entit
     private void onRemoved(final CallbackInfo ci) {
         final Entity entity = (Entity)this.entity;
 
-        ((CollisionLevel)entity.level()).getCollisionLookup().removeEntity(entity);
+        ((CollisionLevel)entity.level()).moonrise$getCollisionLookup().removeEntity(entity);
     }
 }

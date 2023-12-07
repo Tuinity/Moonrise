@@ -73,7 +73,7 @@ public final class ZeroCollidingReferenceStateTable {
                     continue;
                 }
 
-                states[((PropertyAccess)property).getIdFor(entry.getKey())] = entry.getValue();
+                states[((PropertyAccess)property).moonrise$getIdFor(entry.getKey())] = entry.getValue();
             }
         }
 
@@ -86,7 +86,7 @@ public final class ZeroCollidingReferenceStateTable {
                 this.value_table[index] = new StateHolder[property.getPossibleValues().size()];
             }
 
-            this.value_table[index][((PropertyAccess)property).getIdFor(entry.getValue())] = this.this_state;
+            this.value_table[index][((PropertyAccess)property).moonrise$getIdFor(entry.getValue())] = this.this_state;
         }
     }
 
@@ -94,7 +94,7 @@ public final class ZeroCollidingReferenceStateTable {
     protected long[] create_table(final Collection<Property<?>> collection) {
         int max_id = -1;
         for (final Property<?> property : collection) {
-            final int id = ((PropertyAccess)property).getId();
+            final int id = ((PropertyAccess)property).moonrise$getId();
             if (id > max_id) {
                 max_id = id;
             }
@@ -103,7 +103,7 @@ public final class ZeroCollidingReferenceStateTable {
         final long[] ret = new long[((max_id + 1) + 31) >>> 5]; // ceil((max_id + 1) / 32)
 
         for (final Property<?> property : collection) {
-            final int id = ((PropertyAccess)property).getId();
+            final int id = ((PropertyAccess)property).moonrise$getId();
 
             ret[id >>> 5] |= (1L << (id & 31));
         }
@@ -135,7 +135,7 @@ public final class ZeroCollidingReferenceStateTable {
 
         final StateHolder<?, ?>[] values = table[index];
 
-        final int withId = ((PropertyAccess)property).getIdFor(with);
+        final int withId = ((PropertyAccess)property).moonrise$getIdFor(with);
         if (withId < 0 || withId >= values.length) {
             return null;
         }
@@ -144,7 +144,7 @@ public final class ZeroCollidingReferenceStateTable {
     }
 
     protected static int lookup_vindex(final Property<?> property, final long[] index_table) {
-        final int id = ((PropertyAccess)property).getId();
+        final int id = ((PropertyAccess)property).moonrise$getId();
         final long bitset_mask = (1L << (id & 31));
         final long lower_mask = bitset_mask - 1;
         final int index = id >>> 5;

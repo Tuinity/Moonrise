@@ -59,7 +59,7 @@ public final class ChunkEntitySlices {
 
         this.allEntities.addEntity(entity, sectionIndex);
 
-        if (((CollisionEntity)entity).isHardColliding()) {
+        if (((CollisionEntity)entity).moonrise$isHardColliding()) {
             this.hardCollidingEntities.addEntity(entity, sectionIndex);
         }
 
@@ -91,7 +91,7 @@ public final class ChunkEntitySlices {
 
         this.allEntities.removeEntity(entity, sectionIndex);
 
-        if (((CollisionEntity)entity).isHardColliding()) {
+        if (((CollisionEntity)entity).moonrise$isHardColliding()) {
             this.hardCollidingEntities.removeEntity(entity, sectionIndex);
         }
 

@@ -49,8 +49,8 @@ public final class SaveUtil {
         final int minSection = WorldUtil.getMinLightSection(world);
         final int maxSection = WorldUtil.getMaxLightSection(world);
 
-        SWMRNibbleArray[] blockNibbles = ((StarlightChunk)chunk).getBlockNibbles();
-        SWMRNibbleArray[] skyNibbles = ((StarlightChunk)chunk).getSkyNibbles();
+        SWMRNibbleArray[] blockNibbles = ((StarlightChunk)chunk).starlight$getBlockNibbles();
+        SWMRNibbleArray[] skyNibbles = ((StarlightChunk)chunk).starlight$getSkyNibbles();
 
         boolean lit = chunk.isLightCorrect() || !(world instanceof ServerLevel);
         // diff start - store our tag for whether light data is init'd
@@ -185,8 +185,8 @@ public final class SaveUtil {
         }
         // end copy from vanilla
 
-        ((StarlightChunk)into).setBlockNibbles(blockNibbles);
-        ((StarlightChunk)into).setSkyNibbles(skyNibbles);
+        ((StarlightChunk)into).starlight$setBlockNibbles(blockNibbles);
+        ((StarlightChunk)into).starlight$setSkyNibbles(skyNibbles);
         into.setLightCorrect(lit); // now we set lit here, only after we've correctly parsed data
     }
 

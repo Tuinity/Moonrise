@@ -22,6 +22,6 @@ public abstract class CubeVoxelShapeMixin {
             )
     )
     private void initState(final DiscreteVoxelShape discreteVoxelShape, final CallbackInfo ci) {
-        ((CollisionVoxelShape)this).initCache();
+        ((CollisionVoxelShape)this).moonrise$initCache();
     }
 }

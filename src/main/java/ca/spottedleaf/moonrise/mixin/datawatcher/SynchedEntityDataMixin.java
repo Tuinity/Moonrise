@@ -30,8 +30,6 @@ public abstract class SynchedEntityDataMixin {
     protected abstract <T> void assignValue(SynchedEntityData.DataItem<T> dataItem, SynchedEntityData.DataValue<?> dataValue);
 
 
-
-
     @Unique
     private static final SynchedEntityData.DataItem<?>[] EMPTY = new SynchedEntityData.DataItem<?>[0];
 

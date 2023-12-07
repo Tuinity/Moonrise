@@ -23,42 +23,42 @@ public abstract class ImposterProtoChunkMixin extends ProtoChunk implements Star
     }
 
     @Override
-    public SWMRNibbleArray[] getBlockNibbles() {
-        return ((StarlightChunk)this.wrapped).getBlockNibbles();
+    public SWMRNibbleArray[] starlight$getBlockNibbles() {
+        return ((StarlightChunk)this.wrapped).starlight$getBlockNibbles();
     }
 
     @Override
-    public void setBlockNibbles(final SWMRNibbleArray[] nibbles) {
-        ((StarlightChunk)this.wrapped).setBlockNibbles(nibbles);
+    public void starlight$setBlockNibbles(final SWMRNibbleArray[] nibbles) {
+        ((StarlightChunk)this.wrapped).starlight$setBlockNibbles(nibbles);
     }
 
     @Override
-    public SWMRNibbleArray[] getSkyNibbles() {
-        return ((StarlightChunk)this.wrapped).getSkyNibbles();
+    public SWMRNibbleArray[] starlight$getSkyNibbles() {
+        return ((StarlightChunk)this.wrapped).starlight$getSkyNibbles();
     }
 
     @Override
-    public void setSkyNibbles(final SWMRNibbleArray[] nibbles) {
-        ((StarlightChunk)this.wrapped).setSkyNibbles(nibbles);
+    public void starlight$setSkyNibbles(final SWMRNibbleArray[] nibbles) {
+        ((StarlightChunk)this.wrapped).starlight$setSkyNibbles(nibbles);
     }
 
     @Override
-    public boolean[] getSkyEmptinessMap() {
-        return ((StarlightChunk)this.wrapped).getSkyEmptinessMap();
+    public boolean[] starlight$getSkyEmptinessMap() {
+        return ((StarlightChunk)this.wrapped).starlight$getSkyEmptinessMap();
     }
 
     @Override
-    public void setSkyEmptinessMap(final boolean[] emptinessMap) {
-        ((StarlightChunk)this.wrapped).setSkyEmptinessMap(emptinessMap);
+    public void starlight$setSkyEmptinessMap(final boolean[] emptinessMap) {
+        ((StarlightChunk)this.wrapped).starlight$setSkyEmptinessMap(emptinessMap);
     }
 
     @Override
-    public boolean[] getBlockEmptinessMap() {
-        return ((StarlightChunk)this.wrapped).getBlockEmptinessMap();
+    public boolean[] starlight$getBlockEmptinessMap() {
+        return ((StarlightChunk)this.wrapped).starlight$getBlockEmptinessMap();
     }
 
     @Override
-    public void setBlockEmptinessMap(final boolean[] emptinessMap) {
-        ((StarlightChunk)this.wrapped).setBlockEmptinessMap(emptinessMap);
+    public void starlight$setBlockEmptinessMap(final boolean[] emptinessMap) {
+        ((StarlightChunk)this.wrapped).starlight$setBlockEmptinessMap(emptinessMap);
     }
 }

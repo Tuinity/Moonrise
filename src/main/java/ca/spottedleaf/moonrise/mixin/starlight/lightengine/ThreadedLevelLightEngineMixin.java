@@ -51,9 +51,9 @@ public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine imp
     @Unique
     private void queueTaskForSection(final int chunkX, final int chunkY, final int chunkZ,
                                      final Supplier<StarLightInterface.LightQueue.ChunkTasks> runnable) {
-        final ServerLevel world = (ServerLevel)this.getLightEngine().getWorld();
+        final ServerLevel world = (ServerLevel)this.starlight$getLightEngine().getWorld();
 
-        final ChunkAccess center = this.getLightEngine().getAnyChunkNow(chunkX, chunkZ);
+        final ChunkAccess center = this.starlight$getLightEngine().getAnyChunkNow(chunkX, chunkZ);
         if (center == null || !center.getStatus().isOrAfter(ChunkStatus.LIGHT)) {
             // do not accept updates in unlit chunks, unless we might be generating a chunk. thanks to the amazing
             // chunk scheduling, we could be lighting and generating a chunk at the same time
@@ -121,7 +121,7 @@ public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine imp
     public void checkBlock(final BlockPos pos) {
         final BlockPos posCopy = pos.immutable();
         this.queueTaskForSection(posCopy.getX() >> 4, posCopy.getY() >> 4, posCopy.getZ() >> 4, () -> {
-            return this.getLightEngine().blockChange(posCopy);
+            return this.starlight$getLightEngine().blockChange(posCopy);
         });
     }
 
@@ -141,7 +141,7 @@ public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine imp
     @Overwrite
     public void updateSectionStatus(final SectionPos pos, final boolean notReady) {
         this.queueTaskForSection(pos.getX(), pos.getY(), pos.getZ(), () -> {
-            return this.getLightEngine().sectionChange(pos, notReady);
+            return this.starlight$getLightEngine().sectionChange(pos, notReady);
         });
     }
 
@@ -203,20 +203,20 @@ public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine imp
             final Boolean[] emptySections = StarLightEngine.getEmptySectionsForChunk(chunk);
             if (!lit) {
                 chunk.setLightCorrect(false);
-                this.getLightEngine().lightChunk(chunk, emptySections);
+                this.starlight$getLightEngine().lightChunk(chunk, emptySections);
                 chunk.setLightCorrect(true);
             } else {
-                this.getLightEngine().forceLoadInChunk(chunk, emptySections);
+                this.starlight$getLightEngine().forceLoadInChunk(chunk, emptySections);
                 // can't really force the chunk to be edged checked, as we need neighbouring chunks - but we don't have
                 // them, so if it's not loaded then i guess we can't do edge checks. later loads of the chunk should
                 // catch what we miss here.
-                this.getLightEngine().checkChunkEdges(chunkPos.x, chunkPos.z);
+                this.starlight$getLightEngine().checkChunkEdges(chunkPos.x, chunkPos.z);
             }
 
             this.chunkMap.releaseLightTicket(chunkPos);
             return chunk;
         }, (runnable) -> {
-            this.getLightEngine().scheduleChunkLight(chunkPos, runnable);
+            this.starlight$getLightEngine().scheduleChunkLight(chunkPos, runnable);
             this.tryScheduleUpdate();
         }).whenComplete((final ChunkAccess c, final Throwable throwable) -> {
             if (throwable != null) {

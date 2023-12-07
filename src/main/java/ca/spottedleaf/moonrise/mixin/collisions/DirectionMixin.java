@@ -153,7 +153,7 @@ public abstract class DirectionMixin implements CollisionDirection {
     }
 
     @Override
-    public final int uniqueId() {
+    public final int moonrise$uniqueId() {
         return this.id;
     }
 }

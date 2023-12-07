@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Mixin(ServerSelectionList.class)
-public class ServerSelectionListMixin {
+public abstract class ServerSelectionListMixin {
 
     /**
      * @reason Massively increase the threadpool count so that slow servers do not stall the pinging of other servers
@@ -15,7 +15,9 @@ public class ServerSelectionListMixin {
      */
     @ModifyConstant(
             method = "<clinit>",
-            constant = @Constant(intValue = 5, ordinal = 0)
+            constant = @Constant(
+                    intValue = 5, ordinal = 0
+            )
     )
     private static int noPingLimitExecutor(final int constant) {
         return 128;

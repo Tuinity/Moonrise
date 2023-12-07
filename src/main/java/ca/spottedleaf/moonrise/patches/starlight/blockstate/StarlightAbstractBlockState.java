@@ -2,8 +2,8 @@ package ca.spottedleaf.moonrise.patches.starlight.blockstate;
 
 public interface StarlightAbstractBlockState {
 
-    public boolean isConditionallyFullOpaque();
+    public boolean starlight$isConditionallyFullOpaque();
 
-    public int getOpacityIfCached();
+    public int starlight$getOpacityIfCached();
 
 }

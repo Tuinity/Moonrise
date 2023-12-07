@@ -73,9 +73,6 @@ public abstract class ExplosionMixin {
     private ObjectArrayList<BlockPos> toBlow;
 
     @Shadow
-    public abstract DamageSource getDamageSource();
-
-    @Shadow
     @Final
     private Map<Player, Vec3> hitPlayers;
 
@@ -83,7 +80,7 @@ public abstract class ExplosionMixin {
     @Final
     private boolean fire;
 
-
+    @Shadow @Final private DamageSource damageSource;
 
     @Unique
     private static final double[] CACHED_RAYS;
@@ -164,7 +161,7 @@ public abstract class ExplosionMixin {
                 this.chunkCache[chunkCacheKey] = chunk = this.level.getChunk(x >> 4, z >> 4);
             }
 
-            BlockState blockState = ((GetBlockChunk)chunk).getBlock(x, y, z);
+            BlockState blockState = ((GetBlockChunk)chunk).moonrise$getBlock(x, y, z);
             FluidState fluidState = blockState.getFluidState();
 
             Optional<Float> resistance = !calculateResistance ? Optional.empty() : this.damageCalculator.getBlockExplosionResistance((Explosion)(Object)this, this.level, pos, blockState, fluidState);
@@ -245,10 +242,10 @@ public abstract class ExplosionMixin {
             }
 
             final BlockState blockState = cachedBlock.blockState;
-            if (blockState != null && !((CollisionBlockState)blockState).emptyCollisionShape()) {
+            if (blockState != null && !((CollisionBlockState)blockState).moonrise$emptyCollisionShape()) {
                 VoxelShape collision = cachedBlock.cachedCollisionShape;
                 if (collision == null) {
-                    collision = ((CollisionBlockState)blockState).getConstantCollisionShape();
+                    collision = ((CollisionBlockState)blockState).moonrise$getConstantCollisionShape();
                     if (collision == null) {
                         collision = blockState.getCollisionShape(this.level, currPos, context);
                         if (!context.isDelegated()) {
@@ -455,7 +452,7 @@ public abstract class ExplosionMixin {
 
         for (int i = 0, len = entities.size(); i < len; ++i) {
             final Entity entity = entities.get(i);
-            if (entity.isSpectator() || entity.ignoreExplosion()) {
+            if (entity.isSpectator() || entity.ignoreExplosion((Explosion)(Object)this)) {
                 continue;
             }
 
@@ -475,10 +472,9 @@ public abstract class ExplosionMixin {
                 distZ /= distMag;
 
                 // route to new visible fraction calculation, using the existing block cache
-                final double visibleFraction = (double)this.getSeenFraction(center, entity, blockCache, blockPos);
-                final double intensityFraction = (1.0 - normalizedDistanceToCenter) * visibleFraction;
+                final double intensityFraction = (1.0 - normalizedDistanceToCenter) * (double)this.getSeenFraction(center, entity, blockCache, blockPos);
 
-                entity.hurt(this.getDamageSource(), (float)((int)((intensityFraction * intensityFraction + intensityFraction) / 2.0 * 7.0 * diameter + 1.0)));
+                entity.hurt(this.damageSource, (float)((int)((intensityFraction * intensityFraction + intensityFraction) / 2.0 * 7.0 * diameter + 1.0)));
 
                 final double knockbackFraction;
                 if (entity instanceof LivingEntity livingEntity) {

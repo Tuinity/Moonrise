@@ -3,13 +3,13 @@
   "id": "moonrise",
   "version": "${version}",
   "name": "Moonrise",
-  "description": "",
+  "description": "Optimisation mod for the client and server",
   "authors": [
     "Spottedleaf"
   ],
   "contact": {
-    "issues": "https://github.com/Spottedleaf/Moonrise/issues",
-    "sources": "https://github.com/Spottedleaf/Moonrise",
+    "issues": "https://github.com/Tuinity/Moonrise/issues",
+    "sources": "https://github.com/Tuinity/Moonrise",
     "discord": "https://discord.gg/tuinity",
     "homepage": "https://www.curseforge.com/minecraft/mc-mods/moonrise"
   },
@@ -27,7 +27,7 @@
   ],
   "accessWidener" : "moonrise.accesswidener",
   "depends": {
-    "fabricloader": ">=0.14.19",
-    "minecraft": "1.20.2"
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_version}"
   }
 }

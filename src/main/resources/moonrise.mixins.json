@@ -6,6 +6,7 @@
   "mixins": [
     "bitstorage.SimpleBitStorageMixin",
     "bitstorage.ZeroBitStorageMixin",
+    "block_entity_remove.LevelMixin",
     "blockstate_propertyaccess.BooleanPropertyMixin",
     "blockstate_propertyaccess.EnumPropertyMixin",
     "blockstate_propertyaccess.IntegerPropertyMixin",
@@ -39,7 +40,6 @@
     "explosions.ExplosionMixin",
     "explosions.ExplosionProfileMixin",
     "fluid.FlowingFluidMixin",
-    "fluid.FluidMixin",
     "fluid.FluidStateMixin",
     "hopper.HopperBlockEntityMixin",
     "hopper.RandomizableContainerBlockEntityMixin",

@@ -83,7 +83,7 @@ public abstract class LevelChunkMixin extends ChunkAccess implements GetBlockChu
      */
     @Overwrite
     public BlockState getBlockState(final BlockPos pos) {
-        return this.getBlock(pos.getX(), pos.getY(), pos.getZ());
+        return this.moonrise$getBlock(pos.getX(), pos.getY(), pos.getZ());
     }
 
     @Unique
@@ -101,7 +101,7 @@ public abstract class LevelChunkMixin extends ChunkAccess implements GetBlockChu
     }
 
     @Override
-    public BlockState getBlock(final int x, final int y, final int z) {
+    public BlockState moonrise$getBlock(final int x, final int y, final int z) {
         if (this.debug) {
             return this.getBlockDebug(x, y, z);
         }

@@ -1150,7 +1150,7 @@ public abstract class StarLightEngine {
                     if (blockState == null) {
                         continue;
                     }
-                    final int opacityCached = ((StarlightAbstractBlockState)blockState).getOpacityIfCached();
+                    final int opacityCached = ((StarlightAbstractBlockState)blockState).starlight$getOpacityIfCached();
                     if (opacityCached != -1) {
                         final int targetLevel = propagatedLightLevel - Math.max(1, opacityCached);
                         if (targetLevel > currentLevel) {
@@ -1172,7 +1172,7 @@ public abstract class StarLightEngine {
                     } else {
                         this.mutablePos1.set(offX, offY, offZ);
                         long flags = 0;
-                        if (((StarlightAbstractBlockState)blockState).isConditionallyFullOpaque()) {
+                        if (((StarlightAbstractBlockState)blockState).starlight$isConditionallyFullOpaque()) {
                             final VoxelShape cullingFace = blockState.getFaceOcclusionShape(world, this.mutablePos1, propagate.getOpposite().nms);
 
                             if (Shapes.faceShapeOccludes(Shapes.empty(), cullingFace)) {
@@ -1212,7 +1212,7 @@ public abstract class StarLightEngine {
                     final int offY = posY + propagate.y;
                     final int offZ = posZ + propagate.z;
 
-                    final VoxelShape fromShape = (((StarlightAbstractBlockState)fromBlock).isConditionallyFullOpaque()) ? fromBlock.getFaceOcclusionShape(world, this.mutablePos2, propagate.nms) : Shapes.empty();
+                    final VoxelShape fromShape = (((StarlightAbstractBlockState)fromBlock).starlight$isConditionallyFullOpaque()) ? fromBlock.getFaceOcclusionShape(world, this.mutablePos2, propagate.nms) : Shapes.empty();
 
                     if (fromShape != Shapes.empty() && Shapes.faceShapeOccludes(Shapes.empty(), fromShape)) {
                         continue;
@@ -1232,7 +1232,7 @@ public abstract class StarLightEngine {
                     if (blockState == null) {
                         continue;
                     }
-                    final int opacityCached = ((StarlightAbstractBlockState)blockState).getOpacityIfCached();
+                    final int opacityCached = ((StarlightAbstractBlockState)blockState).starlight$getOpacityIfCached();
                     if (opacityCached != -1) {
                         final int targetLevel = propagatedLightLevel - Math.max(1, opacityCached);
                         if (targetLevel > currentLevel) {
@@ -1254,7 +1254,7 @@ public abstract class StarLightEngine {
                     } else {
                         this.mutablePos1.set(offX, offY, offZ);
                         long flags = 0;
-                        if (((StarlightAbstractBlockState)blockState).isConditionallyFullOpaque()) {
+                        if (((StarlightAbstractBlockState)blockState).starlight$isConditionallyFullOpaque()) {
                             final VoxelShape cullingFace = blockState.getFaceOcclusionShape(world, this.mutablePos1, propagate.getOpposite().nms);
 
                             if (Shapes.faceShapeOccludes(fromShape, cullingFace)) {
@@ -1335,7 +1335,7 @@ public abstract class StarLightEngine {
                     if (blockState == null) {
                         continue;
                     }
-                    final int opacityCached = ((StarlightAbstractBlockState)blockState).getOpacityIfCached();
+                    final int opacityCached = ((StarlightAbstractBlockState)blockState).starlight$getOpacityIfCached();
                     if (opacityCached != -1) {
                         final int targetLevel = Math.max(0, propagatedLightLevel - Math.max(1, opacityCached));
                         if (lightLevel > targetLevel) {
@@ -1361,7 +1361,7 @@ public abstract class StarLightEngine {
                                     ((offX + (offZ << 6) + (offY << 12) + encodeOffset) & ((1L << (6 + 6 + 16)) - 1))
                                             | ((emittedLight & 0xFL) << (6 + 6 + 16))
                                             | (((long)ALL_DIRECTIONS_BITSET) << (6 + 6 + 16 + 4))
-                                            | (((StarlightAbstractBlockState)blockState).isConditionallyFullOpaque() ? (FLAG_WRITE_LEVEL | FLAG_HAS_SIDED_TRANSPARENT_BLOCKS) : FLAG_WRITE_LEVEL);
+                                            | (((StarlightAbstractBlockState)blockState).starlight$isConditionallyFullOpaque() ? (FLAG_WRITE_LEVEL | FLAG_HAS_SIDED_TRANSPARENT_BLOCKS) : FLAG_WRITE_LEVEL);
                         }
 
                         currentNibble.set(localIndex, 0);
@@ -1381,7 +1381,7 @@ public abstract class StarLightEngine {
                     } else {
                         this.mutablePos1.set(offX, offY, offZ);
                         long flags = 0;
-                        if (((StarlightAbstractBlockState)blockState).isConditionallyFullOpaque()) {
+                        if (((StarlightAbstractBlockState)blockState).starlight$isConditionallyFullOpaque()) {
                             final VoxelShape cullingFace = blockState.getFaceOcclusionShape(world, this.mutablePos1, propagate.getOpposite().nms);
 
                             if (Shapes.faceShapeOccludes(Shapes.empty(), cullingFace)) {
@@ -1446,7 +1446,7 @@ public abstract class StarLightEngine {
                     final int sectionIndex = (offX >> 4) + 5 * (offZ >> 4) + (5 * 5) * (offY >> 4) + sectionOffset;
                     final int localIndex = (offX & 15) | ((offZ & 15) << 4) | ((offY & 15) << 8);
 
-                    final VoxelShape fromShape = (((StarlightAbstractBlockState)fromBlock).isConditionallyFullOpaque()) ? fromBlock.getFaceOcclusionShape(world, this.mutablePos2, propagate.nms) : Shapes.empty();
+                    final VoxelShape fromShape = (((StarlightAbstractBlockState)fromBlock).starlight$isConditionallyFullOpaque()) ? fromBlock.getFaceOcclusionShape(world, this.mutablePos2, propagate.nms) : Shapes.empty();
 
                     if (fromShape != Shapes.empty() && Shapes.faceShapeOccludes(Shapes.empty(), fromShape)) {
                         continue;
@@ -1464,7 +1464,7 @@ public abstract class StarLightEngine {
                     if (blockState == null) {
                         continue;
                     }
-                    final int opacityCached = ((StarlightAbstractBlockState)blockState).getOpacityIfCached();
+                    final int opacityCached = ((StarlightAbstractBlockState)blockState).starlight$getOpacityIfCached();
                     if (opacityCached != -1) {
                         final int targetLevel = Math.max(0, propagatedLightLevel - Math.max(1, opacityCached));
                         if (lightLevel > targetLevel) {
@@ -1490,7 +1490,7 @@ public abstract class StarLightEngine {
                                     ((offX + (offZ << 6) + (offY << 12) + encodeOffset) & ((1L << (6 + 6 + 16)) - 1))
                                             | ((emittedLight & 0xFL) << (6 + 6 + 16))
                                             | (((long)ALL_DIRECTIONS_BITSET) << (6 + 6 + 16 + 4))
-                                            | (((StarlightAbstractBlockState)blockState).isConditionallyFullOpaque() ? (FLAG_WRITE_LEVEL | FLAG_HAS_SIDED_TRANSPARENT_BLOCKS) : FLAG_WRITE_LEVEL);
+                                            | (((StarlightAbstractBlockState)blockState).starlight$isConditionallyFullOpaque() ? (FLAG_WRITE_LEVEL | FLAG_HAS_SIDED_TRANSPARENT_BLOCKS) : FLAG_WRITE_LEVEL);
                         }
 
                         currentNibble.set(localIndex, 0);
@@ -1510,7 +1510,7 @@ public abstract class StarLightEngine {
                     } else {
                         this.mutablePos1.set(offX, offY, offZ);
                         long flags = 0;
-                        if (((StarlightAbstractBlockState)blockState).isConditionallyFullOpaque()) {
+                        if (((StarlightAbstractBlockState)blockState).starlight$isConditionallyFullOpaque()) {
                             final VoxelShape cullingFace = blockState.getFaceOcclusionShape(world, this.mutablePos1, propagate.getOpposite().nms);
 
                             if (Shapes.faceShapeOccludes(fromShape, cullingFace)) {

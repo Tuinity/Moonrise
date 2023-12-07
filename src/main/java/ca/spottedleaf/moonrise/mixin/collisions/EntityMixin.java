@@ -92,10 +92,10 @@ public abstract class EntityMixin implements CollisionEntity {
     protected abstract void onInsideBlock(BlockState blockState);
 
     @Unique
-    private final boolean isHardColliding = this.isHardCollidingUncached();
+    private final boolean isHardColliding = this.moonrise$isHardCollidingUncached();
 
     @Override
-    public final boolean isHardColliding() {
+    public final boolean moonrise$isHardColliding() {
         return this.isHardColliding;
     }
 
@@ -350,7 +350,7 @@ public abstract class EntityMixin implements CollisionEntity {
 
                     final BlockState state = chunk.getBlockState(tempPos);
 
-                    if (((CollisionBlockState)state).emptyCollisionShape() || !state.isSuffocating(this.level, tempPos)) {
+                    if (((CollisionBlockState)state).moonrise$emptyCollisionShape() || !state.isSuffocating(this.level, tempPos)) {
                         continue;
                     }
 
@@ -363,7 +363,7 @@ public abstract class EntityMixin implements CollisionEntity {
 
                     final AABB toCollide = box.move(-(double)fx, -(double)fy, -(double)fz);
 
-                    final AABB singleAABB = ((CollisionVoxelShape)collisionShape).getSingleAABBRepresentation();
+                    final AABB singleAABB = ((CollisionVoxelShape)collisionShape).moonrise$getSingleAABBRepresentation();
                     if (singleAABB != null) {
                         if (CollisionUtil.voxelShapeIntersect(singleAABB, toCollide)) {
                             return true;

@@ -15,6 +15,6 @@ public abstract class BlockMixin {
      */
     @Overwrite
     public static boolean isShapeFullBlock(final VoxelShape shape) {
-        return ((CollisionVoxelShape)shape).isFullBlock();
+        return ((CollisionVoxelShape)shape).moonrise$isFullBlock();
     }
 }

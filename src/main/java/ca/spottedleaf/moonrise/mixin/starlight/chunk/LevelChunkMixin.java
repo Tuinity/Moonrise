@@ -24,10 +24,10 @@ public abstract class LevelChunkMixin implements StarlightChunk {
             at = @At("TAIL")
     )
     public void onTransitionToFull(ServerLevel serverLevel, ProtoChunk protoChunk, LevelChunk.PostLoadProcessor postLoadProcessor, CallbackInfo ci) {
-        this.setBlockNibbles(((StarlightChunk)protoChunk).getBlockNibbles());
-        this.setSkyNibbles(((StarlightChunk)protoChunk).getSkyNibbles());
-        this.setSkyEmptinessMap(((StarlightChunk)protoChunk).getSkyEmptinessMap());
-        this.setBlockEmptinessMap(((StarlightChunk)protoChunk).getBlockEmptinessMap());
+        this.starlight$setBlockNibbles(((StarlightChunk)protoChunk).starlight$getBlockNibbles());
+        this.starlight$setSkyNibbles(((StarlightChunk)protoChunk).starlight$getSkyNibbles());
+        this.starlight$setSkyEmptinessMap(((StarlightChunk)protoChunk).starlight$getSkyEmptinessMap());
+        this.starlight$setBlockEmptinessMap(((StarlightChunk)protoChunk).starlight$getBlockEmptinessMap());
     }
 
     /**

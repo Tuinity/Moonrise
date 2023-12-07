@@ -26,6 +26,6 @@ public abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess
     private void addEntity(final T entityAccess, final boolean onDisk, final CallbackInfoReturnable<Boolean> cir) {
         final Entity entity = (Entity)entityAccess;
 
-        ((CollisionLevel)entity.level()).getCollisionLookup().addEntity(entity);
+        ((CollisionLevel)entity.level()).moonrise$getCollisionLookup().addEntity(entity);
     }
 }

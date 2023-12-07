@@ -51,7 +51,7 @@ public abstract class EnumPropertyMixin<T extends Enum<T> & StringRepresentable>
     }
 
     @Override
-    public final int getIdFor(final T value) {
+    public final int moonrise$getIdFor(final T value) {
         return this.idLookupTable[value.ordinal()];
     }
 }

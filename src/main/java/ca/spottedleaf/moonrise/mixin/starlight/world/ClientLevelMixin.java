@@ -14,7 +14,6 @@ import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.storage.WritableLevelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-
 import java.util.function.Supplier;
 
 @Mixin(ClientLevel.class)
@@ -28,12 +27,12 @@ public abstract class ClientLevelMixin extends Level implements StarlightWorld {
     public abstract ClientChunkCache getChunkSource();
 
     @Override
-    public final LevelChunk getChunkAtImmediately(final int chunkX, final int chunkZ) {
+    public final LevelChunk starlight$getChunkAtImmediately(final int chunkX, final int chunkZ) {
         return this.getChunkSource().getChunk(chunkX, chunkZ, false);
     }
 
     @Override
-    public final ChunkAccess getAnyChunkImmediately(int chunkX, int chunkZ) {
+    public final ChunkAccess starlight$getAnyChunkImmediately(final int chunkX, final int chunkZ) {
         return this.getChunkSource().getChunk(chunkX, chunkZ, false);
     }
 }

@@ -23,7 +23,7 @@ public abstract class BooleanPropertyMixin extends Property<Boolean> implements 
     }
 
     @Override
-    public final int getIdFor(final Boolean value) {
+    public final int moonrise$getIdFor(final Boolean value) {
         return value.booleanValue() ? 1 : 0;
     }
 }

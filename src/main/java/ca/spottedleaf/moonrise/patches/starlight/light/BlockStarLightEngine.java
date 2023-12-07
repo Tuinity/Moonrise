@@ -24,22 +24,22 @@ public final class BlockStarLightEngine extends StarLightEngine {
 
     @Override
     protected boolean[] getEmptinessMap(final ChunkAccess chunk) {
-        return ((StarlightChunk)chunk).getBlockEmptinessMap();
+        return ((StarlightChunk)chunk).starlight$getBlockEmptinessMap();
     }
 
     @Override
     protected void setEmptinessMap(final ChunkAccess chunk, final boolean[] to) {
-        ((StarlightChunk)chunk).setBlockEmptinessMap(to);
+        ((StarlightChunk)chunk).starlight$setBlockEmptinessMap(to);
     }
 
     @Override
     protected SWMRNibbleArray[] getNibblesOnChunk(final ChunkAccess chunk) {
-        return ((StarlightChunk)chunk).getBlockNibbles();
+        return ((StarlightChunk)chunk).starlight$getBlockNibbles();
     }
 
     @Override
     protected void setNibbles(final ChunkAccess chunk, final SWMRNibbleArray[] to) {
-        ((StarlightChunk)chunk).setBlockNibbles(to);
+        ((StarlightChunk)chunk).starlight$setBlockNibbles(to);
     }
 
     @Override
@@ -100,7 +100,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
                     ((worldX + (worldZ << 6) + (worldY << (6 + 6)) + encodeOffset) & ((1L << (6 + 6 + 16)) - 1))
                             | (emittedLevel & 0xFL) << (6 + 6 + 16)
                             | (((long)ALL_DIRECTIONS_BITSET) << (6 + 6 + 16 + 4))
-                            | (((StarlightAbstractBlockState)blockState).isConditionallyFullOpaque() ? FLAG_HAS_SIDED_TRANSPARENT_BLOCKS : 0)
+                            | (((StarlightAbstractBlockState)blockState).starlight$isConditionallyFullOpaque() ? FLAG_HAS_SIDED_TRANSPARENT_BLOCKS : 0)
             );
         }
         // this also accounts for a change in emitted light that would cause a decrease
@@ -133,12 +133,12 @@ public final class BlockStarLightEngine extends StarLightEngine {
 
         final int sectionOffset = this.chunkSectionIndexOffset;
         final BlockState conditionallyOpaqueState;
-        int opacity = ((StarlightAbstractBlockState)centerState).getOpacityIfCached();
+        int opacity = ((StarlightAbstractBlockState)centerState).starlight$getOpacityIfCached();
 
         if (opacity == -1) {
             this.recalcCenterPos.set(worldX, worldY, worldZ);
             opacity = centerState.getLightBlock(lightAccess.getLevel(), this.recalcCenterPos);
-            if (((StarlightAbstractBlockState)centerState).isConditionallyFullOpaque()) {
+            if (((StarlightAbstractBlockState)centerState).starlight$isConditionallyFullOpaque()) {
                 conditionallyOpaqueState = centerState;
             } else {
                 conditionallyOpaqueState = null;
@@ -165,7 +165,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
             }
 
             final BlockState neighbourState = this.getBlockState(offX, offY, offZ);
-            if (((StarlightAbstractBlockState)neighbourState).isConditionallyFullOpaque()) {
+            if (((StarlightAbstractBlockState)neighbourState).starlight$isConditionallyFullOpaque()) {
                 // here the block can be conditionally opaque (i.e light cannot propagate from it), so we need to test that
                 // we don't read the blockstate because most of the time this is false, so using the faster
                 // known transparency lookup results in a net win
@@ -254,7 +254,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
                     ((pos.getX() + (pos.getZ() << 6) + (pos.getY() << (6 + 6)) + this.coordinateOffset) & ((1L << (6 + 6 + 16)) - 1))
                             | (emittedLight & 0xFL) << (6 + 6 + 16)
                             | (((long)ALL_DIRECTIONS_BITSET) << (6 + 6 + 16 + 4))
-                            | (((StarlightAbstractBlockState)blockState).isConditionallyFullOpaque() ? FLAG_HAS_SIDED_TRANSPARENT_BLOCKS : 0)
+                            | (((StarlightAbstractBlockState)blockState).starlight$isConditionallyFullOpaque() ? FLAG_HAS_SIDED_TRANSPARENT_BLOCKS : 0)
             );
 
 

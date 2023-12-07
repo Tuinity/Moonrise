@@ -26,6 +26,6 @@ public abstract class TransientEntitySectionManagerMixin<T extends EntityAccess>
     private void addEntity(final T entityAccess, final CallbackInfo ci) {
         final Entity entity = (Entity)entityAccess;
 
-        ((CollisionLevel)entity.level()).getCollisionLookup().addEntity(entity);
+        ((CollisionLevel)entity.level()).moonrise$getCollisionLookup().addEntity(entity);
     }
 }

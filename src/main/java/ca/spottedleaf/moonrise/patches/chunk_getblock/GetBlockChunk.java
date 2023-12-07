@@ -4,6 +4,6 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public interface GetBlockChunk {
 
-    public BlockState getBlock(final int x, final int y, final int z);
+    public BlockState moonrise$getBlock(final int x, final int y, final int z);
 
 }

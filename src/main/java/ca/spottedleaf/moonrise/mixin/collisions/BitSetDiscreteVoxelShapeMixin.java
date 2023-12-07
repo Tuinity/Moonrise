@@ -103,7 +103,7 @@ public abstract class BitSetDiscreteVoxelShapeMixin extends DiscreteVoxelShape {
             chkForAll(shape, mergeAdjacent);
         }
         // called with the shape of a VoxelShape, so we can expect the cache to exist
-        final CachedShapeData cache = ((CollisionDiscreteVoxelShape)shape).getOrCreateCachedShapeData();
+        final CachedShapeData cache = ((CollisionDiscreteVoxelShape)shape).moonrise$getOrCreateCachedShapeData();
 
         final int sizeX = cache.sizeX();
         final int sizeY = cache.sizeY();

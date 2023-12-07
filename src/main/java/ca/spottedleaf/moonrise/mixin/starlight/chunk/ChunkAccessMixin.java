@@ -40,42 +40,42 @@ public abstract class ChunkAccessMixin implements StarlightChunk {
     private volatile boolean[] blockEmptinessMap;
 
     @Override
-    public SWMRNibbleArray[] getBlockNibbles() {
+    public SWMRNibbleArray[] starlight$getBlockNibbles() {
         return this.blockNibbles;
     }
 
     @Override
-    public void setBlockNibbles(final SWMRNibbleArray[] nibbles) {
+    public void starlight$setBlockNibbles(final SWMRNibbleArray[] nibbles) {
         this.blockNibbles = nibbles;
     }
 
     @Override
-    public SWMRNibbleArray[] getSkyNibbles() {
+    public SWMRNibbleArray[] starlight$getSkyNibbles() {
         return this.skyNibbles;
     }
 
     @Override
-    public void setSkyNibbles(final SWMRNibbleArray[] nibbles) {
+    public void starlight$setSkyNibbles(final SWMRNibbleArray[] nibbles) {
         this.skyNibbles = nibbles;
     }
 
     @Override
-    public boolean[] getSkyEmptinessMap() {
+    public boolean[] starlight$getSkyEmptinessMap() {
         return this.skyEmptinessMap;
     }
 
     @Override
-    public void setSkyEmptinessMap(final boolean[] emptinessMap) {
+    public void starlight$setSkyEmptinessMap(final boolean[] emptinessMap) {
         this.skyEmptinessMap = emptinessMap;
     }
 
     @Override
-    public boolean[] getBlockEmptinessMap() {
+    public boolean[] starlight$getBlockEmptinessMap() {
         return this.blockEmptinessMap;
     }
 
     @Override
-    public void setBlockEmptinessMap(final boolean[] emptinessMap) {
+    public void starlight$setBlockEmptinessMap(final boolean[] emptinessMap) {
         this.blockEmptinessMap = emptinessMap;
     }
 
@@ -94,8 +94,8 @@ public abstract class ChunkAccessMixin implements StarlightChunk {
                              CallbackInfo ci) {
         this.skyLightSources = null;
         if (!((Object)this instanceof ImposterProtoChunk)) {
-            this.setBlockNibbles(StarLightEngine.getFilledEmptyLight(levelHeightAccessor));
-            this.setSkyNibbles(StarLightEngine.getFilledEmptyLight(levelHeightAccessor));
+            this.starlight$setBlockNibbles(StarLightEngine.getFilledEmptyLight(levelHeightAccessor));
+            this.starlight$setSkyNibbles(StarLightEngine.getFilledEmptyLight(levelHeightAccessor));
         }
     }
 

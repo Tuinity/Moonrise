@@ -6,35 +6,35 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public interface CollisionVoxelShape {
 
-    public double offsetX();
+    public double moonrise$offsetX();
 
-    public double offsetY();
+    public double moonrise$offsetY();
 
-    public double offsetZ();
+    public double moonrise$offsetZ();
 
-    public double[] rootCoordinatesX();
+    public double[] moonrise$rootCoordinatesX();
 
-    public double[] rootCoordinatesY();
+    public double[] moonrise$rootCoordinatesY();
 
-    public double[] rootCoordinatesZ();
+    public double[] moonrise$rootCoordinatesZ();
 
-    public CachedShapeData getCachedVoxelData();
+    public CachedShapeData moonrise$getCachedVoxelData();
 
     // rets null if not possible to represent this shape as one AABB
-    public AABB getSingleAABBRepresentation();
+    public AABB moonrise$getSingleAABBRepresentation();
 
     // ONLY USE INTERNALLY, ONLY FOR INITIALISING IN CONSTRUCTOR: VOXELSHAPES ARE STATIC
-    public void initCache();
+    public void moonrise$initCache();
 
     // this returns empty if not clamped to 1.0 or 0.0 depending on direction
-    public VoxelShape getFaceShapeClamped(final Direction direction);
+    public VoxelShape moonrise$getFaceShapeClamped(final Direction direction);
 
-    public boolean isFullBlock();
+    public boolean moonrise$isFullBlock();
 
-    public boolean occludesFullBlock();
+    public boolean moonrise$occludesFullBlock();
 
-    public boolean occludesFullBlockIfCached();
+    public boolean moonrise$occludesFullBlockIfCached();
 
     // uses a cache internally
-    public VoxelShape orUnoptimized(final VoxelShape other);
+    public VoxelShape moonrise$orUnoptimized(final VoxelShape other);
 }

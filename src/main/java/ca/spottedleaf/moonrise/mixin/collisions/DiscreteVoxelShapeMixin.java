@@ -17,7 +17,7 @@ public abstract class DiscreteVoxelShapeMixin implements CollisionDiscreteVoxelS
     private CachedShapeData cachedShapeData;
 
     @Override
-    public final CachedShapeData getOrCreateCachedShapeData() {
+    public final CachedShapeData moonrise$getOrCreateCachedShapeData() {
         if (this.cachedShapeData != null) {
             return this.cachedShapeData;
         }

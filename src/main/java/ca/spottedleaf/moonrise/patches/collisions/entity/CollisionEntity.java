@@ -7,10 +7,10 @@ import net.minecraft.world.entity.vehicle.Boat;
 
 public interface CollisionEntity {
 
-    public boolean isHardColliding();
+    public boolean moonrise$isHardColliding();
 
     // for mods to override
-    public default boolean isHardCollidingUncached() {
+    public default boolean moonrise$isHardCollidingUncached() {
         return this instanceof Boat || this instanceof AbstractMinecart || this instanceof Shulker || ((Entity)this).canBeCollidedWith();
     }
 }

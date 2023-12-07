@@ -32,7 +32,7 @@ public abstract class ServerEntityMixin {
             )
     )
     private void forceHardCollideTeleport(final CallbackInfo ci) {
-        if (((CollisionEntity)this.entity).isHardColliding()) {
+        if (((CollisionEntity)this.entity).moonrise$isHardColliding()) {
             this.teleportDelay = 9999;
         }
     }

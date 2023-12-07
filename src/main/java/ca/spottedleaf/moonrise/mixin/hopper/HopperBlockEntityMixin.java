@@ -51,16 +51,6 @@ public abstract class HopperBlockEntityMixin extends RandomizableContainerBlockE
     protected abstract void setCooldown(int i);
 
     @Shadow
-    private static Container getSourceContainer(Level level, Hopper hopper) {
-        return null;
-    }
-
-    @Shadow
-    public static boolean addItem(Container container, ItemEntity itemEntity) {
-        return false;
-    }
-
-    @Shadow
     private static boolean tryTakeInItemFromSlot(Hopper hopper, Container container, int i, Direction direction) {
         return false;
     }
@@ -200,20 +190,19 @@ public abstract class HopperBlockEntityMixin extends RandomizableContainerBlockE
 
         final LevelChunk chunk = level.getChunk(blockX >> 4, blockZ >> 4);
 
-        final BlockState state = ((GetBlockChunk)chunk).getBlock(blockX, blockY, blockZ);
+        final BlockState state = ((GetBlockChunk)chunk).moonrise$getBlock(blockX, blockY, blockZ);
         final Block block = state.getBlock();
 
         Container blockContainer = null;
         if (block instanceof WorldlyContainerHolder worldlyContainerHolder) {
             blockContainer = worldlyContainerHolder.getContainer(state, level, new BlockPos(blockX, blockY, blockZ));
-        } else if (state.hasBlockEntity() && !level.isOutsideBuildHeight(blockY)) {
+        } else if (state.hasBlockEntity()) { // note: AIR is never outside build height, so we do not need to check
             final BlockPos pos = new BlockPos(blockX, blockY, blockZ);
             final BlockEntity blockEntity = chunk.getBlockEntity(pos, LevelChunk.EntityCreationType.IMMEDIATE);
-            if (blockEntity instanceof Container) {
+            if (block instanceof ChestBlock chestBlock && blockEntity instanceof ChestBlockEntity) {
+                blockContainer = ChestBlock.getContainer(chestBlock, state, level, pos, true);
+            } else if (blockEntity instanceof Container) {
                 blockContainer = (Container)blockEntity;
-                if (block instanceof ChestBlock chestBlock && blockContainer instanceof ChestBlockEntity) {
-                    blockContainer = ChestBlock.getContainer(chestBlock, state, level, pos, true);
-                }
             }
         }
 

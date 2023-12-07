@@ -38,7 +38,7 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
          final int dataIndex = index / this.valuesPerLong;
          final int localIndex = (index % this.valuesPerLong) * this.bitsPerValue;
      where valuesPerLong = 64 / this.bits
-     The additional add that mojang uses is only for unsigned division, when in reality the above is signed division.
+     The additional add that Mojang uses is only for unsigned division, when in reality the above is signed division.
      Thus, it is appropriate to use the signed division magic values which do not use an add.
      */
 
@@ -70,7 +70,7 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
     }
 
     /**
-     * @reason Optimise method to use our magic value, which does not perform an add
+     * @reason Do not validate input, and optimise method to use our magic value, which does not perform an add
      * @author Spottedleaf
      */
     @Overwrite
@@ -100,7 +100,7 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
     }
 
     /**
-     * @reason Optimise method to use our magic value, which does not perform an add
+     * @reason Do not validate input, and optimise method to use our magic value, which does not perform an add
      * @author Spottedleaf
      */
     @Overwrite
@@ -127,7 +127,7 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
     }
 
     /**
-     * @reason Optimise method to use our magic value, which does not perform an add
+     * @reason Do not validate input, and optimise method to use our magic value, which does not perform an add
      * @author Spottedleaf
      */
     @Overwrite

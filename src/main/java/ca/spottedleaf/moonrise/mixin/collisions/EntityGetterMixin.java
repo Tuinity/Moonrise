@@ -44,10 +44,10 @@ public interface EntityGetterMixin extends CollisionEntityGetter {
         box = box.inflate(-CollisionUtil.COLLISION_EPSILON, -CollisionUtil.COLLISION_EPSILON, -CollisionUtil.COLLISION_EPSILON);
 
         final List<Entity> entities;
-        if (entity != null && ((CollisionEntity)entity).isHardColliding()) {
+        if (entity != null && ((CollisionEntity)entity).moonrise$isHardColliding()) {
             entities = this.getEntities(entity, box, null);
         } else {
-            entities = this.getHardCollidingEntities(entity, box, null);
+            entities = this.moonrise$getHardCollidingEntities(entity, box, null);
         }
 
         final List<VoxelShape> ret = new ArrayList<>(Math.min(25, entities.size()));
@@ -68,7 +68,7 @@ public interface EntityGetterMixin extends CollisionEntityGetter {
     }
 
     @Override
-    default List<Entity> getHardCollidingEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate) {
+    default List<Entity> moonrise$getHardCollidingEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate) {
         return this.getEntities(entity, box, predicate);
     }
 
@@ -82,7 +82,7 @@ public interface EntityGetterMixin extends CollisionEntityGetter {
             return false;
         }
 
-        final AABB singleAABB = ((CollisionVoxelShape)voxel).getSingleAABBRepresentation();
+        final AABB singleAABB = ((CollisionVoxelShape)voxel).moonrise$getSingleAABBRepresentation();
         final List<Entity> entities = this.getEntities(
                 entity,
                 singleAABB == null ? voxel.bounds() : singleAABB.inflate(-CollisionUtil.COLLISION_EPSILON, -CollisionUtil.COLLISION_EPSILON, -CollisionUtil.COLLISION_EPSILON)

@@ -3,7 +3,6 @@ package ca.spottedleaf.moonrise.mixin.chunk_getblock;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;

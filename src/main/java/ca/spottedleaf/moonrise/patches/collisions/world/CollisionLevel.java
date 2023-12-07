@@ -4,12 +4,12 @@ import ca.spottedleaf.moonrise.patches.collisions.slices.EntityLookup;
 
 public interface CollisionLevel {
 
-    public EntityLookup getCollisionLookup();
+    public EntityLookup moonrise$getCollisionLookup();
 
     // avoid name conflicts by appending mod name
 
-    public int getMinSectionMoonrise();
+    public int moonrise$getMinSection();
 
-    public int getMaxSectionMoonrise();
+    public int moonrise$getMaxSection();
 
 }

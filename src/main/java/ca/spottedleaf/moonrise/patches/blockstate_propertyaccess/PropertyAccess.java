@@ -2,8 +2,8 @@ package ca.spottedleaf.moonrise.patches.blockstate_propertyaccess;
 
 public interface PropertyAccess<T> {
 
-    public int getId();
+    public int moonrise$getId();
 
-    public int getIdFor(final T value);
+    public int moonrise$getIdFor(final T value);
 
 }
