@@ -69,6 +69,7 @@
     "collisions.ParticleMixin",
     "profiler.MinecraftMixin",
     "serverlist.ServerSelectionListMixin",
+    "serverlist.ClientConnectionMixin",
     "starlight.multiplayer.ClientPacketListenerMixin",
     "starlight.world.ClientLevelMixin"
   ],
