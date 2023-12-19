@@ -147,13 +147,9 @@ public abstract class EntityMixin implements CollisionEntity {
 
         CollisionUtil.getCollisions(
                 world, (Entity)(Object)this, collisionBox, potentialCollisionsVoxel, potentialCollisionsBB,
-                (0),
+                CollisionUtil.COLLISION_FLAG_CHECK_BORDER,
                 null, null
         );
-
-        if (CollisionUtil.isCollidingWithBorderEdge(world.getWorldBorder(), collisionBox)) {
-            potentialCollisionsVoxel.add(world.getWorldBorder().getCollisionShape());
-        }
 
         if (potentialCollisionsVoxel.isEmpty() && potentialCollisionsBB.isEmpty()) {
             return movement;

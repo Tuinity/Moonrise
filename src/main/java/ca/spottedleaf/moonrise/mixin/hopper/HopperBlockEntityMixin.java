@@ -23,6 +23,7 @@ import net.minecraft.world.level.block.entity.Hopper;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -188,7 +189,7 @@ public abstract class HopperBlockEntityMixin extends RandomizableContainerBlockE
         final int blockY = Mth.floor(y);
         final int blockZ = Mth.floor(z);
 
-        final LevelChunk chunk = level.getChunk(blockX >> 4, blockZ >> 4);
+        final LevelChunk chunk = (LevelChunk)level.getChunkSource().getChunk(blockX >> 4, blockZ >> 4, ChunkStatus.FULL, true);
 
         final BlockState state = ((GetBlockChunk)chunk).moonrise$getBlock(blockX, blockY, blockZ);
         final Block block = state.getBlock();

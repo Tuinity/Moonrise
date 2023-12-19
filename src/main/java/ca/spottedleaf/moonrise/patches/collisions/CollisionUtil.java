@@ -1584,41 +1584,13 @@ public final class CollisionUtil {
         return new Vec3(x, y, z);
     }
 
-    public static boolean isAlmostCollidingOnBorder(final WorldBorder worldborder, final AABB boundingBox) {
-        return isAlmostCollidingOnBorder(worldborder, boundingBox.minX, boundingBox.maxX, boundingBox.minZ, boundingBox.maxZ);
+    public static boolean isCollidingWithBorder(final WorldBorder worldborder, final AABB boundingBox) {
+        return isCollidingWithBorder(worldborder, boundingBox.minX, boundingBox.maxX, boundingBox.minZ, boundingBox.maxZ);
     }
 
-    public static boolean isAlmostCollidingOnBorder(final WorldBorder worldborder, final double boxMinX, final double boxMaxX,
-                                                    final double boxMinZ, final double boxMaxZ) {
-        final double borderMinX = worldborder.getMinX(); // -X
-        final double borderMaxX = worldborder.getMaxX(); // +X
-
-        final double borderMinZ = worldborder.getMinZ(); // -Z
-        final double borderMaxZ = worldborder.getMaxZ(); // +Z
-
-        return
-            // Not intersecting if we're smaller
-            !voxelShapeIntersect(
-                boxMinX + COLLISION_EPSILON, Double.NEGATIVE_INFINITY, boxMinZ + COLLISION_EPSILON,
-                boxMaxX - COLLISION_EPSILON, Double.POSITIVE_INFINITY, boxMaxZ - COLLISION_EPSILON,
-                borderMinX, Double.NEGATIVE_INFINITY, borderMinZ, borderMaxX, Double.POSITIVE_INFINITY, borderMaxZ
-            )
-            &&
-
-            // Are intersecting if we're larger
-            voxelShapeIntersect(
-                boxMinX - COLLISION_EPSILON, Double.NEGATIVE_INFINITY, boxMinZ - COLLISION_EPSILON,
-                boxMaxX + COLLISION_EPSILON, Double.POSITIVE_INFINITY, boxMaxZ + COLLISION_EPSILON,
-                borderMinX, Double.NEGATIVE_INFINITY, borderMinZ, borderMaxX, Double.POSITIVE_INFINITY, borderMaxZ
-            );
-    }
-
-    public static boolean isCollidingWithBorderEdge(final WorldBorder worldborder, final AABB boundingBox) {
-        return isCollidingWithBorderEdge(worldborder, boundingBox.minX, boundingBox.maxX, boundingBox.minZ, boundingBox.maxZ);
-    }
-
-    public static boolean isCollidingWithBorderEdge(final WorldBorder worldborder, final double boxMinX, final double boxMaxX,
-                                                    final double boxMinZ, final double boxMaxZ) {
+    public static boolean isCollidingWithBorder(final WorldBorder worldborder,
+                                                final double boxMinX, final double boxMaxX,
+                                                final double boxMinZ, final double boxMaxZ) {
         final double borderMinX = worldborder.getMinX(); // -X
         final double borderMaxX = worldborder.getMaxX(); // +X
 
@@ -1651,11 +1623,12 @@ public final class CollisionUtil {
         boolean ret = false;
 
         if ((collisionFlags & COLLISION_FLAG_CHECK_BORDER) != 0) {
-            if (CollisionUtil.isCollidingWithBorderEdge(world.getWorldBorder(), aabb)) {
+            final WorldBorder worldBorder = world.getWorldBorder();
+            if (CollisionUtil.isCollidingWithBorder(worldBorder, aabb) && entity != null && worldBorder.isInsideCloseToBorder(entity, aabb)) {
                 if (checkOnly) {
                     return true;
                 } else {
-                    final VoxelShape borderShape = world.getWorldBorder().getCollisionShape();
+                    final VoxelShape borderShape = worldBorder.getCollisionShape();
                     intoVoxel.add(borderShape);
                     ret = true;
                 }
