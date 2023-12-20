@@ -1591,11 +1591,11 @@ public final class CollisionUtil {
     public static boolean isCollidingWithBorder(final WorldBorder worldborder,
                                                 final double boxMinX, final double boxMaxX,
                                                 final double boxMinZ, final double boxMaxZ) {
-        final double borderMinX = worldborder.getMinX(); // -X
-        final double borderMaxX = worldborder.getMaxX(); // +X
+        final double borderMinX = Math.floor(worldborder.getMinX()); // -X
+        final double borderMaxX = Math.ceil(worldborder.getMaxX()); // +X
 
-        final double borderMinZ = worldborder.getMinZ(); // -Z
-        final double borderMaxZ = worldborder.getMaxZ(); // +Z
+        final double borderMinZ = Math.floor(worldborder.getMinZ()); // -Z
+        final double borderMaxZ = Math.ceil(worldborder.getMaxZ()); // +Z
 
         // inverted check for world border enclosing the specified box expanded by -EPSILON
         return (borderMinX - boxMinX) > CollisionUtil.COLLISION_EPSILON || (borderMaxX - boxMaxX) < -CollisionUtil.COLLISION_EPSILON ||
