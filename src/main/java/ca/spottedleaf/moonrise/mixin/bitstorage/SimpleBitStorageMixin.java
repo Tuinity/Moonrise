@@ -1,6 +1,5 @@
 package ca.spottedleaf.moonrise.mixin.bitstorage;
 
-import ca.spottedleaf.concurrentutil.util.IntegerUtil;
 import net.minecraft.util.BitStorage;
 import net.minecraft.util.SimpleBitStorage;
 import org.spongepowered.asm.mixin.Final;
@@ -27,33 +26,38 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
 
     @Shadow
     @Final
-    private int valuesPerLong;
+    private long mask;
+
+    @Shadow
+    @Final
+    private int size;
+
 
     @Unique
     private static final VarHandle LONG_ARRAY_HANDLE = MethodHandles.arrayElementVarHandle(long[].class);
 
-
     /*
-     This is how the indices are supposed to be computed:
-         final int dataIndex = index / this.valuesPerLong;
-         final int localIndex = (index % this.valuesPerLong) * this.bitsPerValue;
-     where valuesPerLong = 64 / this.bits
-     The additional add that Mojang uses is only for unsigned division, when in reality the above is signed division.
-     Thus, it is appropriate to use the signed division magic values which do not use an add.
+     Credit to https://lemire.me/blog/2019/02/08/faster-remainders-when-the-divisor-is-a-constant-beating-compilers-and-libdivide
+     and https://github.com/Vrganj for the algorithm to determine a magic value to use for both division and mod operations
+
      */
 
-
-
     @Unique
-    private static final long[] BETTER_MAGIC = new long[33];
+    private static final int[] BETTER_MAGIC = new int[33];
     static {
-        for (int i = 1; i < BETTER_MAGIC.length; ++i) {
-            BETTER_MAGIC[i] = IntegerUtil.getDivisorNumbers(64 / i);
+        // 20 bits of precision
+        // since index is always [0, 4095] (i.e 12 bits), multiplication by a magic value here (20 bits)
+        // fits exactly in an int and allows us to use integer arithmetic
+        for (int bits = 1; bits < BETTER_MAGIC.length; ++bits) {
+            BETTER_MAGIC[bits] = (0xFFFFF / (64 / bits)) + 1;
         }
     }
 
     @Unique
-    private long magic;
+    private int magic;
+
+    @Unique
+    private int mulBits;
 
     /**
      * @reason Init magic field
@@ -67,6 +71,10 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
     )
     private void init(final CallbackInfo ci) {
         this.magic = BETTER_MAGIC[this.bits];
+        this.mulBits = (64 / this.bits) * this.bits;
+        if (this.size > 4096) {
+            throw new IllegalStateException("Size > 4096 not supported");
+        }
     }
 
     /**
@@ -78,25 +86,20 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
     public int getAndSet(final int index, final int value) {
         // assume index/value in range
         // note: enforce atomic writes
-        final long magic = this.magic;
-        final int bits = this.bits;
-        final long mul = magic >>> 32;
-        final int dataIndex = (int)(((long)index * mul) >>> magic);
+        final int full = this.magic * index; // 20 bits of magic + 12 bits of index = barely int
+        final int divQ = full >>> 20;
+        final int divR = (full & 0xFFFFF) * this.mulBits >>> 20;
 
         final long[] dataArray = this.data;
 
-        final long data = dataArray[dataIndex];
-        final int valuesPerLong = this.valuesPerLong;
-        final long mask = (1L << bits) - 1; // avoid extra memory read
+        final long data = dataArray[divQ];
+        final long mask = this.mask;
 
+        final long write = data & ~(mask << divR) | ((long)value & mask) << divR;
 
-        final int bitIndex = (index - (dataIndex * valuesPerLong)) * bits;
-        final int prev = (int)(data >> bitIndex & mask);
-        final long write = data & ~(mask << bitIndex) | ((long)value & mask) << bitIndex;
+        dataArray[divQ] = write;
 
-        LONG_ARRAY_HANDLE.setOpaque(dataArray, dataIndex, write);
-
-        return prev;
+        return (int)(data >>> divR & mask);
     }
 
     /**
@@ -108,22 +111,18 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
     public void set(final int index, final int value) {
         // assume index/value in range
         // note: enforce atomic writes
-
-        final long magic = this.magic;
-        final int bits = this.bits;
-        final long mul = magic >>> 32;
-        final int dataIndex = (int)(((long)index * mul) >>> magic);
+        final int full = this.magic * index; // 20 bits of magic + 12 bits of index = barely int
+        final int divQ = full >>> 20;
+        final int divR = (full & 0xFFFFF) * this.mulBits >>> 20;
 
         final long[] dataArray = this.data;
 
-        final long data = dataArray[dataIndex];
-        final int valuesPerLong = this.valuesPerLong;
-        final long mask = (1L << bits) - 1; // avoid extra memory read
+        final long data = dataArray[divQ];
+        final long mask = this.mask;
 
-        final int bitIndex = (index - (dataIndex * valuesPerLong)) * bits;
-        final long write = data & ~(mask << bitIndex) | ((long)value & mask) << bitIndex;
+        final long write = data & ~(mask << divR) | ((long)value & mask) << divR;
 
-        LONG_ARRAY_HANDLE.setOpaque(dataArray, dataIndex, write);
+        dataArray[divQ] = write;
     }
 
     /**
@@ -135,17 +134,10 @@ public abstract class SimpleBitStorageMixin implements BitStorage {
     public int get(final int index) {
         // assume index in range
         // note: enforce atomic reads
-        final long magic = this.magic;
-        final int bits = this.bits;
-        final long mul = magic >>> 32;
-        final int dataIndex = (int)(((long)index * mul) >>> magic);
+        final int full = this.magic * index; // 20 bits of magic + 12 bits of index = barely int
+        final int divQ = full >>> 20;
+        final int divR = (full & 0xFFFFF) * this.mulBits >>> 20;
 
-        final long mask = (1L << bits) - 1; // avoid extra memory read
-        final long data = (long)LONG_ARRAY_HANDLE.getOpaque(this.data, dataIndex);
-        final int valuesPerLong = this.valuesPerLong;
-
-        final int bitIndex = (index - (dataIndex * valuesPerLong)) * bits;
-
-        return (int)(data >> bitIndex & mask);
+        return (int)(this.data[divQ] >>> divR & this.mask);
     }
 }
