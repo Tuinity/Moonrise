@@ -3,6 +3,7 @@ package ca.spottedleaf.moonrise.mixin.blockstate_propertyaccess;
 import ca.spottedleaf.moonrise.patches.blockstate_propertyaccess.util.ZeroCollidingReferenceStateTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.world.level.block.state.StateHolder;
 import net.minecraft.world.level.block.state.properties.Property;
 import org.spongepowered.asm.mixin.Final;
@@ -20,16 +21,15 @@ import java.util.Optional;
 public abstract class StateHolderMixin<O, S> {
 
     @Shadow
-    @Final
-    private ImmutableMap<Property<?>, Comparable<?>> values;
-
-    @Shadow
     private Table<Property<?>, Comparable<?>, S> neighbours;
 
     @Shadow
     @Final
     protected O owner;
 
+    @Shadow
+    @Final
+    private Reference2ObjectArrayMap<Property<?>, Comparable<?>> values;
 
     @Unique
     protected ZeroCollidingReferenceStateTable optimisedTable;

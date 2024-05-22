@@ -2,9 +2,9 @@ package ca.spottedleaf.moonrise.mixin.collisions;
 
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
-import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.MapCodec;
 import it.unimi.dsi.fastutil.HashCommon;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
@@ -34,10 +34,9 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
     @Shadow
     public abstract VoxelShape getCollisionShape(BlockGetter blockGetter, BlockPos blockPos, CollisionContext collisionContext);
 
-    protected BlockStateBaseMixin(Block object, ImmutableMap<Property<?>, Comparable<?>> immutableMap, MapCodec<BlockState> mapCodec) {
-        super(object, immutableMap, mapCodec);
+    protected BlockStateBaseMixin(Block object, Reference2ObjectArrayMap<Property<?>, Comparable<?>> reference2ObjectArrayMap, MapCodec<BlockState> mapCodec) {
+        super(object, reference2ObjectArrayMap, mapCodec);
     }
-
 
     @Unique
     private static final int RANDOM_OFFSET = 704237939;

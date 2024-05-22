@@ -1,8 +1,8 @@
 package ca.spottedleaf.moonrise.mixin.starlight.blockstate;
 
 import ca.spottedleaf.moonrise.patches.starlight.blockstate.StarlightAbstractBlockState;
-import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.MapCodec;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -36,8 +36,8 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
     @Unique
     private boolean isConditionallyFullOpaque;
 
-    protected BlockStateBaseMixin(final Block object, final ImmutableMap<Property<?>, Comparable<?>> immutableMap, final MapCodec<BlockState> mapCodec) {
-        super(object, immutableMap, mapCodec);
+    protected BlockStateBaseMixin(Block object, Reference2ObjectArrayMap<Property<?>, Comparable<?>> reference2ObjectArrayMap, MapCodec<BlockState> mapCodec) {
+        super(object, reference2ObjectArrayMap, mapCodec);
     }
 
     /**

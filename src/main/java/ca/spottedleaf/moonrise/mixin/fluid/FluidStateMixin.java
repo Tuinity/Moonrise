@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.fluid;
 
-import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.MapCodec;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateHolder;
 import net.minecraft.world.level.block.state.properties.Property;
@@ -21,8 +21,8 @@ public abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> {
     @Shadow
     public abstract Fluid getType();
 
-    protected FluidStateMixin(Fluid object, ImmutableMap<Property<?>, Comparable<?>> immutableMap, MapCodec<FluidState> mapCodec) {
-        super(object, immutableMap, mapCodec);
+    protected FluidStateMixin(Fluid object, Reference2ObjectArrayMap<Property<?>, Comparable<?>> reference2ObjectArrayMap, MapCodec<FluidState> mapCodec) {
+        super(object, reference2ObjectArrayMap, mapCodec);
     }
 
     @Unique

@@ -2,19 +2,19 @@ package ca.spottedleaf.moonrise.mixin.starlight.world;
 
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.starlight.world.StarlightWorld;
-import com.mojang.datafixers.util.Either;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
+import net.minecraft.server.level.ChunkResult;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.storage.WritableLevelData;
@@ -43,9 +43,9 @@ public abstract class ServerWorldMixin extends Level implements WorldGenLevel, S
             return null;
         }
 
-        final Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure> either = holder.getFutureIfPresentUnchecked(ChunkStatus.FULL).getNow(null);
+        final ChunkResult<ChunkAccess> result = holder.getFutureIfPresentUnchecked(ChunkStatus.FULL).getNow(null);
 
-        return either == null ? null : (LevelChunk)either.left().orElse(null);
+        return result == null ? null : (LevelChunk)result.orElse(null);
     }
 
     @Override

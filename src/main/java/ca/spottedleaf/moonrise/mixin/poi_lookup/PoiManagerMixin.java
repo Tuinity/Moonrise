@@ -1,23 +1,21 @@
 package ca.spottedleaf.moonrise.mixin.poi_lookup;
 
 import ca.spottedleaf.moonrise.patches.poi_lookup.PoiAccess;
-import com.mojang.datafixers.DataFixer;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.util.RandomSource;
-import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.ai.village.poi.PoiSection;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.chunk.storage.SectionStorage;
+import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,10 +26,9 @@ import java.util.stream.Stream;
 
 @Mixin(PoiManager.class)
 public abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
-    public PoiManagerMixin(Path path, Function<Runnable, Codec<PoiSection>> function, Function<Runnable, PoiSection> function2,
-                           DataFixer dataFixer, DataFixTypes dataFixTypes, boolean bl, RegistryAccess registryAccess,
-                           LevelHeightAccessor levelHeightAccessor) {
-        super(path, function, function2, dataFixer, dataFixTypes, bl, registryAccess, levelHeightAccessor);
+
+    public PoiManagerMixin(SimpleRegionStorage simpleRegionStorage, Function<Runnable, Codec<PoiSection>> function, Function<Runnable, PoiSection> function2, RegistryAccess registryAccess, LevelHeightAccessor levelHeightAccessor) {
+        super(simpleRegionStorage, function, function2, registryAccess, levelHeightAccessor);
     }
 
     /**

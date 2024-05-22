@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.slf4j.Logger;
 
 public final class SaveUtil {
@@ -34,9 +34,6 @@ public final class SaveUtil {
         } catch (final Throwable ex) {
             // failing to inject is not fatal so we catch anything here. if it fails, it will have correctly set lit to false
             // for Vanilla to relight on load and it will not set our lit tag so we will relight on load
-            if (ex instanceof ThreadDeath) {
-                throw (ThreadDeath)ex;
-            }
             LOGGER.warn("Failed to inject light data into save data for chunk " + chunk.getPos() + ", chunk light will be recalculated on its next load", ex);
         }
     }
@@ -131,9 +128,6 @@ public final class SaveUtil {
         } catch (final Throwable ex) {
             // failing to inject is not fatal so we catch anything here. if it fails, then we simply relight. Not a problem, we get correct
             // lighting in both cases.
-            if (ex instanceof ThreadDeath) {
-                throw (ThreadDeath)ex;
-            }
             LOGGER.warn("Failed to load light for chunk " + pos + ", light will be recalculated", ex);
         }
     }

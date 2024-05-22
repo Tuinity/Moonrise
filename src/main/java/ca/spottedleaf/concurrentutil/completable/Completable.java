@@ -54,8 +54,6 @@ public final class Completable<T> {
     private void completeWaiter(final BiConsumer<T, Throwable> consumer, final T result, final Throwable throwable) {
         try {
             consumer.accept(result, throwable);
-        } catch (final ThreadDeath death) {
-            throw death;
         } catch (final Throwable throwable2) {
             LOGGER.error("Failed to complete callback " + ConcurrentUtil.genericToString(consumer), throwable2);
         }

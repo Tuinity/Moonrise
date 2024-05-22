@@ -21,6 +21,10 @@ accessible field net/minecraft/world/level/chunk/PalettedContainer$Data storage 
 accessible field net/minecraft/world/level/chunk/PalettedContainer$Data palette Lnet/minecraft/world/level/chunk/Palette;
 
 
+# PaletteResize
+accessible class net/minecraft/world/level/chunk/PaletteResize
+
+
 # ChunkMap
 accessible field net/minecraft/server/level/ChunkMap level Lnet/minecraft/server/level/ServerLevel;
 accessible field net/minecraft/server/level/ChunkMap mainThreadExecutor Lnet/minecraft/util/thread/BlockableEventLoop;
@@ -29,6 +33,15 @@ accessible method net/minecraft/server/level/ChunkMap getUpdatingChunkIfPresent 
 accessible method net/minecraft/server/level/ChunkMap getVisibleChunkIfPresent (J)Lnet/minecraft/server/level/ChunkHolder;
 accessible method net/minecraft/server/level/ChunkMap getChunkQueueLevel (J)Ljava/util/function/IntSupplier;
 accessible method net/minecraft/server/level/ChunkMap releaseLightTicket (Lnet/minecraft/world/level/ChunkPos;)V
+accessible field net/minecraft/server/level/ChunkMap structureTemplateManager Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplateManager;
+accessible method net/minecraft/server/level/ChunkMap generator ()Lnet/minecraft/world/level/chunk/ChunkGenerator;
+accessible method net/minecraft/server/level/ChunkMap getDependencyStatus (Lnet/minecraft/world/level/chunk/ChunkStatus;I)Lnet/minecraft/world/level/chunk/ChunkStatus;
+mutable field net/minecraft/server/level/ChunkMap updatingChunkMap Lit/unimi/dsi/fastutil/longs/Long2ObjectLinkedOpenHashMap;
+mutable field net/minecraft/server/level/ChunkMap queueSorter Lnet/minecraft/server/level/ChunkTaskPriorityQueueSorter;
+mutable field net/minecraft/server/level/ChunkMap worldgenMailbox Lnet/minecraft/util/thread/ProcessorHandle;
+mutable field net/minecraft/server/level/ChunkMap mainThreadMailbox Lnet/minecraft/util/thread/ProcessorHandle;
+accessible method net/minecraft/server/level/ChunkMap setServerViewDistance (I)V
+accessible method net/minecraft/server/level/ChunkMap upgradeChunkTag (Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/nbt/CompoundTag;
 
 
 # ChunkHolder
@@ -124,3 +137,75 @@ accessible field net/minecraft/client/renderer/chunk/VisibilitySet data Ljava/ut
 # Level
 mutable field net/minecraft/world/level/Level blockEntityTickers Ljava/util/List;
 mutable field net/minecraft/world/level/Level pendingBlockEntityTickers Ljava/util/List;
+
+
+# PoiManager
+accessible method net/minecraft/world/entity/ai/village/poi/PoiManager setDirty (J)V
+
+
+# PlayerChunkSender
+accessible method net/minecraft/server/network/PlayerChunkSender sendChunk (Lnet/minecraft/server/network/ServerGamePacketListenerImpl;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/LevelChunk;)V
+
+
+# ChunkStatus
+accessible class net/minecraft/world/level/chunk/ChunkStatus$GenerationTask
+accessible class net/minecraft/world/level/chunk/ChunkStatus$LoadingTask
+accessible class net/minecraft/world/level/chunk/ChunkStatus$SimpleGenerationTask
+
+
+# RegionFileStorage
+accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage getRegionFile (Lnet/minecraft/world/level/ChunkPos;)Lnet/minecraft/world/level/chunk/storage/RegionFile;
+extendable class net/minecraft/world/level/chunk/storage/RegionFileStorage
+accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage <init> (Ljava/nio/file/Path;Z)V
+
+# ChunkMap.DistanceManager
+accessible class net/minecraft/server/level/ChunkMap$DistanceManager
+
+
+# DistanceManager
+mutable field net/minecraft/server/level/DistanceManager playersPerChunk Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;
+mutable field net/minecraft/server/level/DistanceManager tickets Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;
+mutable field net/minecraft/server/level/DistanceManager ticketTracker Lnet/minecraft/server/level/DistanceManager$ChunkTicketTracker;
+mutable field net/minecraft/server/level/DistanceManager tickingTicketsTracker Lnet/minecraft/server/level/TickingTracker;
+mutable field net/minecraft/server/level/DistanceManager playerTicketManager Lnet/minecraft/server/level/DistanceManager$PlayerTicketTracker;
+mutable field net/minecraft/server/level/DistanceManager chunksToUpdateFutures Ljava/util/Set;
+mutable field net/minecraft/server/level/DistanceManager ticketThrottler Lnet/minecraft/server/level/ChunkTaskPriorityQueueSorter;
+mutable field net/minecraft/server/level/DistanceManager ticketThrottlerInput Lnet/minecraft/util/thread/ProcessorHandle;
+mutable field net/minecraft/server/level/DistanceManager ticketThrottlerReleaser Lnet/minecraft/util/thread/ProcessorHandle;
+mutable field net/minecraft/server/level/DistanceManager ticketsToRelease Lit/unimi/dsi/fastutil/longs/LongSet;
+mutable field net/minecraft/server/level/DistanceManager mainThreadExecutor Ljava/util/concurrent/Executor;
+
+
+# DistanceManager$ChunkTicketTracker
+accessible class net/minecraft/server/level/DistanceManager$ChunkTicketTracker
+
+
+# DistanceManager$PlayerTicketTracker
+accessible class net/minecraft/server/level/DistanceManager$PlayerTicketTracker
+
+
+# DistanceManager$FixedPlayerDistanceChunkTracker
+accessible class net/minecraft/server/level/DistanceManager$FixedPlayerDistanceChunkTracker
+
+
+# Ticket
+accessible field net/minecraft/server/level/Ticket key Ljava/lang/Object;
+accessible field net/minecraft/server/level/TicketType timeout J
+
+
+# ServerChunkCache
+accessible method net/minecraft/server/level/ServerChunkCache runDistanceManagerUpdates ()Z
+accessible field net/minecraft/server/level/ServerChunkCache level Lnet/minecraft/server/level/ServerLevel;
+accessible field net/minecraft/server/level/ServerChunkCache mainThreadProcessor Lnet/minecraft/server/level/ServerChunkCache$MainThreadExecutor;
+
+
+# ServerChunkCache$MainThreadExecutor
+accessible class net/minecraft/server/level/ServerChunkCache$MainThreadExecutor
+
+
+# ServerLevel
+mutable field net/minecraft/server/level/ServerLevel entityManager Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;
+
+
+# EntityStorage
+accessible method net/minecraft/world/level/chunk/storage/EntityStorage readChunkPos (Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/world/level/ChunkPos;

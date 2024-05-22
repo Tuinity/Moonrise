@@ -280,8 +280,6 @@ public final class PrioritisedThreadPool {
                             break;
                         }
                         ret = true;
-                    } catch (final ThreadDeath death) {
-                        throw death; // goodbye world...
                     } catch (final Throwable throwable) {
                         LOGGER.error("Exception thrown from thread '" + this.getName() + "' in queue '" + queue.toString() + "'", throwable);
                     }
