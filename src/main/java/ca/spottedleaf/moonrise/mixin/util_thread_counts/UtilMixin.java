@@ -56,7 +56,7 @@ public abstract class UtilMixin {
      * @author Spottedleaf
      */
     @Overwrite
-    private static ExecutorService makeExecutor(final String name) {
+    public static ExecutorService makeExecutor(final String name) {
         final int threads = getThreadCounts(1, getMaxThreads());
         if (threads <= 0) {
             return MoreExecutors.newDirectExecutorService();
