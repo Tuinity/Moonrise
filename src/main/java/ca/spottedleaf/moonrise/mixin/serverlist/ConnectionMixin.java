@@ -2,12 +2,10 @@ package ca.spottedleaf.moonrise.mixin.serverlist;
 
 import ca.spottedleaf.moonrise.patches.serverlist.ServerListConnection;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import net.minecraft.client.multiplayer.ServerStatusPinger;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,9 +13,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import java.net.InetSocketAddress;
 
 @Mixin(Connection.class)
 public abstract class ConnectionMixin extends SimpleChannelInboundHandler<Packet<?>> implements ServerListConnection {

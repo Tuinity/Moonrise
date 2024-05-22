@@ -43,7 +43,7 @@ public abstract class UtilMixin {
             // [5, 8]
             value = cpus <= 6 ? 3 : 4;
         } else {
-            value = Math.min(8, cpus / 2);
+            value = (cpus - 4) / 2;
         }
 
         return Mth.clamp(value, min, max);

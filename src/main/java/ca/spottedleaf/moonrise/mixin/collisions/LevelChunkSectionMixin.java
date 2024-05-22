@@ -2,6 +2,9 @@ package ca.spottedleaf.moonrise.mixin.collisions;
 
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevelChunkSection;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import net.minecraft.util.BitStorage;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.Palette;
@@ -16,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import java.util.Iterator;
 import java.util.function.Predicate;
 
 @Mixin(LevelChunkSection.class)
@@ -74,20 +78,35 @@ public abstract class LevelChunkSectionMixin implements CollisionLevelChunkSecti
         if (this.maybeHas((final BlockState state) -> !state.isAir())) {
             final PalettedContainer.Data<BlockState> data = this.states.data;
             final Palette<BlockState> palette = data.palette;
+            final int paletteSize = palette.getSize();
+            final BitStorage storage = data.storage;
 
-            data.storage.getAll((final int paletteIdx) -> {
+            final Int2IntOpenHashMap counts = new Int2IntOpenHashMap(paletteSize);
+            if (paletteSize == 1) {
+                counts.addTo(0, storage.getSize());
+            } else {
+                storage.getAll((final int paletteIdx) -> {
+                    counts.addTo(paletteIdx, 1);
+                });
+            }
+
+            for (final Iterator<Int2IntMap.Entry> iterator = counts.int2IntEntrySet().fastIterator(); iterator.hasNext();) {
+                final Int2IntMap.Entry entry = iterator.next();
+                final int paletteIdx = entry.getIntKey();
+                final int paletteCount = entry.getIntValue();
+
                 final BlockState state = palette.valueFor(paletteIdx);
 
                 if (state.isAir()) {
-                    return;
+                    continue;
                 }
 
                 if (CollisionUtil.isSpecialCollidingBlock(state)) {
-                    ++this.specialCollidingBlocks;
+                    this.specialCollidingBlocks += paletteCount;
                 }
-                this.nonEmptyBlockCount += 1;
+                this.nonEmptyBlockCount += paletteCount;
                 if (state.isRandomlyTicking()) {
-                    this.tickingBlockCount += 1;
+                    this.tickingBlockCount += paletteCount;
                 }
 
                 final FluidState fluid = state.getFluidState();
@@ -95,10 +114,10 @@ public abstract class LevelChunkSectionMixin implements CollisionLevelChunkSecti
                 if (!fluid.isEmpty()) {
                     //this.nonEmptyBlockCount += count; // fix vanilla bug: make non empty block count correct
                     if (fluid.isRandomlyTicking()) {
-                        this.tickingFluidCount += 1;
+                        this.tickingFluidCount += paletteCount;
                     }
                 }
-            });
+            }
         }
     }
 

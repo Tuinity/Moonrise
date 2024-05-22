@@ -13,12 +13,12 @@ public final class ZeroCollidingReferenceStateTable {
 
     // upper 32 bits: starting index
     // lower 32 bits: bitset for contained ids
-    protected final long[] this_index_table;
-    protected final Comparable<?>[] this_table;
-    protected final StateHolder<?, ?> this_state;
+    private final long[] this_index_table;
+    private final Comparable<?>[] this_table;
+    private final StateHolder<?, ?> this_state;
 
-    protected long[] index_table;
-    protected StateHolder<?, ?>[][] value_table;
+    private long[] index_table;
+    private StateHolder<?, ?>[][] value_table;
 
     private boolean inited;
 

@@ -27,7 +27,7 @@ public abstract class ServerGamePacketListenerImplMixin implements ServerCommonP
             )
     )
     private void refuseSPKick(final ServerCommonPacketListenerImpl instance, final Component component) {
-        if (Component.translatable("disconnect.timeout").equals(component) && this.isSingleplayerOwner()) {
+        if (this.isSingleplayerOwner() && Component.translatable("disconnect.timeout").equals(component)) {
             return;
         }
 
