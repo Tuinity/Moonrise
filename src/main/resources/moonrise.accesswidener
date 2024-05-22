@@ -33,9 +33,8 @@ accessible method net/minecraft/server/level/ChunkMap getUpdatingChunkIfPresent 
 accessible method net/minecraft/server/level/ChunkMap getVisibleChunkIfPresent (J)Lnet/minecraft/server/level/ChunkHolder;
 accessible method net/minecraft/server/level/ChunkMap getChunkQueueLevel (J)Ljava/util/function/IntSupplier;
 accessible method net/minecraft/server/level/ChunkMap releaseLightTicket (Lnet/minecraft/world/level/ChunkPos;)V
-accessible field net/minecraft/server/level/ChunkMap structureTemplateManager Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplateManager;
 accessible method net/minecraft/server/level/ChunkMap generator ()Lnet/minecraft/world/level/chunk/ChunkGenerator;
-accessible method net/minecraft/server/level/ChunkMap getDependencyStatus (Lnet/minecraft/world/level/chunk/ChunkStatus;I)Lnet/minecraft/world/level/chunk/ChunkStatus;
+accessible method net/minecraft/server/level/ChunkMap getDependencyStatus (Lnet/minecraft/world/level/chunk/status/ChunkStatus;I)Lnet/minecraft/world/level/chunk/status/ChunkStatus;
 mutable field net/minecraft/server/level/ChunkMap updatingChunkMap Lit/unimi/dsi/fastutil/longs/Long2ObjectLinkedOpenHashMap;
 mutable field net/minecraft/server/level/ChunkMap queueSorter Lnet/minecraft/server/level/ChunkTaskPriorityQueueSorter;
 mutable field net/minecraft/server/level/ChunkMap worldgenMailbox Lnet/minecraft/util/thread/ProcessorHandle;
@@ -148,15 +147,14 @@ accessible method net/minecraft/server/network/PlayerChunkSender sendChunk (Lnet
 
 
 # ChunkStatus
-accessible class net/minecraft/world/level/chunk/ChunkStatus$GenerationTask
-accessible class net/minecraft/world/level/chunk/ChunkStatus$LoadingTask
-accessible class net/minecraft/world/level/chunk/ChunkStatus$SimpleGenerationTask
+accessible class net/minecraft/world/level/chunk/status/ChunkStatus$GenerationTask
+accessible class net/minecraft/world/level/chunk/status/ChunkStatus$LoadingTask
 
 
 # RegionFileStorage
 accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage getRegionFile (Lnet/minecraft/world/level/ChunkPos;)Lnet/minecraft/world/level/chunk/storage/RegionFile;
 extendable class net/minecraft/world/level/chunk/storage/RegionFileStorage
-accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage <init> (Ljava/nio/file/Path;Z)V
+accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage <init> (Lnet/minecraft/world/level/chunk/storage/RegionStorageInfo;Ljava/nio/file/Path;Z)V
 
 # ChunkMap.DistanceManager
 accessible class net/minecraft/server/level/ChunkMap$DistanceManager
