@@ -35,8 +35,8 @@ public final class StarLightInterface {
     /**
      * Can be {@code null}, indicating the light is all empty.
      */
-    protected final Level world;
-    protected final LightChunkGetter lightAccess;
+    public final Level world;
+    public final LightChunkGetter lightAccess;
 
     protected final ArrayDeque<SkyStarLightEngine> cachedSkyPropagators;
     protected final ArrayDeque<BlockStarLightEngine> cachedBlockPropagators;
@@ -47,10 +47,10 @@ public final class StarLightInterface {
     protected final LayerLightEventListener blockReader;
     protected final boolean isClientSide;
 
-    protected final int minSection;
-    protected final int maxSection;
-    protected final int minLightSection;
-    protected final int maxLightSection;
+    public final int minSection;
+    public final int maxSection;
+    public final int minLightSection;
+    public final int maxLightSection;
 
     public final LevelLightEngine lightEngine;
 
@@ -328,7 +328,7 @@ public final class StarLightInterface {
         return this.lightAccess;
     }
 
-    protected final SkyStarLightEngine getSkyLightEngine() {
+    public SkyStarLightEngine getSkyLightEngine() {
         if (this.cachedSkyPropagators == null) {
             return null;
         }
@@ -343,7 +343,7 @@ public final class StarLightInterface {
         return ret;
     }
 
-    protected final void releaseSkyLightEngine(final SkyStarLightEngine engine) {
+    public void releaseSkyLightEngine(final SkyStarLightEngine engine) {
         if (this.cachedSkyPropagators == null) {
             return;
         }
@@ -352,7 +352,7 @@ public final class StarLightInterface {
         }
     }
 
-    protected final BlockStarLightEngine getBlockLightEngine() {
+    public BlockStarLightEngine getBlockLightEngine() {
         if (this.cachedBlockPropagators == null) {
             return null;
         }
@@ -367,7 +367,7 @@ public final class StarLightInterface {
         return ret;
     }
 
-    protected final void releaseBlockLightEngine(final BlockStarLightEngine engine) {
+    public void releaseBlockLightEngine(final BlockStarLightEngine engine) {
         if (this.cachedBlockPropagators == null) {
             return;
         }
@@ -526,18 +526,18 @@ public final class StarLightInterface {
             return;
         }
 
-        final SkyStarLightEngine skyEngine = this.getSkyLightEngine();
-        final BlockStarLightEngine blockEngine = this.getBlockLightEngine();
-
-        try {
-            LightQueue.ChunkTasks task;
-            while ((task = this.lightQueue.removeFirstTask()) != null) {
-                if (task.lightTasks != null) {
-                    for (final Runnable run : task.lightTasks) {
-                        run.run();
-                    }
+        LightQueue.ChunkTasks task;
+        while ((task = this.lightQueue.removeFirstTask()) != null) {
+            if (task.lightTasks != null) {
+                for (final Runnable run : task.lightTasks) {
+                    run.run();
                 }
+            }
 
+            final SkyStarLightEngine skyEngine = this.getSkyLightEngine();
+            final BlockStarLightEngine blockEngine = this.getBlockLightEngine();
+
+            try {
                 final long coordinate = task.chunkCoordinate;
                 final int chunkX = CoordinateUtils.getChunkX(coordinate);
                 final int chunkZ = CoordinateUtils.getChunkZ(coordinate);
@@ -558,12 +558,12 @@ public final class StarLightInterface {
                 if (blockEngine != null && task.queuedEdgeChecksBlock != null) {
                     blockEngine.checkChunkEdges(this.lightAccess, chunkX, chunkZ, task.queuedEdgeChecksBlock);
                 }
-
-                task.onComplete.complete(null);
+            } finally {
+                this.releaseSkyLightEngine(skyEngine);
+                this.releaseBlockLightEngine(blockEngine);
             }
-        } finally {
-            this.releaseSkyLightEngine(skyEngine);
-            this.releaseBlockLightEngine(blockEngine);
+
+            task.onComplete.complete(null);
         }
     }
 
