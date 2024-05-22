@@ -38,6 +38,7 @@
     "collisions.VoxelShapeMixin",
     "explosions.ExplosionMixin",
     "explosions.ExplosionProfileMixin",
+    "farm_block.FarmBlockMixin",
     "fluid.FlowingFluidMixin",
     "fluid.FluidStateMixin",
     "keep_alive_client.ServerGamePacketListenerImplMixin",
@@ -65,8 +66,8 @@
     "collisions.LiquidBlockRendererMixin",
     "collisions.ParticleMixin",
     "profiler.MinecraftMixin",
-    "serverlist.ServerSelectionListMixin",
     "serverlist.ClientConnectionMixin",
+    "serverlist.ServerSelectionListMixin",
     "starlight.multiplayer.ClientPacketListenerMixin",
     "starlight.world.ClientLevelMixin"
   ],
