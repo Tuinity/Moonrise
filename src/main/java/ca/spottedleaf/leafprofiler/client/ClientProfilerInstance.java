@@ -27,7 +27,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
         if (MEASURE_CPU_TIME) {
             THREAD_MX_BEAN.setThreadCpuTimeEnabled(true);
         } else {
-            LOGGER.warn("TickRegionScheduler CPU time measurement is not available");
+            LOGGER.warn("ClientProfilerInstance CPU time measurement is not available");
         }
     }
 

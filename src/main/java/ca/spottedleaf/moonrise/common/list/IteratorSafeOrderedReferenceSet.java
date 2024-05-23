@@ -9,16 +9,16 @@ public final class IteratorSafeOrderedReferenceSet<E> {
 
     public static final int ITERATOR_FLAG_SEE_ADDITIONS = 1 << 0;
 
-    protected final Reference2IntLinkedOpenHashMap<E> indexMap;
-    protected int firstInvalidIndex = -1;
+    private final Reference2IntLinkedOpenHashMap<E> indexMap;
+    private int firstInvalidIndex = -1;
 
     /* list impl */
-    protected E[] listElements;
-    protected int listSize;
+    private E[] listElements;
+    private int listSize;
 
-    protected final double maxFragFactor;
+    private final double maxFragFactor;
 
-    protected int iteratorCount;
+    private int iteratorCount;
 
     public IteratorSafeOrderedReferenceSet() {
         this(16, 0.75f, 16, 0.2);
@@ -74,7 +74,7 @@ public final class IteratorSafeOrderedReferenceSet<E> {
     }
     */
 
-    protected final double getFragFactor() {
+    private double getFragFactor() {
         return 1.0 - ((double)this.indexMap.size() / (double)this.listSize);
     }
 
@@ -148,7 +148,7 @@ public final class IteratorSafeOrderedReferenceSet<E> {
         return true;
     }
 
-    protected void defrag() {
+    private void defrag() {
         if (this.firstInvalidIndex < 0) {
             return; // nothing to do
         }
@@ -236,17 +236,17 @@ public final class IteratorSafeOrderedReferenceSet<E> {
 
     }
 
-    protected static final class BaseIterator<E> implements IteratorSafeOrderedReferenceSet.Iterator<E> {
+    private static final class BaseIterator<E> implements IteratorSafeOrderedReferenceSet.Iterator<E> {
 
-        protected final IteratorSafeOrderedReferenceSet<E> set;
-        protected final boolean canFinish;
-        protected final int maxIndex;
-        protected int nextIndex;
-        protected E pendingValue;
-        protected boolean finished;
-        protected E lastReturned;
+        private final IteratorSafeOrderedReferenceSet<E> set;
+        private final boolean canFinish;
+        private final int maxIndex;
+        private int nextIndex;
+        private E pendingValue;
+        private boolean finished;
+        private E lastReturned;
 
-        protected BaseIterator(final IteratorSafeOrderedReferenceSet<E> set, final boolean canFinish, final int maxIndex) {
+        private BaseIterator(final IteratorSafeOrderedReferenceSet<E> set, final boolean canFinish, final int maxIndex) {
             this.set = set;
             this.canFinish = canFinish;
             this.maxIndex = maxIndex;

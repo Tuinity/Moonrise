@@ -9,12 +9,6 @@ import net.minecraft.world.phys.Vec3;
 
 public final class CoordinateUtils {
 
-    // dx, dz are relative to the target chunk
-    // dx, dz in [-radius, radius]
-    public static int getNeighbourMappedIndex(final int dx, final int dz, final int radius) {
-        return (dx + radius) + (2 * radius + 1)*(dz + radius);
-    }
-
     // the chunk keys are compatible with vanilla
 
     public static long getChunkKey(final BlockPos pos) {
@@ -103,24 +97,6 @@ public final class CoordinateUtils {
 
     public static int getChunkSectionZ(final long key) {
         return (int)(key << (Long.SIZE - (SECTION_Z_SHIFT + SECTION_Z_BITS)) >> (Long.SIZE - SECTION_Z_BITS));
-    }
-
-    // the block coordinates are not necessarily compatible with vanilla's
-
-    public static int getBlockCoordinate(final double blockCoordinate) {
-        return Mth.floor(blockCoordinate);
-    }
-
-    public static long getBlockKey(final int x, final int y, final int z) {
-        return ((long)x & 0x7FFFFFF) | (((long)z & 0x7FFFFFF) << 27) | ((long)y << 54);
-    }
-
-    public static long getBlockKey(final BlockPos pos) {
-        return ((long)pos.getX() & 0x7FFFFFF) | (((long)pos.getZ() & 0x7FFFFFF) << 27) | ((long)pos.getY() << 54);
-    }
-
-    public static long getBlockKey(final Entity entity) {
-        return ((long)entity.getX() & 0x7FFFFFF) | (((long)entity.getZ() & 0x7FFFFFF) << 27) | ((long)entity.getY() << 54);
     }
 
     public static int getBlockX(final Vec3 pos) {

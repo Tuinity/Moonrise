@@ -7,15 +7,24 @@ import java.util.NoSuchElementException;
 
 public final class ReferenceList<E> implements Iterable<E> {
 
-    protected final Reference2IntOpenHashMap<E> referenceToIndex = new Reference2IntOpenHashMap<>(2, 0.8f);
+    private final Reference2IntOpenHashMap<E> referenceToIndex = new Reference2IntOpenHashMap<>(2, 0.8f);
     {
         this.referenceToIndex.defaultReturnValue(Integer.MIN_VALUE);
     }
 
-    protected static final Object[] EMPTY_LIST = new Object[0];
+    private static final Object[] EMPTY_LIST = new Object[0];
 
-    protected Object[] references = EMPTY_LIST;
-    protected int count;
+    private E[] references;
+    private int count;
+
+    public ReferenceList() {
+        this((E[])EMPTY_LIST, 0);
+    }
+
+    public ReferenceList(final E[] array, final int count) {
+        this.references = array;
+        this.count = count;
+    }
 
     public int size() {
         return this.count;
@@ -52,7 +61,7 @@ public final class ReferenceList<E> implements Iterable<E> {
             return false; // already in this list
         }
 
-        Object[] list = this.references;
+        E[] list = this.references;
 
         if (list.length == count) {
             // resize required
@@ -69,14 +78,18 @@ public final class ReferenceList<E> implements Iterable<E> {
         if (index < 0 || index >= this.count) {
             throw new IndexOutOfBoundsException("Index: " + index + " is out of bounds, size: " + this.count);
         }
-        return (E)this.references[index];
+        return this.references[index];
     }
 
     public E getUnchecked(final int index) {
-        return (E)this.references[index];
+        return this.references[index];
     }
 
     public Object[] getRawData() {
+        return this.references;
+    }
+
+    public E[] getRawDataUnchecked() {
         return this.references;
     }
 
@@ -102,7 +115,7 @@ public final class ReferenceList<E> implements Iterable<E> {
                 if (this.current >= ReferenceList.this.count) {
                     throw new NoSuchElementException();
                 }
-                return this.lastRet = (E)ReferenceList.this.references[this.current++];
+                return this.lastRet = ReferenceList.this.references[this.current++];
             }
 
             @Override

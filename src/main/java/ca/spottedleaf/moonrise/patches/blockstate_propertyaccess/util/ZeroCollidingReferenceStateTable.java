@@ -24,7 +24,7 @@ public final class ZeroCollidingReferenceStateTable {
 
     public ZeroCollidingReferenceStateTable(final StateHolder<?, ?> state, final Map<Property<?>, Comparable<?>> this_map) {
         this.this_state = state;
-        this.this_index_table = this.create_table(this_map.keySet());
+        this.this_index_table = create_table(this_map.keySet());
 
         int max_id = -1;
         for (final Property<?> property : this_map.keySet()) {
@@ -49,7 +49,7 @@ public final class ZeroCollidingReferenceStateTable {
         final Set<Property<?>> combined = new HashSet<>(table.rowKeySet());
         combined.addAll(this_map.keySet());
 
-        this.index_table = this.create_table(combined);
+        this.index_table = create_table(combined);
 
         int max_id = -1;
         for (final Property<?> property : combined) {
@@ -90,8 +90,7 @@ public final class ZeroCollidingReferenceStateTable {
         }
     }
 
-
-    protected long[] create_table(final Collection<Property<?>> collection) {
+    private static long[] create_table(final Collection<Property<?>> collection) {
         int max_id = -1;
         for (final Property<?> property : collection) {
             final int id = ((PropertyAccess)property).moonrise$getId();
@@ -143,7 +142,7 @@ public final class ZeroCollidingReferenceStateTable {
         return values[withId];
     }
 
-    protected static int lookup_vindex(final Property<?> property, final long[] index_table) {
+    private static int lookup_vindex(final Property<?> property, final long[] index_table) {
         final int id = ((PropertyAccess)property).moonrise$getId();
         final long bitset_mask = (1L << (id & 31));
         final long lower_mask = bitset_mask - 1;

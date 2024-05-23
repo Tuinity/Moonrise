@@ -115,7 +115,6 @@ public abstract class LevelChunkMixin extends ChunkAccess implements GetBlockChu
 
         final LevelChunkSection section = sections[sectionY];
 
-        // note: when empty hasOnlyAir() is true, so we always fall to defaultBlockState
         if (!section.hasOnlyAir()) {
             final int index = (x & 15) | ((z & 15) << 4) | ((y & 15) << (4+4));
             return section.states.get(index);

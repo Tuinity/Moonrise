@@ -9,7 +9,7 @@ import net.minecraft.world.level.chunk.GlobalPalette;
 
 public final class IBlockDataList {
 
-    static final GlobalPalette<BlockState> GLOBAL_PALETTE = new GlobalPalette<>(Block.BLOCK_STATE_REGISTRY);
+    private static final GlobalPalette<BlockState> GLOBAL_PALETTE = new GlobalPalette<>(Block.BLOCK_STATE_REGISTRY);
 
     // map of location -> (index | (location << 16) | (palette id << 32))
     private final Short2LongOpenHashMap map = new Short2LongOpenHashMap(2, 0.8f);
