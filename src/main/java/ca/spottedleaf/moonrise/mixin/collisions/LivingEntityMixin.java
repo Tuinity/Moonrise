@@ -1,6 +1,5 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
-import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevel;
 import net.minecraft.world.entity.Attackable;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
@@ -12,7 +11,6 @@ import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(LivingEntity.class)

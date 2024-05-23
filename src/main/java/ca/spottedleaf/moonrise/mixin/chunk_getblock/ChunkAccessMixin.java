@@ -59,14 +59,16 @@ public abstract class ChunkAccessMixin implements BlockGetter, BiomeManager.Nois
         int sectionY = (biomeY >> 2) - this.minSection;
         int rel = biomeY & 3;
 
+        final LevelChunkSection[] sections = this.sections;
+
         if (sectionY < 0) {
             sectionY = 0;
             rel = 0;
-        } else if (sectionY >= this.sections.length) {
-            sectionY = this.sections.length - 1;
+        } else if (sectionY >= sections.length) {
+            sectionY = sections.length - 1;
             rel = 3;
         }
 
-        return this.sections[sectionY].getNoiseBiome(biomeX & 3, rel, biomeZ & 3);
+        return sections[sectionY].getNoiseBiome(biomeX & 3, rel, biomeZ & 3);
     }
 }

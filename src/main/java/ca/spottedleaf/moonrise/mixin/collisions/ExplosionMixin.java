@@ -1,10 +1,10 @@
-package ca.spottedleaf.moonrise.mixin.explosions;
+package ca.spottedleaf.moonrise.mixin.collisions;
 
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_getblock.GetBlockChunk;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
-import ca.spottedleaf.moonrise.patches.explosions.ExplosionBlockCache;
+import ca.spottedleaf.moonrise.patches.collisions.ExplosionBlockCache;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;

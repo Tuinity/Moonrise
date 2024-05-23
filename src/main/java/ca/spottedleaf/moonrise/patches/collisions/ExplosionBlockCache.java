@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.patches.explosions;
+package ca.spottedleaf.moonrise.patches.collisions;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -16,8 +16,8 @@ public final class ExplosionBlockCache {
     public Boolean shouldExplode; // null -> not called yet
     public VoxelShape cachedCollisionShape;
 
-    public ExplosionBlockCache(long key, BlockPos immutablePos, BlockState blockState, FluidState fluidState, float resistance,
-                               boolean outOfWorld) {
+    public ExplosionBlockCache(final long key, final BlockPos immutablePos, final BlockState blockState,
+                               final FluidState fluidState, final float resistance, final boolean outOfWorld) {
         this.key = key;
         this.immutablePos = immutablePos;
         this.blockState = blockState;
