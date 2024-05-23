@@ -22,8 +22,8 @@ public abstract class FarmBlockMixin {
      * @author Spottedleaf
      */
     @Overwrite
-    private static boolean isNearWater(final LevelReader world0, final BlockPos pos) {
-        final ChunkSource chunkCache = ((Level)world0).getChunkSource();
+    public static boolean isNearWater(final LevelReader world, final BlockPos pos) {
+        final ChunkSource chunkCache = ((Level)world).getChunkSource();
         final int xOff = pos.getX();
         final int yOff = pos.getY();
         final int zOff = pos.getZ();

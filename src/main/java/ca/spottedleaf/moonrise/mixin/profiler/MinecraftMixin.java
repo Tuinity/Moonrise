@@ -32,7 +32,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
      * @author Spottedleaf
      */
     @Overwrite
-    private ProfilerFiller constructProfiler(final boolean shouldRenderFPSPie, final SingleTickProfiler singleTickProfiler) {
+    public ProfilerFiller constructProfiler(final boolean shouldRenderFPSPie, final SingleTickProfiler singleTickProfiler) {
         if (shouldRenderFPSPie) {
             this.fpsPieProfiler.enable();
         } else {

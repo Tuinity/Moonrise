@@ -129,7 +129,7 @@ public abstract class PalettedContainerMixin<T> implements PaletteResize<T>, Pal
      * @author Spottedleaf
      */
     @Overwrite
-    private T getAndSet(final int index, final T value) {
+    public T getAndSet(final int index, final T value) {
         final int paletteIdx = this.data.palette.idFor(value);
         final int prev = this.data.storage.getAndSet(index, paletteIdx);
         return this.readPalette(prev);
