@@ -254,3 +254,7 @@ mutable field net/minecraft/client/multiplayer/ClientLevel entityStorage Lnet/mi
 # ClientLevel$EntityCallbacks
 accessible class net/minecraft/client/multiplayer/ClientLevel$EntityCallbacks
 accessible method net/minecraft/client/multiplayer/ClientLevel$EntityCallbacks <init> (Lnet/minecraft/client/multiplayer/ClientLevel;)V
+
+
+# StructureTemplate$Palette
+mutable field net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$Palette cache Ljava/util/Map;

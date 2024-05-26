@@ -43,6 +43,7 @@
     "chunk_system.ServerPlayerMixin",
     "chunk_system.SortedArraySetMixin",
     "chunk_system.StructureCheckMixin",
+    "chunk_system.StructureTemplate$PaletteMixin",
     "chunk_system.TicketMixin",
     "collisions.ArmorStandMixin",
     "collisions.ArrayVoxelShapeMixin",
