@@ -32,21 +32,16 @@ repositories {
     }
 }
 
+configurations.implementation {
+    extendsFrom(configurations.shadow)
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    implementation(
-            group: 'ca.spottedleaf',
-            name: 'concurrentutil',
-            version: '0.0.1-SNAPSHOT'
-    )
-    shadow(
-            group: 'ca.spottedleaf',
-            name: 'concurrentutil',
-            version: '0.0.1-SNAPSHOT'
-    )
+    shadow('ca.spottedleaf:concurrentutil:0.0.1-SNAPSHOT')
 }
 
 processResources {
