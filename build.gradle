@@ -25,7 +25,11 @@ base {
 }
 
 repositories {
-    mavenLocal()
+    mavenLocal {
+        mavenContent {
+            includeModule("ca.spottedleaf", "concurrentutil")
+        }
+    }
 }
 
 dependencies {
