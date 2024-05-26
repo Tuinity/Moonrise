@@ -88,10 +88,12 @@ jar {
     }
 }
 
+shadowJar {
+    archiveClassifier = "dev-all"
+    destinationDirectory = layout.buildDirectory.dir("devlibs")
+}
 remapJar {
-    dependsOn(shadowJar)
-    mustRunAfter(shadowJar)
-    inputFile = file(shadowJar.archivePath)
+    inputFile = shadowJar.archiveFile
 }
 
 shadowJar {
