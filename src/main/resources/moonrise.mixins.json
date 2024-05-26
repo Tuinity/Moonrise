@@ -97,6 +97,7 @@
     "chunk_system.OptionsMixin",
     "collisions.LiquidBlockRendererMixin",
     "collisions.ParticleMixin",
+    "render.SectionRenderDispatcherMixin",
     "serverlist.ClientConnectionMixin",
     "serverlist.ServerSelectionListMixin",
     "starlight.multiplayer.ClientPacketListenerMixin"

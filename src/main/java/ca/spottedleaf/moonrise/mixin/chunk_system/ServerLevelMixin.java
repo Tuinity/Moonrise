@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.ChunkDataController;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.EntityDataController;
@@ -117,7 +118,7 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
         this.poiDataController = new PoiDataController((ServerLevel)(Object)this);
         this.chunkDataController = new ChunkDataController((ServerLevel)(Object)this);
         this.moonrise$setEntityLookup(new ServerEntityLookup((ServerLevel)(Object)this, ((ServerLevel)(Object)this).new EntityCallbacks()));
-        this.chunkTaskScheduler = new ChunkTaskScheduler((ServerLevel)(Object)this, ChunkTaskScheduler.workerThreads);
+        this.chunkTaskScheduler = new ChunkTaskScheduler((ServerLevel)(Object)this, MoonriseCommon.WORKER_POOL);
     }
 
     @Override

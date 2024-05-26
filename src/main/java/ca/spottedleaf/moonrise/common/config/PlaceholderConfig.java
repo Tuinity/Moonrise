@@ -13,8 +13,9 @@ public final class PlaceholderConfig {
     public static int autoSaveInterval = 60 * 5 * 20; // 5 mins
     public static int maxAutoSaveChunksPerTick = 12;
 
+    public static int workerThreads = -1;
+
     public static int chunkSystemIOThreads = -1;
-    public static int chunkSystemThreads = -1;
     public static String chunkSystemGenParallelism = "default";
 
 }

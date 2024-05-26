@@ -7,6 +7,7 @@ import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.moonrise.common.config.PlaceholderConfig;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
@@ -49,11 +50,8 @@ public final class ChunkTaskScheduler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChunkTaskScheduler.class);
 
     static int newChunkSystemIOThreads;
-    static int newChunkSystemWorkerThreads;
     static int newChunkSystemGenParallelism;
     static int newChunkSystemLoadParallelism;
-
-    public static PrioritisedThreadPool workerThreads;
 
     private static boolean initialised = false;
 
@@ -63,24 +61,10 @@ public final class ChunkTaskScheduler {
         }
         initialised = true;
         newChunkSystemIOThreads = PlaceholderConfig.chunkSystemIOThreads;
-        newChunkSystemWorkerThreads = PlaceholderConfig.chunkSystemThreads;
         if (newChunkSystemIOThreads < 0) {
             newChunkSystemIOThreads = 1;
         } else {
             newChunkSystemIOThreads = Math.max(1, newChunkSystemIOThreads);
-        }
-        int defaultWorkerThreads = Runtime.getRuntime().availableProcessors() / 2;
-        if (defaultWorkerThreads <= 4) {
-            defaultWorkerThreads = defaultWorkerThreads <= 3 ? 1 : 2;
-        } else {
-            defaultWorkerThreads = defaultWorkerThreads / 2;
-        }
-        defaultWorkerThreads = Integer.getInteger("Moonrise.WorkerThreadCount", Integer.valueOf(defaultWorkerThreads));
-
-        if (newChunkSystemWorkerThreads < 0) {
-            newChunkSystemWorkerThreads = defaultWorkerThreads;
-        } else {
-            newChunkSystemWorkerThreads = Math.max(1, newChunkSystemWorkerThreads);
         }
 
         String newChunkSystemGenParallelism = PlaceholderConfig.chunkSystemGenParallelism;
@@ -98,24 +82,12 @@ public final class ChunkTaskScheduler {
             throw new IllegalStateException("Invalid option for gen-parallelism: must be one of [on, off, enabled, disabled, true, false, default]");
         }
 
-        ChunkTaskScheduler.newChunkSystemGenParallelism = useParallelGen ? newChunkSystemWorkerThreads : 1;
-        ChunkTaskScheduler.newChunkSystemLoadParallelism = newChunkSystemWorkerThreads;
+        ChunkTaskScheduler.newChunkSystemGenParallelism = useParallelGen ? MoonriseCommon.WORKER_THREADS : 1;
+        ChunkTaskScheduler.newChunkSystemLoadParallelism = MoonriseCommon.WORKER_THREADS;
 
         RegionFileIOThread.init(newChunkSystemIOThreads);
-        workerThreads = new PrioritisedThreadPool(
-            "Paper Chunk System Worker Pool", newChunkSystemWorkerThreads,
-            (final Thread thread, final Integer id) -> {
-                thread.setPriority(Thread.NORM_PRIORITY - 2);
-                thread.setName("Moonrise Chunk System Worker #" + id.intValue());
-                thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-                    @Override
-                    public void uncaughtException(final Thread thread, final Throwable throwable) {
-                        LOGGER.error("Uncaught exception in thread " + thread.getName(), throwable);
-                    }
-                });
-            }, (long)(20.0e6)); // 20ms
 
-        LOGGER.info("Chunk system is using " + newChunkSystemIOThreads + " I/O threads, " + newChunkSystemWorkerThreads + " worker threads, and gen parallelism of " + ChunkTaskScheduler.newChunkSystemGenParallelism + " threads");
+        LOGGER.info("Chunk system is using " + newChunkSystemIOThreads + " I/O threads, " + MoonriseCommon.WORKER_THREADS + " worker threads, and gen parallelism of " + ChunkTaskScheduler.newChunkSystemGenParallelism + " threads");
     }
 
     public static final TicketType<Long> CHUNK_LOAD = TicketType.create("chunk_system:chunk_load", Long::compareTo);
