@@ -86,7 +86,8 @@ public abstract class StructureCheckMixin {
             method = "checkStart",
             at = @At(
                     value = "INVOKE",
-                    target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;get(J)Ljava/lang/Object;"
+                    target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;get(J)Ljava/lang/Object;",
+                    remap = false
             )
     )
     private <V> V redirectCachedGet(final Long2ObjectMap<V> instance, final long pos) {

@@ -59,7 +59,8 @@ public abstract class EntityTickListMixin {
             method = "add",
             at = @At(
                     value = "INVOKE",
-                    target = "Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;put(ILjava/lang/Object;)Ljava/lang/Object;"
+                    target = "Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;put(ILjava/lang/Object;)Ljava/lang/Object;",
+                    remap = false
             )
     )
     private <V> V hookAdd(final Int2ObjectMap<V> instance, final int key, final V value) {
@@ -75,7 +76,8 @@ public abstract class EntityTickListMixin {
             method = "remove",
             at = @At(
                     value = "INVOKE",
-                    target = "Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;remove(I)Ljava/lang/Object;"
+                    target = "Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;remove(I)Ljava/lang/Object;",
+                    remap = false
             )
     )
     private void hookRemove(final Entity entity, final CallbackInfo ci) {
@@ -91,7 +93,8 @@ public abstract class EntityTickListMixin {
             method = "remove",
             at = @At(
                     value = "INVOKE",
-                    target = "Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;remove(I)Ljava/lang/Object;"
+                    target = "Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;remove(I)Ljava/lang/Object;",
+                    remap = false
             )
     )
     private <V> V hookRemoveAvoidNPE(final Int2ObjectMap<V> instance, final int key) {

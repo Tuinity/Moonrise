@@ -59,6 +59,9 @@ processResources {
 
 loom {
     accessWidenerPath = file("src/main/resources/moonrise.accesswidener")
+    mixin {
+        useLegacyMixinAp = false
+    }
 }
 
 // make build reproducible
