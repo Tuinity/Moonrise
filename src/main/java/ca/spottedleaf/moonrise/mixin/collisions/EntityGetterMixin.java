@@ -1,9 +1,9 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
+import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemEntityGetter;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
-import ca.spottedleaf.moonrise.patches.collisions.entity.CollisionEntity;
+import ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
-import ca.spottedleaf.moonrise.patches.collisions.world.CollisionEntityGetter;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.EntityGetter;
 import net.minecraft.world.phys.AABB;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 @Mixin(EntityGetter.class)
-public interface EntityGetterMixin extends CollisionEntityGetter {
+public interface EntityGetterMixin {
 
     @Shadow
     List<Entity> getEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate);
@@ -44,10 +44,10 @@ public interface EntityGetterMixin extends CollisionEntityGetter {
         box = box.inflate(-CollisionUtil.COLLISION_EPSILON, -CollisionUtil.COLLISION_EPSILON, -CollisionUtil.COLLISION_EPSILON);
 
         final List<Entity> entities;
-        if (entity != null && ((CollisionEntity)entity).moonrise$isHardColliding()) {
+        if (entity != null && ((ChunkSystemEntity)entity).moonrise$isHardColliding()) {
             entities = this.getEntities(entity, box, null);
         } else {
-            entities = this.moonrise$getHardCollidingEntities(entity, box, null);
+            entities = ((ChunkSystemEntityGetter)this).moonrise$getHardCollidingEntities(entity, box, null);
         }
 
         final List<VoxelShape> ret = new ArrayList<>(Math.min(25, entities.size()));
@@ -65,11 +65,6 @@ public interface EntityGetterMixin extends CollisionEntityGetter {
         }
 
         return ret;
-    }
-
-    @Override
-    default List<Entity> moonrise$getHardCollidingEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate) {
-        return this.getEntities(entity, box, predicate);
     }
 
     /**

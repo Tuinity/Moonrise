@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
-import ca.spottedleaf.moonrise.patches.collisions.entity.CollisionEntity;
+import ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Final;
@@ -32,7 +32,7 @@ public abstract class ServerEntityMixin {
             )
     )
     private void forceHardCollideTeleport(final CallbackInfo ci) {
-        if (((CollisionEntity)this.entity).moonrise$isHardColliding()) {
+        if (((ChunkSystemEntity)this.entity).moonrise$isHardColliding()) {
             this.teleportDelay = 9999;
         }
     }

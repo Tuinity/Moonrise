@@ -28,7 +28,7 @@ accessible class net/minecraft/world/level/chunk/PaletteResize
 # ChunkMap
 accessible field net/minecraft/server/level/ChunkMap level Lnet/minecraft/server/level/ServerLevel;
 accessible field net/minecraft/server/level/ChunkMap mainThreadExecutor Lnet/minecraft/util/thread/BlockableEventLoop;
-
+accessible method net/minecraft/server/level/ChunkMap postLoadProtoChunk (Lnet/minecraft/server/level/ServerLevel;Ljava/util/List;)V
 accessible method net/minecraft/server/level/ChunkMap getUpdatingChunkIfPresent (J)Lnet/minecraft/server/level/ChunkHolder;
 accessible method net/minecraft/server/level/ChunkMap getVisibleChunkIfPresent (J)Lnet/minecraft/server/level/ChunkHolder;
 accessible method net/minecraft/server/level/ChunkMap getChunkQueueLevel (J)Ljava/util/function/IntSupplier;
@@ -41,6 +41,9 @@ mutable field net/minecraft/server/level/ChunkMap worldgenMailbox Lnet/minecraft
 mutable field net/minecraft/server/level/ChunkMap mainThreadMailbox Lnet/minecraft/util/thread/ProcessorHandle;
 accessible method net/minecraft/server/level/ChunkMap setServerViewDistance (I)V
 accessible method net/minecraft/server/level/ChunkMap upgradeChunkTag (Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/nbt/CompoundTag;
+accessible field net/minecraft/server/level/ChunkMap generator Lnet/minecraft/world/level/chunk/ChunkGenerator;
+accessible field net/minecraft/server/level/ChunkMap worldGenContext Lnet/minecraft/world/level/chunk/status/WorldGenContext;
+accessible field net/minecraft/server/level/ChunkMap tickingGenerated Ljava/util/concurrent/atomic/AtomicInteger;
 
 
 # ChunkHolder
@@ -52,12 +55,23 @@ mutable field net/minecraft/world/level/lighting/LevelLightEngine skyEngine Lnet
 
 # ThreadedLevelLightEngine
 accessible class net/minecraft/server/level/ThreadedLevelLightEngine$TaskType
-
+mutable field net/minecraft/server/level/ThreadedLevelLightEngine sorterMailbox Lnet/minecraft/util/thread/ProcessorHandle;
+mutable field net/minecraft/server/level/ThreadedLevelLightEngine taskMailbox Lnet/minecraft/util/thread/ProcessorMailbox;
 
 # SectionStorage
 accessible field net/minecraft/world/level/chunk/storage/SectionStorage levelHeightAccessor Lnet/minecraft/world/level/LevelHeightAccessor;
+mutable field net/minecraft/world/level/chunk/storage/SectionStorage simpleRegionStorage Lnet/minecraft/world/level/chunk/storage/SimpleRegionStorage;
 accessible method net/minecraft/world/level/chunk/storage/SectionStorage get (J)Ljava/util/Optional;
 accessible method net/minecraft/world/level/chunk/storage/SectionStorage getOrLoad (J)Ljava/util/Optional;
+accessible method net/minecraft/world/level/chunk/storage/SectionStorage tryRead (Lnet/minecraft/world/level/ChunkPos;)Ljava/util/concurrent/CompletableFuture;
+accessible method net/minecraft/world/level/chunk/storage/SectionStorage setDirty (J)V
+
+# SimpleRegionStorage
+accessible field net/minecraft/world/level/chunk/storage/SimpleRegionStorage worker Lnet/minecraft/world/level/chunk/storage/IOWorker;
+
+
+# IOWorker
+accessible field net/minecraft/world/level/chunk/storage/IOWorker storage Lnet/minecraft/world/level/chunk/storage/RegionFileStorage;
 
 
 # PoiSection
@@ -151,10 +165,16 @@ accessible class net/minecraft/world/level/chunk/status/ChunkStatus$GenerationTa
 accessible class net/minecraft/world/level/chunk/status/ChunkStatus$LoadingTask
 
 
+# ChunkStatusTasks
+accessible method net/minecraft/world/level/chunk/status/ChunkStatusTasks loadPassThrough (Lnet/minecraft/world/level/chunk/status/WorldGenContext;Lnet/minecraft/world/level/chunk/status/ChunkStatus;Lnet/minecraft/world/level/chunk/status/ToFullChunk;Lnet/minecraft/world/level/chunk/ChunkAccess;)Ljava/util/concurrent/CompletableFuture;
+
+
 # RegionFileStorage
 accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage getRegionFile (Lnet/minecraft/world/level/ChunkPos;)Lnet/minecraft/world/level/chunk/storage/RegionFile;
 extendable class net/minecraft/world/level/chunk/storage/RegionFileStorage
 accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage <init> (Lnet/minecraft/world/level/chunk/storage/RegionStorageInfo;Ljava/nio/file/Path;Z)V
+accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage write (Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/nbt/CompoundTag;)V
+
 
 # ChunkMap.DistanceManager
 accessible class net/minecraft/server/level/ChunkMap$DistanceManager
@@ -205,5 +225,32 @@ accessible class net/minecraft/server/level/ServerChunkCache$MainThreadExecutor
 mutable field net/minecraft/server/level/ServerLevel entityManager Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;
 
 
+# ServerLevel$EntityCallbacks
+accessible class net/minecraft/server/level/ServerLevel$EntityCallbacks
+accessible method net/minecraft/server/level/ServerLevel$EntityCallbacks <init> (Lnet/minecraft/server/level/ServerLevel;)V
+
+
 # EntityStorage
 accessible method net/minecraft/world/level/chunk/storage/EntityStorage readChunkPos (Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/world/level/ChunkPos;
+accessible method net/minecraft/world/level/chunk/storage/EntityStorage writeChunkPos (Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/world/level/ChunkPos;)V
+
+# Ticket
+accessible method net/minecraft/server/level/Ticket <init> (Lnet/minecraft/server/level/TicketType;ILjava/lang/Object;)V
+
+
+# ChunkStorage
+mutable field net/minecraft/world/level/chunk/storage/ChunkStorage worker Lnet/minecraft/world/level/chunk/storage/IOWorker;
+
+
+# StructureCheck
+mutable field net/minecraft/world/level/levelgen/structure/StructureCheck loadedChunks Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;
+mutable field net/minecraft/world/level/levelgen/structure/StructureCheck featureChecks Ljava/util/Map;
+
+
+# ClientLevel
+mutable field net/minecraft/client/multiplayer/ClientLevel entityStorage Lnet/minecraft/world/level/entity/TransientEntitySectionManager;
+
+
+# ClientLevel$EntityCallbacks
+accessible class net/minecraft/client/multiplayer/ClientLevel$EntityCallbacks
+accessible method net/minecraft/client/multiplayer/ClientLevel$EntityCallbacks <init> (Lnet/minecraft/client/multiplayer/ClientLevel;)V

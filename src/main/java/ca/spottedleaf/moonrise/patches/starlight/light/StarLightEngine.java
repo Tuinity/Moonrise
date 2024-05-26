@@ -1021,7 +1021,7 @@ public abstract class StarLightEngine {
             this.setNibbles(chunk, nibbles);
 
             for (int y = this.minLightSection; y <= this.maxLightSection; ++y) {
-                lightAccess.onLightUpdate(this.skylightPropagator ? LightLayer.SKY : LightLayer.BLOCK, SectionPos.of(chunkX, y, chunkX));
+                lightAccess.onLightUpdate(this.skylightPropagator ? LightLayer.SKY : LightLayer.BLOCK, SectionPos.of(chunkX, y, chunkZ));
             }
 
             // now do callback

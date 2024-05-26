@@ -3,7 +3,6 @@ package ca.spottedleaf.moonrise.mixin.collisions;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
-import ca.spottedleaf.moonrise.patches.collisions.entity.CollisionEntity;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.util.EmptyStreamForMoveCall;
 import net.minecraft.CrashReport;
@@ -36,7 +35,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Mixin(Entity.class)
-public abstract class EntityMixin implements CollisionEntity {
+public abstract class EntityMixin {
 
     @Shadow
     private Level level;
@@ -79,6 +78,7 @@ public abstract class EntityMixin implements CollisionEntity {
 
     @Shadow
     public boolean wasOnFire;
+
     @Shadow
     public boolean isInPowderSnow;
 
@@ -90,14 +90,6 @@ public abstract class EntityMixin implements CollisionEntity {
 
     @Shadow
     protected abstract void onInsideBlock(BlockState blockState);
-
-    @Unique
-    private final boolean isHardColliding = this.moonrise$isHardCollidingUncached();
-
-    @Override
-    public final boolean moonrise$isHardColliding() {
-        return this.isHardColliding;
-    }
 
     /**
      * @author Spottedleaf

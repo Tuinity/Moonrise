@@ -5,15 +5,12 @@ import ca.spottedleaf.moonrise.patches.chunk_getblock.GetBlockChunk;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
-import ca.spottedleaf.moonrise.patches.collisions.slices.EntityLookup;
-import ca.spottedleaf.moonrise.patches.collisions.world.CollisionEntityGetter;
 import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -24,7 +21,6 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
@@ -34,7 +30,6 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -43,10 +38,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 @Mixin(Level.class)
-public abstract class LevelMixin implements CollisionLevel, CollisionEntityGetter, LevelAccessor, AutoCloseable {
+public abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseable {
 
     @Shadow
     public abstract ProfilerFiller getProfiler();
@@ -57,18 +51,10 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
 
 
     @Unique
-    private final EntityLookup collisionLookup = new EntityLookup((Level)(Object)this);
-
-    @Unique
     private int minSection;
 
     @Unique
     private int maxSection;
-
-    @Override
-    public final EntityLookup moonrise$getCollisionLookup() {
-        return this.collisionLookup;
-    }
 
     @Override
     public final int moonrise$getMinSection() {
@@ -93,115 +79,6 @@ public abstract class LevelMixin implements CollisionLevel, CollisionEntityGette
     private void init(final CallbackInfo ci) {
         this.minSection = WorldUtil.getMinSection(this);
         this.maxSection = WorldUtil.getMaxSection(this);
-    }
-
-    /**
-     * @reason Route to faster lookup
-     * @author Spottedleaf
-     */
-    @Overwrite
-    @Override
-    public List<Entity> getEntities(final Entity entity, final AABB boundingBox, final Predicate<? super Entity> predicate) {
-        this.getProfiler().incrementCounter("getEntities");
-        final List<Entity> ret = new ArrayList<>();
-
-        this.collisionLookup.getEntities(entity, boundingBox, ret, predicate);
-
-        return ret;
-    }
-
-    /**
-     * @reason Route to faster lookup
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public <T extends Entity> void getEntities(final EntityTypeTest<Entity, T> entityTypeTest,
-                                               final AABB boundingBox, final Predicate<? super T> predicate,
-                                               final List<? super T> into, final int maxCount) {
-        this.getProfiler().incrementCounter("getEntities");
-        if (entityTypeTest instanceof EntityType<T> byType) {
-            if (maxCount != Integer.MAX_VALUE) {
-                this.collisionLookup.getEntities(byType, boundingBox, into, predicate, maxCount);
-                return;
-            } else {
-                this.collisionLookup.getEntities(byType, boundingBox, into, predicate);
-                return;
-            }
-        }
-
-        if (entityTypeTest == null) {
-            if (maxCount != Integer.MAX_VALUE) {
-                this.collisionLookup.getEntities((Entity)null, boundingBox, (List)into, (Predicate)predicate, maxCount);
-                return;
-            } else {
-                this.collisionLookup.getEntities((Entity)null, boundingBox, (List)into, (Predicate)predicate);
-                return;
-            }
-        }
-
-        final Class<? extends Entity> base = entityTypeTest.getBaseClass();
-
-        final Predicate<? super T> modifiedPredicate;
-        if (predicate == null) {
-            modifiedPredicate = (final T obj) -> {
-                return entityTypeTest.tryCast(obj) != null;
-            };
-        } else {
-            modifiedPredicate = (final Entity obj) -> {
-                final T casted = entityTypeTest.tryCast(obj);
-                if (casted == null) {
-                    return false;
-                }
-
-                return predicate.test(casted);
-            };
-        }
-
-        if (base == null || base == Entity.class) {
-            if (maxCount != Integer.MAX_VALUE) {
-                this.collisionLookup.getEntities((Entity)null, boundingBox, (List)into, (Predicate)modifiedPredicate, maxCount);
-                return;
-            } else {
-                this.collisionLookup.getEntities((Entity)null, boundingBox, (List)into, (Predicate)modifiedPredicate);
-                return;
-            }
-        } else {
-            if (maxCount != Integer.MAX_VALUE) {
-                this.collisionLookup.getEntities(base, null, boundingBox, (List)into, (Predicate)modifiedPredicate, maxCount);
-                return;
-            } else {
-                this.collisionLookup.getEntities(base, null, boundingBox, (List)into, (Predicate)modifiedPredicate);
-                return;
-            }
-        }
-    }
-
-    /**
-     * Route to faster lookup
-     * @author Spottedleaf
-     */
-    @Override
-    public final <T extends Entity> List<T> getEntitiesOfClass(final Class<T> entityClass, final AABB boundingBox, final Predicate<? super T> predicate) {
-        this.getProfiler().incrementCounter("getEntities");
-        final List<T> ret = new ArrayList<>();
-
-        this.collisionLookup.getEntities(entityClass, null, boundingBox, ret, predicate);
-
-        return ret;
-    }
-
-    /**
-     * Route to faster lookup
-     * @author Spottedleaf
-     */
-    @Override
-    public final List<Entity> moonrise$getHardCollidingEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate) {
-        this.getProfiler().incrementCounter("getEntities");
-        final List<Entity> ret = new ArrayList<>();
-
-        this.collisionLookup.getHardCollidingEntities(entity, box, ret, predicate);
-
-        return ret;
     }
 
     /**

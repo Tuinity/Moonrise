@@ -1,0 +1,504 @@
+package ca.spottedleaf.moonrise.mixin.chunk_system;
+
+import ca.spottedleaf.moonrise.common.list.ReferenceList;
+import ca.spottedleaf.moonrise.common.util.WorldUtil;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
+import com.mojang.datafixers.util.Pair;
+import net.minecraft.server.level.ChunkHolder;
+import net.minecraft.server.level.ChunkMap;
+import net.minecraft.server.level.ChunkResult;
+import net.minecraft.server.level.FullChunkStatus;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ImposterProtoChunk;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+
+@Mixin(ChunkHolder.class)
+public abstract class ChunkHolderMixin implements ChunkSystemChunkHolder {
+
+    @Shadow
+    @Final
+    private ChunkPos pos;
+
+    @Shadow
+    @Final
+    private ChunkHolder.PlayerProvider playerProvider;
+
+    @Shadow
+    @Final
+    public static CompletableFuture<ChunkResult<ChunkAccess>> UNLOADED_CHUNK_FUTURE;
+
+
+    @Unique
+    private NewChunkHolder newChunkHolder;
+
+    @Unique
+    private ReferenceList<ServerPlayer> playersSentChunkTo;
+
+    @Unique
+    private ChunkMap getChunkMap() {
+        return (ChunkMap)this.playerProvider;
+    }
+
+    @Override
+    public final NewChunkHolder moonrise$getRealChunkHolder() {
+        return this.newChunkHolder;
+    }
+
+    @Override
+    public final void moonrise$setRealChunkHolder(final NewChunkHolder newChunkHolder) {
+        this.newChunkHolder = newChunkHolder;
+    }
+
+    @Override
+    public final void moonrise$addReceivedChunk(final ServerPlayer player) {
+        if (!this.playersSentChunkTo.add(player)) {
+            throw new IllegalStateException("Already sent chunk " + this.pos + " in world '" + WorldUtil.getWorldName(this.getChunkMap().level) + "' to player " + player);
+        }
+    }
+
+    @Override
+    public final void moonrise$removeReceivedChunk(final ServerPlayer player) {
+        if (!this.playersSentChunkTo.remove(player)) {
+            throw new IllegalStateException("Already sent chunk " + this.pos + " in world '" + WorldUtil.getWorldName(this.getChunkMap().level) + "' to player " + player);
+        }
+    }
+
+    @Override
+    public final boolean moonrise$hasChunkBeenSent() {
+        return this.playersSentChunkTo.size() != 0;
+    }
+
+    @Override
+    public final boolean moonrise$hasChunkBeenSent(final ServerPlayer to) {
+        return this.playersSentChunkTo.contains(to);
+    }
+
+    @Override
+    public final List<ServerPlayer> moonrise$getPlayers(final boolean onlyOnWatchDistanceEdge) {
+        final List<ServerPlayer> ret = new ArrayList<>();
+        final ServerPlayer[] raw = this.playersSentChunkTo.getRawDataUnchecked();
+        for (int i = 0, len = this.playersSentChunkTo.size(); i < len; ++i) {
+            final ServerPlayer player = raw[i];
+            if (onlyOnWatchDistanceEdge && !((ChunkSystemServerLevel)this.getChunkMap().level).moonrise$getPlayerChunkLoader().isChunkSent(player, this.pos.x, this.pos.z, onlyOnWatchDistanceEdge)) {
+                continue;
+            }
+            ret.add(player);
+        }
+
+        return ret;
+    }
+
+    @Unique
+    private static final ServerPlayer[] EMPTY_PLAYER_ARRAY = new ServerPlayer[0];
+
+    /**
+     * @reason Initialise our fields
+     * @author Spottedleaf
+     */
+    @Inject(
+            method = "<init>",
+            at = @At(
+                    value = "RETURN"
+            )
+    )
+    private void initFields(final CallbackInfo ci) {
+        this.playersSentChunkTo = new ReferenceList<>(EMPTY_PLAYER_ARRAY, 0);
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore, use {@link ChunkTaskScheduler}
+     *         schedule methods to await for a chunk load
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public CompletableFuture<ChunkResult<ChunkAccess>> getFutureIfPresentUnchecked(final ChunkStatus chunkStatus) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore, use {@link ChunkTaskScheduler}
+     *         schedule methods to await for a chunk load
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public CompletableFuture<ChunkResult<ChunkAccess>> getFutureIfPresent(final ChunkStatus chunkStatus) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore, use {@link ChunkTaskScheduler}
+     *         schedule methods to await for a chunk load
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public CompletableFuture<ChunkResult<ChunkAccess>> getTickingChunkFuture() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore, use {@link ChunkTaskScheduler}
+     *         schedule methods to await for a chunk load
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public CompletableFuture<ChunkResult<ChunkAccess>> getEntityTickingChunkFuture() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore, use {@link ChunkTaskScheduler}
+     *         schedule methods to await for a chunk load
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public CompletableFuture<ChunkResult<ChunkAccess>> getFullChunkFuture() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Route to new chunk holder
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public LevelChunk getTickingChunk() {
+        if (this.newChunkHolder.isTickingReady()) {
+            if (this.newChunkHolder.getCurrentChunk() instanceof LevelChunk levelChunk) {
+                return levelChunk;
+            } // else: race condition: chunk unload
+        }
+        return null;
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore, and I am pretty sure this is a disgusting hack for a problem
+     *         that doesn't even exist.
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public CompletableFuture<?> getChunkSendSyncFuture() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Unique
+    private boolean isRadiusLoaded(final int radius) {
+        final ChunkHolderManager manager = ((ChunkSystemServerLevel)this.getChunkMap().level).moonrise$getChunkTaskScheduler()
+                .chunkHolderManager;
+        final ChunkPos pos = this.pos;
+        final int chunkX = pos.x;
+        final int chunkZ = pos.z;
+        for (int dz = -radius; dz <= radius; ++dz) {
+            for (int dx = -radius; dx <= radius; ++dx) {
+                if ((dx | dz) == 0) {
+                    continue;
+                }
+
+                final NewChunkHolder holder = manager.getChunkHolder(dx + chunkX, dz + chunkZ);
+
+                if (holder == null || !holder.isFullChunkReady()) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @reason Chunk sending may now occur for non-ticking chunks, provided that both the 1 radius neighbours are FULL
+     *         and post-processing is ran.
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public LevelChunk getChunkToSend() {
+        final LevelChunk ret = this.moonrise$getFullChunk();
+        if (ret != null && this.isRadiusLoaded(1)) {
+            return ret;
+        }
+        return null;
+    }
+
+    @Override
+    public final LevelChunk moonrise$getFullChunk() {
+        if (this.newChunkHolder.isFullChunkReady()) {
+            if (this.newChunkHolder.getCurrentChunk() instanceof LevelChunk levelChunk) {
+                return levelChunk;
+            } // else: race condition: chunk unload
+        }
+        return null;
+    }
+
+    /**
+     * @reason Route to new chunk holder
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public ChunkStatus getLastAvailableStatus() {
+        final NewChunkHolder.ChunkCompletion lastCompletion = this.newChunkHolder.getLastChunkCompletion();
+        return lastCompletion == null ? null : lastCompletion.genStatus();
+    }
+
+    /**
+     * @reason Route to new chunk holder
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public ChunkAccess getLastAvailable() {
+        final NewChunkHolder.ChunkCompletion lastCompletion = this.newChunkHolder.getLastChunkCompletion();
+        return lastCompletion == null ? null : lastCompletion.chunk();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore, unloading is now checked via {@link NewChunkHolder#isSafeToUnload()}
+     *         while holding chunk system locks.
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public CompletableFuture<ChunkAccess> getChunkToSave() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason need to reroute getTickingChunk to getChunkToSend, as we do not bring all sent chunks to ticking
+     * @author Spottedleaf
+     */
+    @Redirect(
+            method = "blockChanged",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/server/level/ChunkHolder;getTickingChunk()Lnet/minecraft/world/level/chunk/LevelChunk;")
+    )
+    private LevelChunk redirectBlockUpdate(final ChunkHolder instance) {
+        if (this.playersSentChunkTo.size() == 0) {
+            // no players to sent to, so don't need to update anything
+            return null;
+        }
+        return this.getChunkToSend();
+    }
+
+    /**
+     * @reason Need to reroute getFutureIfPresent to new chunk system call
+     * @author Spottedleaf
+     */
+    @Redirect(
+            method = "sectionLightChanged",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/server/level/ChunkHolder;getFutureIfPresent(Lnet/minecraft/world/level/chunk/status/ChunkStatus;)Ljava/util/concurrent/CompletableFuture;"
+            )
+    )
+    private CompletableFuture<ChunkResult<ChunkAccess>> redirectLightUpdate(final ChunkHolder instance,
+                                                                            final ChunkStatus chunkStatus) {
+        final NewChunkHolder.ChunkCompletion chunkCompletion = this.newChunkHolder.getLastChunkCompletion();
+        if (chunkCompletion == null || !chunkCompletion.genStatus().isOrAfter(ChunkStatus.INITIALIZE_LIGHT)) {
+            return UNLOADED_CHUNK_FUTURE;
+        }
+
+        return CompletableFuture.completedFuture(ChunkResult.of(chunkCompletion.chunk()));
+    }
+
+    /**
+     * @reason need to reroute getTickingChunk to getChunkToSend, as we do not bring all sent chunks to ticking
+     * @author Spottedleaf
+     */
+    @Redirect(
+            method = "sectionLightChanged",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/server/level/ChunkHolder;getTickingChunk()Lnet/minecraft/world/level/chunk/LevelChunk;"
+            )
+    )
+    private LevelChunk redirectLightUpdate(final ChunkHolder instance) {
+        return this.getChunkToSend();
+    }
+
+    /**
+     * @reason Redirect player retrieval to the sent player list, as we do not maintain the Vanilla hook
+     * @author Spottedleaf
+     */
+    @Redirect(
+            method = "broadcastChanges",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/server/level/ChunkHolder$PlayerProvider;getPlayers(Lnet/minecraft/world/level/ChunkPos;Z)Ljava/util/List;")
+    )
+    private List<ServerPlayer> redirectPlayerRetrieval(final ChunkHolder.PlayerProvider instance, final ChunkPos chunkPos,
+                                                       final boolean onlyOnWatchDistanceEdge) {
+        return this.moonrise$getPlayers(onlyOnWatchDistanceEdge);
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore, use {@link ChunkTaskScheduler}
+     *         schedule methods to await for a chunk load
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public CompletableFuture<ChunkResult<ChunkAccess>> getOrScheduleFuture(final ChunkStatus chunkStatus,
+                                                                           final ChunkMap chunkMap) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore, use ticket levels to prevent chunk unloading.
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void addSaveDependency(final String string, final CompletableFuture<?> completableFuture) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore, use ticket levels to prevent chunk unloading.
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void updateChunkToSave(CompletableFuture<? extends ChunkResult<? extends ChunkAccess>> completableFuture,
+                                   final String string) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore, and I am pretty sure this is a disgusting hack for a problem
+     *         that doesn't even exist.
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void addSendDependency(final CompletableFuture<?> completableFuture) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Route to new chunk holder
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public FullChunkStatus getFullStatus() {
+        return this.newChunkHolder.getChunkStatus();
+    }
+
+    /**
+     * @reason Route to new chunk holder
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public int getTicketLevel() {
+        return this.newChunkHolder.getTicketLevel();
+    }
+
+    /**
+     * @reason Set chunk priority instead in the new chunk system
+     * @author Spottedleaf
+     * @see ChunkTaskScheduler
+     */
+    @Overwrite
+    public int getQueueLevel() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Set chunk priority instead in the new chunk system
+     * @author Spottedleaf
+     * @see ChunkTaskScheduler
+     */
+    @Overwrite
+    public void setQueueLevel(int i) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Use ticket system to control ticket levels
+     * @author Spottedleaf
+     * @see net.minecraft.server.level.ServerChunkCache#addRegionTicket(TicketType, ChunkPos, int, Object)
+     */
+    @Overwrite
+    public void setTicketLevel(int i) {
+        // don't throw, this is called during construction of ChunkHolder
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void scheduleFullChunkPromotion(final ChunkMap chunkMap,
+                                            final CompletableFuture<ChunkResult<LevelChunk>> completableFuture,
+                                            final Executor executor, final FullChunkStatus fullChunkStatus) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void demoteFullChunk(final ChunkMap chunkMap, final FullChunkStatus fullChunkStatus) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system hooks for ticket level updating now in {@link NewChunkHolder#processTicketLevelUpdate(List, List)}
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void updateFutures(final ChunkMap chunkMap, final Executor executor) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason New chunk system has no equivalent, as chunks should be saved according to their dirty flag to ensure
+     *         that all unsaved data is not lost.
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public boolean wasAccessibleSinceLastSave() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason New chunk system has no equivalent, as chunks should be saved according to their dirty flag to ensure
+     *         that all unsaved data is not lost.
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void refreshAccessibility() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void replaceProtoChunk(final ImposterProtoChunk imposterProtoChunk) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public List<Pair<ChunkStatus, CompletableFuture<ChunkResult<ChunkAccess>>>> getAllFutures() {
+        throw new UnsupportedOperationException();
+    }
+}

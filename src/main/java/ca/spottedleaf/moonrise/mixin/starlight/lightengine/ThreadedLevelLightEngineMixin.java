@@ -1,15 +1,14 @@
 package ca.spottedleaf.moonrise.mixin.starlight.lightengine;
 
-import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
-import ca.spottedleaf.moonrise.patches.starlight.light.StarLightEngine;
 import ca.spottedleaf.moonrise.patches.starlight.light.StarLightInterface;
 import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
-import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
-import net.minecraft.server.level.ChunkMap;
+import net.minecraft.server.level.ChunkTaskPriorityQueueSorter;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ThreadedLevelLightEngine;
+import net.minecraft.util.thread.ProcessorHandle;
+import net.minecraft.util.thread.ProcessorMailbox;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -18,39 +17,37 @@ import net.minecraft.world.level.chunk.LightChunkGetter;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 @Mixin(ThreadedLevelLightEngine.class)
 public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements StarLightLightingProvider {
 
-    @Final
     @Shadow
-    private ChunkMap chunkMap;
-
-    @Final
-    @Shadow
-    private static Logger LOGGER;
+    private ProcessorMailbox<Runnable> taskMailbox;
 
     @Shadow
-    public abstract void tryScheduleUpdate();
+    private ProcessorHandle<ChunkTaskPriorityQueueSorter.Message<Runnable>> sorterMailbox;
 
     public ThreadedLevelLightEngineMixin(final LightChunkGetter chunkProvider, final boolean hasBlockLight, final boolean hasSkyLight) {
         super(chunkProvider, hasBlockLight, hasSkyLight);
     }
 
     @Unique
-    private final Long2IntOpenHashMap chunksBeingWorkedOn = new Long2IntOpenHashMap();
+    private final AtomicLong chunkWorkCounter = new AtomicLong();
 
     @Unique
     private void queueTaskForSection(final int chunkX, final int chunkY, final int chunkZ,
-                                     final Supplier<StarLightInterface.LightQueue.ChunkTasks> runnable) {
+                                     final Supplier<StarLightInterface.LightQueue.ChunkTasks> supplier) {
         final ServerLevel world = (ServerLevel)this.starlight$getLightEngine().getWorld();
 
         final ChunkAccess center = this.starlight$getLightEngine().getAnyChunkNow(chunkX, chunkZ);
@@ -60,56 +57,76 @@ public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine imp
             return;
         }
 
-        if (center.getStatus() != ChunkStatus.FULL) {
-            // do not keep chunk loaded, we are probably in a gen thread
-            // if we proceed to add a ticket the chunk will be loaded, which is not what we want (avoid cascading gen)
-            runnable.get();
-            return;
-        }
+        final StarLightInterface.ServerLightQueue.ServerChunkTasks scheduledTask = (StarLightInterface.ServerLightQueue.ServerChunkTasks)supplier.get();
 
-        if (!world.getChunkSource().chunkMap.mainThreadExecutor.isSameThread()) {
-            // ticket logic is not safe to run off-main, re-schedule
-            world.getChunkSource().chunkMap.mainThreadExecutor.execute(() -> {
-                this.queueTaskForSection(chunkX, chunkY, chunkZ, runnable);
-            });
-            return;
-        }
-
-        final long key = CoordinateUtils.getChunkKey(chunkX, chunkZ);
-
-        final StarLightInterface.LightQueue.ChunkTasks updateFuture = runnable.get();
-
-        if (updateFuture == null) {
+        if (scheduledTask == null) {
             // not scheduled
             return;
         }
 
-        if (updateFuture.isTicketAdded) {
+        if (!scheduledTask.markTicketAdded()) {
             // ticket already added
             return;
         }
-        updateFuture.isTicketAdded = true;
 
-        final int references = this.chunksBeingWorkedOn.addTo(key, 1);
-        if (references == 0) {
-            final ChunkPos pos = new ChunkPos(chunkX, chunkZ);
-            world.getChunkSource().addRegionTicket(StarLightInterface.CHUNK_WORK_TICKET, pos, 0, pos);
-        }
+        final Long ticketId = Long.valueOf(this.chunkWorkCounter.getAndIncrement());
+        final ChunkPos pos = new ChunkPos(chunkX, chunkZ);
+        world.getChunkSource().addRegionTicket(StarLightInterface.CHUNK_WORK_TICKET, pos, StarLightInterface.REGION_LIGHT_TICKET_LEVEL, ticketId);
 
-        updateFuture.onComplete.thenAcceptAsync((final Void ignore) -> {
-            final int newReferences = this.chunksBeingWorkedOn.get(key);
-            if (newReferences == 1) {
-                this.chunksBeingWorkedOn.remove(key);
-                final ChunkPos pos = new ChunkPos(chunkX, chunkZ);
-                world.getChunkSource().removeRegionTicket(StarLightInterface.CHUNK_WORK_TICKET, pos, 0, pos);
-            } else {
-                this.chunksBeingWorkedOn.put(key, newReferences - 1);
-            }
-        }, world.getChunkSource().chunkMap.mainThreadExecutor).whenComplete((final Void ignore, final Throwable thr) -> {
-            if (thr != null) {
-                LOGGER.error("Failed to remove ticket level for post chunk task " + new ChunkPos(chunkX, chunkZ), thr);
-            }
+        scheduledTask.queueOrRunTask(() -> {
+            world.getChunkSource().removeRegionTicket(StarLightInterface.CHUNK_WORK_TICKET, pos, StarLightInterface.REGION_LIGHT_TICKET_LEVEL, ticketId);
         });
+    }
+
+    /**
+     * @reason Destroy old chunk system hook
+     * @author Spottedleaf
+     */
+    @Inject(
+            method = "<init>",
+            at = @At(
+                    value = "RETURN"
+            )
+    )
+    private void initHook(final CallbackInfo ci) {
+        this.taskMailbox = null;
+        this.sorterMailbox = null;
+    }
+
+    /**
+     * @reason Destroy old chunk system hook
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void addTask(final int x, final int z, final ThreadedLevelLightEngine.TaskType type,
+                         final Runnable task) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Destroy old chunk system hook
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void addTask(final int x, final int z, final IntSupplier ticketLevelSupplier,
+                        final ThreadedLevelLightEngine.TaskType type, final Runnable task) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system schedules light tasks immediately
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void tryScheduleUpdate() {}
+
+    /**
+     * @reason Destroy old chunk system hook
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void runUpdate() {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -121,7 +138,7 @@ public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine imp
     public void checkBlock(final BlockPos pos) {
         final BlockPos posCopy = pos.immutable();
         this.queueTaskForSection(posCopy.getX() >> 4, posCopy.getY() >> 4, posCopy.getZ() >> 4, () -> {
-            return this.starlight$getLightEngine().blockChange(posCopy);
+            return ThreadedLevelLightEngineMixin.this.starlight$getLightEngine().blockChange(posCopy);
         });
     }
 
@@ -141,7 +158,7 @@ public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine imp
     @Overwrite
     public void updateSectionStatus(final SectionPos pos, final boolean notReady) {
         this.queueTaskForSection(pos.getX(), pos.getY(), pos.getZ(), () -> {
-            return this.starlight$getLightEngine().sectionChange(pos, notReady);
+            return ThreadedLevelLightEngineMixin.this.starlight$getLightEngine().sectionChange(pos, notReady);
         });
     }
 
@@ -192,36 +209,11 @@ public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine imp
     }
 
     /**
-     * @reason Route to new logic to either light or just load the data
+     * @reason Chunk system patch replaces the vanilla scheduling entirely
      * @author Spottedleaf
      */
     @Overwrite
     public CompletableFuture<ChunkAccess> lightChunk(final ChunkAccess chunk, final boolean lit) {
-        final ChunkPos chunkPos = chunk.getPos();
-
-        return CompletableFuture.supplyAsync(() -> {
-            final Boolean[] emptySections = StarLightEngine.getEmptySectionsForChunk(chunk);
-            if (!lit) {
-                chunk.setLightCorrect(false);
-                this.starlight$getLightEngine().lightChunk(chunk, emptySections);
-                chunk.setLightCorrect(true);
-            } else {
-                this.starlight$getLightEngine().forceLoadInChunk(chunk, emptySections);
-                // can't really force the chunk to be edged checked, as we need neighbouring chunks - but we don't have
-                // them, so if it's not loaded then i guess we can't do edge checks. later loads of the chunk should
-                // catch what we miss here.
-                this.starlight$getLightEngine().checkChunkEdges(chunkPos.x, chunkPos.z);
-            }
-
-            this.chunkMap.releaseLightTicket(chunkPos);
-            return chunk;
-        }, (runnable) -> {
-            this.starlight$getLightEngine().scheduleChunkLight(chunkPos, runnable);
-            this.tryScheduleUpdate();
-        }).whenComplete((final ChunkAccess c, final Throwable throwable) -> {
-            if (throwable != null) {
-                LOGGER.error("Failed to light chunk " + chunkPos, throwable);
-            }
-        });
+        throw new UnsupportedOperationException();
     }
 }

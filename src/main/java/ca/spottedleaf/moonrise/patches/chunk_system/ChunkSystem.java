@@ -1,0 +1,139 @@
+package ca.spottedleaf.moonrise.patches.chunk_system;
+
+import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
+import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
+import com.mojang.logging.LogUtils;
+import net.minecraft.server.level.ChunkHolder;
+import net.minecraft.server.level.FullChunkStatus;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
+import org.slf4j.Logger;
+import java.util.List;
+import java.util.function.Consumer;
+
+public final class ChunkSystem {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
+
+    public static void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run) {
+        scheduleChunkTask(level, chunkX, chunkZ, run, PrioritisedExecutor.Priority.NORMAL);
+    }
+
+    public static void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run, final PrioritisedExecutor.Priority priority) {
+        ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkTask(chunkX, chunkZ, run, priority);
+    }
+
+    public static void scheduleChunkLoad(final ServerLevel level, final int chunkX, final int chunkZ, final boolean gen,
+                                         final ChunkStatus toStatus, final boolean addTicket, final PrioritisedExecutor.Priority priority,
+                                         final Consumer<ChunkAccess> onComplete) {
+        ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkLoad(chunkX, chunkZ, gen, toStatus, addTicket, priority, onComplete);
+    }
+
+    // Paper - rewrite chunk system
+    public static void scheduleChunkLoad(final ServerLevel level, final int chunkX, final int chunkZ, final ChunkStatus toStatus,
+                                         final boolean addTicket, final PrioritisedExecutor.Priority priority, final Consumer<ChunkAccess> onComplete) {
+        ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkLoad(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
+    }
+
+    public static void scheduleTickingState(final ServerLevel level, final int chunkX, final int chunkZ,
+                                            final FullChunkStatus toStatus, final boolean addTicket,
+                                            final PrioritisedExecutor.Priority priority, final Consumer<LevelChunk> onComplete) {
+        ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleTickingState(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
+    }
+
+    public static List<ChunkHolder> getVisibleChunkHolders(final ServerLevel level) {
+        return ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().chunkHolderManager.getOldChunkHolders();
+    }
+
+    public static List<ChunkHolder> getUpdatingChunkHolders(final ServerLevel level) {
+        return ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().chunkHolderManager.getOldChunkHolders();
+    }
+
+    public static int getVisibleChunkHolderCount(final ServerLevel level) {
+        return ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().chunkHolderManager.size();
+    }
+
+    public static int getUpdatingChunkHolderCount(final ServerLevel level) {
+        return ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().chunkHolderManager.size();
+    }
+
+    public static boolean hasAnyChunkHolders(final ServerLevel level) {
+        return getUpdatingChunkHolderCount(level) != 0;
+    }
+
+    public static void onEntityPreAdd(final ServerLevel level, final Entity entity) {
+
+    }
+
+    public static void onChunkHolderCreate(final ServerLevel level, final ChunkHolder holder) {
+
+    }
+
+    public static void onChunkHolderDelete(final ServerLevel level, final ChunkHolder holder) {
+
+    }
+
+    public static void onChunkBorder(final LevelChunk chunk, final ChunkHolder holder) {
+
+    }
+
+    public static void onChunkNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
+
+    }
+
+    public static void onChunkTicking(final LevelChunk chunk, final ChunkHolder holder) {
+        if (!((ChunkSystemLevelChunk)chunk).moonrise$isPostProcessingDone()) {
+            chunk.postProcessGeneration();
+        }
+        ((ServerLevel)chunk.getLevel()).startTickingChunk(chunk);
+        ((ServerLevel)chunk.getLevel()).getChunkSource().chunkMap.tickingGenerated.incrementAndGet();
+    }
+
+    public static void onChunkNotTicking(final LevelChunk chunk, final ChunkHolder holder) {
+
+    }
+
+    public static void onChunkEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
+
+    }
+
+    public static void onChunkNotEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
+
+    }
+
+    public static ChunkHolder getUnloadingChunkHolder(final ServerLevel level, final int chunkX, final int chunkZ) {
+        return null;
+    }
+
+    public static int getSendViewDistance(final ServerPlayer player) {
+        return RegionizedPlayerChunkLoader.getAPISendViewDistance(player);
+    }
+
+    public static int getLoadViewDistance(final ServerPlayer player) {
+        return RegionizedPlayerChunkLoader.getLoadViewDistance(player);
+    }
+
+    public static int getTickViewDistance(final ServerPlayer player) {
+        return RegionizedPlayerChunkLoader.getAPITickViewDistance(player);
+    }
+
+    public static void addPlayerToDistanceMaps(final ServerLevel world, final ServerPlayer player) {
+        ((ChunkSystemServerLevel)world).moonrise$getPlayerChunkLoader().addPlayer(player);
+    }
+
+    public static void removePlayerFromDistanceMaps(final ServerLevel world, final ServerPlayer player) {
+        ((ChunkSystemServerLevel)world).moonrise$getPlayerChunkLoader().removePlayer(player);
+    }
+
+    public static void updateMaps(final ServerLevel world, final ServerPlayer player) {
+        ((ChunkSystemServerLevel)world).moonrise$getPlayerChunkLoader().updatePlayer(player);
+    }
+
+    private ChunkSystem() {}
+}

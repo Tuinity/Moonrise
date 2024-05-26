@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.common.util;
 
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
 
 public final class WorldUtil {
@@ -38,6 +39,13 @@ public final class WorldUtil {
 
     public static int getMaxBlockY(final LevelHeightAccessor world) {
         return (getMaxSection(world) << 4) | 15;
+    }
+
+    public static String getWorldName(final Level world) {
+        if (world == null) {
+            return "null world";
+        }
+        return world.dimension().toString();
     }
 
     private WorldUtil() {

@@ -225,6 +225,9 @@ public abstract class LevelLightEngineMixin implements LightEventListener, StarL
                 }
                 break;
             }
+            default: {
+                throw new IllegalStateException("Unknown light type: " + lightType);
+            }
         }
     }
 

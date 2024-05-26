@@ -1,11 +1,11 @@
 package ca.spottedleaf.moonrise.patches.collisions;
 
+import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemEntityGetter;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
-import ca.spottedleaf.moonrise.patches.collisions.entity.CollisionEntity;
+import ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CachedShapeData;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionDiscreteVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
-import ca.spottedleaf.moonrise.patches.collisions.world.CollisionEntityGetter;
 import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevel;
 import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevelChunkSection;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -1807,10 +1807,10 @@ public final class CollisionUtil {
         // specifically with boat collisions.
         aabb = aabb.inflate(-COLLISION_EPSILON, -COLLISION_EPSILON, -COLLISION_EPSILON);
         final List<Entity> entities;
-        if (entity != null && ((CollisionEntity)entity).moonrise$isHardColliding()) {
+        if (entity != null && ((ChunkSystemEntity)entity).moonrise$isHardColliding()) {
             entities = world.getEntities(entity, aabb, predicate);
         } else {
-            entities = ((CollisionEntityGetter)world).moonrise$getHardCollidingEntities(entity, aabb, predicate);
+            entities = ((ChunkSystemEntityGetter)world).moonrise$getHardCollidingEntities(entity, aabb, predicate);
         }
 
         for (int i = 0, len = entities.size(); i < len; ++i) {

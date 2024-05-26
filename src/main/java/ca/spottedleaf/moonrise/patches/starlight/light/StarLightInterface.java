@@ -1,15 +1,21 @@
 package ca.spottedleaf.moonrise.patches.starlight.light;
 
+import ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue;
+import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkStatus;
 import ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk;
-import ca.spottedleaf.moonrise.patches.starlight.world.StarlightWorld;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.shorts.ShortCollection;
 import it.unimi.dsi.fastutil.shorts.ShortOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.server.level.ChunkLevel;
+import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
@@ -22,15 +28,20 @@ import net.minecraft.world.level.lighting.LayerLightEventListener;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
 public final class StarLightInterface {
 
-    public static final TicketType<ChunkPos> CHUNK_WORK_TICKET = TicketType.create("starlight_chunk_work_ticket", (p1, p2) -> Long.compare(p1.toLong(), p2.toLong()));
+    public static final TicketType<Long> CHUNK_WORK_TICKET = TicketType.create("starlight:chunk_work_ticket", Long::compareTo);
+    public static final int LIGHT_TICKET_LEVEL = ChunkLevel.byStatus(ChunkStatus.LIGHT);
+    // ticket level = ChunkLevel.byStatus(FullChunkStatus.FULL) - input
+    public static final int REGION_LIGHT_TICKET_LEVEL = ChunkLevel.byStatus(FullChunkStatus.FULL) - LIGHT_TICKET_LEVEL;
 
     /**
      * Can be {@code null}, indicating the light is all empty.
@@ -38,14 +49,14 @@ public final class StarLightInterface {
     public final Level world;
     public final LightChunkGetter lightAccess;
 
-    protected final ArrayDeque<SkyStarLightEngine> cachedSkyPropagators;
-    protected final ArrayDeque<BlockStarLightEngine> cachedBlockPropagators;
+    private final ArrayDeque<SkyStarLightEngine> cachedSkyPropagators;
+    private final ArrayDeque<BlockStarLightEngine> cachedBlockPropagators;
 
-    protected final LightQueue lightQueue = new LightQueue(this);
+    private final LightQueue lightQueue;
 
-    protected final LayerLightEventListener skyReader;
-    protected final LayerLightEventListener blockReader;
-    protected final boolean isClientSide;
+    private final LayerLightEventListener skyReader;
+    private final LayerLightEventListener blockReader;
+    private final boolean isClientSide;
 
     public final int minSection;
     public final int maxSection;
@@ -74,6 +85,13 @@ public final class StarLightInterface {
             this.minLightSection = WorldUtil.getMinLightSection(this.world);
             this.maxLightSection = WorldUtil.getMaxLightSection(this.world);
         }
+
+        if (this.world instanceof ServerLevel) {
+            this.lightQueue = new ServerLightQueue(this);
+        } else {
+            this.lightQueue = new ClientLightQueue(this);
+        }
+
         this.lightEngine = lightEngine;
         this.hasBlockLight = hasBlockLight;
         this.hasSkyLight = hasSkyLight;
@@ -182,6 +200,20 @@ public final class StarLightInterface {
                 StarLightInterface.this.sectionChange(pos, notReady);
             }
         };
+    }
+
+    public ClientLightQueue getClientLightQueue() {
+        if (this.lightQueue instanceof ClientLightQueue clientLightQueue) {
+            return clientLightQueue;
+        }
+        return null;
+    }
+
+    public ServerLightQueue getServerLightQueue() {
+        if (this.lightQueue instanceof ServerLightQueue serverLightQueue) {
+            return serverLightQueue;
+        }
+        return null;
     }
 
     public boolean hasSkyLight() {
@@ -313,7 +345,7 @@ public final class StarLightInterface {
             // empty world
             return null;
         }
-        return ((StarlightWorld)this.world).starlight$getAnyChunkImmediately(chunkX, chunkZ);
+        return ((ChunkSystemLevel)this.world).moonrise$getAnyChunkIfLoaded(chunkX, chunkZ);
     }
 
     public boolean hasUpdates() {
@@ -490,179 +522,408 @@ public final class StarLightInterface {
         }
     }
 
-    public void checkSkyEdges(final int chunkX, final int chunkZ, final ShortCollection sections) {
-        final SkyStarLightEngine skyEngine = this.getSkyLightEngine();
-
-        try {
-            if (skyEngine != null) {
-                skyEngine.checkChunkEdges(this.lightAccess, chunkX, chunkZ, sections);
-            }
-        } finally {
-            this.releaseSkyLightEngine(skyEngine);
-        }
-    }
-
-    public void checkBlockEdges(final int chunkX, final int chunkZ, final ShortCollection sections) {
-        final BlockStarLightEngine blockEngine = this.getBlockLightEngine();
-        try {
-            if (blockEngine != null) {
-                blockEngine.checkChunkEdges(this.lightAccess, chunkX, chunkZ, sections);
-            }
-        } finally {
-            this.releaseBlockLightEngine(blockEngine);
-        }
-    }
-
-    public void scheduleChunkLight(final ChunkPos pos, final Runnable run) {
-        this.lightQueue.queueChunkLighting(pos, run);
-    }
-
-    public void removeChunkTasks(final ChunkPos pos) {
-        this.lightQueue.removeChunk(pos);
-    }
-
     public void propagateChanges() {
-        if (this.lightQueue.isEmpty()) {
-            return;
+        final LightQueue lightQueue = this.lightQueue;
+        if (lightQueue instanceof ClientLightQueue clientLightQueue) {
+            clientLightQueue.drainTasks();
+        } // else: invalid usage, although we won't throw because mods...
+    }
+
+    public static abstract class LightQueue {
+
+        protected final StarLightInterface lightInterface;
+
+        public LightQueue(final StarLightInterface lightInterface) {
+            this.lightInterface = lightInterface;
         }
 
-        LightQueue.ChunkTasks task;
-        while ((task = this.lightQueue.removeFirstTask()) != null) {
-            if (task.lightTasks != null) {
-                for (final Runnable run : task.lightTasks) {
+        public abstract boolean isEmpty();
+
+        public abstract ChunkTasks queueBlockChange(final BlockPos pos);
+
+        public abstract ChunkTasks queueSectionChange(final SectionPos pos, final boolean newEmptyValue);
+
+        public abstract ChunkTasks queueChunkSkylightEdgeCheck(final SectionPos pos, final ShortCollection sections);
+
+        public abstract ChunkTasks queueChunkBlocklightEdgeCheck(final SectionPos pos, final ShortCollection sections);
+
+        public static abstract class ChunkTasks implements Runnable {
+
+            public final long chunkCoordinate;
+
+            protected final StarLightInterface lightEngine;
+            protected final LightQueue queue;
+            protected final MultiThreadedQueue<Runnable> onComplete = new MultiThreadedQueue<>();
+            protected final Set<BlockPos> changedPositions = new HashSet<>();
+            protected Boolean[] changedSectionSet;
+            protected ShortOpenHashSet queuedEdgeChecksSky;
+            protected ShortOpenHashSet queuedEdgeChecksBlock;
+            protected List<BooleanSupplier> lightTasks;
+
+            public ChunkTasks(final long chunkCoordinate, final StarLightInterface lightEngine, final LightQueue queue) {
+                this.chunkCoordinate = chunkCoordinate;
+                this.lightEngine = lightEngine;
+                this.queue = queue;
+            }
+
+            @Override
+            public abstract void run();
+
+            public void queueOrRunTask(final Runnable run) {
+                if (!this.onComplete.add(run)) {
                     run.run();
                 }
             }
 
-            final SkyStarLightEngine skyEngine = this.getSkyLightEngine();
-            final BlockStarLightEngine blockEngine = this.getBlockLightEngine();
-
-            try {
-                final long coordinate = task.chunkCoordinate;
-                final int chunkX = CoordinateUtils.getChunkX(coordinate);
-                final int chunkZ = CoordinateUtils.getChunkZ(coordinate);
-
-                final Set<BlockPos> positions = task.changedPositions;
-                final Boolean[] sectionChanges = task.changedSectionSet;
-
-                if (skyEngine != null && (!positions.isEmpty() || sectionChanges != null)) {
-                    skyEngine.blocksChangedInChunk(this.lightAccess, chunkX, chunkZ, positions, sectionChanges);
-                }
-                if (blockEngine != null && (!positions.isEmpty() || sectionChanges != null)) {
-                    blockEngine.blocksChangedInChunk(this.lightAccess, chunkX, chunkZ, positions, sectionChanges);
-                }
-
-                if (skyEngine != null && task.queuedEdgeChecksSky != null) {
-                    skyEngine.checkChunkEdges(this.lightAccess, chunkX, chunkZ, task.queuedEdgeChecksSky);
-                }
-                if (blockEngine != null && task.queuedEdgeChecksBlock != null) {
-                    blockEngine.checkChunkEdges(this.lightAccess, chunkX, chunkZ, task.queuedEdgeChecksBlock);
-                }
-            } finally {
-                this.releaseSkyLightEngine(skyEngine);
-                this.releaseBlockLightEngine(blockEngine);
+            protected void addChangedPosition(final BlockPos pos) {
+                this.changedPositions.add(pos.immutable());
             }
 
-            task.onComplete.complete(null);
+            protected void setChangedSection(final int y, final Boolean newEmptyValue) {
+                if (this.changedSectionSet == null) {
+                    this.changedSectionSet = new Boolean[this.lightEngine.maxSection - this.lightEngine.minSection + 1];
+                }
+                this.changedSectionSet[y - this.lightEngine.minSection] = newEmptyValue;
+            }
+
+            protected void addLightTask(final BooleanSupplier lightTask) {
+                if (this.lightTasks == null) {
+                    this.lightTasks = new ArrayList<>();
+                }
+                this.lightTasks.add(lightTask);
+            }
+
+            protected void addEdgeChecksSky(final ShortCollection values) {
+                if (this.queuedEdgeChecksSky == null) {
+                    this.queuedEdgeChecksSky = new ShortOpenHashSet(Math.max(8, values.size()));
+                }
+                this.queuedEdgeChecksSky.addAll(values);
+            }
+
+            protected void addEdgeChecksBlock(final ShortCollection values) {
+                if (this.queuedEdgeChecksBlock == null) {
+                    this.queuedEdgeChecksBlock = new ShortOpenHashSet(Math.max(8, values.size()));
+                }
+                this.queuedEdgeChecksBlock.addAll(values);
+            }
+
+            protected final void runTasks() {
+                boolean litChunk = false;
+                if (this.lightTasks != null) {
+                    for (final BooleanSupplier run : this.lightTasks) {
+                        if (run.getAsBoolean()) {
+                            litChunk = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!litChunk) {
+                    final SkyStarLightEngine skyEngine = this.lightEngine.getSkyLightEngine();
+                    final BlockStarLightEngine blockEngine = this.lightEngine.getBlockLightEngine();
+                    try {
+                        final long coordinate = this.chunkCoordinate;
+                        final int chunkX = CoordinateUtils.getChunkX(coordinate);
+                        final int chunkZ = CoordinateUtils.getChunkZ(coordinate);
+
+                        final Set<BlockPos> positions = this.changedPositions;
+                        final Boolean[] sectionChanges = this.changedSectionSet;
+
+                        if (skyEngine != null && (!positions.isEmpty() || sectionChanges != null)) {
+                            skyEngine.blocksChangedInChunk(this.lightEngine.getLightAccess(), chunkX, chunkZ, positions, sectionChanges);
+                        }
+                        if (blockEngine != null && (!positions.isEmpty() || sectionChanges != null)) {
+                            blockEngine.blocksChangedInChunk(this.lightEngine.getLightAccess(), chunkX, chunkZ, positions, sectionChanges);
+                        }
+
+                        if (skyEngine != null && this.queuedEdgeChecksSky != null) {
+                            skyEngine.checkChunkEdges(this.lightEngine.getLightAccess(), chunkX, chunkZ, this.queuedEdgeChecksSky);
+                        }
+                        if (blockEngine != null && this.queuedEdgeChecksBlock != null) {
+                            blockEngine.checkChunkEdges(this.lightEngine.getLightAccess(), chunkX, chunkZ, this.queuedEdgeChecksBlock);
+                        }
+                    } finally {
+                        this.lightEngine.releaseSkyLightEngine(skyEngine);
+                        this.lightEngine.releaseBlockLightEngine(blockEngine);
+                    }
+                }
+
+                Runnable run;
+                while ((run = this.onComplete.pollOrBlockAdds()) != null) {
+                    run.run();
+                }
+            }
         }
     }
 
-    public static final class LightQueue {
+    public static final class ClientLightQueue extends LightQueue {
 
-        protected final Long2ObjectLinkedOpenHashMap<ChunkTasks> chunkTasks = new Long2ObjectLinkedOpenHashMap<>();
-        protected final StarLightInterface manager;
+        private final Long2ObjectLinkedOpenHashMap<ClientChunkTasks> chunkTasks = new Long2ObjectLinkedOpenHashMap<>();
 
-        public LightQueue(final StarLightInterface manager) {
-            this.manager = manager;
+        public ClientLightQueue(final StarLightInterface lightInterface) {
+            super(lightInterface);
         }
 
+        @Override
         public synchronized boolean isEmpty() {
             return this.chunkTasks.isEmpty();
         }
 
-        public synchronized LightQueue.ChunkTasks queueBlockChange(final BlockPos pos) {
-            final ChunkTasks tasks = this.chunkTasks.computeIfAbsent(CoordinateUtils.getChunkKey(pos), ChunkTasks::new);
-            tasks.changedPositions.add(pos.immutable());
+        // must hold synchronized lock on this object
+        private ClientChunkTasks getOrCreate(final long key) {
+            return this.chunkTasks.computeIfAbsent(key, (final long keyInMap) -> {
+                return new ClientChunkTasks(keyInMap, ClientLightQueue.this.lightInterface, ClientLightQueue.this);
+            });
+        }
+
+        @Override
+        public synchronized ClientChunkTasks queueBlockChange(final BlockPos pos) {
+            final ClientChunkTasks tasks = this.getOrCreate(CoordinateUtils.getChunkKey(pos));
+            tasks.addChangedPosition(pos);
             return tasks;
         }
 
-        public synchronized LightQueue.ChunkTasks queueSectionChange(final SectionPos pos, final boolean newEmptyValue) {
-            final ChunkTasks tasks = this.chunkTasks.computeIfAbsent(CoordinateUtils.getChunkKey(pos), ChunkTasks::new);
+        @Override
+        public synchronized ClientChunkTasks queueSectionChange(final SectionPos pos, final boolean newEmptyValue) {
+            final ClientChunkTasks tasks = this.getOrCreate(CoordinateUtils.getChunkKey(pos));
 
-            if (tasks.changedSectionSet == null) {
-                tasks.changedSectionSet = new Boolean[this.manager.maxSection - this.manager.minSection + 1];
-            }
-            tasks.changedSectionSet[pos.getY() - this.manager.minSection] = Boolean.valueOf(newEmptyValue);
-
-            return tasks;
-        }
-
-        public synchronized LightQueue.ChunkTasks queueChunkLighting(final ChunkPos pos, final Runnable lightTask) {
-            final ChunkTasks tasks = this.chunkTasks.computeIfAbsent(CoordinateUtils.getChunkKey(pos), ChunkTasks::new);
-            if (tasks.lightTasks == null) {
-                tasks.lightTasks = new ArrayList<>();
-            }
-            tasks.lightTasks.add(lightTask);
+            tasks.setChangedSection(pos.getY(), Boolean.valueOf(newEmptyValue));
 
             return tasks;
         }
 
-        public synchronized LightQueue.ChunkTasks queueChunkSkylightEdgeCheck(final SectionPos pos, final ShortCollection sections) {
-            final ChunkTasks tasks = this.chunkTasks.computeIfAbsent(CoordinateUtils.getChunkKey(pos), ChunkTasks::new);
+        @Override
+        public synchronized ClientChunkTasks queueChunkSkylightEdgeCheck(final SectionPos pos, final ShortCollection sections) {
+            final ClientChunkTasks tasks = this.getOrCreate(CoordinateUtils.getChunkKey(pos));
 
-            ShortOpenHashSet queuedEdges = tasks.queuedEdgeChecksSky;
-            if (queuedEdges == null) {
-                queuedEdges = tasks.queuedEdgeChecksSky = new ShortOpenHashSet();
-            }
-            queuedEdges.addAll(sections);
+            tasks.addEdgeChecksSky(sections);
 
             return tasks;
         }
 
-        public synchronized LightQueue.ChunkTasks queueChunkBlocklightEdgeCheck(final SectionPos pos, final ShortCollection sections) {
-            final ChunkTasks tasks = this.chunkTasks.computeIfAbsent(CoordinateUtils.getChunkKey(pos), ChunkTasks::new);
+        @Override
+        public synchronized ClientChunkTasks queueChunkBlocklightEdgeCheck(final SectionPos pos, final ShortCollection sections) {
+            final ClientChunkTasks tasks = this.getOrCreate(CoordinateUtils.getChunkKey(pos));
 
-            ShortOpenHashSet queuedEdges = tasks.queuedEdgeChecksBlock;
-            if (queuedEdges == null) {
-                queuedEdges = tasks.queuedEdgeChecksBlock = new ShortOpenHashSet();
-            }
-            queuedEdges.addAll(sections);
+            tasks.addEdgeChecksBlock(sections);
 
             return tasks;
         }
 
-        public void removeChunk(final ChunkPos pos) {
-            final ChunkTasks tasks;
-            synchronized (this) {
-                tasks = this.chunkTasks.remove(CoordinateUtils.getChunkKey(pos));
-            }
-            if (tasks != null) {
-                tasks.onComplete.complete(null);
-            }
-        }
-
-        public synchronized ChunkTasks removeFirstTask() {
+        public synchronized ClientChunkTasks removeFirstTask() {
             if (this.chunkTasks.isEmpty()) {
                 return null;
             }
             return this.chunkTasks.removeFirst();
         }
 
-        public static final class ChunkTasks {
+        public void drainTasks() {
+            ClientChunkTasks task;
+            while ((task = this.removeFirstTask()) != null) {
+                task.runTasks();
+            }
+        }
 
-            public final Set<BlockPos> changedPositions = new ObjectOpenHashSet<>();
-            public Boolean[] changedSectionSet;
-            public ShortOpenHashSet queuedEdgeChecksSky;
-            public ShortOpenHashSet queuedEdgeChecksBlock;
-            public List<Runnable> lightTasks;
+        public static final class ClientChunkTasks extends ChunkTasks {
 
-            public boolean isTicketAdded = false;
-            public final CompletableFuture<Void> onComplete = new CompletableFuture<>();
+            public ClientChunkTasks(final long chunkCoordinate, final StarLightInterface lightEngine, final ClientLightQueue queue) {
+                super(chunkCoordinate, lightEngine, queue);
+            }
 
-            public final long chunkCoordinate;
+            @Override
+            public void run() {
+                this.runTasks();
+            }
+        }
+    }
 
-            public ChunkTasks(final long chunkCoordinate) {
-                this.chunkCoordinate = chunkCoordinate;
+    public static final class ServerLightQueue extends LightQueue {
+
+        private final ConcurrentLong2ReferenceChainedHashTable<ServerChunkTasks> chunkTasks = new ConcurrentLong2ReferenceChainedHashTable<>();
+
+        public ServerLightQueue(final StarLightInterface lightInterface) {
+            super(lightInterface);
+        }
+
+        public void lowerPriority(final int chunkX, final int chunkZ, final PrioritisedExecutor.Priority priority) {
+            final ServerChunkTasks task = this.chunkTasks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
+            if (task != null) {
+                task.lowerPriority(priority);
+            }
+        }
+
+        public void setPriority(final int chunkX, final int chunkZ, final PrioritisedExecutor.Priority priority) {
+            final ServerChunkTasks task = this.chunkTasks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
+            if (task != null) {
+                task.setPriority(priority);
+            }
+        }
+
+        public void raisePriority(final int chunkX, final int chunkZ, final PrioritisedExecutor.Priority priority) {
+            final ServerChunkTasks task = this.chunkTasks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
+            if (task != null) {
+                task.raisePriority(priority);
+            }
+        }
+
+        public PrioritisedExecutor.Priority getPriority(final int chunkX, final int chunkZ) {
+            final ServerChunkTasks task = this.chunkTasks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
+            if (task != null) {
+                return task.getPriority();
+            }
+
+            return PrioritisedExecutor.Priority.COMPLETING;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return this.chunkTasks.isEmpty();
+        }
+
+        @Override
+        public ServerChunkTasks queueBlockChange(final BlockPos pos) {
+            final ServerChunkTasks ret = this.chunkTasks.compute(CoordinateUtils.getChunkKey(pos), (final long keyInMap, ServerChunkTasks valueInMap) -> {
+                if (valueInMap == null) {
+                    valueInMap = new ServerChunkTasks(
+                            keyInMap, ServerLightQueue.this.lightInterface, ServerLightQueue.this
+                    );
+                }
+                valueInMap.addChangedPosition(pos);
+                return valueInMap;
+            });
+
+            ret.schedule();
+
+            return ret;
+        }
+
+        @Override
+        public ServerChunkTasks queueSectionChange(final SectionPos pos, final boolean newEmptyValue) {
+            final ServerChunkTasks ret = this.chunkTasks.compute(CoordinateUtils.getChunkKey(pos), (final long keyInMap, ServerChunkTasks valueInMap) -> {
+                if (valueInMap == null) {
+                    valueInMap = new ServerChunkTasks(
+                            keyInMap, ServerLightQueue.this.lightInterface, ServerLightQueue.this
+                    );
+                }
+
+                valueInMap.setChangedSection(pos.getY(), Boolean.valueOf(newEmptyValue));
+
+                return valueInMap;
+            });
+
+            ret.schedule();
+
+            return ret;
+        }
+
+        public ServerChunkTasks queueChunkLightTask(final ChunkPos pos, final BooleanSupplier lightTask, final PrioritisedExecutor.Priority priority) {
+            final ServerChunkTasks ret = this.chunkTasks.compute(CoordinateUtils.getChunkKey(pos), (final long keyInMap, ServerChunkTasks valueInMap) -> {
+                if (valueInMap == null) {
+                    valueInMap = new ServerChunkTasks(
+                            keyInMap, ServerLightQueue.this.lightInterface, ServerLightQueue.this, priority
+                    );
+                }
+
+                valueInMap.addLightTask(lightTask);
+
+                return valueInMap;
+            });
+
+            ret.schedule();
+
+            return ret;
+        }
+
+        @Override
+        public ServerChunkTasks queueChunkSkylightEdgeCheck(final SectionPos pos, final ShortCollection sections) {
+            final ServerChunkTasks ret = this.chunkTasks.compute(CoordinateUtils.getChunkKey(pos), (final long keyInMap, ServerChunkTasks valueInMap) -> {
+                if (valueInMap == null) {
+                    valueInMap = new ServerChunkTasks(
+                            keyInMap, ServerLightQueue.this.lightInterface, ServerLightQueue.this
+                    );
+                }
+
+                valueInMap.addEdgeChecksSky(sections);
+
+                return valueInMap;
+            });
+
+            ret.schedule();
+
+            return ret;
+        }
+
+        @Override
+        public ServerChunkTasks queueChunkBlocklightEdgeCheck(final SectionPos pos, final ShortCollection sections) {
+            final ServerChunkTasks ret = this.chunkTasks.compute(CoordinateUtils.getChunkKey(pos), (final long keyInMap, ServerChunkTasks valueInMap) -> {
+                if (valueInMap == null) {
+                    valueInMap = new ServerChunkTasks(
+                            keyInMap, ServerLightQueue.this.lightInterface, ServerLightQueue.this
+                    );
+                }
+
+                valueInMap.addEdgeChecksBlock(sections);
+
+                return valueInMap;
+            });
+
+            ret.schedule();
+
+            return ret;
+        }
+
+        public static final class ServerChunkTasks extends ChunkTasks {
+
+            private final AtomicBoolean ticketAdded = new AtomicBoolean();
+            private final PrioritisedExecutor.PrioritisedTask task;
+
+            public ServerChunkTasks(final long chunkCoordinate, final StarLightInterface lightEngine,
+                                    final ServerLightQueue queue) {
+                this(chunkCoordinate, lightEngine, queue, PrioritisedExecutor.Priority.NORMAL);
+            }
+
+            public ServerChunkTasks(final long chunkCoordinate, final StarLightInterface lightEngine,
+                                    final ServerLightQueue queue, final PrioritisedExecutor.Priority priority) {
+                super(chunkCoordinate, lightEngine, queue);
+                this.task = ((ChunkSystemServerLevel)(ServerLevel)lightEngine.getWorld()).moonrise$getChunkTaskScheduler().radiusAwareScheduler.createTask(
+                        CoordinateUtils.getChunkX(chunkCoordinate), CoordinateUtils.getChunkZ(chunkCoordinate),
+                        ((ChunkSystemChunkStatus)ChunkStatus.LIGHT).moonrise$getWriteRadius(), this, priority
+                );
+            }
+
+            public boolean markTicketAdded() {
+                return !this.ticketAdded.get() && !this.ticketAdded.getAndSet(true);
+            }
+
+            public void schedule() {
+                this.task.queue();
+            }
+
+            public boolean cancel() {
+                return this.task.cancel();
+            }
+
+            public PrioritisedExecutor.Priority getPriority() {
+                return this.task.getPriority();
+            }
+
+            public void lowerPriority(final PrioritisedExecutor.Priority priority) {
+                this.task.lowerPriority(priority);
+            }
+
+            public void setPriority(final PrioritisedExecutor.Priority priority) {
+                this.task.setPriority(priority);
+            }
+
+            public void raisePriority(final PrioritisedExecutor.Priority priority) {
+                this.task.raisePriority(priority);
+            }
+
+            @Override
+            public void run() {
+                ((ServerLightQueue)this.queue).chunkTasks.remove(this.chunkCoordinate, this);
+
+                this.runTasks();
             }
         }
     }
