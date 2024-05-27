@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevelReader;
+import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -21,7 +22,7 @@ import java.util.function.Supplier;
 public abstract class ChunkGeneratorMixin {
 
     /**
-     * @reason Pass the supplier to the mixin below so that we can change the executor to the parameter provided
+     * @reason Use the provided executor, chunk system sets this to something specific
      * @author Spottedleaf
      */
     @Redirect(
@@ -31,27 +32,9 @@ public abstract class ChunkGeneratorMixin {
                     target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"
             )
     )
-    private <U> CompletableFuture<U> passSupplier(Supplier<U> supplier, Executor executor) {
-        return (CompletableFuture<U>)CompletableFuture.completedFuture(supplier);
-    }
-
-    /**
-     * @reason Retrieve the supplier from the mixin above so that we can change the executor to the parameter provided
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "createBiomes",
-            cancellable = true,
-            at = @At(
-                    value = "RETURN"
-            )
-    )
-    private void unpackSupplier(Executor executor, RandomState randomState, Blender blender,
-                                StructureManager structureManager, ChunkAccess chunkAccess,
-                                CallbackInfoReturnable<CompletableFuture<ChunkAccess>> cir) {
-        cir.setReturnValue(
-                CompletableFuture.supplyAsync(((CompletableFuture<Supplier<ChunkAccess>>)(CompletableFuture)cir.getReturnValue()).join(), executor)
-        );
+    private <U> CompletableFuture<U> redirectBiomesExecutor(final Supplier<U> supplier, final Executor badExecutor,
+                                                            @Local(ordinal = 0, argsOnly = true) final Executor executor) {
+        return CompletableFuture.supplyAsync(supplier, executor);
     }
 
     /**

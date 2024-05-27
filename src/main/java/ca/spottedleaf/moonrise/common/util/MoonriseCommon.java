@@ -30,9 +30,9 @@ public final class MoonriseCommon {
         }
 
         WORKER_POOL = new PrioritisedThreadPool(
-                "Moonrise Chunk System Worker Pool", workerThreads,
+                "Moonrise Worker Pool", workerThreads,
                 (final Thread thread, final Integer id) -> {
-                    thread.setName("Moonrise Chunk System Worker #" + id.intValue());
+                    thread.setName("Moonrise Common Worker #" + id.intValue());
                     thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                         @Override
                         public void uncaughtException(final Thread thread, final Throwable throwable) {

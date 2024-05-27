@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.common.list.IteratorSafeOrderedReferenceSet;
 import ca.spottedleaf.moonrise.common.util.TickThread;
+import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.entity.EntityTickList;
@@ -68,25 +69,9 @@ public abstract class EntityTickListMixin {
         return null;
     }
 
+
     /**
      * @reason Route to new entity list
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "remove",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;remove(I)Ljava/lang/Object;",
-                    remap = false
-            )
-    )
-    private void hookRemove(final Entity entity, final CallbackInfo ci) {
-        this.entities.remove(entity);
-    }
-
-
-    /**
-     * @reason Avoid NPE on accessing old state
      * @author Spottedleaf
      */
     @Redirect(
@@ -97,7 +82,9 @@ public abstract class EntityTickListMixin {
                     remap = false
             )
     )
-    private <V> V hookRemoveAvoidNPE(final Int2ObjectMap<V> instance, final int key) {
+    private <V> V hookRemoveAvoidNPE(final Int2ObjectMap<V> instance, final int key,
+                                     final @Local(ordinal = 0, argsOnly = true) Entity entity) {
+        this.entities.remove(entity);
         return null;
     }
 
