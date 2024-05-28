@@ -224,13 +224,19 @@ public class RegionizedPlayerChunkLoader {
     // Note: follow the player chunk loader so everything stays consistent...
     public int getAPITickDistance() {
         final ViewDistances distances = ((ChunkSystemServerLevel)this.world).moonrise$getViewDistanceHolder().getViewDistances();
-        final int tickViewDistance = PlayerChunkLoaderData.getTickDistance(-1, distances.tickViewDistance);
+        final int tickViewDistance = PlayerChunkLoaderData.getTickDistance(
+                -1, distances.tickViewDistance,
+                -1, distances.loadViewDistance
+        );
         return tickViewDistance;
     }
 
     public int getAPIViewDistance() {
         final ViewDistances distances = ((ChunkSystemServerLevel)this.world).moonrise$getViewDistanceHolder().getViewDistances();
-        final int tickViewDistance = PlayerChunkLoaderData.getTickDistance(-1, distances.tickViewDistance);
+        final int tickViewDistance = PlayerChunkLoaderData.getTickDistance(
+                -1, distances.tickViewDistance,
+                -1, distances.loadViewDistance
+        );
         final int loadDistance = PlayerChunkLoaderData.getLoadViewDistance(tickViewDistance, -1, distances.loadViewDistance);
 
         // loadDistance = api view distance + 1
@@ -239,7 +245,10 @@ public class RegionizedPlayerChunkLoader {
 
     public int getAPISendViewDistance() {
         final ViewDistances distances = ((ChunkSystemServerLevel)this.world).moonrise$getViewDistanceHolder().getViewDistances();
-        final int tickViewDistance = PlayerChunkLoaderData.getTickDistance(-1, distances.tickViewDistance);
+        final int tickViewDistance = PlayerChunkLoaderData.getTickDistance(
+                -1, distances.tickViewDistance,
+                -1, distances.loadViewDistance
+        );
         final int loadDistance = PlayerChunkLoaderData.getLoadViewDistance(tickViewDistance, -1, distances.loadViewDistance);
         final int sendViewDistance = PlayerChunkLoaderData.getSendViewDistance(
                 loadDistance, -1, -1, distances.sendViewDistance
@@ -486,8 +495,12 @@ public class RegionizedPlayerChunkLoader {
             return vd == null ? -1 : Math.max(0, vd.intValue());
         }
 
-        private static int getTickDistance(final int playerTickViewDistance, final int worldTickViewDistance) {
-            return playerTickViewDistance < 0 ? worldTickViewDistance : playerTickViewDistance;
+        private static int getTickDistance(final int playerTickViewDistance, final int worldTickViewDistance,
+                                           final int playerLoadViewDistance, final int worldLoadViewDistance) {
+            return Math.min(
+                    playerTickViewDistance < 0 ? worldTickViewDistance : playerTickViewDistance,
+                    playerLoadViewDistance < 0 ? worldLoadViewDistance : playerLoadViewDistance
+            );
         }
 
         private static int getLoadViewDistance(final int tickViewDistance, final int playerLoadViewDistance,
@@ -824,7 +837,10 @@ public class RegionizedPlayerChunkLoader {
             final int chunkX = this.player.chunkPosition().x;
             final int chunkZ = this.player.chunkPosition().z;
 
-            final int tickViewDistance = getTickDistance(playerDistances.tickViewDistance, worldDistances.tickViewDistance);
+            final int tickViewDistance = getTickDistance(
+                    playerDistances.tickViewDistance, worldDistances.tickViewDistance,
+                    playerDistances.loadViewDistance, worldDistances.loadViewDistance
+            );
             // load view cannot be less-than tick view + 1
             final int loadViewDistance = getLoadViewDistance(tickViewDistance, playerDistances.loadViewDistance, worldDistances.loadViewDistance);
             // send view cannot be greater-than load view
@@ -875,7 +891,10 @@ public class RegionizedPlayerChunkLoader {
             final ViewDistances playerDistances = ((ChunkSystemServerPlayer)this.player).moonrise$getViewDistanceHolder().getViewDistances();
             final ViewDistances worldDistances = ((ChunkSystemServerLevel)this.world).moonrise$getViewDistanceHolder().getViewDistances();
 
-            final int tickViewDistance = getTickDistance(playerDistances.tickViewDistance, worldDistances.tickViewDistance);
+            final int tickViewDistance = getTickDistance(
+                    playerDistances.tickViewDistance, worldDistances.tickViewDistance,
+                    playerDistances.loadViewDistance, worldDistances.loadViewDistance
+            );
             // load view cannot be less-than tick view + 1
             final int loadViewDistance = getLoadViewDistance(tickViewDistance, playerDistances.loadViewDistance, worldDistances.loadViewDistance);
             // send view cannot be greater-than load view
