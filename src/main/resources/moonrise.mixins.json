@@ -21,6 +21,7 @@
     "chunk_system.ChunkSerializerMixin",
     "chunk_system.ChunkStatusMixin",
     "chunk_system.ChunkStorageMixin",
+    "chunk_system.CommandsMixin",
     "chunk_system.DistanceManagerMixin",
     "chunk_system.EntityGetterMixin",
     "chunk_system.EntityMixin",
