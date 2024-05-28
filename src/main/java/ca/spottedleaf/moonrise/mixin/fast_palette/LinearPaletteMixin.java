@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.fast_palette;
 
 import ca.spottedleaf.moonrise.patches.fast_palette.FastPalette;
-import ca.spottedleaf.moonrise.patches.fast_palette.FastPalettedContainer;
+import ca.spottedleaf.moonrise.patches.fast_palette.FastPaletteData;
 import net.minecraft.world.level.chunk.LinearPalette;
 import net.minecraft.world.level.chunk.Palette;
 import org.spongepowered.asm.mixin.Final;
@@ -16,7 +16,7 @@ public abstract class LinearPaletteMixin<T> implements Palette<T>, FastPalette<T
     private T[] values;
 
     @Override
-    public T[] moonrise$getRawPalette(final FastPalettedContainer<T> container) {
+    public T[] moonrise$getRawPalette(final FastPaletteData<T> container) {
         return this.values;
     }
 }

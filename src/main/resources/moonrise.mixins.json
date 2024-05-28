@@ -68,6 +68,7 @@
     "fast_palette.CrudeIncrementalIntIdentityHashBiMapMixin",
     "fast_palette.HashMapPaletteMixin",
     "fast_palette.LinearPaletteMixin",
+    "fast_palette.PalettedContainer$DataMixin",
     "fast_palette.PalettedContainerMixin",
     "fast_palette.PaletteMixin",
     "fast_palette.SingleValuePaletteMixin",

@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.fast_palette;
 
 import ca.spottedleaf.moonrise.patches.fast_palette.FastPalette;
-import ca.spottedleaf.moonrise.patches.fast_palette.FastPalettedContainer;
+import ca.spottedleaf.moonrise.patches.fast_palette.FastPaletteData;
 import net.minecraft.util.CrudeIncrementalIntIdentityHashBiMap;
 import net.minecraft.world.level.chunk.HashMapPalette;
 import net.minecraft.world.level.chunk.Palette;
@@ -17,7 +17,7 @@ public abstract class HashMapPaletteMixin<T> implements Palette<T>, FastPalette<
     private CrudeIncrementalIntIdentityHashBiMap<T> values;
 
     @Override
-    public T[] moonrise$getRawPalette(final FastPalettedContainer<T> container) {
+    public T[] moonrise$getRawPalette(final FastPaletteData<T> container) {
         return ((FastPalette<T>)this.values).moonrise$getRawPalette(container);
     }
 }

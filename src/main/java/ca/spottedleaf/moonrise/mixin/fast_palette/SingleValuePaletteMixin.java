@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.fast_palette;
 
 import ca.spottedleaf.moonrise.patches.fast_palette.FastPalette;
-import ca.spottedleaf.moonrise.patches.fast_palette.FastPalettedContainer;
+import ca.spottedleaf.moonrise.patches.fast_palette.FastPaletteData;
 import net.minecraft.world.level.chunk.Palette;
 import net.minecraft.world.level.chunk.SingleValuePalette;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,7 +14,7 @@ public abstract class SingleValuePaletteMixin<T> implements Palette<T>, FastPale
     private T value;
 
     @Override
-    public T[] moonrise$getRawPalette(final FastPalettedContainer<T> container) {
+    public T[] moonrise$getRawPalette(final FastPaletteData<T> container) {
         return (T[])new Object[] { this.value };
     }
 }

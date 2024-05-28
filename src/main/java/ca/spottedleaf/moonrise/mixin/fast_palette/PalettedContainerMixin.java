@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.fast_palette;
 
 import ca.spottedleaf.moonrise.patches.fast_palette.FastPalette;
-import ca.spottedleaf.moonrise.patches.fast_palette.FastPalettedContainer;
+import ca.spottedleaf.moonrise.patches.fast_palette.FastPaletteData;
 import net.minecraft.world.level.chunk.PaletteResize;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.PalettedContainerRO;
@@ -15,25 +15,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PalettedContainer.class)
-public abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedContainerRO<T>, FastPalettedContainer<T> {
+public abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedContainerRO<T> {
 
     @Shadow
     public volatile PalettedContainer.Data<T> data;
 
     @Unique
-    private T[] rawPalette;
-
-    @Unique
     private void updateData(final PalettedContainer.Data<T> data) {
         if (data != null) {
-            this.rawPalette = ((FastPalette<T>)data.palette).moonrise$getRawPalette(this);
+            ((FastPaletteData<T>)(Object)data).moonrise$setPalette(
+                    ((FastPalette<T>)data.palette).moonrise$getRawPalette((FastPaletteData<T>)(Object)data)
+            );
         }
     }
 
-    @Override
-    public void moonrise$updatePaletteArray(final T[] palette) {
-        this.rawPalette = palette;
-    }
 
     /**
      * @reason Hook to update raw palette data on object construction
@@ -111,8 +106,8 @@ public abstract class PalettedContainerMixin<T> implements PaletteResize<T>, Pal
     }
 
     @Unique
-    private T readPalette(final int paletteIdx) {
-        final T[] palette = this.rawPalette;
+    private T readPalette(final PalettedContainer.Data<T> data, final int paletteIdx) {
+        final T[] palette = ((FastPaletteData<T>)(Object)data).moonrise$getPalette();
         if (palette == null) {
             return this.readPaletteSlow(paletteIdx);
         }
@@ -131,8 +126,9 @@ public abstract class PalettedContainerMixin<T> implements PaletteResize<T>, Pal
     @Overwrite
     public T getAndSet(final int index, final T value) {
         final int paletteIdx = this.data.palette.idFor(value);
-        final int prev = this.data.storage.getAndSet(index, paletteIdx);
-        return this.readPalette(prev);
+        final PalettedContainer.Data<T> data = this.data;
+        final int prev = data.storage.getAndSet(index, paletteIdx);
+        return this.readPalette(data, prev);
     }
 
     /**
@@ -141,6 +137,7 @@ public abstract class PalettedContainerMixin<T> implements PaletteResize<T>, Pal
      */
     @Overwrite
     public T get(final int index) {
-        return this.readPalette(this.data.storage.get(index));
+        final PalettedContainer.Data<T> data = this.data;
+        return this.readPalette(data, data.storage.get(index));
     }
 }

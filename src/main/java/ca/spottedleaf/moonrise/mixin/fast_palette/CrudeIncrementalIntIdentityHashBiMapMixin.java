@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.fast_palette;
 
 import ca.spottedleaf.moonrise.patches.fast_palette.FastPalette;
-import ca.spottedleaf.moonrise.patches.fast_palette.FastPalettedContainer;
+import ca.spottedleaf.moonrise.patches.fast_palette.FastPaletteData;
 import net.minecraft.core.IdMap;
 import net.minecraft.util.CrudeIncrementalIntIdentityHashBiMap;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,10 +19,10 @@ public abstract class CrudeIncrementalIntIdentityHashBiMapMixin<K> implements Id
 
 
     @Unique
-    private FastPalettedContainer<K> reference;
+    private FastPaletteData<K> reference;
 
     @Override
-    public K[] moonrise$getRawPalette(final FastPalettedContainer<K> src) {
+    public K[] moonrise$getRawPalette(final FastPaletteData<K> src) {
         this.reference = src;
         return this.byId;
     }
@@ -38,9 +38,9 @@ public abstract class CrudeIncrementalIntIdentityHashBiMapMixin<K> implements Id
             )
     )
     private void growHook(final CallbackInfo ci) {
-        final FastPalettedContainer<K> ref = this.reference;
+        final FastPaletteData<K> ref = this.reference;
         if (ref != null) {
-            ref.moonrise$updatePaletteArray(this.byId);
+            ref.moonrise$setPalette(this.byId);
         }
     }
 }
