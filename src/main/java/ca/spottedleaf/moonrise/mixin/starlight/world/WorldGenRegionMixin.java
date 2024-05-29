@@ -15,7 +15,7 @@ public abstract class WorldGenRegionMixin implements WorldGenLevel {
     public abstract ChunkAccess getChunk(int i, int j);
 
     /**
-     * @reason During feature generation, light data is not initialised and will always return 15 in Starlight. Vanilla
+     * During feature generation, light data is not initialised and will always return 15 in Starlight. Vanilla
      * can possibly return 0 if partially initialised, which allows some mushroom blocks to generate.
      * In general, the brightness value from the light engine should not be used until the chunk is ready. To emulate
      * Vanilla behavior better, we return 0 as the brightness during world gen unless the target chunk is finished
@@ -32,7 +32,7 @@ public abstract class WorldGenRegionMixin implements WorldGenLevel {
     }
 
     /**
-     * @reason See above
+     * See above
      * @author Spottedleaf
      */
     @Override
