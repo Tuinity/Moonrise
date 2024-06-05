@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.PrimitiveIterator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -1361,40 +1362,13 @@ public final class ChunkHolderManager {
             holders.add(holder.getDebugJson());
         }
 
-        /* TODO
-        final JsonArray removeTickToChunkExpireTicketCount = new JsonArray();
-        ret.add("remove_tick_to_chunk_expire_ticket_count", removeTickToChunkExpireTicketCount);
-
-        for (final Long2ObjectMap.Entry<Long2IntOpenHashMap> tickEntry : this.removeTickToChunkExpireTicketCount.long2ObjectEntrySet()) {
-            final long tick = tickEntry.getLongKey();
-            final Long2IntOpenHashMap coordinateToCount = tickEntry.getValue();
-
-            final JsonObject tickJson = new JsonObject();
-            removeTickToChunkExpireTicketCount.add(tickJson);
-
-            tickJson.addProperty("tick", Long.valueOf(tick));
-
-            final JsonArray tickEntries = new JsonArray();
-            tickJson.add("entries", tickEntries);
-
-            for (final Long2IntMap.Entry entry : coordinateToCount.long2IntEntrySet()) {
-                final long coordinate = entry.getLongKey();
-                final int count = entry.getIntValue();
-
-                final JsonObject entryJson = new JsonObject();
-                tickEntries.add(entryJson);
-
-                entryJson.addProperty("chunkX", Long.valueOf(CoordinateUtils.getChunkX(coordinate)));
-                entryJson.addProperty("chunkZ", Long.valueOf(CoordinateUtils.getChunkZ(coordinate)));
-                entryJson.addProperty("count", Integer.valueOf(count));
-            }
-        }
-
         final JsonArray allTicketsJson = new JsonArray();
         ret.add("tickets", allTicketsJson);
 
-        for (final Long2ObjectMap.Entry<SortedArraySet<Ticket<?>>> coordinateTickets : this.tickets.long2ObjectEntrySet()) {
-            final long coordinate = coordinateTickets.getLongKey();
+        for (final Iterator<ConcurrentLong2ReferenceChainedHashTable.TableEntry<SortedArraySet<Ticket<?>>>> iterator = this.tickets.entryIterator();
+            iterator.hasNext();) {
+            final ConcurrentLong2ReferenceChainedHashTable.TableEntry<SortedArraySet<Ticket<?>>> coordinateTickets = iterator.next();
+            final long coordinate = coordinateTickets.getKey();
             final SortedArraySet<Ticket<?>> tickets = coordinateTickets.getValue();
 
             final JsonObject coordinateJson = new JsonObject();
@@ -1406,17 +1380,24 @@ public final class ChunkHolderManager {
             final JsonArray ticketsSerialized = new JsonArray();
             coordinateJson.add("tickets", ticketsSerialized);
 
-            for (final Ticket<?> ticket : tickets) {
+            // note: by using a copy of the backing array, we can avoid explicit exceptions we may trip when iterating
+            // directly over the set using the iterator
+            // however, it also means we need to null-check the values, and there is a possibility that we _miss_ an
+            // entry OR iterate over an entry multiple times
+            for (final Object ticketUncasted : ((ChunkSystemSortedArraySet<Ticket<?>>)tickets).moonrise$copyBackingArray()) {
+                if (ticketUncasted == null) {
+                    continue;
+                }
+                final Ticket<?> ticket = (Ticket<?>)ticketUncasted;
                 final JsonObject ticketSerialized = new JsonObject();
                 ticketsSerialized.add(ticketSerialized);
 
                 ticketSerialized.addProperty("type", ticket.getType().toString());
                 ticketSerialized.addProperty("level", Integer.valueOf(ticket.getTicketLevel()));
                 ticketSerialized.addProperty("identifier", Objects.toString(ticket.key));
-                ticketSerialized.addProperty("remove_tick", Long.valueOf(ticket.removalTick));
+                ticketSerialized.addProperty("remove_tick", Long.valueOf(((ChunkSystemTicket<?>)(Object)ticket).moonrise$getRemoveDelay()));
             }
         }
-         */
 
         return ret;
     }

@@ -107,4 +107,9 @@ public abstract class SortedArraySetMixin<T> extends AbstractSet<T> implements C
 
         return ret;
     }
+
+    @Override
+    public Object[] moonrise$copyBackingArray() {
+        return this.contents.clone();
+    }
 }

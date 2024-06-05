@@ -212,21 +212,17 @@ public final class ChunkTaskScheduler {
     }
 
     private static final int[] ACCESS_RADIUS_TABLE = new int[ChunkStatus.getStatusList().size()];
-    private static final int[] MAX_ACCESS_RADIUS_TABLE = new int[ACCESS_RADIUS_TABLE.length];
-    static {
-        Arrays.fill(ACCESS_RADIUS_TABLE, -1);
-    }
 
     private static int getAccessRadius0(final ChunkStatus genStatus) {
         if (genStatus == ChunkStatus.EMPTY) {
             return 0;
         }
 
-        final int radius = Math.max(((ChunkSystemChunkStatus)genStatus).moonrise$getLoadRadius(), genStatus.getRange());
+        final int radius = genStatus.getRange();
         int maxRange = radius;
 
-        for (int dist = 1; dist <= radius; ++dist) {
-            final ChunkStatus requiredNeighbourStatus = ChunkStatus.getStatusAroundFullChunk(ChunkStatus.getDistance(genStatus) + dist);
+        for (int dist = 0; dist <= radius; ++dist) {
+            final ChunkStatus requiredNeighbourStatus = dist == 0 ? genStatus.getParent() : ChunkStatus.getStatusAroundFullChunk(ChunkStatus.getDistance(genStatus) + dist);
             final int rad = ACCESS_RADIUS_TABLE[requiredNeighbourStatus.getIndex()];
             if (rad == -1) {
                 throw new IllegalStateException();
@@ -238,22 +234,18 @@ public final class ChunkTaskScheduler {
         return maxRange;
     }
 
-    private static int maxAccessRadius;
+    private static final int MAX_ACCESS_RADIUS;
 
     static {
         final List<ChunkStatus> statuses = ChunkStatus.getStatusList();
         for (int i = 0, len = statuses.size(); i < len; ++i) {
             ACCESS_RADIUS_TABLE[i] = getAccessRadius0(statuses.get(i));
         }
-        int max = 0;
-        for (int i = 0, len = statuses.size(); i < len; ++i) {
-            MAX_ACCESS_RADIUS_TABLE[i] = max = Math.max(ACCESS_RADIUS_TABLE[i], max);
-        }
-        maxAccessRadius = max;
+        MAX_ACCESS_RADIUS = ACCESS_RADIUS_TABLE[ACCESS_RADIUS_TABLE.length - 1];
     }
 
     public static int getMaxAccessRadius() {
-        return maxAccessRadius;
+        return MAX_ACCESS_RADIUS;
     }
 
     public static int getAccessRadius(final ChunkStatus genStatus) {

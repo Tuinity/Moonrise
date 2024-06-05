@@ -824,34 +824,6 @@ public final class RegionFileIOThread extends PrioritisedQueueExecutorThread {
         return thread.loadDataAsyncInternal(world, chunkX, chunkZ, type, onComplete, intendingToBlock, priority);
     }
 
-    private static Boolean doesRegionFileExist(final int chunkX, final int chunkZ, final boolean intendingToBlock,
-                                               final ChunkDataController taskController) {
-        final ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
-        if (intendingToBlock) {
-            return taskController.computeForRegionFile(chunkX, chunkZ, true, (final RegionFile file) -> {
-                if (file == null) { // null if no regionfile exists
-                    return Boolean.FALSE;
-                }
-
-                return file.hasChunk(chunkPos) ? Boolean.TRUE : Boolean.FALSE;
-            });
-        } else {
-            // first check if the region file for sure does not exist
-            if (taskController.doesRegionFileNotExist(chunkX, chunkZ)) {
-                return Boolean.FALSE;
-            } // else: it either exists or is not known, fall back to checking the loaded region file
-
-            return taskController.computeForRegionFileIfLoaded(chunkX, chunkZ, (final RegionFile file) -> {
-                if (file == null) { // null if not loaded
-                    // not sure at this point, let the I/O thread figure it out
-                    return Boolean.TRUE;
-                }
-
-                return file.hasChunk(chunkPos) ? Boolean.TRUE : Boolean.FALSE;
-            });
-        }
-    }
-
     Cancellable loadDataAsyncInternal(final ServerLevel world, final int chunkX, final int chunkZ,
                                       final RegionFileType type, final BiConsumer<CompoundTag, Throwable> onComplete,
                                       final boolean intendingToBlock, final Priority priority) {
@@ -863,20 +835,6 @@ public final class RegionFileIOThread extends PrioritisedQueueExecutorThread {
         final BiLong1Function<ChunkDataTask, ChunkDataTask> compute = (final long keyInMap, final ChunkDataTask running) -> {
             if (running == null) {
                 // not scheduled
-
-                if (callbackInfo.regionFileCalculation == null) {
-                    // caller will compute this outside of compute(), to avoid holding the bin lock
-                    callbackInfo.needsRegionFileTest = true;
-                    return null;
-                }
-
-                if (callbackInfo.regionFileCalculation == Boolean.FALSE) {
-                    // not on disk
-                    callbackInfo.data = null;
-                    callbackInfo.throwable = null;
-                    callbackInfo.completeNow = true;
-                    return null;
-                }
 
                 // set up task
                 final ChunkDataTask newTask = new ChunkDataTask(
@@ -908,17 +866,7 @@ public final class RegionFileIOThread extends PrioritisedQueueExecutorThread {
             return running;
         };
 
-        ChunkDataTask curr = taskController.tasks.get(key);
-        if (curr == null) {
-            callbackInfo.regionFileCalculation = doesRegionFileExist(chunkX, chunkZ, intendingToBlock, taskController);
-        }
-        ChunkDataTask ret = taskController.tasks.compute(key, compute);
-        if (callbackInfo.needsRegionFileTest) {
-            // curr isn't null but when we went into compute() it was
-            callbackInfo.regionFileCalculation = doesRegionFileExist(chunkX, chunkZ, intendingToBlock, taskController);
-            // now it should be fine
-            ret = taskController.tasks.compute(key, compute);
-        }
+        final ChunkDataTask ret = taskController.tasks.compute(key, compute);
 
         // needs to be scheduled
         if (callbackInfo.tasksNeedsScheduling) {
@@ -975,8 +923,6 @@ public final class RegionFileIOThread extends PrioritisedQueueExecutorThread {
         public Throwable throwable;
         public boolean completeNow;
         public boolean tasksNeedsScheduling;
-        public boolean needsRegionFileTest;
-        public Boolean regionFileCalculation;
 
     }
 
@@ -1043,7 +989,7 @@ public final class RegionFileIOThread extends PrioritisedQueueExecutorThread {
 
         private CompoundTag value;
         private Throwable throwable;
-        private MultiThreadedQueue<BiConsumer<CompoundTag, Throwable>> callbacks = new MultiThreadedQueue<>();
+        private final MultiThreadedQueue<BiConsumer<CompoundTag, Throwable>> callbacks = new MultiThreadedQueue<>();
 
         public boolean hasNoWaiters() {
             return this.callbacks.isEmpty();

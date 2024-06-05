@@ -12,6 +12,7 @@ import it.unimi.dsi.fastutil.shorts.Short2ByteMap;
 import it.unimi.dsi.fastutil.shorts.ShortOpenHashSet;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -28,6 +29,10 @@ public abstract class ThreadedTicketLevelPropagator {
     // we limit the max source to 62 because the de-propagation code _must_ attempt to de-propagate
     // a 1 level to 0; and if a source was 63 then it may cross more than 2 sections in de-propagation
     private static final int MAX_SOURCE_LEVEL = 62;
+
+    private static int getMaxSchedulingRadius() {
+        return 2 * ChunkTaskScheduler.getMaxAccessRadius();
+    }
 
     private final UpdateQueue updateQueue;
     private final ConcurrentLong2ReferenceChainedHashTable<Section> sections;
@@ -305,7 +310,7 @@ public abstract class ThreadedTicketLevelPropagator {
 
                 if (!propagator.updatedPositions.isEmpty()) {
                     // now we can actually update the ticket levels in the chunk holders
-                    final int maxScheduleRadius = 2 * ChunkTaskScheduler.getMaxAccessRadius();
+                    final int maxScheduleRadius = getMaxSchedulingRadius();
 
                     // allow the chunkholders to process ticket level updates without needing to acquire the schedule lock every time
                     final ReentrantAreaLock.Node schedulingNode = schedulingLock.lock(
@@ -347,10 +352,8 @@ public abstract class ThreadedTicketLevelPropagator {
         Propagator propagator = null;
 
         for (;;) {
-            final UpdateQueue.UpdateQueueNode toUpdate = this.updateQueue.acquireNextToUpdate(maxOrder);
+            final UpdateQueue.UpdateQueueNode toUpdate = this.updateQueue.acquireNextOrWait(maxOrder);
             if (toUpdate == null) {
-                this.updateQueue.awaitFirst(maxOrder);
-
                 if (!this.updateQueue.hasRemainingUpdates(maxOrder)) {
                     if (propagator != null) {
                         Propagator.returnPropagator(propagator);
@@ -375,11 +378,9 @@ public abstract class ThreadedTicketLevelPropagator {
 
         private volatile UpdateQueueNode head;
         private volatile UpdateQueueNode tail;
-        private volatile UpdateQueueNode lastUpdating;
 
         private static final VarHandle HEAD_HANDLE = ConcurrentUtil.getVarHandle(UpdateQueue.class, "head", UpdateQueueNode.class);
         private static final VarHandle TAIL_HANDLE = ConcurrentUtil.getVarHandle(UpdateQueue.class, "tail", UpdateQueueNode.class);
-        private static final VarHandle LAST_UPDATING = ConcurrentUtil.getVarHandle(UpdateQueue.class, "lastUpdating", UpdateQueueNode.class);
 
         /* head */
 
@@ -421,16 +422,6 @@ public abstract class ThreadedTicketLevelPropagator {
             return (UpdateQueueNode)TAIL_HANDLE.getOpaque(this);
         }
 
-        /* lastUpdating */
-
-        private final UpdateQueueNode getLastUpdatingVolatile() {
-            return (UpdateQueueNode)LAST_UPDATING.getVolatile(this);
-        }
-
-        private final UpdateQueueNode compareAndExchangeLastUpdatingVolatile(final UpdateQueueNode expect, final UpdateQueueNode update) {
-            return (UpdateQueueNode)LAST_UPDATING.compareAndExchange(this, expect, update);
-        }
-
         public UpdateQueue() {
             final UpdateQueueNode dummy = new UpdateQueueNode(null, null);
             dummy.order = -1L;
@@ -463,44 +454,55 @@ public abstract class ThreadedTicketLevelPropagator {
             }
         }
 
-        public UpdateQueueNode acquireNextToUpdate(final long maxOrder) {
-            int failures = 0;
-            for (UpdateQueueNode prev = this.getLastUpdatingVolatile();;) {
-                UpdateQueueNode next = prev == null ? this.peek() : prev.next;
-
-                if (next == null || next.order > maxOrder) {
-                    return null;
-                }
-
-                for (int i = 0; i < failures; ++i) {
-                    ConcurrentUtil.backoff();
-                }
-
-                if (prev == (prev = this.compareAndExchangeLastUpdatingVolatile(prev, next))) {
-                    return next;
-                }
-
-                ++failures;
-            }
-        }
-
-        public void awaitFirst(final long maxOrder) {
-            final UpdateQueueNode earliest = this.peek();
-            if (earliest == null || earliest.order > maxOrder) {
-                return;
-            }
-
+        private static void await(final UpdateQueueNode node) {
             final Thread currThread = Thread.currentThread();
             // we do not use add-blocking because we use the nullability of the section to block
             // remove() does not begin to poll from the wait queue until the section is null'd,
             // and so provided we check the nullability before parking there is no ordering of these operations
             // such that remove() finishes polling from the wait queue while section is not null
-            earliest.add(currThread);
+            node.add(currThread);
 
             // wait until completed
-            while (earliest.getSectionVolatile() != null) {
+            while (node.getSectionVolatile() != null) {
                 LockSupport.park();
             }
+        }
+
+        public UpdateQueueNode acquireNextOrWait(final long maxOrder) {
+            final List<UpdateQueueNode> blocking = new ArrayList<>();
+
+            node_search:
+            for (UpdateQueueNode curr = this.peek(); curr != null && curr.order <= maxOrder; curr = curr.getNextVolatile()) {
+                if (curr.getSectionVolatile() == null) {
+                    continue;
+                }
+
+                if (curr.getUpdatingVolatile()) {
+                    blocking.add(curr);
+                    continue;
+                }
+
+                for (int i = 0, len = blocking.size(); i < len; ++i) {
+                    final UpdateQueueNode node = blocking.get(i);
+
+                    if (node.intersects(curr)) {
+                        continue node_search;
+                    }
+                }
+
+                if (curr.getAndSetUpdatingVolatile(true)) {
+                    blocking.add(curr);
+                    continue;
+                }
+
+                return curr;
+            }
+
+            if (!blocking.isEmpty()) {
+                await(blocking.get(0));
+            }
+
+            return null;
         }
 
         public UpdateQueueNode peek() {
@@ -587,16 +589,35 @@ public abstract class ThreadedTicketLevelPropagator {
         // each node also represents a set of waiters, represented by the MTQ
         // if the queue is add-blocked, then the update is complete
         private static final class UpdateQueueNode extends MultiThreadedQueue<Thread> {
+            private final int sectionX;
+            private final int sectionZ;
+
             private long order;
-            private Section section;
+            private volatile Section section;
             private volatile UpdateQueueNode next;
+            private volatile boolean updating;
 
             private static final VarHandle SECTION_HANDLE = ConcurrentUtil.getVarHandle(UpdateQueueNode.class, "section", Section.class);
             private static final VarHandle NEXT_HANDLE = ConcurrentUtil.getVarHandle(UpdateQueueNode.class, "next", UpdateQueueNode.class);
+            private static final VarHandle UPDATING_HANDLE = ConcurrentUtil.getVarHandle(UpdateQueueNode.class, "updating", boolean.class);
 
             public UpdateQueueNode(final Section section, final UpdateQueueNode next) {
+                if (section == null) {
+                    this.sectionX = this.sectionZ = 0;
+                } else {
+                    this.sectionX = section.sectionX;
+                    this.sectionZ = section.sectionZ;
+                }
+
                 SECTION_HANDLE.set(this, section);
                 NEXT_HANDLE.set(this, next);
+            }
+
+            public boolean intersects(final UpdateQueueNode other) {
+                final int dist = Math.max(Math.abs(this.sectionX - other.sectionX), Math.abs(this.sectionZ - other.sectionZ));
+
+                // intersection radius is ticket update radius (1) + scheduling radius
+                return dist <= (1 + ((getMaxSchedulingRadius() + (SECTION_SIZE - 1)) >> SECTION_SHIFT));
             }
 
             /* section */
@@ -657,6 +678,16 @@ public abstract class ThreadedTicketLevelPropagator {
 
             private final UpdateQueueNode compareExchangeNextVolatile(final UpdateQueueNode expect, final UpdateQueueNode set) {
                 return (UpdateQueueNode)NEXT_HANDLE.compareAndExchange(this, expect, set);
+            }
+
+            /* updating */
+
+            private final boolean getUpdatingVolatile() {
+                return (boolean)UPDATING_HANDLE.getVolatile(this);
+            }
+
+            private final boolean getAndSetUpdatingVolatile(final boolean value) {
+                return (boolean)UPDATING_HANDLE.getAndSet(this, value);
             }
         }
     }
