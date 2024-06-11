@@ -1,14 +1,57 @@
 package ca.spottedleaf.moonrise.common.util;
 
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedThreadPool;
-import ca.spottedleaf.moonrise.common.config.PlaceholderConfig;
+import ca.spottedleaf.moonrise.common.config.MoonriseConfig;
+import ca.spottedleaf.moonrise.common.config.adapter.TypeAdapterRegistry;
+import ca.spottedleaf.moonrise.common.config.config.YamlConfig;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.io.File;
 
 public final class MoonriseCommon {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChunkTaskScheduler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MoonriseCommon.class);
+
+    private static final File CONFIG_FILE = new File("moonrise.yaml");
+    private static final YamlConfig<MoonriseConfig> CONFIG;
+    static {
+        try {
+            CONFIG = new YamlConfig<>(MoonriseConfig.class, new MoonriseConfig());
+        } catch (final Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    static {
+        reloadConfig();
+    }
+
+    public static MoonriseConfig getConfig() {
+        return CONFIG.config;
+    }
+
+    public static void reloadConfig() {
+        if (CONFIG_FILE.exists()) {
+            try {
+                CONFIG.load(CONFIG_FILE);
+            } catch (final Exception ex) {
+                LOGGER.error("Failed to load configuration, using defaults", ex);
+                return;
+            }
+        }
+
+        // write back any changes, or create if needed
+        saveConfig();
+    }
+
+    public static void saveConfig() {
+        try {
+            CONFIG.save(CONFIG_FILE);
+        } catch (final Exception ex) {
+            LOGGER.error("Failed to save configuration", ex);
+        }
+    }
 
     public static final PrioritisedThreadPool WORKER_POOL;
     public static final int WORKER_THREADS;
@@ -21,7 +64,7 @@ public final class MoonriseCommon {
         }
         defaultWorkerThreads = Integer.getInteger("Moonrise.WorkerThreadCount", Integer.valueOf(defaultWorkerThreads));
 
-        int workerThreads = PlaceholderConfig.workerThreads;
+        int workerThreads = MoonriseCommon.getConfig().workerThreads;
 
         if (workerThreads < 0) {
             workerThreads = defaultWorkerThreads;
@@ -44,5 +87,4 @@ public final class MoonriseCommon {
     }
 
     private MoonriseCommon() {}
-
 }

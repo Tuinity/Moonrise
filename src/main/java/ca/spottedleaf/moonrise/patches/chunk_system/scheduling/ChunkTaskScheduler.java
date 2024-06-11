@@ -5,7 +5,6 @@ import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedThreadPool;
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedThreadedTaskQueue;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
-import ca.spottedleaf.moonrise.common.config.PlaceholderConfig;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.TickThread;
@@ -51,6 +50,7 @@ public final class ChunkTaskScheduler {
 
     static int newChunkSystemIOThreads;
     static int newChunkSystemGenParallelism;
+    static int newChunkSystemGenPopulationParallelism;
     static int newChunkSystemLoadParallelism;
 
     private static boolean initialised = false;
@@ -60,29 +60,17 @@ public final class ChunkTaskScheduler {
             return;
         }
         initialised = true;
-        newChunkSystemIOThreads = PlaceholderConfig.chunkSystemIOThreads;
+        newChunkSystemIOThreads = MoonriseCommon.getConfig().chunkSystem.ioThreads;
         if (newChunkSystemIOThreads < 0) {
             newChunkSystemIOThreads = 1;
         } else {
             newChunkSystemIOThreads = Math.max(1, newChunkSystemIOThreads);
         }
 
-        String newChunkSystemGenParallelism = PlaceholderConfig.chunkSystemGenParallelism;
-        if (newChunkSystemGenParallelism.equalsIgnoreCase("default")) {
-            newChunkSystemGenParallelism = "true";
-        }
-        boolean useParallelGen;
-        if (newChunkSystemGenParallelism.equalsIgnoreCase("on") || newChunkSystemGenParallelism.equalsIgnoreCase("enabled")
-            || newChunkSystemGenParallelism.equalsIgnoreCase("true")) {
-            useParallelGen = true;
-        } else if (newChunkSystemGenParallelism.equalsIgnoreCase("off") || newChunkSystemGenParallelism.equalsIgnoreCase("disabled")
-            || newChunkSystemGenParallelism.equalsIgnoreCase("false")) {
-            useParallelGen = false;
-        } else {
-            throw new IllegalStateException("Invalid option for gen-parallelism: must be one of [on, off, enabled, disabled, true, false, default]");
-        }
+        boolean useParallelGen = MoonriseCommon.getConfig().chunkSystem.populationGenParallelism;
 
-        ChunkTaskScheduler.newChunkSystemGenParallelism = useParallelGen ? MoonriseCommon.WORKER_THREADS : 1;
+        ChunkTaskScheduler.newChunkSystemGenParallelism = MoonriseCommon.WORKER_THREADS;
+        ChunkTaskScheduler.newChunkSystemGenPopulationParallelism = useParallelGen ? MoonriseCommon.WORKER_THREADS : 1;
         ChunkTaskScheduler.newChunkSystemLoadParallelism = MoonriseCommon.WORKER_THREADS;
 
         RegionFileIOThread.init(newChunkSystemIOThreads);
@@ -277,10 +265,9 @@ public final class ChunkTaskScheduler {
 
         final String worldName = WorldUtil.getWorldName(world);
         this.parallelGenExecutor = workers.createExecutor("Chunk parallel generation executor for world '" + worldName + "'", 1, Math.max(1, newChunkSystemGenParallelism));
-        this.radiusAwareGenExecutor =
-            newChunkSystemGenParallelism <= 1 ? this.parallelGenExecutor : workers.createExecutor("Chunk radius aware generator for world '" + worldName + "'", 1, newChunkSystemGenParallelism);
+        this.radiusAwareGenExecutor = workers.createExecutor("Chunk radius aware generator for world '" + worldName + "'", 1, Math.max(1, newChunkSystemGenPopulationParallelism));
         this.loadExecutor = workers.createExecutor("Chunk load executor for world '" + worldName + "'", 1, newChunkSystemLoadParallelism);
-        this.radiusAwareScheduler = new RadiusAwarePrioritisedExecutor(this.radiusAwareGenExecutor, Math.max(1, newChunkSystemGenParallelism));
+        this.radiusAwareScheduler = new RadiusAwarePrioritisedExecutor(this.radiusAwareGenExecutor, Math.max(1, newChunkSystemGenPopulationParallelism));
         this.chunkHolderManager = new ChunkHolderManager(world, this);
     }
 

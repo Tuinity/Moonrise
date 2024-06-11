@@ -2,10 +2,10 @@ package ca.spottedleaf.moonrise.patches.chunk_system.player;
 
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
-import ca.spottedleaf.moonrise.common.config.PlaceholderConfig;
 import ca.spottedleaf.moonrise.common.misc.AllocatingRateLimiter;
 import ca.spottedleaf.moonrise.common.misc.SingleUserAreaMap;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
-public class RegionizedPlayerChunkLoader {
+public final class RegionizedPlayerChunkLoader {
 
     public static final TicketType<Long> PLAYER_TICKET         = TicketType.create("chunk_system:player_ticket", Long::compareTo);
     public static final TicketType<Long> PLAYER_TICKET_DELAYED = TicketType.create("chunk_system:player_ticket_delayed", Long::compareTo, 5 * 20);
@@ -512,7 +512,7 @@ public class RegionizedPlayerChunkLoader {
                                                final int playerSendViewDistance, final int worldSendViewDistance) {
             return Math.min(
                 loadViewDistance - 1,
-                playerSendViewDistance < 0 ? (!PlaceholderConfig.chunkLoadingAdvanced$autoConfigSendDistance || clientViewDistance < 0 ? (worldSendViewDistance < 0 ? (loadViewDistance - 1) : worldSendViewDistance) : clientViewDistance + 1) : playerSendViewDistance
+                playerSendViewDistance < 0 ? (!MoonriseCommon.getConfig().chunkLoading.advanced.autoConfigSendDistance || clientViewDistance < 0 ? (worldSendViewDistance < 0 ? (loadViewDistance - 1) : worldSendViewDistance) : clientViewDistance + 1) : playerSendViewDistance
             );
         }
 
@@ -537,26 +537,26 @@ public class RegionizedPlayerChunkLoader {
         }
 
         private double getMaxChunkLoadRate() {
-            final double configRate = PlaceholderConfig.chunkLoadingBasic$playerMaxChunkLoadRate;
+            final double configRate = MoonriseCommon.getConfig().chunkLoading.basic.playerMaxLoadRate;
 
             return configRate < 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
         }
 
         private double getMaxChunkGenRate() {
-            final double configRate = PlaceholderConfig.chunkLoadingBasic$playerMaxChunkGenerateRate;
+            final double configRate = MoonriseCommon.getConfig().chunkLoading.basic.playerMaxGenRate;
 
             return configRate < 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
         }
 
         private double getMaxChunkSendRate() {
-            final double configRate = PlaceholderConfig.chunkLoadingBasic$playerMaxChunkSendRate;
+            final double configRate = MoonriseCommon.getConfig().chunkLoading.basic.playerMaxSendRate;
 
             return configRate < 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
         }
 
         private long getMaxChunkLoads() {
             final long radiusChunks = (2L * this.lastLoadDistance + 1L) * (2L * this.lastLoadDistance + 1L);
-            long configLimit = PlaceholderConfig.chunkLoadingAdvanced$playerMaxConcurrentChunkLoads;
+            long configLimit = MoonriseCommon.getConfig().chunkLoading.advanced.playerMaxConcurrentChunkLoads;
             if (configLimit == 0L) {
                 // by default, only allow 1/5th of the chunks in the view distance to be concurrently active
                 configLimit = Math.max(5L, radiusChunks / 5L);
@@ -570,7 +570,7 @@ public class RegionizedPlayerChunkLoader {
 
         private long getMaxChunkGenerates() {
             final long radiusChunks = (2L * this.lastLoadDistance + 1L) * (2L * this.lastLoadDistance + 1L);
-            long configLimit = PlaceholderConfig.chunkLoadingAdvanced$playerMaxConcurrentChunkGenerates;
+            long configLimit = MoonriseCommon.getConfig().chunkLoading.advanced.playerMaxConcurrentChunkGenerates;
             if (configLimit == 0L) {
                 // by default, only allow 1/5th of the chunks in the view distance to be concurrently active
                 configLimit = Math.max(5L, radiusChunks / 5L);

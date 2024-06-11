@@ -3,8 +3,8 @@ package ca.spottedleaf.moonrise.patches.chunk_system.scheduling;
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
-import ca.spottedleaf.moonrise.common.config.PlaceholderConfig;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.ChunkSystem;
@@ -230,8 +230,9 @@ public final class ChunkHolderManager {
     public void autoSave() {
         final List<NewChunkHolder> reschedule = new ArrayList<>();
         final long currentTick = this.currentTick;
-        final long maxSaveTime = currentTick - (long)PlaceholderConfig.autoSaveInterval;
-        for (int autoSaved = 0; autoSaved < (long)PlaceholderConfig.maxAutoSaveChunksPerTick && !this.autoSaveQueue.isEmpty();) {
+        final long maxSaveTime = currentTick - Math.max(1L, MoonriseCommon.getConfig().chunkSaving.autoSaveInterval.getTimeTicks());
+        final int maxToSave = MoonriseCommon.getConfig().chunkSaving.maxAutoSaveChunksPerTick;
+        for (int autoSaved = 0; autoSaved < maxToSave && !this.autoSaveQueue.isEmpty();) {
             final NewChunkHolder holder = this.autoSaveQueue.first();
 
             if (holder.lastAutoSave > maxSaveTime) {

@@ -42,6 +42,7 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     shadow('ca.spottedleaf:concurrentutil:0.0.1-SNAPSHOT')
+    shadow('org.yaml:snakeyaml:2.2')
 }
 
 processResources {
