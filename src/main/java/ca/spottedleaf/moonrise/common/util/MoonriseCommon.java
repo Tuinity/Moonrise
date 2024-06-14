@@ -13,7 +13,7 @@ public final class MoonriseCommon {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MoonriseCommon.class);
 
-    private static final File CONFIG_FILE = new File("moonrise.yaml");
+    private static final File CONFIG_FILE = new File(System.getProperty("Moonrise.ConfigFile", "moonrise.yml"));
     private static final YamlConfig<MoonriseConfig> CONFIG;
     static {
         try {
@@ -22,6 +22,17 @@ public final class MoonriseCommon {
             throw new RuntimeException(ex);
         }
     }
+    private static final String CONFIG_HEADER = """
+            This is the configuration file for Moonrise.
+            
+            Each configuration option is prefixed with a comment to explain what it does. Additional changes to this file
+            other than modifying the options, such as adding comments, will be overwritten when Moonrise loads the config.
+            
+            Below are the Moonrise startup flags. Note that startup flags must be placed in the JVM arguments, not
+            program arguments.
+            -DMoonrise.ConfigFile=<file> - Override the config file location. Maybe useful for multiple game versions.
+            -DMoonrise.WorkerThreadCount=<number> - Override the auto configured worker thread counts (worker-threads).
+            """;
 
     static {
         reloadConfig();
@@ -31,25 +42,27 @@ public final class MoonriseCommon {
         return CONFIG.config;
     }
 
-    public static void reloadConfig() {
+    public static boolean reloadConfig() {
         if (CONFIG_FILE.exists()) {
             try {
                 CONFIG.load(CONFIG_FILE);
             } catch (final Exception ex) {
                 LOGGER.error("Failed to load configuration, using defaults", ex);
-                return;
+                return false;
             }
         }
 
         // write back any changes, or create if needed
-        saveConfig();
+        return saveConfig();
     }
 
-    public static void saveConfig() {
+    public static boolean saveConfig() {
         try {
-            CONFIG.save(CONFIG_FILE);
+            CONFIG.save(CONFIG_FILE, CONFIG_HEADER);
+            return true;
         } catch (final Exception ex) {
             LOGGER.error("Failed to save configuration", ex);
+            return false;
         }
     }
 
@@ -66,10 +79,8 @@ public final class MoonriseCommon {
 
         int workerThreads = MoonriseCommon.getConfig().workerThreads;
 
-        if (workerThreads < 0) {
+        if (workerThreads <= 0) {
             workerThreads = defaultWorkerThreads;
-        } else {
-            workerThreads = Math.max(1, workerThreads);
         }
 
         WORKER_POOL = new PrioritisedThreadPool(

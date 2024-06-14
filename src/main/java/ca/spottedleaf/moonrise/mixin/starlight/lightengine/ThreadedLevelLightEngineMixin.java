@@ -51,7 +51,7 @@ public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine imp
         final ServerLevel world = (ServerLevel)this.starlight$getLightEngine().getWorld();
 
         final ChunkAccess center = this.starlight$getLightEngine().getAnyChunkNow(chunkX, chunkZ);
-        if (center == null || !center.getStatus().isOrAfter(ChunkStatus.LIGHT)) {
+        if (center == null || !center.getPersistedStatus().isOrAfter(ChunkStatus.LIGHT)) {
             // do not accept updates in unlit chunks, unless we might be generating a chunk. thanks to the amazing
             // chunk scheduling, we could be lighting and generating a chunk at the same time
             return;

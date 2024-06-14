@@ -1,8 +1,7 @@
-package ca.spottedleaf.moonrise.mixin.chunk_system;
+package ca.spottedleaf.moonrise.mixin.command;
 
-import ca.spottedleaf.moonrise.patches.chunk_system.command.MoonriseCommand;
+import ca.spottedleaf.moonrise.patches.command.MoonriseCommand;
 import com.mojang.brigadier.CommandDispatcher;
-import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import org.spongepowered.asm.mixin.Final;

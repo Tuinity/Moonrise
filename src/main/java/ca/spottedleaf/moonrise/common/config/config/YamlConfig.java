@@ -67,6 +67,10 @@ public final class YamlConfig<T> {
     }
 
     public void save(final File file) throws IOException {
+        this.save(file, "");
+    }
+
+    public void save(final File file, final String header) throws IOException {
         if (file.isDirectory()) {
             throw new IOException("File is a directory");
         }
@@ -76,7 +80,7 @@ public final class YamlConfig<T> {
         tmp.createNewFile();
         try {
             try (final OutputStream os = new BufferedOutputStream(new FileOutputStream(tmp))) {
-                this.save(os);
+                this.save(os, header);
             }
 
             try {
@@ -93,8 +97,28 @@ public final class YamlConfig<T> {
         os.write(this.saveToString().getBytes(StandardCharsets.UTF_8));
     }
 
+    public void save(final OutputStream os, final String header) throws IOException {
+        os.write(this.saveToString(header).getBytes(StandardCharsets.UTF_8));
+    }
+
     public String saveToString() {
         return this.yaml.dump(this.typeAdapters.serialize(this.config, this.clazz));
+    }
+
+    public String saveToString(final String header) {
+        if (header.isBlank()) {
+            return this.saveToString();
+        }
+
+        final StringBuilder ret = new StringBuilder();
+
+        for (final String line : header.split("\n")) {
+            ret.append("# ").append(line).append('\n');
+        }
+
+        ret.append('\n');
+
+        return ret.append(this.saveToString()).toString();
     }
 
     private static final class YamlConstructor extends Constructor {

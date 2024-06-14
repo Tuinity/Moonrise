@@ -60,9 +60,9 @@ public final class ChunkHolderManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChunkHolderManager.class);
 
-    public static final int FULL_LOADED_TICKET_LEVEL    = 33;
-    public static final int BLOCK_TICKING_TICKET_LEVEL  = 32;
-    public static final int ENTITY_TICKING_TICKET_LEVEL = 31;
+    public static final int FULL_LOADED_TICKET_LEVEL    = ChunkLevel.FULL_CHUNK_LEVEL;
+    public static final int BLOCK_TICKING_TICKET_LEVEL  = ChunkLevel.BLOCK_TICKING_LEVEL;
+    public static final int ENTITY_TICKING_TICKET_LEVEL = ChunkLevel.ENTITY_TICKING_LEVEL;
     public static final int MAX_TICKET_LEVEL = ChunkLevel.MAX_LEVEL; // inclusive
 
     public static final TicketType<Unit> UNLOAD_COOLDOWN = TicketType.create("unload_cooldown", (u1, u2) -> 0, 5 * 20);

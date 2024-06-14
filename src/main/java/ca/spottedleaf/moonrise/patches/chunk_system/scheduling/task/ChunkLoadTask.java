@@ -346,7 +346,7 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
         private TaskResult<ChunkAccess, Throwable> deserialize(final CompoundTag data) {
             try {
                 final ChunkAccess deserialized = ChunkSerializer.read(
-                        this.world, this.world.getPoiManager(), new ChunkPos(this.chunkX, this.chunkZ), data
+                        this.world, this.world.getPoiManager(), this.world.getChunkSource().chunkMap.storageInfo(), new ChunkPos(this.chunkX, this.chunkZ), data
                 );
                 return new TaskResult<>(deserialized, null);
             } catch (final Throwable thr2) {

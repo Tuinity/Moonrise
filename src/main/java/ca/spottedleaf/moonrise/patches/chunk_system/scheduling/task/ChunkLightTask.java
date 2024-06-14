@@ -151,7 +151,7 @@ public final class ChunkLightTask extends ChunkProgressionTask {
             try {
                 final Boolean[] emptySections = StarLightEngine.getEmptySectionsForChunk(task.fromChunk);
 
-                if (task.fromChunk.isLightCorrect() && task.fromChunk.getStatus().isOrAfter(ChunkStatus.LIGHT)) {
+                if (task.fromChunk.isLightCorrect() && task.fromChunk.getPersistedStatus().isOrAfter(ChunkStatus.LIGHT)) {
                     this.lightEngine.forceLoadInChunk(task.fromChunk, emptySections);
                     this.lightEngine.checkChunkEdges(task.chunkX, task.chunkZ);
                 } else {
@@ -160,8 +160,8 @@ public final class ChunkLightTask extends ChunkProgressionTask {
                     task.fromChunk.setLightCorrect(true);
                 }
                 // we need to advance status
-                if (task.fromChunk instanceof ProtoChunk chunk && chunk.getStatus() == ChunkStatus.LIGHT.getParent()) {
-                    chunk.setStatus(ChunkStatus.LIGHT);
+                if (task.fromChunk instanceof ProtoChunk chunk && chunk.getPersistedStatus() == ChunkStatus.LIGHT.getParent()) {
+                    chunk.setPersistedStatus(ChunkStatus.LIGHT);
                 }
             } catch (final Throwable thr) {
                 LOGGER.fatal(

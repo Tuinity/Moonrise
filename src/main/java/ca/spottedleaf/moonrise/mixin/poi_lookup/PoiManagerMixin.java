@@ -12,6 +12,7 @@ import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.ai.village.poi.PoiSection;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.chunk.storage.ChunkIOErrorReporter;
 import net.minecraft.world.level.chunk.storage.SectionStorage;
 import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,8 +28,8 @@ import java.util.stream.Stream;
 @Mixin(PoiManager.class)
 public abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
 
-    public PoiManagerMixin(SimpleRegionStorage simpleRegionStorage, Function<Runnable, Codec<PoiSection>> function, Function<Runnable, PoiSection> function2, RegistryAccess registryAccess, LevelHeightAccessor levelHeightAccessor) {
-        super(simpleRegionStorage, function, function2, registryAccess, levelHeightAccessor);
+    public PoiManagerMixin(SimpleRegionStorage simpleRegionStorage, Function<Runnable, Codec<PoiSection>> function, Function<Runnable, PoiSection> function2, RegistryAccess registryAccess, ChunkIOErrorReporter chunkIOErrorReporter, LevelHeightAccessor levelHeightAccessor) {
+        super(simpleRegionStorage, function, function2, registryAccess, chunkIOErrorReporter, levelHeightAccessor);
     }
 
     /**

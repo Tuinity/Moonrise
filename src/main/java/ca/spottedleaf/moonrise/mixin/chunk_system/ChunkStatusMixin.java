@@ -29,9 +29,6 @@ public abstract class ChunkStatusMixin implements ChunkSystemChunkStatus {
     private int writeRadius;
 
     @Unique
-    private int loadRadius;
-
-    @Unique
     private ChunkStatus nextStatus;
 
     @Unique
@@ -55,16 +52,6 @@ public abstract class ChunkStatusMixin implements ChunkSystemChunkStatus {
     @Override
     public final void moonrise$setWriteRadius(final int value) {
         this.writeRadius = value;
-    }
-
-    @Override
-    public final int moonrise$getLoadRadius() {
-        return this.loadRadius;
-    }
-
-    @Override
-    public final void moonrise$setLoadRadius(final int value) {
-        this.loadRadius = value;
     }
 
     @Override
@@ -102,12 +89,9 @@ public abstract class ChunkStatusMixin implements ChunkSystemChunkStatus {
                     value = "RETURN"
             )
     )
-    private void initFields(ChunkStatus prevStatus, int i, boolean bl, EnumSet<Heightmap.Types> enumSet, ChunkType chunkType,
-                            ChunkStatus.GenerationTask generationTask, ChunkStatus.LoadingTask loadingTask,
-                            CallbackInfo ci) {
+    private void initFields(ChunkStatus prevStatus, EnumSet<Heightmap.Types> enumSet, ChunkType chunkType, CallbackInfo ci) {
         this.isParallelCapable = false;
         this.writeRadius = -1;
-        this.loadRadius = 0;
         this.nextStatus = (ChunkStatus)(Object)this;
         if (prevStatus != null) {
             ((ChunkStatusMixin)(Object)prevStatus).nextStatus = (ChunkStatus)(Object)this;

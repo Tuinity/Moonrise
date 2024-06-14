@@ -8,6 +8,7 @@ import net.minecraft.world.level.chunk.storage.ChunkScanAccess;
 import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import net.minecraft.world.level.chunk.storage.IOWorker;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
+import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
 import net.minecraft.world.level.levelgen.structure.LegacyStructureDataHandler;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -187,5 +188,14 @@ public abstract class ChunkStorageMixin implements ChunkSystemChunkStorage, Auto
                 throw new RuntimeException(e);
             }
         };
+    }
+
+    /**
+     * @reason Redirect to access the storage directly
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public RegionStorageInfo storageInfo() {
+        return this.storage.info();
     }
 }

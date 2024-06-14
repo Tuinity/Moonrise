@@ -18,14 +18,16 @@
     "chunk_system.ChunkHolderMixin",
     "chunk_system.ChunkMap$DistanceManagerMixin",
     "chunk_system.ChunkMapMixin",
+    "chunk_system.ChunkPyramidMixin",
     "chunk_system.ChunkSerializerMixin",
     "chunk_system.ChunkStatusMixin",
+    "chunk_system.ChunkStepMixin",
     "chunk_system.ChunkStorageMixin",
-    "chunk_system.CommandsMixin",
     "chunk_system.DistanceManagerMixin",
     "chunk_system.EntityGetterMixin",
     "chunk_system.EntityMixin",
     "chunk_system.EntityTickListMixin",
+    "chunk_system.GenerationChunkHolderMixin",
     "chunk_system.LevelChunkMixin",
     "chunk_system.LevelChunkTicksMixin",
     "chunk_system.LevelMixin",
@@ -65,6 +67,7 @@
     "collisions.ShapesMixin",
     "collisions.SliceShapeMixin",
     "collisions.VoxelShapeMixin",
+    "command.CommandsMixin",
     "farm_block.FarmBlockMixin",
     "fast_palette.CrudeIncrementalIntIdentityHashBiMapMixin",
     "fast_palette.HashMapPaletteMixin",
@@ -109,5 +112,5 @@
   },
   "overwrites": {
     "conformVisibility": true
-   }
+  }
 }

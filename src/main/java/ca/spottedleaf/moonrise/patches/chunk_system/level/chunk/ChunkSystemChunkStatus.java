@@ -13,10 +13,6 @@ public interface ChunkSystemChunkStatus {
 
     public void moonrise$setWriteRadius(final int value);
 
-    public int moonrise$getLoadRadius();
-
-    public void moonrise$setLoadRadius(final int value);
-
     public ChunkStatus moonrise$getNextStatus();
 
     public boolean moonrise$isEmptyLoadStatus();

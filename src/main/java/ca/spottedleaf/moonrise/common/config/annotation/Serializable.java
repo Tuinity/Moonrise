@@ -9,7 +9,7 @@ import java.util.function.Function;
 
 /**
  * Annotation indicating that a field should be deserialized or serialized from the config.
- * By default, this annotation is assumed
+ * By default, this annotation is not assumed.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

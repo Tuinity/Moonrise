@@ -125,7 +125,7 @@ public final class StarLightInterface {
             @Override
             public DataLayer getDataLayerData(final SectionPos pos) {
                 final ChunkAccess chunk = StarLightInterface.this.getAnyChunkNow(pos.getX(), pos.getZ());
-                if (chunk == null || (!StarLightInterface.this.isClientSide && !chunk.isLightCorrect()) || !chunk.getStatus().isOrAfter(ChunkStatus.LIGHT)) {
+                if (chunk == null || (!StarLightInterface.this.isClientSide && !chunk.isLightCorrect()) || !chunk.getPersistedStatus().isOrAfter(ChunkStatus.LIGHT)) {
                     return null;
                 }
 
@@ -237,7 +237,7 @@ public final class StarLightInterface {
         final int minLightSection = this.minLightSection;
         final int maxLightSection = this.maxLightSection;
 
-        if (chunk == null || (!this.isClientSide && !chunk.isLightCorrect()) || !chunk.getStatus().isOrAfter(ChunkStatus.LIGHT)) {
+        if (chunk == null || (!this.isClientSide && !chunk.isLightCorrect()) || !chunk.getPersistedStatus().isOrAfter(ChunkStatus.LIGHT)) {
             return 15;
         }
 

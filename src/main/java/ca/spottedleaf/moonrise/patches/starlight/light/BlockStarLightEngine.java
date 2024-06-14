@@ -44,7 +44,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
 
     @Override
     protected boolean canUseChunk(final ChunkAccess chunk) {
-        return chunk.getStatus().isOrAfter(ChunkStatus.LIGHT) && (this.isClientSide || chunk.isLightCorrect());
+        return chunk.getPersistedStatus().isOrAfter(ChunkStatus.LIGHT) && (this.isClientSide || chunk.isLightCorrect());
     }
 
     @Override

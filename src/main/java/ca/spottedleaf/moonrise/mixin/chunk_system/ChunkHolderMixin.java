@@ -12,6 +12,7 @@ import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ChunkResult;
 import net.minecraft.server.level.FullChunkStatus;
+import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
@@ -34,20 +35,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 @Mixin(ChunkHolder.class)
-public abstract class ChunkHolderMixin implements ChunkSystemChunkHolder {
-
-    @Shadow
-    @Final
-    private ChunkPos pos;
+public abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSystemChunkHolder {
 
     @Shadow
     @Final
     private ChunkHolder.PlayerProvider playerProvider;
 
-    @Shadow
-    @Final
-    public static CompletableFuture<ChunkResult<ChunkAccess>> UNLOADED_CHUNK_FUTURE;
-
+    public ChunkHolderMixin(ChunkPos chunkPos) {
+        super(chunkPos);
+    }
 
     @Unique
     private NewChunkHolder newChunkHolder;
@@ -132,26 +128,6 @@ public abstract class ChunkHolderMixin implements ChunkSystemChunkHolder {
      * @author Spottedleaf
      */
     @Overwrite
-    public CompletableFuture<ChunkResult<ChunkAccess>> getFutureIfPresentUnchecked(final ChunkStatus chunkStatus) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @reason Chunk system is not built on futures anymore, use {@link ChunkTaskScheduler}
-     *         schedule methods to await for a chunk load
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public CompletableFuture<ChunkResult<ChunkAccess>> getFutureIfPresent(final ChunkStatus chunkStatus) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @reason Chunk system is not built on futures anymore, use {@link ChunkTaskScheduler}
-     *         schedule methods to await for a chunk load
-     * @author Spottedleaf
-     */
-    @Overwrite
     public CompletableFuture<ChunkResult<ChunkAccess>> getTickingChunkFuture() {
         throw new UnsupportedOperationException();
     }
@@ -196,7 +172,7 @@ public abstract class ChunkHolderMixin implements ChunkSystemChunkHolder {
      * @author Spottedleaf
      */
     @Overwrite
-    public CompletableFuture<?> getChunkSendSyncFuture() {
+    public CompletableFuture<?> getSendSyncFuture() {
         throw new UnsupportedOperationException();
     }
 
@@ -249,32 +225,12 @@ public abstract class ChunkHolderMixin implements ChunkSystemChunkHolder {
     }
 
     /**
-     * @reason Route to new chunk holder
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public ChunkStatus getLastAvailableStatus() {
-        final NewChunkHolder.ChunkCompletion lastCompletion = this.newChunkHolder.getLastChunkCompletion();
-        return lastCompletion == null ? null : lastCompletion.genStatus();
-    }
-
-    /**
-     * @reason Route to new chunk holder
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public ChunkAccess getLastAvailable() {
-        final NewChunkHolder.ChunkCompletion lastCompletion = this.newChunkHolder.getLastChunkCompletion();
-        return lastCompletion == null ? null : lastCompletion.chunk();
-    }
-
-    /**
      * @reason Chunk system is not built on futures anymore, unloading is now checked via {@link NewChunkHolder#isSafeToUnload()}
      *         while holding chunk system locks.
      * @author Spottedleaf
      */
     @Overwrite
-    public CompletableFuture<ChunkAccess> getChunkToSave() {
+    public CompletableFuture<ChunkAccess> getSaveSyncFuture() {
         throw new UnsupportedOperationException();
     }
 
@@ -294,27 +250,6 @@ public abstract class ChunkHolderMixin implements ChunkSystemChunkHolder {
             return null;
         }
         return this.getChunkToSend();
-    }
-
-    /**
-     * @reason Need to reroute getFutureIfPresent to new chunk system call
-     * @author Spottedleaf
-     */
-    @Redirect(
-            method = "sectionLightChanged",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/server/level/ChunkHolder;getFutureIfPresent(Lnet/minecraft/world/level/chunk/status/ChunkStatus;)Ljava/util/concurrent/CompletableFuture;"
-            )
-    )
-    private CompletableFuture<ChunkResult<ChunkAccess>> redirectLightUpdate(final ChunkHolder instance,
-                                                                            final ChunkStatus chunkStatus) {
-        final NewChunkHolder.ChunkCompletion chunkCompletion = this.newChunkHolder.getLastChunkCompletion();
-        if (chunkCompletion == null || !chunkCompletion.genStatus().isOrAfter(ChunkStatus.INITIALIZE_LIGHT)) {
-            return UNLOADED_CHUNK_FUTURE;
-        }
-
-        return CompletableFuture.completedFuture(ChunkResult.of(chunkCompletion.chunk()));
     }
 
     /**
@@ -348,36 +283,6 @@ public abstract class ChunkHolderMixin implements ChunkSystemChunkHolder {
     }
 
     /**
-     * @reason Chunk system is not built on futures anymore, use {@link ChunkTaskScheduler}
-     *         schedule methods to await for a chunk load
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public CompletableFuture<ChunkResult<ChunkAccess>> getOrScheduleFuture(final ChunkStatus chunkStatus,
-                                                                           final ChunkMap chunkMap) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @reason Chunk system is not built on futures anymore, use ticket levels to prevent chunk unloading.
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public void addSaveDependency(final String string, final CompletableFuture<?> completableFuture) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @reason Chunk system is not built on futures anymore, use ticket levels to prevent chunk unloading.
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public void updateChunkToSave(CompletableFuture<? extends ChunkResult<? extends ChunkAccess>> completableFuture,
-                                   final String string) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
      * @reason Chunk system is not built on futures anymore, and I am pretty sure this is a disgusting hack for a problem
      *         that doesn't even exist.
      * @author Spottedleaf
@@ -385,15 +290,6 @@ public abstract class ChunkHolderMixin implements ChunkSystemChunkHolder {
     @Overwrite
     public void addSendDependency(final CompletableFuture<?> completableFuture) {
         throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @reason Route to new chunk holder
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public FullChunkStatus getFullStatus() {
-        return this.newChunkHolder.getChunkStatus();
     }
 
     /**
@@ -481,24 +377,6 @@ public abstract class ChunkHolderMixin implements ChunkSystemChunkHolder {
      */
     @Overwrite
     public void refreshAccessibility() {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @reason Chunk system is not built on futures anymore
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public void replaceProtoChunk(final ImposterProtoChunk imposterProtoChunk) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @reason Chunk system is not built on futures anymore
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public List<Pair<ChunkStatus, CompletableFuture<ChunkResult<ChunkAccess>>>> getAllFutures() {
         throw new UnsupportedOperationException();
     }
 }

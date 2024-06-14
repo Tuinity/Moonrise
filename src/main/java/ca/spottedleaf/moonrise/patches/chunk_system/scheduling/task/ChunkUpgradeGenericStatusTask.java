@@ -7,10 +7,13 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunk
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
+import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.StaticCache2D;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.level.chunk.status.ChunkPyramid;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.status.WorldGenContext;
 import org.slf4j.Logger;
@@ -27,19 +30,19 @@ public final class ChunkUpgradeGenericStatusTask extends ChunkProgressionTask im
     private final ChunkAccess fromChunk;
     private final ChunkStatus fromStatus;
     private final ChunkStatus toStatus;
-    private final List<ChunkAccess> neighbours;
+    private final StaticCache2D<GenerationChunkHolder> neighbours;
 
     private final PrioritisedExecutor.PrioritisedTask generateTask;
 
     public ChunkUpgradeGenericStatusTask(final ChunkTaskScheduler scheduler, final ServerLevel world, final int chunkX,
-                                         final int chunkZ, final ChunkAccess chunk, final List<ChunkAccess> neighbours,
+                                         final int chunkZ, final ChunkAccess chunk, final StaticCache2D<GenerationChunkHolder> neighbours,
                                          final ChunkStatus toStatus, final PrioritisedExecutor.Priority priority) {
         super(scheduler, world, chunkX, chunkZ);
         if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
         this.fromChunk = chunk;
-        this.fromStatus = chunk.getStatus();
+        this.fromStatus = chunk.getPersistedStatus();
         this.toStatus = toStatus;
         this.neighbours = neighbours;
         if (((ChunkSystemChunkStatus)this.toStatus).moonrise$isParallelCapable()) {
@@ -80,27 +83,22 @@ public final class ChunkUpgradeGenericStatusTask extends ChunkProgressionTask im
         // note: should optimise the case where the chunk does not need to execute the status, because
         // schedule() calls this synchronously if it will run through that path
 
-        final WorldGenContext ctx = new WorldGenContext(
-                this.world,
-                chunkMap.generator,
-                chunkMap.worldGenContext.structureManager(),
-                serverChunkCache.getLightEngine()
-        );
+        final WorldGenContext ctx = chunkMap.worldGenContext;
         try {
-            generation = !chunk.getStatus().isOrAfter(this.toStatus);
+            generation = !chunk.getPersistedStatus().isOrAfter(this.toStatus);
             if (generation) {
                 if (((ChunkSystemChunkStatus)this.toStatus).moonrise$isEmptyGenStatus()) {
                     if (chunk instanceof ProtoChunk) {
-                        ((ProtoChunk)chunk).setStatus(this.toStatus);
+                        ((ProtoChunk)chunk).setPersistedStatus(this.toStatus);
                     }
                     completing = true;
                     this.complete(chunk, null);
                     return;
                 }
-                completeFuture = this.toStatus.generate(ctx, Runnable::run, null, this.neighbours)
+                completeFuture = ChunkPyramid.GENERATION_PYRAMID.getStepTo(this.toStatus).apply(ctx, this.neighbours, this.fromChunk)
                         .whenComplete((final ChunkAccess either, final Throwable throwable) -> {
                                     if (either instanceof ProtoChunk proto) {
-                                        proto.setStatus(ChunkUpgradeGenericStatusTask.this.toStatus);
+                                        proto.setPersistedStatus(ChunkUpgradeGenericStatusTask.this.toStatus);
                                     }
                                 }
                         );
@@ -110,7 +108,7 @@ public final class ChunkUpgradeGenericStatusTask extends ChunkProgressionTask im
                     this.complete(chunk, null);
                     return;
                 }
-                completeFuture = this.toStatus.load(ctx, null, chunk);
+                completeFuture = ChunkPyramid.LOADING_PYRAMID.getStepTo(this.toStatus).apply(ctx, this.neighbours, this.fromChunk);
             }
         } catch (final Throwable throwable) {
             if (!completing) {

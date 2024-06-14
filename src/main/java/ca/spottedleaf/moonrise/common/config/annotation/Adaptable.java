@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation used on a class to indicate that its type adapter may automatically be generated. The class must have
- *
+ * a public no-args constructor.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

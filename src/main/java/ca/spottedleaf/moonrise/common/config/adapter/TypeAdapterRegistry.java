@@ -214,6 +214,9 @@ public final class TypeAdapterRegistry {
                     final Object fieldValue = inputMap.get(field.serializedKey);
 
                     if (fieldValue == null) {
+                        if (field.required) {
+                            throw new IllegalArgumentException("Missing required field '" + field.serializedKey + "' in " + this.constructor.getDeclaringClass());
+                        }
                         continue;
                     }
 

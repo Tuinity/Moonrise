@@ -14,6 +14,7 @@ import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.chunk.status.ChunkStatusTasks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.lang.invoke.VarHandle;
@@ -41,7 +42,7 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
 
     @Override
     public void run() {
-        // See Vanilla protoChunkToFullChunk for what this function should be doing
+        // See Vanilla ChunkPyramid#LOADING_PYRAMID.FULL for what this function should be doing
         final LevelChunk chunk;
         try {
             // moved from the load from nbt stage into here
@@ -59,7 +60,7 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
                 final ServerLevel world = this.world;
                 final ProtoChunk protoChunk = (ProtoChunk)this.fromChunk;
                 chunk = new LevelChunk(this.world, protoChunk, (final LevelChunk unused) -> {
-                    ChunkMap.postLoadProtoChunk(world, protoChunk.getEntities());
+                    ChunkStatusTasks.postLoadProtoChunk(world, protoChunk.getEntities());
                 });
             }
 

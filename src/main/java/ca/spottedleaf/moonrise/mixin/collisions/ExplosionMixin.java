@@ -13,9 +13,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.enchantment.ProtectionEnchantment;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
@@ -478,7 +478,7 @@ public abstract class ExplosionMixin {
 
                 final double knockbackFraction;
                 if (entity instanceof LivingEntity livingEntity) {
-                    knockbackFraction = ProtectionEnchantment.getExplosionKnockbackAfterDampener(livingEntity, intensityFraction);
+                    knockbackFraction = intensityFraction * (1.0 - livingEntity.getAttributeValue(Attributes.EXPLOSION_KNOCKBACK_RESISTANCE));
                 } else {
                     knockbackFraction = intensityFraction;
                 }

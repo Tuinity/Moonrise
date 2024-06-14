@@ -22,6 +22,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.storage.ChunkIOErrorReporter;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
 import net.minecraft.world.level.chunk.storage.SectionStorage;
 import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
@@ -44,14 +45,15 @@ import java.util.stream.Stream;
 
 @Mixin(PoiManager.class)
 public abstract class PoiManagerMixin extends SectionStorage<PoiSection> implements ChunkSystemPoiManager {
+
     @Shadow
     abstract boolean isVillageCenter(long l);
 
     @Shadow
     public abstract void checkConsistencyWithBlocks(SectionPos sectionPos, LevelChunkSection levelChunkSection);
 
-    public PoiManagerMixin(SimpleRegionStorage simpleRegionStorage, Function<Runnable, Codec<PoiSection>> function, Function<Runnable, PoiSection> function2, RegistryAccess registryAccess, LevelHeightAccessor levelHeightAccessor) {
-        super(simpleRegionStorage, function, function2, registryAccess, levelHeightAccessor);
+    public PoiManagerMixin(SimpleRegionStorage simpleRegionStorage, Function<Runnable, Codec<PoiSection>> function, Function<Runnable, PoiSection> function2, RegistryAccess registryAccess, ChunkIOErrorReporter chunkIOErrorReporter, LevelHeightAccessor levelHeightAccessor) {
+        super(simpleRegionStorage, function, function2, registryAccess, chunkIOErrorReporter, levelHeightAccessor);
     }
 
     @Unique
@@ -89,7 +91,8 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection> impleme
                     value = "RETURN"
             )
     )
-    private void initHook(RegionStorageInfo regionStorageInfo, Path path, DataFixer dataFixer, boolean bl, RegistryAccess registryAccess,
+    private void initHook(RegionStorageInfo regionStorageInfo, Path path, DataFixer dataFixer, boolean bl,
+                          RegistryAccess registryAccess, ChunkIOErrorReporter chunkIOErrorReporter,
                           LevelHeightAccessor levelHeightAccessor, CallbackInfo ci) {
         this.world = (ServerLevel)levelHeightAccessor;
         this.villageDistanceTracker = new Delayed26WayDistancePropagator3D();

@@ -11,19 +11,24 @@ import com.mojang.datafixers.DataFixer;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StreamTagVisitor;
+import net.minecraft.server.level.ChunkGenerationTask;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ChunkResult;
 import net.minecraft.server.level.ChunkTaskPriorityQueueSorter;
 import net.minecraft.server.level.ChunkTrackingView;
+import net.minecraft.server.level.GeneratingChunkMap;
+import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.util.StaticCache2D;
 import net.minecraft.util.thread.ProcessorHandle;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.chunk.status.ChunkStep;
 import net.minecraft.world.level.chunk.storage.ChunkScanAccess;
 import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
@@ -47,7 +52,7 @@ import java.util.function.IntFunction;
 import java.util.function.IntSupplier;
 
 @Mixin(ChunkMap.class)
-public abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.PlayerProvider {
+public abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.PlayerProvider, GeneratingChunkMap {
 
     @Shadow
     @Final
@@ -244,15 +249,6 @@ public abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.
      * @author Spottedleaf
      */
     @Overwrite
-    public CompletableFuture<ChunkResult<ChunkAccess>> schedule(final ChunkHolder holder, final ChunkStatus requiredStatus) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @reason Destroy old chunk system hooks
-     * @author Spottedleaf
-     */
-    @Overwrite
     public CompletableFuture<ChunkResult<ChunkAccess>> scheduleChunkLoad(final ChunkPos pos) {
         throw new UnsupportedOperationException();
     }
@@ -261,9 +257,9 @@ public abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.
      * @reason Destroy old chunk system hooks
      * @author Spottedleaf
      */
+    @Override
     @Overwrite
-    public CompletableFuture<ChunkResult<ChunkAccess>> scheduleChunkGeneration(final ChunkHolder holder,
-                                                                                final ChunkStatus requiredStatus) {
+    public GenerationChunkHolder acquireGeneration(final long pos) {
         throw new UnsupportedOperationException();
     }
 
@@ -271,9 +267,40 @@ public abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.
      * @reason Destroy old chunk system hooks
      * @author Spottedleaf
      */
+    @Override
     @Overwrite
-    public CompletableFuture<ChunkResult<ChunkAccess>> protoChunkToFullChunk(final ChunkHolder chunkHolder,
-                                                                              final ChunkAccess chunkAccess) {
+    public void releaseGeneration(final GenerationChunkHolder holder) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Destroy old chunk system hooks
+     * @author Spottedleaf
+     */
+    @Override
+    @Overwrite
+    public CompletableFuture<ChunkAccess> applyStep(final GenerationChunkHolder generationChunkHolder, final ChunkStep chunkStep,
+                                                    final StaticCache2D<GenerationChunkHolder> staticCache2D) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Destroy old chunk system hooks
+     * @author Spottedleaf
+     */
+    @Override
+    @Overwrite
+    public ChunkGenerationTask scheduleGenerationTask(final ChunkStatus chunkStatus, final ChunkPos chunkPos) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Destroy old chunk system hooks
+     * @author Spottedleaf
+     */
+    @Override
+    @Overwrite
+    public void runGenerationTasks() {
         throw new UnsupportedOperationException();
     }
 

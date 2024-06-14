@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 public abstract class NoiseBasedChunkGeneratorMixin {
 
     /**
-     * @reason Use the provided executor, chunk system sets this to something specific
+     * @reason Use Runnable:run, as we schedule onto the moonrise common pool
      * @author Spottedleaf
      */
     @Redirect(
@@ -30,13 +30,12 @@ public abstract class NoiseBasedChunkGeneratorMixin {
                     target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"
             )
     )
-    private <U> CompletableFuture<U> redirectBiomesExecutor(final Supplier<U> supplier, final Executor badExecutor,
-                                                            @Local(ordinal = 0, argsOnly = true) final Executor executor) {
-        return CompletableFuture.supplyAsync(supplier, executor);
+    private <U> CompletableFuture<U> redirectBiomesExecutor(final Supplier<U> supplier, final Executor badExecutor) {
+        return CompletableFuture.supplyAsync(supplier, Runnable::run);
     }
 
     /**
-     * @reason Use the provided executor, chunk system sets this to something specific
+     * @reason Use Runnable:run, as we schedule onto the moonrise common pool
      * @author Spottedleaf
      */
     @Redirect(
@@ -46,8 +45,7 @@ public abstract class NoiseBasedChunkGeneratorMixin {
                     target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"
             )
     )
-    private <U> CompletableFuture<U> redirectNoiseExecutor(final Supplier<U> supplier, final Executor badExecutor,
-                                                           @Local(ordinal = 0, argsOnly = true) final Executor executor) {
-        return CompletableFuture.supplyAsync(supplier, executor);
+    private <U> CompletableFuture<U> redirectNoiseExecutor(final Supplier<U> supplier, final Executor badExecutor) {
+        return CompletableFuture.supplyAsync(supplier, Runnable::run);
     }
 }

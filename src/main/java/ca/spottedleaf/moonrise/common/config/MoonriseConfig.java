@@ -36,21 +36,24 @@ public final class MoonriseConfig {
         public static final class Basic {
             @Serializable(
                     comment = """
-                            The maximum number of chunks to send to any given player, per second.
+                            The maximum rate of chunks to send to any given player, per second. If this value is <= 0,
+                            then there is no rate limit.
                             """
             )
             public double playerMaxSendRate = -1.0;
 
             @Serializable(
                     comment = """
-                            The maximum number of chunks to load from disk for any given player, per second.
+                            The maximum rate of chunks to load from disk for any given player, per second. If this value is <= 0,
+                            then there is no rate limit.
                             """
             )
             public double playerMaxLoadRate = -1.0;
 
             @Serializable(
                     comment = """
-                            The maximum number of chunks to generate for any given player, per second.
+                            The maximum rate of chunks to generate for given player, per second. If this value is <= 0,
+                            then there is no rate limit.
                             """
             )
             public double playerMaxGenRate = -1.0;
@@ -78,8 +81,8 @@ public final class MoonriseConfig {
             @Serializable(
                     comment = """
                             The maximum amount of pending chunk loads per player. If
-                            this value is less-than 1, then the player chunk loader will
-                            automatically determine a value.
+                            this value is 0, then the player chunk loader will automatically determine a value. If
+                            this value is less-than 0, then there is no limit.
                             
                             This value should be used to tune the saturation of the chunk system.
                             """
@@ -89,8 +92,8 @@ public final class MoonriseConfig {
             @Serializable(
                     comment = """
                             The maximum amount of pending chunk generations per player. If
-                            this value is less-than 1, then the player chunk loader will
-                            automatically determine a value.
+                            this value is 0, then the player chunk loader will automatically determine a value. If
+                            this value is less-than 0, then there is no limit.
                             
                             This value should be used to tune the saturation of the chunk system.
                             """

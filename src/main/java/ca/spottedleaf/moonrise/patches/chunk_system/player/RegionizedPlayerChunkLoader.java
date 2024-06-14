@@ -539,19 +539,19 @@ public final class RegionizedPlayerChunkLoader {
         private double getMaxChunkLoadRate() {
             final double configRate = MoonriseCommon.getConfig().chunkLoading.basic.playerMaxLoadRate;
 
-            return configRate < 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
+            return configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
         }
 
         private double getMaxChunkGenRate() {
             final double configRate = MoonriseCommon.getConfig().chunkLoading.basic.playerMaxGenRate;
 
-            return configRate < 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
+            return configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
         }
 
         private double getMaxChunkSendRate() {
             final double configRate = MoonriseCommon.getConfig().chunkLoading.basic.playerMaxSendRate;
 
-            return configRate < 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
+            return configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
         }
 
         private long getMaxChunkLoads() {
@@ -739,7 +739,7 @@ public final class RegionizedPlayerChunkLoader {
                 final int chunkX = CoordinateUtils.getChunkX(chunkKey);
                 final int chunkZ = CoordinateUtils.getChunkZ(chunkKey);
                 final ChunkAccess chunk = ((ChunkSystemLevel)this.world).moonrise$getAnyChunkIfLoaded(chunkX, chunkZ);
-                if (chunk.getStatus() != ChunkStatus.FULL) {
+                if (chunk.getPersistedStatus() != ChunkStatus.FULL) {
                     // only rate limit actual generations
                     if ((ratedGensThisTick + 1L) > maxGensThisTick) {
                         break;
@@ -878,7 +878,7 @@ public final class RegionizedPlayerChunkLoader {
             final BelowZeroRetrogen belowZeroRetrogen;
             // see PortalForcer#findPortalAround
             return chunkAccess != null && (
-                chunkAccess.getStatus() == ChunkStatus.FULL ||
+                chunkAccess.getPersistedStatus() == ChunkStatus.FULL ||
                     ((belowZeroRetrogen = chunkAccess.getBelowZeroRetrogen()) != null && belowZeroRetrogen.targetStatus().isOrAfter(ChunkStatus.SPAWN))
             );
         }

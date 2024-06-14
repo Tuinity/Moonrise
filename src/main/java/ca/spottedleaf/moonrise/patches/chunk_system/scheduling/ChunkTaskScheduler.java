@@ -19,18 +19,24 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkLoadTas
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkProgressionTask;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkUpgradeGenericStatusTask;
 import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
+import ca.spottedleaf.moonrise.patches.chunk_system.status.ChunkSystemChunkStep;
 import ca.spottedleaf.moonrise.patches.chunk_system.util.ParallelSearchRadiusIteration;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
+import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.FullChunkStatus;
+import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
+import net.minecraft.util.StaticCache2D;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.status.ChunkPyramid;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.chunk.status.ChunkStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayDeque;
@@ -61,7 +67,7 @@ public final class ChunkTaskScheduler {
         }
         initialised = true;
         newChunkSystemIOThreads = MoonriseCommon.getConfig().chunkSystem.ioThreads;
-        if (newChunkSystemIOThreads < 0) {
+        if (newChunkSystemIOThreads <= 0) {
             newChunkSystemIOThreads = 1;
         } else {
             newChunkSystemIOThreads = Math.max(1, newChunkSystemIOThreads);
@@ -75,7 +81,7 @@ public final class ChunkTaskScheduler {
 
         RegionFileIOThread.init(newChunkSystemIOThreads);
 
-        LOGGER.info("Chunk system is using " + newChunkSystemIOThreads + " I/O threads, " + MoonriseCommon.WORKER_THREADS + " worker threads, and gen parallelism of " + ChunkTaskScheduler.newChunkSystemGenParallelism + " threads");
+        LOGGER.info("Chunk system is using " + newChunkSystemIOThreads + " I/O threads, " + MoonriseCommon.WORKER_THREADS + " worker threads, and population gen parallelism of " + ChunkTaskScheduler.newChunkSystemGenPopulationParallelism + " threads");
     }
 
     public static final TicketType<Long> CHUNK_LOAD = TicketType.create("chunk_system:chunk_load", Long::compareTo);
@@ -108,7 +114,7 @@ public final class ChunkTaskScheduler {
 
 
     public static int getTicketLevel(final ChunkStatus status) {
-        return ChunkHolderManager.FULL_LOADED_TICKET_LEVEL + ChunkStatus.getDistance(status);
+        return ChunkLevel.byStatus(status);
     }
 
     public final ServerLevel world;
@@ -199,18 +205,27 @@ public final class ChunkTaskScheduler {
         }
     }
 
+    private static final int[] ACCESS_RADIUS_TABLE_LOAD = new int[ChunkStatus.getStatusList().size()];
+    private static final int[] ACCESS_RADIUS_TABLE_GEN = new int[ChunkStatus.getStatusList().size()];
     private static final int[] ACCESS_RADIUS_TABLE = new int[ChunkStatus.getStatusList().size()];
+    static {
+        Arrays.fill(ACCESS_RADIUS_TABLE_LOAD, -1);
+        Arrays.fill(ACCESS_RADIUS_TABLE_GEN, -1);
+        Arrays.fill(ACCESS_RADIUS_TABLE, -1);
+    }
 
-    private static int getAccessRadius0(final ChunkStatus genStatus) {
-        if (genStatus == ChunkStatus.EMPTY) {
+    private static int getAccessRadius0(final ChunkStatus toStatus, final ChunkPyramid pyramid) {
+        if (toStatus == ChunkStatus.EMPTY) {
             return 0;
         }
 
-        final int radius = genStatus.getRange();
+        final ChunkStep chunkStep = pyramid.getStepTo(toStatus);
+
+        final int radius = chunkStep.getAccumulatedRadiusOf(ChunkStatus.EMPTY);
         int maxRange = radius;
 
         for (int dist = 0; dist <= radius; ++dist) {
-            final ChunkStatus requiredNeighbourStatus = dist == 0 ? genStatus.getParent() : ChunkStatus.getStatusAroundFullChunk(ChunkStatus.getDistance(genStatus) + dist);
+            final ChunkStatus requiredNeighbourStatus = ((ChunkSystemChunkStep)(Object)chunkStep).moonrise$getRequiredStatusAtRadius(dist);
             final int rad = ACCESS_RADIUS_TABLE[requiredNeighbourStatus.getIndex()];
             if (rad == -1) {
                 throw new IllegalStateException();
@@ -227,7 +242,13 @@ public final class ChunkTaskScheduler {
     static {
         final List<ChunkStatus> statuses = ChunkStatus.getStatusList();
         for (int i = 0, len = statuses.size(); i < len; ++i) {
-            ACCESS_RADIUS_TABLE[i] = getAccessRadius0(statuses.get(i));
+            final ChunkStatus status = statuses.get(i);
+            ACCESS_RADIUS_TABLE_LOAD[i] = getAccessRadius0(status, ChunkPyramid.LOADING_PYRAMID);
+            ACCESS_RADIUS_TABLE_GEN[i] = getAccessRadius0(status, ChunkPyramid.GENERATION_PYRAMID);
+            ACCESS_RADIUS_TABLE[i] = Math.max(
+                    ACCESS_RADIUS_TABLE_LOAD[i],
+                    ACCESS_RADIUS_TABLE_GEN[i]
+            );
         }
         MAX_ACCESS_RADIUS = ACCESS_RADIUS_TABLE[ACCESS_RADIUS_TABLE.length - 1];
     }
@@ -267,7 +288,7 @@ public final class ChunkTaskScheduler {
         this.parallelGenExecutor = workers.createExecutor("Chunk parallel generation executor for world '" + worldName + "'", 1, Math.max(1, newChunkSystemGenParallelism));
         this.radiusAwareGenExecutor = workers.createExecutor("Chunk radius aware generator for world '" + worldName + "'", 1, Math.max(1, newChunkSystemGenPopulationParallelism));
         this.loadExecutor = workers.createExecutor("Chunk load executor for world '" + worldName + "'", 1, newChunkSystemLoadParallelism);
-        this.radiusAwareScheduler = new RadiusAwarePrioritisedExecutor(this.radiusAwareGenExecutor, Math.max(1, newChunkSystemGenPopulationParallelism));
+        this.radiusAwareScheduler = new RadiusAwarePrioritisedExecutor(this.radiusAwareGenExecutor, Math.max(2, 1 + newChunkSystemGenPopulationParallelism));
         this.chunkHolderManager = new ChunkHolderManager(world, this);
     }
 
@@ -431,7 +452,7 @@ public final class ChunkTaskScheduler {
             if (chunk == null) {
                 onComplete.accept(null);
             } else {
-                if (chunk.getStatus().isOrAfter(toStatus)) {
+                if (chunk.getPersistedStatus().isOrAfter(toStatus)) {
                     this.scheduleChunkLoad(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
                 } else {
                     onComplete.accept(null);
@@ -608,7 +629,7 @@ public final class ChunkTaskScheduler {
     }
 
     private ChunkProgressionTask createTask(final int chunkX, final int chunkZ, final ChunkAccess chunk,
-                                            final NewChunkHolder chunkHolder, final List<ChunkAccess> neighbours,
+                                            final NewChunkHolder chunkHolder, final StaticCache2D<GenerationChunkHolder> neighbours,
                                             final ChunkStatus toStatus, final PrioritisedExecutor.Priority initialPriority) {
         if (toStatus == ChunkStatus.EMPTY) {
             return new ChunkLoadTask(this, this.world, chunkX, chunkZ, chunkHolder, initialPriority);
@@ -653,7 +674,7 @@ public final class ChunkTaskScheduler {
         if (currentGenStatus == null) {
             // not yet loaded
             final ChunkProgressionTask task = this.createTask(
-                chunkX, chunkZ, chunk, chunkHolder, Collections.emptyList(), ChunkStatus.EMPTY, requestedPriority
+                chunkX, chunkZ, chunk, chunkHolder, null, ChunkStatus.EMPTY, requestedPriority
             );
 
             allTasks.add(task);
@@ -675,12 +696,15 @@ public final class ChunkTaskScheduler {
         // we know for sure now that we want to schedule _something_, so set the target
         chunkHolder.setGenerationTarget(targetStatus);
 
-        final ChunkStatus chunkRealStatus = chunk.getStatus();
+        final ChunkStatus chunkRealStatus = chunk.getPersistedStatus();
         final ChunkStatus toStatus = ((ChunkSystemChunkStatus)currentGenStatus).moonrise$getNextStatus();
+        final ChunkPyramid chunkPyramid = chunkRealStatus.isOrAfter(toStatus) ? ChunkPyramid.LOADING_PYRAMID : ChunkPyramid.GENERATION_PYRAMID;
+        final ChunkStep chunkStep = chunkPyramid.getStepTo(toStatus);
 
-        // if this chunk has already generated up to or past the specified status, then we don't
-        // need the neighbours AT ALL.
-        final int neighbourReadRadius = chunkRealStatus.isOrAfter(toStatus) ? ((ChunkSystemChunkStatus)toStatus).moonrise$getLoadRadius() : toStatus.getRange();
+        final int neighbourReadRadius = Math.max(
+                0,
+                chunkPyramid.getStepTo(toStatus).getAccumulatedRadiusOf(ChunkStatus.EMPTY)
+        );
 
         boolean unGeneratedNeighbours = false;
 
@@ -690,7 +714,7 @@ public final class ChunkTaskScheduler {
                 final int x = CoordinateUtils.getChunkX(pos);
                 final int z = CoordinateUtils.getChunkZ(pos);
                 final int radius = Math.max(Math.abs(x), Math.abs(z));
-                final ChunkStatus requiredNeighbourStatus = chunkMap.getDependencyStatus(toStatus, radius);
+                final ChunkStatus requiredNeighbourStatus = ((ChunkSystemChunkStep)(Object)chunkStep).moonrise$getRequiredStatusAtRadius(radius);
 
                 unGeneratedNeighbours |= this.checkNeighbour(
                         chunkX + x, chunkZ + z, requiredNeighbourStatus, chunkHolder, allTasks, requestedPriority
@@ -708,26 +732,14 @@ public final class ChunkTaskScheduler {
 
         // need to gather neighbours
 
-        final List<ChunkAccess> neighbours;
-        final List<NewChunkHolder> chunkHolderNeighbours;
-        if (neighbourReadRadius <= 0) {
-            neighbours = new ArrayList<>(1);
-            chunkHolderNeighbours = new ArrayList<>(1);
-            neighbours.add(chunk);
-            chunkHolderNeighbours.add(chunkHolder);
-        } else {
-            // the iteration order is _very_ important, as all generation statuses expect a certain order such that:
-            // chunkAtRelative = neighbours.get(relX + relZ * (2 * radius + 1))
-            neighbours = new ArrayList<>((2 * neighbourReadRadius + 1) * (2 * neighbourReadRadius + 1));
-            chunkHolderNeighbours = new ArrayList<>((2 * neighbourReadRadius + 1) * (2 * neighbourReadRadius + 1));
-            for (int dz = -neighbourReadRadius; dz <= neighbourReadRadius; ++dz) {
-                for (int dx = -neighbourReadRadius; dx <= neighbourReadRadius; ++dx) {
-                    final NewChunkHolder holder = (dx | dz) == 0 ? chunkHolder : this.chunkHolderManager.getChunkHolder(dx + chunkX, dz + chunkZ);
-                    neighbours.add(holder.getChunkForNeighbourAccess());
+        final List<NewChunkHolder> chunkHolderNeighbours = new ArrayList<>((2 * neighbourReadRadius + 1) * (2 * neighbourReadRadius + 1));
+        final StaticCache2D<GenerationChunkHolder> neighbours = StaticCache2D
+                .create(chunkX, chunkZ, neighbourReadRadius, (final int nx, final int nz) -> {
+                    final NewChunkHolder holder = nx == chunkX && nz == chunkZ ? chunkHolder : this.chunkHolderManager.getChunkHolder(nx, nz);
                     chunkHolderNeighbours.add(holder);
-                }
-            }
-        }
+
+                    return holder.vanillaChunkHolder;
+                });
 
         final ChunkProgressionTask task = this.createTask(
                 chunkX, chunkZ, chunk, chunkHolder, neighbours, toStatus,

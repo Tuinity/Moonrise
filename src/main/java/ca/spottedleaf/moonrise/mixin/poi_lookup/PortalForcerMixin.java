@@ -37,7 +37,7 @@ public abstract class PortalForcerMixin {
      * @author Spottedleaf
      */
     @Overwrite
-    public Optional<BlockUtil.FoundRectangle> findPortalAround(BlockPos blockPos, boolean bl, WorldBorder worldBorder) {
+    public Optional<BlockUtil.FoundRectangle> findClosestPortalPosition(BlockPos blockPos, boolean bl, WorldBorder worldBorder) {
         PoiManager poiManager = this.level.getPoiManager();
         int i = bl ? 16 : 128;
         List<PoiRecord> records = new ArrayList<>();
@@ -46,7 +46,7 @@ public abstract class PortalForcerMixin {
                 (BlockPos pos) -> {
                     ChunkAccess lowest = this.level.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.EMPTY);
                     BelowZeroRetrogen belowZeroRetrogen;
-                    if (!lowest.getStatus().isOrAfter(ChunkStatus.FULL)
+                    if (!lowest.getPersistedStatus().isOrAfter(ChunkStatus.FULL)
                             // check below zero retrogen so that pre 1.17 worlds still load portals (JMP)
                             && ((belowZeroRetrogen = lowest.getBelowZeroRetrogen()) == null || !belowZeroRetrogen.targetStatus().isOrAfter(ChunkStatus.SPAWN))) {
                         // why would we generate the chunk?
