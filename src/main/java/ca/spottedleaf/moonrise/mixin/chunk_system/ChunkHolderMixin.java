@@ -7,7 +7,6 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunk
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
-import com.mojang.datafixers.util.Pair;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ChunkResult;
@@ -17,9 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -40,6 +37,24 @@ public abstract class ChunkHolderMixin extends GenerationChunkHolder implements 
     @Shadow
     @Final
     private ChunkHolder.PlayerProvider playerProvider;
+
+    @Shadow
+    private volatile CompletableFuture<ChunkResult<LevelChunk>> fullChunkFuture;
+
+    @Shadow
+    private volatile CompletableFuture<ChunkResult<LevelChunk>> tickingChunkFuture;
+
+    @Shadow
+    private volatile CompletableFuture<ChunkResult<LevelChunk>> entityTickingChunkFuture;
+
+    @Shadow
+    private CompletableFuture<?> pendingFullStateConfirmation;
+
+    @Shadow
+    private CompletableFuture<?> sendSync;
+
+    @Shadow
+    private CompletableFuture<?> saveSync;
 
     public ChunkHolderMixin(ChunkPos chunkPos) {
         super(chunkPos);
@@ -120,6 +135,13 @@ public abstract class ChunkHolderMixin extends GenerationChunkHolder implements 
     )
     private void initFields(final CallbackInfo ci) {
         this.playersSentChunkTo = new ReferenceList<>(EMPTY_PLAYER_ARRAY, 0);
+
+        this.fullChunkFuture = null;
+        this.tickingChunkFuture = null;
+        this.entityTickingChunkFuture = null;
+        this.pendingFullStateConfirmation = null;
+        this.sendSync = null;
+        this.saveSync = null;
     }
 
     /**
@@ -231,6 +253,24 @@ public abstract class ChunkHolderMixin extends GenerationChunkHolder implements 
      */
     @Overwrite
     public CompletableFuture<ChunkAccess> getSaveSyncFuture() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public boolean isReadyForSaving() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void addSaveDependency(final CompletableFuture<?> completableFuture) {
         throw new UnsupportedOperationException();
     }
 

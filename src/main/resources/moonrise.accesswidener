@@ -33,6 +33,9 @@ accessible method net/minecraft/server/level/ChunkMap getVisibleChunkIfPresent (
 accessible method net/minecraft/server/level/ChunkMap getChunkQueueLevel (J)Ljava/util/function/IntSupplier;
 accessible method net/minecraft/server/level/ChunkMap generator ()Lnet/minecraft/world/level/chunk/ChunkGenerator;
 mutable field net/minecraft/server/level/ChunkMap updatingChunkMap Lit/unimi/dsi/fastutil/longs/Long2ObjectLinkedOpenHashMap;
+mutable field net/minecraft/server/level/ChunkMap pendingUnloads Lit/unimi/dsi/fastutil/longs/Long2ObjectLinkedOpenHashMap;
+mutable field net/minecraft/server/level/ChunkMap pendingGenerationTasks Ljava/util/List;
+mutable field net/minecraft/server/level/ChunkMap unloadQueue Ljava/util/Queue;
 mutable field net/minecraft/server/level/ChunkMap queueSorter Lnet/minecraft/server/level/ChunkTaskPriorityQueueSorter;
 mutable field net/minecraft/server/level/ChunkMap worldgenMailbox Lnet/minecraft/util/thread/ProcessorHandle;
 mutable field net/minecraft/server/level/ChunkMap mainThreadMailbox Lnet/minecraft/util/thread/ProcessorHandle;
@@ -254,3 +257,10 @@ accessible method net/minecraft/client/multiplayer/ClientLevel$EntityCallbacks <
 
 # StructureTemplate$Palette
 mutable field net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$Palette cache Ljava/util/Map;
+
+
+# GenerationChunkHolder
+mutable field net/minecraft/server/level/GenerationChunkHolder startedWork Ljava/util/concurrent/atomic/AtomicReference;
+mutable field net/minecraft/server/level/GenerationChunkHolder futures Ljava/util/concurrent/atomic/AtomicReferenceArray;
+mutable field net/minecraft/server/level/GenerationChunkHolder task Ljava/util/concurrent/atomic/AtomicReference;
+mutable field net/minecraft/server/level/GenerationChunkHolder generationRefCount Ljava/util/concurrent/atomic/AtomicInteger;

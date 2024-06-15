@@ -54,7 +54,9 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
         );
 
         if (TickThread.isTickThreadFor(this.level, chunkX, chunkZ)) {
+            ChunkTaskScheduler.pushChunkWait(this.level, chunkX, chunkZ);
             this.mainThreadProcessor.managedBlock(completable::isDone);
+            ChunkTaskScheduler.popChunkWait();
         }
 
         final ChunkAccess ret = completable.join();

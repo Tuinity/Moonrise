@@ -161,6 +161,15 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
     }
 
     /**
+     * @reason Remove old chunk system hooks
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public SortedArraySet<Ticket<?>> getTickets(final long pos) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * @reason Route to new chunk system
      * @author Spottedleaf
      */
@@ -322,6 +331,24 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
     @Overwrite
     public String getDebugStatus() {
         return "No DistanceManager stats available";
+    }
+
+    /**
+     * @reason Remove old chunk system hooks
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void dumpTickets(final String file) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Remove old chunk system hooks
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public TickingTracker tickingTracker() {
+        throw new UnsupportedOperationException();
     }
 
     /**

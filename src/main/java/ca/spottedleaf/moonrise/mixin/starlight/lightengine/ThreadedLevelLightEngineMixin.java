@@ -216,4 +216,13 @@ public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine imp
     public CompletableFuture<ChunkAccess> lightChunk(final ChunkAccess chunk, final boolean lit) {
         throw new UnsupportedOperationException();
     }
+
+    /**
+     * @reason Destroy old chunk system hooks
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public CompletableFuture<?> waitForPendingTasks(final int chunkX, final int chunkZ) {
+        throw new UnsupportedOperationException();
+    }
 }

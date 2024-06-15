@@ -10,7 +10,6 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import com.mojang.datafixers.DataFixer;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.StreamTagVisitor;
 import net.minecraft.server.level.ChunkGenerationTask;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
@@ -29,7 +28,6 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.status.ChunkStep;
-import net.minecraft.world.level.chunk.storage.ChunkScanAccess;
 import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
 import org.spongepowered.asm.mixin.Final;
@@ -46,6 +44,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntFunction;
@@ -76,6 +75,15 @@ public abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.
     @Shadow
     private int serverViewDistance;
 
+    @Shadow
+    private Long2ObjectLinkedOpenHashMap<ChunkHolder> pendingUnloads;
+
+    @Shadow
+    private List<ChunkGenerationTask> pendingGenerationTasks;
+
+    @Shadow
+    private Queue<Runnable> unloadQueue;
+
     public ChunkMapMixin(RegionStorageInfo regionStorageInfo, Path path, DataFixer dataFixer, boolean bl) {
         super(regionStorageInfo, path, dataFixer, bl);
     }
@@ -94,9 +102,12 @@ public abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.
         // intentionally destroy old chunk system hooks
         this.updatingChunkMap = null;
         this.visibleChunkMap = null;
+        this.pendingUnloads = null;
         this.queueSorter = null;
         this.worldgenMailbox = null;
         this.mainThreadMailbox = null;
+        this.pendingGenerationTasks = null;
+        this.unloadQueue = null;
     }
 
     /**

@@ -1,7 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
-import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.server.level.ChunkGenerationTask;
@@ -19,14 +18,49 @@ import net.minecraft.world.level.chunk.status.ChunkStep;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 @Mixin(GenerationChunkHolder.class)
 public abstract class GenerationChunkHolderMixin {
 
     @Shadow
     public abstract int getTicketLevel();
+
+    @Shadow
+    private AtomicReference<ChunkStatus> startedWork;
+
+    @Shadow
+    private AtomicReferenceArray<CompletableFuture<ChunkResult<ChunkAccess>>> futures;
+
+    @Shadow
+    private AtomicReference<ChunkGenerationTask> task;
+
+    @Shadow
+    private AtomicInteger generationRefCount;
+
+    /**
+     * @reason Destroy old chunk system fields
+     * @author Spottedleaf
+     */
+    @Inject(
+            method = "<init>",
+            at = @At(
+                    value = "RETURN"
+            )
+    )
+    private void init(final CallbackInfo ci) {
+        this.startedWork = null;
+        this.futures = null;
+        this.task = null;
+        this.generationRefCount = null;
+    }
 
     /**
      * @reason Chunk system is not built on futures anymore
@@ -71,7 +105,16 @@ public abstract class GenerationChunkHolderMixin {
      * @author Spottedleaf
      */
     @Overwrite
-    public void removeTask(ChunkGenerationTask chunkGenerationTask) {
+    public void removeTask(final ChunkGenerationTask chunkGenerationTask) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void rescheduleChunkTask(final ChunkMap chunkMap, final ChunkStatus chunkStatus) {
         throw new UnsupportedOperationException();
     }
 
@@ -81,6 +124,60 @@ public abstract class GenerationChunkHolderMixin {
      */
     @Overwrite
     public CompletableFuture<ChunkResult<ChunkAccess>> getOrCreateFuture(final ChunkStatus chunkStatus) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void failAndClearPendingFuturesBetween(final ChunkStatus from, final ChunkStatus to) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void failAndClearPendingFuture(final int idx, final CompletableFuture<ChunkResult<ChunkAccess>> expect) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void completeFuture(final ChunkStatus status, final ChunkAccess chunk) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public ChunkStatus findHighestStatusWithPendingFuture(final ChunkStatus from) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public boolean acquireStatusBump(final ChunkStatus chunkStatus) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Chunk system is not built on futures anymore
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public boolean isStatusDisallowed(final ChunkStatus chunkStatus) {
         throw new UnsupportedOperationException();
     }
 
