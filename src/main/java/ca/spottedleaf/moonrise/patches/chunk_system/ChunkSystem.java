@@ -4,6 +4,7 @@ import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
+import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemServerChunkCache;
 import com.mojang.logging.LogUtils;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.FullChunkStatus;
@@ -80,11 +81,13 @@ public final class ChunkSystem {
     }
 
     public static void onChunkBorder(final LevelChunk chunk, final ChunkHolder holder) {
-
+        ((ChunkSystemServerChunkCache)((ServerLevel)chunk.getLevel()).getChunkSource())
+                .moonrise$setFullChunk(chunk.getPos().x, chunk.getPos().z, chunk);
     }
 
     public static void onChunkNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
-
+        ((ChunkSystemServerChunkCache)((ServerLevel)chunk.getLevel()).getChunkSource())
+                .moonrise$setFullChunk(chunk.getPos().x, chunk.getPos().z, null);
     }
 
     public static void onChunkTicking(final LevelChunk chunk, final ChunkHolder holder) {

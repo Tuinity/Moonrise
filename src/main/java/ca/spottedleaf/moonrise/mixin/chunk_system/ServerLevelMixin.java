@@ -151,8 +151,7 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
         if (newChunkHolder == null) {
             return null;
         }
-        final NewChunkHolder.ChunkCompletion lastCompletion = newChunkHolder.getLastChunkCompletion();
-        return lastCompletion == null || !lastCompletion.genStatus().isOrAfter(leastStatus) ? null : lastCompletion.chunk();
+        return newChunkHolder.getChunkIfPresentUnchecked(leastStatus);
     }
 
     @Override

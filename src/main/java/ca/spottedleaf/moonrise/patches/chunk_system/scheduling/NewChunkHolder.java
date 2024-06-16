@@ -5,6 +5,7 @@ import ca.spottedleaf.concurrentutil.executor.Cancellable;
 import ca.spottedleaf.concurrentutil.executor.standard.DelayedPrioritisedTask;
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
+import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
@@ -45,6 +46,7 @@ import net.minecraft.world.level.chunk.storage.ChunkSerializer;
 import net.minecraft.world.level.chunk.storage.EntityStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -451,14 +453,39 @@ public final class NewChunkHolder {
      */
     private ChunkStatus currentGenStatus;
 
-    // This allows unsynchronised access to the chunk and last gen status
+    // This allows lockless access to the chunk and last gen status
+    private static final ChunkStatus[] ALL_STATUSES = ChunkStatus.getStatusList().toArray(new ChunkStatus[0]);
+
+    public static final record ChunkCompletion(ChunkAccess chunk, ChunkStatus genStatus) {};
+    private static final VarHandle CHUNK_COMPLETION_ARRAY_HANDLE = ConcurrentUtil.getArrayHandle(ChunkCompletion[].class);
+    private final ChunkCompletion[] chunkCompletions = new ChunkCompletion[ALL_STATUSES.length];
+
     private volatile ChunkCompletion lastChunkCompletion;
 
     public ChunkCompletion getLastChunkCompletion() {
         return this.lastChunkCompletion;
     }
 
-    public static final record ChunkCompletion(ChunkAccess chunk, ChunkStatus genStatus) {};
+    public ChunkAccess getChunkIfPresentUnchecked(final ChunkStatus status) {
+        final ChunkCompletion completion = (ChunkCompletion)CHUNK_COMPLETION_ARRAY_HANDLE.getVolatile(this.chunkCompletions, status.getIndex());
+        return completion == null ? null : completion.chunk;
+    }
+
+    public ChunkAccess getChunkIfPresent(final ChunkStatus status) {
+        final ChunkStatus maxStatus = ChunkLevel.generationStatus(this.getTicketLevel());
+
+        if (maxStatus == null || status.isAfter(maxStatus)) {
+            return null;
+        }
+
+        return this.getChunkIfPresentUnchecked(status);
+    }
+
+    public void replaceProtoChunk(final ImposterProtoChunk imposterProtoChunk) {
+        for (int i = 0, max = ChunkStatus.FULL.getIndex(); i < max; ++i) {
+            CHUNK_COMPLETION_ARRAY_HANDLE.setVolatile(this.chunkCompletions, i, new ChunkCompletion(imposterProtoChunk, ALL_STATUSES[i]));
+        }
+    }
 
     /**
      * The target final chunk status the chunk system will bring the chunk to.
@@ -625,19 +652,6 @@ public final class NewChunkHolder {
                 world.getLightEngine(), null, world.getChunkSource().chunkMap
         );
         ((ChunkSystemChunkHolder)this.vanillaChunkHolder).moonrise$setRealChunkHolder(this);
-    }
-
-    private ImposterProtoChunk wrappedChunkForNeighbour;
-
-    // holds scheduling lock
-    public ChunkAccess getChunkForNeighbourAccess() {
-        // Vanilla overrides the status futures with an imposter chunk to prevent writes to full chunks
-        // But we don't store per-status futures, so we need this hack
-        if (this.wrappedChunkForNeighbour != null) {
-            return this.wrappedChunkForNeighbour;
-        }
-        final ChunkAccess ret = this.currentChunk;
-        return ret instanceof LevelChunk fullChunk ? this.wrappedChunkForNeighbour = new ImposterProtoChunk(fullChunk, false) : ret;
     }
 
     public ChunkAccess getCurrentChunk() {
@@ -823,8 +837,10 @@ public final class NewChunkHolder {
         // chunk state
         this.currentChunk = null;
         this.currentGenStatus = null;
-        this.wrappedChunkForNeighbour = null;
         this.lastChunkCompletion = null;
+        for (int i = 0; i < this.chunkCompletions.length; ++i) {
+            CHUNK_COMPLETION_ARRAY_HANDLE.setVolatile(this.chunkCompletions, i, (ChunkCompletion)null);
+        }
         // entity chunk state
         this.entityChunk = null;
         this.pendingEntityChunk = null;
@@ -1472,7 +1488,9 @@ public final class NewChunkHolder {
 
         this.currentChunk = newChunk;
         this.currentGenStatus = newStatus;
-        this.lastChunkCompletion = new ChunkCompletion(newChunk, newStatus);
+        final ChunkCompletion completion = new ChunkCompletion(newChunk, newStatus);
+        CHUNK_COMPLETION_ARRAY_HANDLE.setVolatile(this.chunkCompletions, newStatus.getIndex(), completion);
+        this.lastChunkCompletion = completion;
 
         final ChunkStatus requestedGenStatus = this.requestedGenStatus;
 

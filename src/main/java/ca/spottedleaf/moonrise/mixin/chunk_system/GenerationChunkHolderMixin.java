@@ -214,8 +214,7 @@ public abstract class GenerationChunkHolderMixin {
      */
     @Overwrite
     public ChunkAccess getChunkIfPresentUnchecked(final ChunkStatus chunkStatus) {
-        final NewChunkHolder.ChunkCompletion lastCompletion = ((ChunkSystemChunkHolder)(Object)this).moonrise$getRealChunkHolder().getLastChunkCompletion();
-        return lastCompletion == null || !lastCompletion.genStatus().isOrAfter(chunkStatus) ? null : lastCompletion.chunk();
+        return ((ChunkSystemChunkHolder)(Object)this).moonrise$getRealChunkHolder().getChunkIfPresentUnchecked(chunkStatus);
     }
 
     /**
@@ -224,14 +223,7 @@ public abstract class GenerationChunkHolderMixin {
      */
     @Overwrite
     public ChunkAccess getChunkIfPresent(final ChunkStatus chunkStatus) {
-        final ChunkStatus maxStatus = ChunkLevel.generationStatus(this.getTicketLevel());
-
-        if (maxStatus == null || chunkStatus.isOrAfter(maxStatus)) {
-            return null;
-        }
-
-        final NewChunkHolder.ChunkCompletion lastCompletion = ((ChunkSystemChunkHolder)(Object)this).moonrise$getRealChunkHolder().getLastChunkCompletion();
-        return lastCompletion == null || !lastCompletion.genStatus().isOrAfter(chunkStatus) ? null : lastCompletion.chunk();
+        return ((ChunkSystemChunkHolder)(Object)this).moonrise$getRealChunkHolder().getChunkIfPresent(chunkStatus);
     }
 
     /**

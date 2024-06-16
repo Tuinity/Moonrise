@@ -1,12 +1,14 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
+import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemServerChunkCache;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.ChunkResult;
@@ -32,7 +34,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 @Mixin(ServerChunkCache.class)
-public abstract class ServerChunkCacheMixin extends ChunkSource {
+public abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemServerChunkCache {
 
     @Shadow
     @Final
@@ -43,6 +45,23 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
     @Final
     public ServerLevel level;
 
+    @Unique
+    private final ConcurrentLong2ReferenceChainedHashTable<LevelChunk> fullChunks = new ConcurrentLong2ReferenceChainedHashTable<>();
+
+    @Override
+    public final void moonrise$setFullChunk(final int chunkX, final int chunkZ, final LevelChunk chunk) {
+        final long key = CoordinateUtils.getChunkKey(chunkX, chunkZ);
+        if (chunk == null) {
+            this.fullChunks.remove(key);
+        } else {
+            this.fullChunks.put(key, chunk);
+        }
+    }
+
+    @Override
+    public final LevelChunk moonrise$getFullChunkIfLoaded(final int chunkX, final int chunkZ) {
+        return this.fullChunks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
+    }
 
     @Unique
     private ChunkAccess syncLoad(final int chunkX, final int chunkZ, final ChunkStatus toStatus) {
@@ -67,6 +86,23 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
         return ret;
     }
 
+    @Unique
+    private ChunkAccess getChunkFallback(final int chunkX, final int chunkZ, final ChunkStatus toStatus,
+                                         final boolean load) {
+        final ChunkTaskScheduler chunkTaskScheduler = ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler();
+        final ChunkHolderManager chunkHolderManager = chunkTaskScheduler.chunkHolderManager;
+
+        final NewChunkHolder currentChunk = chunkHolderManager.getChunkHolder(CoordinateUtils.getChunkKey(chunkX, chunkZ));
+
+        final ChunkAccess ifPresent = currentChunk == null ? null : currentChunk.getChunkIfPresent(toStatus);
+
+        if (ifPresent != null && (toStatus != ChunkStatus.FULL || currentChunk.isFullChunkReady())) {
+            return ifPresent;
+        }
+
+        return load ? this.syncLoad(chunkX, chunkZ, toStatus) : null;
+    }
+
     /**
      * @reason Optimise impl and support new chunk system
      * @author Spottedleaf
@@ -75,28 +111,17 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
     @Overwrite
     public ChunkAccess getChunk(final int chunkX, final int chunkZ, final ChunkStatus toStatus,
                                 final boolean load) {
-        final ChunkTaskScheduler chunkTaskScheduler = ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler();
-        final ChunkHolderManager chunkHolderManager = chunkTaskScheduler.chunkHolderManager;
-
-        final NewChunkHolder currentChunk = chunkHolderManager.getChunkHolder(CoordinateUtils.getChunkKey(chunkX, chunkZ));
-
         if (toStatus == ChunkStatus.FULL) {
-            if (currentChunk != null && currentChunk.isFullChunkReady() && (currentChunk.getCurrentChunk() instanceof LevelChunk fullChunk)) {
-                return fullChunk;
-            } else if (!load) {
-                return null;
+            final LevelChunk ret = this.fullChunks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
+
+            if (ret != null) {
+                return ret;
             }
-            return this.syncLoad(chunkX, chunkZ, toStatus);
-        } else {
-            final NewChunkHolder.ChunkCompletion lastCompletion;
-            if (currentChunk != null && (lastCompletion = currentChunk.getLastChunkCompletion()) != null &&
-                    lastCompletion.genStatus().isOrAfter(toStatus)) {
-                return lastCompletion.chunk();
-            } else if (!load) {
-                return null;
-            }
-            return this.syncLoad(chunkX, chunkZ, toStatus);
+
+            return load ? this.getChunkFallback(chunkX, chunkZ, toStatus, load) : null;
         }
+
+        return this.getChunkFallback(chunkX, chunkZ, toStatus, load);
     }
 
     /**
@@ -138,11 +163,11 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
             return ChunkHolder.UNLOADED_CHUNK_FUTURE;
         }
 
-        final NewChunkHolder.ChunkCompletion chunkCompletion = chunkHolder == null ? null : chunkHolder.getLastChunkCompletion();
-        if (needsFullScheduling || chunkCompletion == null || !chunkCompletion.genStatus().isOrAfter(toStatus)) {
+        final ChunkAccess ifPresent = chunkHolder == null ? null : chunkHolder.getChunkIfPresent(toStatus);
+        if (needsFullScheduling || ifPresent == null) {
             // schedule
-            CompletableFuture<ChunkResult<ChunkAccess>> ret = new CompletableFuture<>();
-            Consumer<ChunkAccess> complete = (ChunkAccess chunk) -> {
+            final CompletableFuture<ChunkResult<ChunkAccess>> ret = new CompletableFuture<>();
+            final Consumer<ChunkAccess> complete = (ChunkAccess chunk) -> {
                 if (chunk == null) {
                     ret.complete(ChunkHolder.UNLOADED_CHUNK);
                 } else {
@@ -159,7 +184,7 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
             return ret;
         } else {
             // can return now
-            return CompletableFuture.completedFuture(ChunkResult.of(chunkCompletion.chunk()));
+            return CompletableFuture.completedFuture(ChunkResult.of(ifPresent));
         }
     }
 
@@ -174,11 +199,7 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
         if (newChunkHolder == null) {
             return null;
         }
-        final NewChunkHolder.ChunkCompletion lastCompletion = newChunkHolder.getLastChunkCompletion();
-        if (lastCompletion == null || !lastCompletion.genStatus().isOrAfter(ChunkStatus.INITIALIZE_LIGHT)) {
-            return null;
-        }
-        return lastCompletion.chunk();
+        return newChunkHolder.getChunkIfPresentUnchecked(ChunkStatus.INITIALIZE_LIGHT.getParent());
     }
 
     /**
