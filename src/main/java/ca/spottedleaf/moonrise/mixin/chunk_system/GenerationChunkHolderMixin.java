@@ -226,7 +226,7 @@ public abstract class GenerationChunkHolderMixin {
     public ChunkAccess getChunkIfPresent(final ChunkStatus chunkStatus) {
         final ChunkStatus maxStatus = ChunkLevel.generationStatus(this.getTicketLevel());
 
-        if (chunkStatus.isOrAfter(maxStatus)) {
+        if (maxStatus == null || chunkStatus.isOrAfter(maxStatus)) {
             return null;
         }
 
