@@ -1282,7 +1282,6 @@ public final class ChunkHolderManager {
     }
 
     private boolean processTicketUpdates(final boolean processFullUpdates, List<ChunkProgressionTask> scheduledTasks) {
-        TickThread.ensureTickThread("Cannot process ticket levels off-main");
         if (BLOCK_TICKET_UPDATES.get() == Boolean.TRUE) {
             throw new IllegalStateException("Cannot update ticket level while unloading chunks or updating entity manager");
         }

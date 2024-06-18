@@ -1,12 +1,21 @@
 package ca.spottedleaf.moonrise.mixin.starlight.lightengine;
 
+import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import ca.spottedleaf.moonrise.patches.starlight.light.StarLightInterface;
 import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundLightUpdatePacket;
+import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkTaskPriorityQueueSorter;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ThreadedLevelLightEngine;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.util.thread.ProcessorHandle;
 import net.minecraft.util.thread.ProcessorMailbox;
 import net.minecraft.world.level.ChunkPos;
@@ -24,8 +33,17 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
@@ -76,6 +94,85 @@ public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine imp
         scheduledTask.queueOrRunTask(() -> {
             world.getChunkSource().removeRegionTicket(StarLightInterface.CHUNK_WORK_TICKET, pos, StarLightInterface.REGION_LIGHT_TICKET_LEVEL, ticketId);
         });
+    }
+
+    @Override
+    public final int starlight$serverRelightChunks(final Collection<ChunkPos> chunks0,
+                                                    final Consumer<ChunkPos> chunkLightCallback,
+                                                    final IntConsumer onComplete) {
+        final Set<ChunkPos> chunks = new LinkedHashSet<>(chunks0);
+        final Map<ChunkPos, Long> ticketIds = new HashMap<>();
+        final ServerLevel world = (ServerLevel)this.starlight$getLightEngine().getWorld();
+
+        for (final Iterator<ChunkPos> iterator = chunks.iterator(); iterator.hasNext();) {
+            final ChunkPos pos = iterator.next();
+
+            final Long id = ChunkTaskScheduler.getNextChunkRelightId();
+            world.getChunkSource().addRegionTicket(ChunkTaskScheduler.CHUNK_RELIGHT, pos, StarLightInterface.REGION_LIGHT_TICKET_LEVEL, id);
+            ticketIds.put(pos, id);
+
+            final ChunkAccess chunk = (ChunkAccess)world.getChunkSource().getChunkForLighting(pos.x, pos.z);
+            if (chunk == null || !chunk.isLightCorrect() || !chunk.getPersistedStatus().isOrAfter(ChunkStatus.LIGHT)) {
+                // cannot relight this chunk
+                iterator.remove();
+                ticketIds.remove(pos);
+                world.getChunkSource().removeRegionTicket(ChunkTaskScheduler.CHUNK_RELIGHT, pos, StarLightInterface.REGION_LIGHT_TICKET_LEVEL, id);
+                continue;
+            }
+        }
+
+        ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().radiusAwareScheduler.queueInfiniteRadiusTask(() -> {
+            ThreadedLevelLightEngineMixin.this.starlight$getLightEngine().relightChunks(
+                    chunks,
+                    (final ChunkPos pos) -> {
+                        if (chunkLightCallback != null) {
+                            chunkLightCallback.accept(pos);
+                        }
+
+                        ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().scheduleChunkTask(pos.x, pos.z, () -> {
+                            final NewChunkHolder chunkHolder = ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(
+                                    pos.x, pos.z
+                            );
+
+                            if (chunkHolder == null) {
+                                return;
+                            }
+
+                            final List<ServerPlayer> players = ((ChunkSystemChunkHolder)chunkHolder.vanillaChunkHolder).moonrise$getPlayers(false);
+
+                            if (players.isEmpty()) {
+                                return;
+                            }
+
+                            final Packet<?> relightPacket = new ClientboundLightUpdatePacket(
+                                    pos, (ThreadedLevelLightEngine)(Object)ThreadedLevelLightEngineMixin.this,
+                                    null, null
+                            );
+
+                            for (final ServerPlayer player : players) {
+                                final ServerGamePacketListenerImpl conn = player.connection;
+                                if (conn != null) {
+                                    conn.send(relightPacket);
+                                }
+                            }
+                        });
+                    },
+                    (final int relight) -> {
+                        if (onComplete != null) {
+                            onComplete.accept(relight);
+                        }
+
+                        for (final Map.Entry<ChunkPos, Long> entry : ticketIds.entrySet()) {
+                            world.getChunkSource().removeRegionTicket(
+                                    ChunkTaskScheduler.CHUNK_RELIGHT, entry.getKey(),
+                                    StarLightInterface.REGION_LIGHT_TICKET_LEVEL, entry.getValue()
+                            );
+                        }
+                    }
+            );
+        });
+
+        return chunks.size();
     }
 
     /**

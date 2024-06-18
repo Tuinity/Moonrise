@@ -1,21 +1,34 @@
 package ca.spottedleaf.moonrise.patches.command;
 
+import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
+import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
+import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.PlainTextContents;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.phys.Vec3;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class MoonriseCommand {
 
@@ -38,6 +51,17 @@ public final class MoonriseCommand {
                                 .executes((final CommandContext<CommandSourceStack> ctx) -> {
                                     return MoonriseCommand.reload(ctx);
                                 })
+                ).then(
+                        Commands.literal("relight")
+                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
+                                    return MoonriseCommand.relight(ctx, 10);
+                                })
+                                .then(
+                                        Commands.argument("radius", IntegerArgumentType.integer(0, MoonriseConstants.MAX_VIEW_DISTANCE))
+                                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
+                                                    return MoonriseCommand.relight(ctx, IntegerArgumentType.getInteger(ctx, "radius"));
+                                                })
+                                )
                 )
         );
     }
@@ -150,5 +174,68 @@ public final class MoonriseCommand {
         }
 
         return 0;
+    }
+
+    public static int relight(final CommandContext<CommandSourceStack> ctx, final int radius) {
+        final Vec3 center = ctx.getSource().getPosition();
+
+        final int centerChunkX = Mth.floor(center.x) >> 4;
+        final int centerChunkZ = Mth.floor(center.z) >> 4;
+
+        final List<ChunkPos> chunks = new ArrayList<>();
+
+        final LongOpenHashSet seen = new LongOpenHashSet();
+        final LongArrayFIFOQueue queue = new LongArrayFIFOQueue();
+
+        final long zero = CoordinateUtils.getChunkKey(0, 0);
+
+        seen.add(zero);
+        queue.enqueue(zero);
+        chunks.add(new ChunkPos(centerChunkX, centerChunkZ));
+
+        final int[][] offsets = new int[][] {
+                new int[] { -1, 0  },
+                new int[] {  1, 0  },
+                new int[] {  0, -1 },
+                new int[] {  0, 1  }
+        };
+
+        while (!queue.isEmpty()) {
+            final long chunk = queue.dequeueLong();
+            final int chunkX = CoordinateUtils.getChunkX(chunk);
+            final int chunkZ = CoordinateUtils.getChunkZ(chunk);
+
+            for (final int[] offset : offsets) {
+                final int neighbourX = chunkX + offset[0];
+                final int neighbourZ = chunkZ + offset[1];
+                final long neighbour = CoordinateUtils.getChunkKey(neighbourX, neighbourZ);
+
+                final int dist = Math.max(Math.abs(neighbourX), Math.abs(neighbourZ));
+
+                if (dist > radius || !seen.add(neighbour)) {
+                    continue;
+                }
+
+                queue.enqueue(neighbour);
+                chunks.add(new ChunkPos(neighbourX + centerChunkX, neighbourZ + centerChunkZ));
+            }
+        }
+
+
+        final int ret = ((StarLightLightingProvider)ctx.getSource().getLevel().getLightEngine()).starlight$serverRelightChunks(
+                chunks,
+                null,
+                null
+        );
+
+        ctx.getSource().sendSuccess(() -> {
+            return MutableComponent.create(
+                    new PlainTextContents.LiteralContents(
+                            "Relighting " + ret + " chunks"
+                    )
+            );
+        }, true);
+
+        return ret;
     }
 }

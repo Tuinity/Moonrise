@@ -14,6 +14,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevel
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.util.ParallelSearchRadiusIteration;
+import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -58,7 +59,7 @@ public final class RegionizedPlayerChunkLoader {
     public static final int LOADED_TICKET_LEVEL = ChunkTaskScheduler.getTicketLevel(ChunkStatus.EMPTY);
     public static final int TICK_TICKET_LEVEL = ChunkHolderManager.ENTITY_TICKING_TICKET_LEVEL;
 
-    public static class ViewDistanceHolder {
+    public static final class ViewDistanceHolder {
 
         private volatile ViewDistances viewDistances;
         private static final VarHandle VIEW_DISTANCES_HANDLE = ConcurrentUtil.getVarHandle(ViewDistanceHolder.class, "viewDistances", ViewDistances.class);
@@ -106,6 +107,10 @@ public final class RegionizedPlayerChunkLoader {
                 return param.setTickViewDistance(distance);
             });
         }
+
+        public JsonObject toJson() {
+            return this.getViewDistances().toJson();
+        }
     }
 
     public static final record ViewDistances(
@@ -123,6 +128,16 @@ public final class RegionizedPlayerChunkLoader {
 
         public ViewDistances setSendViewDistance(final int distance) {
             return new ViewDistances(this.tickViewDistance, this.loadViewDistance, distance);
+        }
+
+        public JsonObject toJson() {
+            final JsonObject ret = new JsonObject();
+
+            ret.addProperty("tick-view-distance", this.tickViewDistance);
+            ret.addProperty("load-view-distance", this.loadViewDistance);
+            ret.addProperty("send-view-distance", this.sendViewDistance);
+
+            return ret;
         }
     }
 

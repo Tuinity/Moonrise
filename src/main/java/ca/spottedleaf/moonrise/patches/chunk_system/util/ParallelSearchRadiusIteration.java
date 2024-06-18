@@ -9,7 +9,7 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class ParallelSearchRadiusIteration {
+public final class ParallelSearchRadiusIteration {
 
     // expected that this list returns for a given radius, the set of chunks ordered
     // by manhattan distance

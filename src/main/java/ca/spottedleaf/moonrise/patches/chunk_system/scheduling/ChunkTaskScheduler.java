@@ -112,6 +112,13 @@ public final class ChunkTaskScheduler {
         return Long.valueOf(POI_LOAD_IDS.getAndIncrement());
     }
 
+    public static final TicketType<Long> CHUNK_RELIGHT = TicketType.create("starlight:chunk_relight", Long::compareTo);
+    private static final AtomicLong CHUNK_RELIGHT_IDS = new AtomicLong();
+
+    public static Long getNextChunkRelightId() {
+        return Long.valueOf(CHUNK_RELIGHT_IDS.getAndIncrement());
+    }
+
 
     public static int getTicketLevel(final ChunkStatus status) {
         return ChunkLevel.byStatus(status);
