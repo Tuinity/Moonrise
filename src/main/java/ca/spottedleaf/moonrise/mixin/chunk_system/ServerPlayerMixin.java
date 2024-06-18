@@ -66,4 +66,19 @@ public abstract class ServerPlayerMixin extends Player implements ChunkSystemSer
     public final RegionizedPlayerChunkLoader.ViewDistanceHolder moonrise$getViewDistanceHolder() {
         return this.viewDistanceHolder;
     }
+
+    /**
+     * @reason Copy player state when respawning
+     * @author Spottedleaf
+     */
+    @Inject(
+            method = "restoreFrom",
+            at = @At(
+                    value = "HEAD"
+            )
+    )
+    private void copyRealPlayer(ServerPlayer from, boolean bl, CallbackInfo ci) {
+        this.isRealPlayer = ((ServerPlayerMixin)(Object)from).isRealPlayer;
+        this.viewDistanceHolder = ((ServerPlayerMixin)(Object)from).viewDistanceHolder;
+    }
 }
