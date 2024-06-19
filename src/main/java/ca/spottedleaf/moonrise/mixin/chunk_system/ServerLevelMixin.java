@@ -124,7 +124,7 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
     @Override
     public final LevelChunk moonrise$getFullChunkIfLoaded(final int chunkX, final int chunkZ) {
         final NewChunkHolder newChunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(CoordinateUtils.getChunkKey(chunkX, chunkZ));
-        if (!newChunkHolder.isFullChunkReady()) {
+        if (newChunkHolder == null || !newChunkHolder.isFullChunkReady()) {
             return null;
         }
 
