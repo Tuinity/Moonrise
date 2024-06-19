@@ -1,15 +1,18 @@
 package ca.spottedleaf.moonrise.patches.command;
 
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import ca.spottedleaf.moonrise.common.util.JsonUtil;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.commands.CommandSourceStack;
@@ -24,6 +27,7 @@ import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.phys.Vec3;
+import org.slf4j.Logger;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -31,6 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class MoonriseCommand {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
@@ -60,6 +66,14 @@ public final class MoonriseCommand {
                                         Commands.argument("radius", IntegerArgumentType.integer(0, MoonriseConstants.MAX_VIEW_DISTANCE))
                                                 .executes((final CommandContext<CommandSourceStack> ctx) -> {
                                                     return MoonriseCommand.relight(ctx, IntegerArgumentType.getInteger(ctx, "radius"));
+                                                })
+                                )
+                ).then(
+                        Commands.literal("debug")
+                                .then(
+                                        Commands.literal("chunks")
+                                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
+                                                    return MoonriseCommand.debugChunks(ctx);
                                                 })
                                 )
                 )
@@ -237,5 +251,37 @@ public final class MoonriseCommand {
         }, true);
 
         return ret;
+    }
+
+    public static int debugChunks(final CommandContext<CommandSourceStack> ctx) {
+        final File file = ChunkTaskScheduler.getChunkDebugFile();
+
+        ctx.getSource().sendSuccess(() -> {
+            return MutableComponent.create(
+                    new PlainTextContents.LiteralContents(
+                            "Writing chunk information dump to '" + file + "'"
+                    )
+            );
+        }, true);
+        try {
+            JsonUtil.writeJson(ChunkTaskScheduler.debugAllWorlds(ctx.getSource().getServer()), file);
+
+            ctx.getSource().sendSuccess(() -> {
+                return MutableComponent.create(
+                        new PlainTextContents.LiteralContents(
+                                "Wrote chunk information dump to '" + file + "'"
+                        )
+                );
+            }, true);
+        } catch (final Throwable throwable) {
+            LOGGER.error("Failed to dump chunk information to file '" + file.getAbsolutePath() + "'", throwable);
+            ctx.getSource().sendFailure(MutableComponent.create(
+                    new PlainTextContents.LiteralContents(
+                            "Failed to dump chunk information, see console"
+                    )
+            ));
+        }
+
+        return 0;
     }
 }

@@ -6,12 +6,14 @@ import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedThreadedTaskQu
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import ca.spottedleaf.moonrise.common.util.JsonUtil;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkStatus;
+import ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.executor.RadiusAwarePrioritisedExecutor;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkFullTask;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkLightTask;
@@ -21,24 +23,34 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkUpgrade
 import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
 import ca.spottedleaf.moonrise.patches.chunk_system.status.ChunkSystemChunkStep;
 import ca.spottedleaf.moonrise.patches.chunk_system.util.ParallelSearchRadiusIteration;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.util.StaticCache2D;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkPyramid;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.status.ChunkStep;
+import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -867,6 +879,16 @@ public final class ChunkTaskScheduler {
             this.world = world;
         }
 
+        public JsonObject toJson() {
+            final JsonObject ret = new JsonObject();
+
+            ret.addProperty("chunk-x", Integer.valueOf(this.chunkX));
+            ret.addProperty("chunk-z", Integer.valueOf(this.chunkZ));
+            ret.addProperty("world-name", WorldUtil.getWorldName(this.world));
+
+            return ret;
+        }
+
         @Override
         public String toString() {
             return "[( " + this.chunkX + "," + this.chunkZ + ") in '" + WorldUtil.getWorldName(this.world) + "']";
@@ -888,6 +910,115 @@ public final class ChunkTaskScheduler {
     public static ChunkInfo[] getChunkInfos() {
         synchronized (WAITING_CHUNKS) {
             return WAITING_CHUNKS.toArray(new ChunkInfo[0]);
+        }
+    }
+
+    private static JsonObject debugPlayer(final ServerPlayer player) {
+        final Level world = player.level();
+
+        final JsonObject ret = new JsonObject();
+
+        ret.addProperty("name", player.getScoreboardName());
+        ret.addProperty("uuid", player.getUUID().toString());
+        ret.addProperty("real", ((ChunkSystemServerPlayer)player).moonrise$isRealPlayer());
+
+        ret.addProperty("world-name", WorldUtil.getWorldName(world));
+
+        final Vec3 pos = player.position();
+
+        ret.addProperty("x", pos.x);
+        ret.addProperty("y", pos.y);
+        ret.addProperty("z", pos.z);
+
+        final Entity.RemovalReason removalReason = player.getRemovalReason();
+
+        ret.addProperty("removal-reason", removalReason == null ? "null" : removalReason.name());
+
+        ret.add("view-distances", ((ChunkSystemServerPlayer)player).moonrise$getViewDistanceHolder().toJson());
+
+        return ret;
+    }
+
+    public JsonObject getDebugJson() {
+        final JsonObject ret = new JsonObject();
+
+        ret.addProperty("lock_shift", Integer.valueOf(this.getChunkSystemLockShift()));
+        ret.addProperty("ticket_shift", Integer.valueOf(ThreadedTicketLevelPropagator.SECTION_SHIFT));
+        ret.addProperty("region_shift", Integer.valueOf(((ChunkSystemServerLevel)this.world).moonrise$getRegionChunkShift()));
+
+        ret.addProperty("name", WorldUtil.getWorldName(this.world));
+        ret.addProperty("view-distance", ((ChunkSystemServerLevel)this.world).moonrise$getPlayerChunkLoader().getAPIViewDistance());
+        ret.addProperty("tick-distance", ((ChunkSystemServerLevel)this.world).moonrise$getPlayerChunkLoader().getAPITickDistance());
+        ret.addProperty("send-distance", ((ChunkSystemServerLevel)this.world).moonrise$getPlayerChunkLoader().getAPISendViewDistance());
+
+        final JsonArray players = new JsonArray();
+        ret.add("players", players);
+
+        for (final ServerPlayer player : this.world.players()) {
+            players.add(debugPlayer(player));
+        }
+
+        ret.add("chunk-holder-manager", this.chunkHolderManager.getDebugJson());
+
+        return ret;
+    }
+
+    public static JsonObject debugAllWorlds(final MinecraftServer server) {
+        final JsonObject ret = new JsonObject();
+
+        ret.addProperty("data-version", 2);
+
+        final JsonArray allPlayers = new JsonArray();
+        ret.add("all-players", allPlayers);
+
+        for (final ServerPlayer player : server.getPlayerList().getPlayers()) {
+            allPlayers.add(debugPlayer(player));
+        }
+
+        final JsonArray chunkWaitInfos = new JsonArray();
+        ret.add("chunk-wait-infos", chunkWaitInfos);
+
+        for (final ChunkTaskScheduler.ChunkInfo info : getChunkInfos()) {
+            chunkWaitInfos.add(info.toJson());
+        }
+
+        final JsonArray worlds = new JsonArray();
+        ret.add("worlds", worlds);
+
+        for (final ServerLevel world : server.getAllLevels()) {
+            worlds.add(((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().getDebugJson());
+        }
+
+        return ret;
+    }
+
+    public static File getChunkDebugFile() {
+        return new File(
+                new File(new File("."), "debug"),
+                "chunks-" + DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss").format(LocalDateTime.now()) + ".txt"
+        );
+    }
+
+    public static void dumpAllChunkLoadInfo(final MinecraftServer server, final boolean writeDebugInfo) {
+        final ChunkInfo[] chunkInfos = getChunkInfos();
+        if (chunkInfos.length > 0) {
+            LOGGER.error("Chunk wait task info below: ");
+            for (final ChunkInfo chunkInfo : chunkInfos) {
+                final NewChunkHolder holder = ((ChunkSystemServerLevel)chunkInfo.world).moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(chunkInfo.chunkX, chunkInfo.chunkZ);
+                LOGGER.error("Chunk wait: " + chunkInfo);
+                LOGGER.error("Chunk holder: " + holder);
+            }
+
+            if (writeDebugInfo) {
+                final File file = getChunkDebugFile();
+                LOGGER.error("Writing chunk information dump to " + file);
+                try {
+                    JsonUtil.writeJson(ChunkTaskScheduler.debugAllWorlds(server), file);
+                    LOGGER.error("Successfully written chunk information!");
+                } catch (final Throwable thr) {
+                    LOGGER.error("Failed to dump chunk information to file " + file.toString(), thr);
+                }
+            }
         }
     }
 }

@@ -1349,10 +1349,6 @@ public final class ChunkHolderManager {
     public JsonObject getDebugJson() {
         final JsonObject ret = new JsonObject();
 
-        ret.addProperty("lock_shift", Integer.valueOf(this.taskScheduler.getChunkSystemLockShift()));
-        ret.addProperty("ticket_shift", Integer.valueOf(ThreadedTicketLevelPropagator.SECTION_SHIFT));
-        ret.addProperty("region_shift", Integer.valueOf(((ChunkSystemServerLevel)this.world).moonrise$getRegionChunkShift()));
-
         ret.add("unload_queue", this.unloadQueue.toDebugJson());
 
         final JsonArray holders = new JsonArray();
