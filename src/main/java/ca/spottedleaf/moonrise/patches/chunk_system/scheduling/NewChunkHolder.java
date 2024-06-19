@@ -1276,6 +1276,7 @@ public final class NewChunkHolder {
                     // state upgrade
                     if (!current.isOrAfter(FullChunkStatus.FULL) && pending.isOrAfter(FullChunkStatus.FULL)) {
                         this.updateCurrentState(FullChunkStatus.FULL);
+                        ChunkSystem.onChunkPreBorder(chunk, this.vanillaChunkHolder);
                         this.scheduler.chunkHolderManager.ensureInAutosave(this);
                         this.changeEntityChunkStatus(FullChunkStatus.FULL);
                         ChunkSystem.onChunkBorder(chunk, this.vanillaChunkHolder);
@@ -1313,6 +1314,7 @@ public final class NewChunkHolder {
                         this.onFullChunkLoadChange(false, changedFullStatus);
                         this.changeEntityChunkStatus(FullChunkStatus.INACCESSIBLE);
                         ChunkSystem.onChunkNotBorder(chunk, this.vanillaChunkHolder);
+                        ChunkSystem.onChunkPostNotBorder(chunk, this.vanillaChunkHolder);
                         this.updateCurrentState(FullChunkStatus.INACCESSIBLE);
                     }
                 }

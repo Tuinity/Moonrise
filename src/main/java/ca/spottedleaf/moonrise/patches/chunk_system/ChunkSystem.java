@@ -80,12 +80,20 @@ public final class ChunkSystem {
 
     }
 
-    public static void onChunkBorder(final LevelChunk chunk, final ChunkHolder holder) {
+    public static void onChunkPreBorder(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerChunkCache)((ServerLevel)chunk.getLevel()).getChunkSource())
                 .moonrise$setFullChunk(chunk.getPos().x, chunk.getPos().z, chunk);
     }
 
+    public static void onChunkBorder(final LevelChunk chunk, final ChunkHolder holder) {
+
+    }
+
     public static void onChunkNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
+
+    }
+
+    public static void onChunkPostNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerChunkCache)((ServerLevel)chunk.getLevel()).getChunkSource())
                 .moonrise$setFullChunk(chunk.getPos().x, chunk.getPos().z, null);
     }
