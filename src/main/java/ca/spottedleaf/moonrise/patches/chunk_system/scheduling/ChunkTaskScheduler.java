@@ -457,12 +457,16 @@ public final class ChunkTaskScheduler {
         }
         this.scheduleChunkLoad(chunkX, chunkZ, ChunkStatus.EMPTY, addTicket, priority, (final ChunkAccess chunk) -> {
             if (chunk == null) {
-                onComplete.accept(null);
+                if (onComplete != null) {
+                    onComplete.accept(null);
+                }
             } else {
                 if (chunk.getPersistedStatus().isOrAfter(toStatus)) {
                     this.scheduleChunkLoad(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
                 } else {
-                    onComplete.accept(null);
+                    if (onComplete != null) {
+                        onComplete.accept(null);
+                    }
                 }
             }
         });
