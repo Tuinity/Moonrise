@@ -726,7 +726,7 @@ public final class ChunkTaskScheduler {
 
         final int neighbourReadRadius = Math.max(
                 0,
-                chunkPyramid.getStepTo(toStatus).getAccumulatedRadiusOf(ChunkStatus.EMPTY)
+                chunkStep.getAccumulatedRadiusOf(ChunkStatus.EMPTY)
         );
 
         boolean unGeneratedNeighbours = false;

@@ -36,7 +36,7 @@ public abstract class AcquirePoiMixin {
         final List<Pair<Holder<PoiType>, BlockPos>> ret = new ArrayList<>();
 
         PoiAccess.findNearestPoiPositions(
-                poiManager, predicate, predicate2, blockPos, i, Double.MAX_VALUE, occup, true, 5, ret
+                poiManager, predicate, predicate2, blockPos, i, Double.MAX_VALUE, occup, PoiAccess.LOAD_FOR_SEARCHING, 5, ret
         );
 
         return ret.stream();

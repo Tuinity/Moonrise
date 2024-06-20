@@ -26,7 +26,7 @@ public abstract class EntityTickListMixin {
     private Int2ObjectMap<Entity> passive;
 
     @Unique
-    private IteratorSafeOrderedReferenceSet<Entity> entities;
+    private final IteratorSafeOrderedReferenceSet<Entity> entities = new IteratorSafeOrderedReferenceSet<>();
 
     /**
      * @reason Initialise new fields and destroy old state
@@ -41,7 +41,6 @@ public abstract class EntityTickListMixin {
     private void initHook(final CallbackInfo ci) {
         this.active = null;
         this.passive = null;
-        this.entities = new IteratorSafeOrderedReferenceSet<>();
     }
 
 

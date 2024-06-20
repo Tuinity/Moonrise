@@ -28,21 +28,7 @@ public abstract class ConnectionMixin extends SimpleChannelInboundHandler<Packet
     private static final int DEFAULT_TIMEOUT = 30;
 
     @Unique
-    private volatile int timeout;
-
-    /**
-     * @reason Initialise fields during construction
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "<init>",
-            at = @At(
-                    value = "RETURN"
-            )
-    )
-    private void init(final CallbackInfo ci) {
-        this.timeout = DEFAULT_TIMEOUT;
-    }
+    private volatile int timeout = DEFAULT_TIMEOUT;
 
     @Override
     public final int moonrise$getReadTimeout() {

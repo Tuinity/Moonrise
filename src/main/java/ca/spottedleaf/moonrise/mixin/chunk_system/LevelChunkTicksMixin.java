@@ -43,21 +43,7 @@ public abstract class LevelChunkTicksMixin<T> implements ChunkSystemLevelChunkTi
     private boolean dirty;
 
     @Unique
-    private long lastSaved;
-
-    /**
-     * @reason Hook to init fields
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "<init>()V",
-            at = @At(
-                    value = "RETURN"
-            )
-    )
-    private void init(final CallbackInfo ci) {
-        this.lastSaved = Long.MIN_VALUE;
-    }
+    private long lastSaved = Long.MIN_VALUE;
 
     @Override
     public final boolean moonrise$isDirty(final long tick) {

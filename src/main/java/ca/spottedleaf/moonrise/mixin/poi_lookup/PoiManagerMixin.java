@@ -39,8 +39,7 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
     @Overwrite
     public Optional<BlockPos> find(Predicate<Holder<PoiType>> typePredicate, Predicate<BlockPos> posPredicate, BlockPos pos,
                                    int radius, PoiManager.Occupancy occupationStatus) {
-        // Diff from Paper: use load=true
-        BlockPos ret = PoiAccess.findAnyPoiPosition((PoiManager)(Object)this, typePredicate, posPredicate, pos, radius, occupationStatus, true);
+        BlockPos ret = PoiAccess.findAnyPoiPosition((PoiManager)(Object)this, typePredicate, posPredicate, pos, radius, occupationStatus, PoiAccess.LOAD_FOR_SEARCHING);
         return Optional.ofNullable(ret);
     }
 
@@ -51,8 +50,7 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
     @Overwrite
     public Optional<BlockPos> findClosest(Predicate<Holder<PoiType>> typePredicate, BlockPos pos, int radius,
                                           PoiManager.Occupancy occupationStatus) {
-        // Diff from Paper: use load=true
-        BlockPos ret = PoiAccess.findClosestPoiDataPosition((PoiManager)(Object)this, typePredicate, null, pos, radius, radius * radius, occupationStatus, true);
+        BlockPos ret = PoiAccess.findClosestPoiDataPosition((PoiManager)(Object)this, typePredicate, null, pos, radius, radius * radius, occupationStatus, PoiAccess.LOAD_FOR_SEARCHING);
         return Optional.ofNullable(ret);
     }
 
@@ -63,9 +61,8 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
     @Overwrite
     public Optional<Pair<Holder<PoiType>, BlockPos>> findClosestWithType(Predicate<Holder<PoiType>> typePredicate, BlockPos pos,
                                                                          int radius, PoiManager.Occupancy occupationStatus) {
-        // Diff from Paper: use load=true
         return Optional.ofNullable(PoiAccess.findClosestPoiDataTypeAndPosition(
-                (PoiManager)(Object)this, typePredicate, null, pos, radius, radius * radius, occupationStatus, true
+                (PoiManager)(Object)this, typePredicate, null, pos, radius, radius * radius, occupationStatus, PoiAccess.LOAD_FOR_SEARCHING
         ));
     }
 
@@ -76,8 +73,7 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
     @Overwrite
     public Optional<BlockPos> findClosest(Predicate<Holder<PoiType>> typePredicate, Predicate<BlockPos> posPredicate, BlockPos pos,
                                           int radius, PoiManager.Occupancy occupationStatus) {
-        // Diff from Paper: use load=true
-        BlockPos ret = PoiAccess.findClosestPoiDataPosition((PoiManager)(Object)this, typePredicate, posPredicate, pos, radius, radius * radius, occupationStatus, true);
+        BlockPos ret = PoiAccess.findClosestPoiDataPosition((PoiManager)(Object)this, typePredicate, posPredicate, pos, radius, radius * radius, occupationStatus, PoiAccess.LOAD_FOR_SEARCHING);
         return Optional.ofNullable(ret);
     }
 
@@ -88,9 +84,8 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
     @Overwrite
     public Optional<BlockPos> take(Predicate<Holder<PoiType>> typePredicate, BiPredicate<Holder<PoiType>, BlockPos> biPredicate,
                                    BlockPos pos, int radius) {
-        // Diff from Paper: use load=true
         final PoiRecord closest = PoiAccess.findClosestPoiDataRecord(
-                (PoiManager)(Object)this, typePredicate, biPredicate, pos, radius, radius * radius, PoiManager.Occupancy.HAS_SPACE, true
+                (PoiManager)(Object)this, typePredicate, biPredicate, pos, radius, radius * radius, PoiManager.Occupancy.HAS_SPACE, PoiAccess.LOAD_FOR_SEARCHING
         );
         return Optional.ofNullable(closest).map(poi -> {
              poi.acquireTicket();
@@ -106,9 +101,8 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
     public Optional<BlockPos> getRandom(Predicate<Holder<PoiType>> typePredicate, Predicate<BlockPos> positionPredicate,
                                         PoiManager.Occupancy occupationStatus, BlockPos pos, int radius, RandomSource random) {
         List<PoiRecord> list = new ArrayList<>();
-        // Diff from Paper: use load=true
         PoiAccess.findAnyPoiRecords(
-                (PoiManager)(Object)this, typePredicate, positionPredicate, pos, radius, occupationStatus, true, Integer.MAX_VALUE, list
+                (PoiManager)(Object)this, typePredicate, positionPredicate, pos, radius, occupationStatus, PoiAccess.LOAD_FOR_SEARCHING, Integer.MAX_VALUE, list
         );
 
         // the old method shuffled the list and then tried to find the first element in it that
@@ -131,7 +125,7 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
         List<Pair<Holder<PoiType>, BlockPos>> ret = new ArrayList<>();
 
         PoiAccess.findAnyPoiPositions(
-                (PoiManager)(Object)this, predicate, predicate2, blockPos, i, occupancy, true,
+                (PoiManager)(Object)this, predicate, predicate2, blockPos, i, occupancy, PoiAccess.LOAD_FOR_SEARCHING,
                 Integer.MAX_VALUE, ret
         );
 
@@ -149,7 +143,7 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
         List<Pair<Holder<PoiType>, BlockPos>> ret = new ArrayList<>();
 
         PoiAccess.findNearestPoiPositions(
-                (PoiManager)(Object)this, predicate, predicate2, blockPos, i, Double.MAX_VALUE, occupancy, true, Integer.MAX_VALUE, ret
+                (PoiManager)(Object)this, predicate, predicate2, blockPos, i, Double.MAX_VALUE, occupancy, PoiAccess.LOAD_FOR_SEARCHING, Integer.MAX_VALUE, ret
         );
 
         return ret.stream();

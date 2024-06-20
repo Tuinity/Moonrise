@@ -80,7 +80,9 @@ public abstract class ExplosionMixin {
     @Final
     private boolean fire;
 
-    @Shadow @Final private DamageSource damageSource;
+    @Shadow
+    @Final private DamageSource damageSource;
+
 
     @Unique
     private static final double[] CACHED_RAYS;

@@ -48,7 +48,9 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
     private static final AtomicInteger ID_GENERATOR = new AtomicInteger();
 
     @Unique
-    private int id1, id2;
+    private final int id1 = HashCommon.murmurHash3(HashCommon.murmurHash3(ID_GENERATOR.getAndIncrement() + RANDOM_OFFSET) + RANDOM_OFFSET);
+    @Unique
+    private final int id2 = HashCommon.murmurHash3(HashCommon.murmurHash3(ID_GENERATOR.getAndIncrement() + RANDOM_OFFSET) + RANDOM_OFFSET);
 
     @Unique
     private boolean occludesFullBlock;
@@ -70,18 +72,6 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
         if (!shape.isEmpty()) {
             shape.bounds();
         }
-    }
-
-    @Inject(
-            method = "<init>",
-            at = @At(
-                    value = "RETURN"
-            )
-    )
-    private void init(final CallbackInfo ci) {
-        // note: murmurHash3 has an inverse, so the field is still unique
-        this.id1 = HashCommon.murmurHash3(HashCommon.murmurHash3(ID_GENERATOR.getAndIncrement() + RANDOM_OFFSET) + RANDOM_OFFSET);
-        this.id2 = HashCommon.murmurHash3(HashCommon.murmurHash3(ID_GENERATOR.getAndIncrement() + RANDOM_OFFSET) + RANDOM_OFFSET);
     }
 
     /**

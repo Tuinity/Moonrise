@@ -64,7 +64,7 @@ public abstract class ChunkHolderMixin extends GenerationChunkHolder implements 
     private NewChunkHolder newChunkHolder;
 
     @Unique
-    private ReferenceList<ServerPlayer> playersSentChunkTo;
+    private final ReferenceList<ServerPlayer> playersSentChunkTo = new ReferenceList<>(EMPTY_PLAYER_ARRAY, 0);
 
     @Unique
     private ChunkMap getChunkMap() {
@@ -134,8 +134,6 @@ public abstract class ChunkHolderMixin extends GenerationChunkHolder implements 
             )
     )
     private void initFields(final CallbackInfo ci) {
-        this.playersSentChunkTo = new ReferenceList<>(EMPTY_PLAYER_ARRAY, 0);
-
         this.fullChunkFuture = null;
         this.tickingChunkFuture = null;
         this.entityTickingChunkFuture = null;

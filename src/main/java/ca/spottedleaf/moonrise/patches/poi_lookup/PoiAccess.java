@@ -29,6 +29,8 @@ import java.util.function.Predicate;
  */
 public final class PoiAccess {
 
+    public static final boolean LOAD_FOR_SEARCHING = true;
+
     protected static double clamp(final double val, final double min, final double max) {
         return (val < min ? min : (val > max ? max : val));
     }

@@ -50,13 +50,13 @@ public abstract class EntityMixin implements ChunkSystemEntity {
     private FullChunkStatus chunkStatus;
 
     @Unique
-    private int sectionX;
+    private int sectionX = Integer.MIN_VALUE;
 
     @Unique
-    private int sectionY;
+    private int sectionY = Integer.MIN_VALUE;
 
     @Unique
-    private int sectionZ;
+    private int sectionZ = Integer.MIN_VALUE;
 
     @Unique
     private boolean updatingSectionStatus;
@@ -122,20 +122,6 @@ public abstract class EntityMixin implements ChunkSystemEntity {
             return false;
         }
         return this.getIndirectPassengersStream().anyMatch((entity) -> entity instanceof Player);
-    }
-
-    /**
-     * @reason Initialise fields
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "<init>",
-            at = @At(
-                    value = "RETURN"
-            )
-    )
-    private void initHook(final CallbackInfo ci) {
-        this.sectionX = this.sectionY = this.sectionZ = Integer.MIN_VALUE;
     }
 
     /**

@@ -83,10 +83,10 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
     private EntityDataController entityDataController;
 
     @Unique
-    private PoiDataController poiDataController;
+    private final PoiDataController poiDataController = new PoiDataController((ServerLevel)(Object)this);
 
     @Unique
-    private ChunkDataController chunkDataController;
+    private final ChunkDataController chunkDataController = new ChunkDataController((ServerLevel)(Object)this);
 
     @Unique
     private ChunkTaskScheduler chunkTaskScheduler;
@@ -115,8 +115,6 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
                         minecraftServer.forceSynchronousWrites()
                 )
         );
-        this.poiDataController = new PoiDataController((ServerLevel)(Object)this);
-        this.chunkDataController = new ChunkDataController((ServerLevel)(Object)this);
         this.moonrise$setEntityLookup(new ServerEntityLookup((ServerLevel)(Object)this, ((ServerLevel)(Object)this).new EntityCallbacks()));
         this.chunkTaskScheduler = new ChunkTaskScheduler((ServerLevel)(Object)this, MoonriseCommon.WORKER_POOL);
     }

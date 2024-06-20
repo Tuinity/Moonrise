@@ -26,21 +26,7 @@ public abstract class ServerPlayerMixin extends Player implements ChunkSystemSer
     private RegionizedPlayerChunkLoader.PlayerChunkLoaderData chunkLoader;
 
     @Unique
-    private RegionizedPlayerChunkLoader.ViewDistanceHolder viewDistanceHolder;
-
-    /**
-     * @reason Initialise fields
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "<init>",
-            at = @At(
-                    value = "RETURN"
-            )
-    )
-    private void init(final CallbackInfo ci) {
-        this.viewDistanceHolder = new RegionizedPlayerChunkLoader.ViewDistanceHolder();
-    }
+    private RegionizedPlayerChunkLoader.ViewDistanceHolder viewDistanceHolder = new RegionizedPlayerChunkLoader.ViewDistanceHolder();
 
     @Override
     public final boolean moonrise$isRealPlayer() {

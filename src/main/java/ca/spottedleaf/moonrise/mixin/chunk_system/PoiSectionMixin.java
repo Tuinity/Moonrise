@@ -34,21 +34,7 @@ public abstract class PoiSectionMixin implements ChunkSystemPoiSection {
 
 
     @Unique
-    private Optional<PoiSection> noAllocOptional;
-
-    /**
-     * @reason Initialise fields
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "<init>(Ljava/lang/Runnable;ZLjava/util/List;)V",
-            at = @At(
-                    value = "RETURN"
-            )
-    )
-    private void init(final CallbackInfo ci) {
-        this.noAllocOptional = Optional.of((PoiSection)(Object)this);
-    }
+    private final Optional<PoiSection> noAllocOptional = Optional.of((PoiSection)(Object)this);;
 
     @Override
     public final boolean moonrise$isEmpty() {

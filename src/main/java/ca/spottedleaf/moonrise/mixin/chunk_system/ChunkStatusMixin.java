@@ -26,13 +26,13 @@ public abstract class ChunkStatusMixin implements ChunkSystemChunkStatus {
     private boolean emptyLoadTask;
 
     @Unique
-    private int writeRadius;
+    private int writeRadius = -1;
 
     @Unique
-    private ChunkStatus nextStatus;
+    private ChunkStatus nextStatus = (ChunkStatus)(Object)this;
 
     @Unique
-    private AtomicBoolean warnedAboutNoImmediateComplete;
+    private final AtomicBoolean warnedAboutNoImmediateComplete = new AtomicBoolean();
 
     @Override
     public final boolean moonrise$isParallelCapable() {
@@ -90,12 +90,8 @@ public abstract class ChunkStatusMixin implements ChunkSystemChunkStatus {
             )
     )
     private void initFields(ChunkStatus prevStatus, EnumSet<Heightmap.Types> enumSet, ChunkType chunkType, CallbackInfo ci) {
-        this.isParallelCapable = false;
-        this.writeRadius = -1;
-        this.nextStatus = (ChunkStatus)(Object)this;
         if (prevStatus != null) {
             ((ChunkStatusMixin)(Object)prevStatus).nextStatus = (ChunkStatus)(Object)this;
         }
-        this.warnedAboutNoImmediateComplete = new AtomicBoolean();
     }
 }
