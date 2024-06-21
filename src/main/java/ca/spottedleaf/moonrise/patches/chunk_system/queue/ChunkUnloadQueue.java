@@ -63,12 +63,13 @@ public final class ChunkUnloadQueue {
         final int shift = this.coordinateShift;
         final int sectionX = chunkX >> shift;
         final int sectionZ = chunkZ >> shift;
+        final long sectionKey = CoordinateUtils.getChunkKey(sectionX, sectionZ);
         final long chunkKey = CoordinateUtils.getChunkKey(chunkX, chunkZ);
 
-        UnloadSection section = this.unloadSections.get(chunkKey);
+        UnloadSection section = this.unloadSections.get(sectionKey);
         if (section == null) {
             section = new UnloadSection(this.orderGenerator.getAndIncrement());
-            this.unloadSections.put(chunkKey, section);
+            this.unloadSections.put(sectionKey, section);
         }
 
         return section.chunks.add(chunkKey);
@@ -80,9 +81,10 @@ public final class ChunkUnloadQueue {
         final int shift = this.coordinateShift;
         final int sectionX = chunkX >> shift;
         final int sectionZ = chunkZ >> shift;
+        final long sectionKey = CoordinateUtils.getChunkKey(sectionX, sectionZ);
         final long chunkKey = CoordinateUtils.getChunkKey(chunkX, chunkZ);
 
-        final UnloadSection section = this.unloadSections.get(chunkKey);
+        final UnloadSection section = this.unloadSections.get(sectionKey);
 
         if (section == null) {
             return false;
@@ -93,7 +95,7 @@ public final class ChunkUnloadQueue {
         }
 
         if (section.chunks.isEmpty()) {
-            this.unloadSections.remove(chunkKey);
+            this.unloadSections.remove(sectionKey);
         }
 
         return true;
@@ -114,14 +116,16 @@ public final class ChunkUnloadQueue {
             sectionJson.add("coordinates", coordinates);
 
             final UnloadSection actualSection = this.getSectionUnsynchronized(section.sectionX(), section.sectionZ());
-            for (final LongIterator iterator = actualSection.chunks.clone().iterator(); iterator.hasNext();) {
-                final long coordinate = iterator.nextLong();
+            if (actualSection != null) {
+                for (final LongIterator iterator = actualSection.chunks.clone().iterator(); iterator.hasNext(); ) {
+                    final long coordinate = iterator.nextLong();
 
-                final JsonObject coordinateJson = new JsonObject();
-                coordinates.add(coordinateJson);
+                    final JsonObject coordinateJson = new JsonObject();
+                    coordinates.add(coordinateJson);
 
-                coordinateJson.addProperty("chunkX", Integer.valueOf(CoordinateUtils.getChunkX(coordinate)));
-                coordinateJson.addProperty("chunkZ", Integer.valueOf(CoordinateUtils.getChunkZ(coordinate)));
+                    coordinateJson.addProperty("chunkX", Integer.valueOf(CoordinateUtils.getChunkX(coordinate)));
+                    coordinateJson.addProperty("chunkZ", Integer.valueOf(CoordinateUtils.getChunkZ(coordinate)));
+                }
             }
         }
 

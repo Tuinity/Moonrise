@@ -14,6 +14,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunk
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ThreadedTicketLevelPropagator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -179,9 +180,9 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
 
     @Override
     public final int moonrise$getRegionChunkShift() {
-        // current default in Folia
-        // note that there is no actual regionizing taking place in Moonrise...
-        return 2;
+        // note that there is no actual regionizing taking place in Moonrise, so we set this to the highest shift to minimize
+        // performance impact
+        return ThreadedTicketLevelPropagator.SECTION_SHIFT;
     }
 
     @Override
