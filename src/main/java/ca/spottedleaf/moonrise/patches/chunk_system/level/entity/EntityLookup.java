@@ -88,7 +88,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
 
     @Override
     public Entity get(final UUID id) {
-        return maskNonAccessible(this.entityByUUID.get(id));
+        return maskNonAccessible(id == null ? null : this.entityByUUID.get(id));
     }
 
     public boolean hasEntity(final UUID uuid) {
@@ -96,7 +96,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
     }
 
     public String getDebugInfo() {
-        return "count_id:" + this.entityById.size() + ",count_uuid:" + this.entityByUUID.size() + ",region_count:" + this.regions.size();
+        return "count_id:" + this.entityById.size() + ",count_uuid:" + this.entityByUUID.size() + ",count_accessible:" + this.getEntityCount() + ",region_count:" + this.regions.size();
     }
 
     protected static final class ArrayIterable<T> implements Iterable<T> {
