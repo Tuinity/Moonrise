@@ -8,10 +8,13 @@ import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftS
 import net.minecraft.commands.CommandSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerInfo;
+import net.minecraft.server.ServerTickRateManager;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -32,6 +36,12 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     @Shadow
     public abstract boolean saveAllChunks(boolean bl, boolean bl2, boolean bl3);
 
+    @Shadow
+    @Final
+    private ServerTickRateManager tickRateManager;
+
+    @Shadow
+    protected abstract boolean haveTime();
 
     public MinecraftServerMixin(String string) {
         super(string);
@@ -44,6 +54,31 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     public final void moonrise$setChunkSystemCrash(final Throwable throwable) {
         this.chunkSystemCrash = throwable;
     }
+
+    /**
+     * @reason Force execution of tasks for all worlds, so that the first world does not hog all of the task processing
+     * @author Spottedleaf
+     */
+    @Overwrite
+    private boolean pollTaskInternal() {
+        if (super.pollTask()) {
+            return true;
+        }
+
+        if (this.tickRateManager.isSprinting() || this.haveTime()) {
+            boolean ret = false;
+            for (final ServerLevel world : this.getAllLevels()) {
+                if (world.getChunkSource().pollTask()) {
+                    ret = true;
+                }
+            }
+
+            return ret;
+        }
+
+        return false;
+    }
+
 
     /**
      * @reason Force response to chunk system crash
