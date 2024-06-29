@@ -55,13 +55,84 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         this.chunkSystemCrash = throwable;
     }
 
+    @Unique
+    private static final long CHUNK_TASK_QUEUE_BACKOFF_MIN_TIME = 25L * 1000L; // 25us
+    @Unique
+    private static final long MAX_CHUNK_EXEC_TIME = 1000L; // 1us
+    @Unique
+    private static final long TASK_EXECUTION_FAILURE_BACKOFF = 5L * 1000L; // 5us
+
+    @Unique
+    private long lastMidTickExecute;
+    @Unique
+    private long lastMidTickExecuteFailure;
+
+    @Unique
+    private boolean tickMidTickTasks() {
+        // give all worlds a fair chance at by targeting them all.
+        // if we execute too many tasks, that's fine - we have logic to correctly handle overuse of allocated time.
+        boolean executed = false;
+        for (final ServerLevel world : this.getAllLevels()) {
+            long currTime = System.nanoTime();
+            if (currTime - ((ChunkSystemServerLevel)world).moonrise$getLastMidTickFailure() <= TASK_EXECUTION_FAILURE_BACKOFF) {
+                continue;
+            }
+            if (!world.getChunkSource().pollTask()) {
+                // we need to back off if this fails
+                ((ChunkSystemServerLevel)world).moonrise$setLastMidTickFailure(currTime);
+            } else {
+                executed = true;
+            }
+        }
+
+        return executed;
+    }
+
+    @Override
+    public final void moonrise$executeMidTickTasks() {
+        final long startTime = System.nanoTime();
+        if ((startTime - this.lastMidTickExecute) <= CHUNK_TASK_QUEUE_BACKOFF_MIN_TIME || (startTime - this.lastMidTickExecuteFailure) <= TASK_EXECUTION_FAILURE_BACKOFF) {
+            // it's shown to be bad to constantly hit the queue (chunk loads slow to a crawl), even if no tasks are executed.
+            // so, backoff to prevent this
+            return;
+        }
+
+        for (;;) {
+            final boolean moreTasks = this.tickMidTickTasks();
+            final long currTime = System.nanoTime();
+            final long diff = currTime - startTime;
+
+            if (!moreTasks || diff >= MAX_CHUNK_EXEC_TIME) {
+                if (!moreTasks) {
+                    this.lastMidTickExecuteFailure = currTime;
+                }
+
+                // note: negative values reduce the time
+                long overuse = diff - MAX_CHUNK_EXEC_TIME;
+                if (overuse >= (10L * 1000L * 1000L)) { // 10ms
+                    // make sure something like a GC or dumb plugin doesn't screw us over...
+                    overuse = 10L * 1000L * 1000L; // 10ms
+                }
+
+                final double overuseCount = (double)overuse/(double)MAX_CHUNK_EXEC_TIME;
+                final long extraSleep = (long)Math.round(overuseCount*CHUNK_TASK_QUEUE_BACKOFF_MIN_TIME);
+
+                this.lastMidTickExecute = currTime + extraSleep;
+                return;
+            }
+        }
+    }
+
     /**
-     * @reason Force execution of tasks for all worlds, so that the first world does not hog all of the task processing
+     * @reason Force execution of tasks for all worlds, so that the first world does not hog the task processing time.
+     *         Additionally, perform mid-tick task execution when handling the normal server queue so that chunk tasks
+     *         are guaranteed to be processed during tick sleep.
      * @author Spottedleaf
      */
     @Overwrite
     private boolean pollTaskInternal() {
         if (super.pollTask()) {
+            this.moonrise$executeMidTickTasks();
             return true;
         }
 

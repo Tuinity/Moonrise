@@ -189,6 +189,11 @@ public abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityG
         return this.getChunkSource().getChunk(chunkX, chunkZ, leastStatus, false);
     }
 
+    @Override
+    public void moonrise$midTickTasks() {
+        // no-op on ClientLevel
+    }
+
     /**
      * @reason Allow block updates in non-ticking chunks, as new chunk system sends non-ticking chunks to clients
      * @author Spottedleaf
@@ -207,4 +212,21 @@ public abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityG
     }
 
     // TODO: Thread.currentThread() != this.thread to TickThread?
+
+
+    /**
+     * @reason Execute mid-tick chunk tasks during entity ticking
+     * @author Spottedleaf
+     */
+    @Inject(
+            method = "guardEntityTick",
+            at = @At(
+                    value = "INVOKE",
+                    shift = At.Shift.AFTER,
+                    target = "Ljava/util/function/Consumer;accept(Ljava/lang/Object;)V"
+            )
+    )
+    private void midTickEntity(final CallbackInfo ci) {
+        this.moonrise$midTickTasks();
+    }
 }

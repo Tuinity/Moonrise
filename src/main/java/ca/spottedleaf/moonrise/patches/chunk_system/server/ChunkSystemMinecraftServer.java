@@ -4,4 +4,6 @@ public interface ChunkSystemMinecraftServer {
 
     public void moonrise$setChunkSystemCrash(final Throwable throwable);
 
+    public void moonrise$executeMidTickTasks();
+
 }

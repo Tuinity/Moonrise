@@ -46,4 +46,7 @@ public interface ChunkSystemServerLevel extends ChunkSystemLevel {
 
     public RegionizedPlayerChunkLoader.ViewDistanceHolder moonrise$getViewDistanceHolder();
 
+    public long moonrise$getLastMidTickFailure();
+
+    public void moonrise$setLastMidTickFailure(final long time);
 }

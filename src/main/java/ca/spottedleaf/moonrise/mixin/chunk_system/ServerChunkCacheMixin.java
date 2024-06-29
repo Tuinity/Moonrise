@@ -8,6 +8,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
+import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
 import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemServerChunkCache;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkLevel;
@@ -47,6 +48,9 @@ public abstract class ServerChunkCacheMixin extends ChunkSource implements Chunk
 
     @Unique
     private final ConcurrentLong2ReferenceChainedHashTable<LevelChunk> fullChunks = new ConcurrentLong2ReferenceChainedHashTable<>();
+
+    @Unique
+    private long chunksTicked;
 
     @Override
     public final void moonrise$setFullChunk(final int chunkX, final int chunkZ, final LevelChunk chunk) {
@@ -273,5 +277,25 @@ public abstract class ServerChunkCacheMixin extends ChunkSource implements Chunk
     )
     private boolean skipSaveTicketUpdates(final ServerChunkCache instance) {
         return false;
+    }
+
+    /**
+     * @reason Perform mid-tick chunk task processing during chunk tick
+     * @author Spottedleaf
+     */
+    @Inject(
+            method = "tickChunks",
+            at = @At(
+                    value = "INVOKE",
+                    shift = At.Shift.AFTER,
+                    target = "Lnet/minecraft/server/level/ServerLevel;tickChunk(Lnet/minecraft/world/level/chunk/LevelChunk;I)V"
+            )
+    )
+    private void midTickChunks(final CallbackInfo ci) {
+        if ((++this.chunksTicked & 7L) != 0L) {
+            return;
+        }
+
+        ((ChunkSystemMinecraftServer)this.level.getServer()).moonrise$executeMidTickTasks();
     }
 }

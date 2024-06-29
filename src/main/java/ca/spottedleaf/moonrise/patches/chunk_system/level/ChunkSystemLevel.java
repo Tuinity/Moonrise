@@ -17,4 +17,6 @@ public interface ChunkSystemLevel {
 
     public ChunkAccess moonrise$getSpecificChunkIfLoaded(final int chunkX, final int chunkZ, final ChunkStatus leastStatus);
 
+    public void moonrise$midTickTasks();
+
 }

@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.block_entity_remove;
 
+import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.TickRateManager;
@@ -73,6 +74,8 @@ public abstract class LevelMixin implements LevelAccessor, AutoCloseable {
         int i = 0; // current ticking entity (exclusive)
         int len = tickList.size();
 
+        int tickedEntities = 0;
+
         Objects.checkFromToIndex(0, len, elements.length);
         try {
             for (; i < len; ++i) {
@@ -84,6 +87,10 @@ public abstract class LevelMixin implements LevelAccessor, AutoCloseable {
 
                 if (doTick && this.shouldTickBlocksAt(tileEntity.getPos())) {
                     tileEntity.tick();
+                    // call mid tick tasks for chunk system
+                    if ((++tickedEntities & 7) == 0) {
+                        ((ChunkSystemLevel)(Level)(Object)this).moonrise$midTickTasks();
+                    }
                 }
 
                 if (writeToBase) {

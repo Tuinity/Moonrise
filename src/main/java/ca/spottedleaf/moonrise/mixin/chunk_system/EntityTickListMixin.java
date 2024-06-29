@@ -111,6 +111,6 @@ public abstract class EntityTickListMixin {
              }
         } finally {
             iterator.finishedIterating();
-         }
+        }
     }
 }

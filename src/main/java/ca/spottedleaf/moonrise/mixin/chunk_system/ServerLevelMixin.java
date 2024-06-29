@@ -15,6 +15,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManage
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ThreadedTicketLevelPropagator;
+import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -43,6 +44,7 @@ import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.level.storage.WritableLevelData;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -66,6 +68,10 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
 
     @Shadow
     private PersistentEntitySectionManager<Entity> entityManager;
+
+    @Shadow
+    @Final
+    private MinecraftServer server;
 
     protected ServerLevelMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l, int i) {
         super(writableLevelData, resourceKey, registryAccess, holder, supplier, bl, bl2, l, i);
@@ -91,6 +97,12 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
 
     @Unique
     private ChunkTaskScheduler chunkTaskScheduler;
+
+    @Unique
+    private long lastMidTickFailure;
+
+    @Unique
+    private long tickedBlocksOrFluids;
 
     /**
      * @reason Initialise fields / destroy entity manager state
@@ -151,6 +163,11 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
             return null;
         }
         return newChunkHolder.getChunkIfPresentUnchecked(leastStatus);
+    }
+
+    @Override
+    public final void moonrise$midTickTasks() {
+        ((ChunkSystemMinecraftServer)this.server).moonrise$executeMidTickTasks();
     }
 
     @Override
@@ -277,6 +294,16 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
     @Override
     public final RegionizedPlayerChunkLoader.ViewDistanceHolder moonrise$getViewDistanceHolder() {
         return this.viewDistanceHolder;
+    }
+
+    @Override
+    public final long moonrise$getLastMidTickFailure() {
+        return this.lastMidTickFailure;
+    }
+
+    @Override
+    public final void moonrise$setLastMidTickFailure(final long time) {
+        this.lastMidTickFailure = time;
     }
 
     /**
@@ -599,5 +626,39 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
     )
     private int redirectCrashCount(final PersistentEntitySectionManager<Entity> instance) {
         return this.moonrise$getEntityLookup().getEntityCount();
+    }
+
+    /**
+     * @reason Execute mid-tick chunk tasks during fluid ticking
+     * @author Spottedleaf
+     */
+    @Inject(
+            method = "tickFluid",
+            at = @At(
+                    value = "RETURN"
+            )
+    )
+    private void midTickFluids(final CallbackInfo ci) {
+        if ((++this.tickedBlocksOrFluids & 7L) != 0L) {
+            return;
+        }
+        ((ChunkSystemMinecraftServer)this.server).moonrise$executeMidTickTasks();
+    }
+
+    /**
+     * @reason Execute mid-tick chunk tasks during block ticking
+     * @author Spottedleaf
+     */
+    @Inject(
+            method = "tickBlock",
+            at = @At(
+                    value = "RETURN"
+            )
+    )
+    private void midTickBlock(final CallbackInfo ci) {
+        if ((++this.tickedBlocksOrFluids & 7L) != 0L) {
+            return;
+        }
+        ((ChunkSystemMinecraftServer)this.server).moonrise$executeMidTickTasks();
     }
 }
