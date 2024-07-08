@@ -35,7 +35,7 @@ public final class YamlConfig<T> {
 
     private final Class<? extends T> clazz;
 
-    public T config;
+    public volatile T config;
 
     private final Yaml yaml;
 

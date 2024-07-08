@@ -30,7 +30,7 @@ public final class MoonriseCommon {
             
             Below are the Moonrise startup flags. Note that startup flags must be placed in the JVM arguments, not
             program arguments.
-            -DMoonrise.ConfigFile=<file> - Override the config file location. Maybe useful for multiple game versions.
+            -DMoonrise.ConfigFile=<file> - Override the config file location. Might be useful for multiple game versions.
             -DMoonrise.WorkerThreadCount=<number> - Override the auto configured worker thread counts (worker-threads).
             """;
 
@@ -38,31 +38,39 @@ public final class MoonriseCommon {
         reloadConfig();
     }
 
+    public static YamlConfig<MoonriseConfig> getConfigRaw() {
+        return CONFIG;
+    }
+
     public static MoonriseConfig getConfig() {
         return CONFIG.config;
     }
 
     public static boolean reloadConfig() {
-        if (CONFIG_FILE.exists()) {
-            try {
-                CONFIG.load(CONFIG_FILE);
-            } catch (final Exception ex) {
-                LOGGER.error("Failed to load configuration, using defaults", ex);
-                return false;
+        synchronized (CONFIG) {
+            if (CONFIG_FILE.exists()) {
+                try {
+                    CONFIG.load(CONFIG_FILE);
+                } catch (final Exception ex) {
+                    LOGGER.error("Failed to load configuration, using defaults", ex);
+                    return false;
+                }
             }
-        }
 
-        // write back any changes, or create if needed
-        return saveConfig();
+            // write back any changes, or create if needed
+            return saveConfig();
+        }
     }
 
     public static boolean saveConfig() {
-        try {
-            CONFIG.save(CONFIG_FILE, CONFIG_HEADER);
-            return true;
-        } catch (final Exception ex) {
-            LOGGER.error("Failed to save configuration", ex);
-            return false;
+        synchronized (CONFIG) {
+            try {
+                CONFIG.save(CONFIG_FILE, CONFIG_HEADER);
+                return true;
+            } catch (final Exception ex) {
+                LOGGER.error("Failed to save configuration", ex);
+                return false;
+            }
         }
     }
 
