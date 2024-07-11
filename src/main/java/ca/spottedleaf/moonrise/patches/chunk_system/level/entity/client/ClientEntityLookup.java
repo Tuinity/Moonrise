@@ -59,6 +59,43 @@ public final class ClientEntityLookup extends EntityLookup {
         this.removeChunk(chunkX, chunkZ);
     }
 
+    @Override
+    protected void entitySectionChangeCallback(final Entity entity,
+                                               final int oldSectionX, final int oldSectionY, final int oldSectionZ,
+                                               final int newSectionX, final int newSectionY, final int newSectionZ) {
+
+    }
+
+    @Override
+    protected void addEntityCallback(final Entity entity) {
+
+    }
+
+    @Override
+    protected void removeEntityCallback(final Entity entity) {
+
+    }
+
+    @Override
+    protected void entityStartLoaded(final Entity entity) {
+
+    }
+
+    @Override
+    protected void entityEndLoaded(final Entity entity) {
+
+    }
+
+    @Override
+    protected void entityStartTicking(final Entity entity) {
+
+    }
+
+    @Override
+    protected void entityEndTicking(final Entity entity) {
+
+    }
+
     public void markTicking(final long pos) {
         if (this.tickingChunks.add(pos)) {
             final int chunkX = CoordinateUtils.getChunkX(pos);

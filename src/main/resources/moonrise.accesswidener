@@ -264,3 +264,8 @@ mutable field net/minecraft/server/level/GenerationChunkHolder startedWork Ljava
 mutable field net/minecraft/server/level/GenerationChunkHolder futures Ljava/util/concurrent/atomic/AtomicReferenceArray;
 mutable field net/minecraft/server/level/GenerationChunkHolder task Ljava/util/concurrent/atomic/AtomicReference;
 mutable field net/minecraft/server/level/GenerationChunkHolder generationRefCount Ljava/util/concurrent/atomic/AtomicInteger;
+
+
+# ChunkMap.TrackedEntity
+accessible class net/minecraft/server/level/ChunkMap$TrackedEntity
+accessible field net/minecraft/server/level/ChunkMap$TrackedEntity serverEntity Lnet/minecraft/server/level/ServerEntity;

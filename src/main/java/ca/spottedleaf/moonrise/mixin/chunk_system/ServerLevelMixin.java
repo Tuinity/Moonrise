@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
@@ -103,6 +104,9 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
 
     @Unique
     private long tickedBlocksOrFluids;
+
+    @Unique
+    private final NearbyPlayers nearbyPlayers = new NearbyPlayers((ServerLevel)(Object)this);
 
     /**
      * @reason Initialise fields / destroy entity manager state
@@ -304,6 +308,11 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
     @Override
     public final void moonrise$setLastMidTickFailure(final long time) {
         this.lastMidTickFailure = time;
+    }
+
+    @Override
+    public final NearbyPlayers moonrise$getNearbyPlayers() {
+        return this.nearbyPlayers;
     }
 
     /**

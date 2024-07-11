@@ -73,6 +73,24 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
 
     protected abstract void onEmptySlices(final int chunkX, final int chunkZ);
 
+    protected abstract void entitySectionChangeCallback(
+            final Entity entity,
+            final int oldSectionX, final int oldSectionY, final int oldSectionZ,
+            final int newSectionX, final int newSectionY, final int newSectionZ
+    );
+
+    protected abstract void addEntityCallback(final Entity entity);
+
+    protected abstract void removeEntityCallback(final Entity entity);
+
+    protected abstract void entityStartLoaded(final Entity entity);
+
+    protected abstract void entityEndLoaded(final Entity entity);
+
+    protected abstract void entityStartTicking(final Entity entity);
+
+    protected abstract void entityEndTicking(final Entity entity);
+
     private static Entity maskNonAccessible(final Entity entity) {
         if (entity == null) {
             return null;
@@ -251,6 +269,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
                     if (newVisibility.ordinal() > oldVisibility.ordinal()) {
                         // status upgrade
                         if (!oldVisibility.isAccessible() && newVisibility.isAccessible()) {
+                            EntityLookup.this.entityStartLoaded(entity);
                             synchronized (this.accessibleEntities) {
                                 this.accessibleEntities.add(entity);
                             }
@@ -260,6 +279,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
                         }
 
                         if (!oldVisibility.isTicking() && newVisibility.isTicking()) {
+                            EntityLookup.this.entityStartTicking(entity);
                             if (EntityLookup.this.worldCallback != null) {
                                 EntityLookup.this.worldCallback.onTickingStart(entity);
                             }
@@ -267,12 +287,14 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
                     } else {
                         // status downgrade
                         if (oldVisibility.isTicking() && !newVisibility.isTicking()) {
+                            EntityLookup.this.entityEndTicking(entity);
                             if (EntityLookup.this.worldCallback != null) {
                                 EntityLookup.this.worldCallback.onTickingEnd(entity);
                             }
                         }
 
                         if (oldVisibility.isAccessible() && !newVisibility.isAccessible()) {
+                            EntityLookup.this.entityEndLoaded(entity);
                             synchronized (this.accessibleEntities) {
                                 this.accessibleEntities.remove(entity);
                             }
@@ -414,6 +436,8 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
 
         entity.setLevelCallback(new EntityCallback(entity));
 
+        this.addEntityCallback(entity);
+
         this.entityStatusChange(entity, slices, Visibility.HIDDEN, getEntityStatus(entity), false, !fromDisk, false);
 
         return true;
@@ -520,6 +544,12 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
         if (old.isEmpty()) {
             this.onEmptySlices(sectionX, sectionZ);
         }
+
+        this.entitySectionChangeCallback(
+                entity,
+                sectionX, sectionY, sectionZ,
+                newSectionX, newSectionY, newSectionZ
+        );
 
         return slices;
     }
@@ -1012,6 +1042,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
                 // no new section, so didn't change sections
                 return;
             }
+
             final Visibility newVisibility = getEntityStatus(entity);
 
             EntityLookup.this.entityStatusChange(entity, newSlices, oldVisibility, newVisibility, true, false, false);
@@ -1026,6 +1057,8 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
             EntityLookup.this.removeEntity(entity);
 
             EntityLookup.this.entityStatusChange(entity, null, tickingState, Visibility.HIDDEN, false, false, reason.shouldDestroy());
+
+            EntityLookup.this.removeEntityCallback(entity);
 
             this.entity.setLevelCallback(NoOpCallback.INSTANCE);
         }

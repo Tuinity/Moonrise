@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.level;
 
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
@@ -49,4 +50,6 @@ public interface ChunkSystemServerLevel extends ChunkSystemLevel {
     public long moonrise$getLastMidTickFailure();
 
     public void moonrise$setLastMidTickFailure(final long time);
+
+    public NearbyPlayers moonrise$getNearbyPlayers();
 }

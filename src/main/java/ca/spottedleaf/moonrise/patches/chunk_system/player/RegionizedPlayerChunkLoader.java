@@ -205,6 +205,8 @@ public final class RegionizedPlayerChunkLoader {
         final PlayerChunkLoaderData loader = ((ChunkSystemServerPlayer)player).moonrise$getChunkLoader();
         if (loader != null) {
             loader.update();
+            // update view distances for nearby players
+            ((ChunkSystemServerLevel)loader.world).moonrise$getNearbyPlayers().tickPlayer(player);
         }
     }
 

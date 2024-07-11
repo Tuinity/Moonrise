@@ -46,6 +46,43 @@ public final class DefaultEntityLookup extends EntityLookup {
         this.removeChunk(chunkX, chunkZ);
     }
 
+    @Override
+    protected void entitySectionChangeCallback(final Entity entity,
+                                               final int oldSectionX, final int oldSectionY, final int oldSectionZ,
+                                               final int newSectionX, final int newSectionY, final int newSectionZ) {
+
+    }
+
+    @Override
+    protected void addEntityCallback(final Entity entity) {
+
+    }
+
+    @Override
+    protected void removeEntityCallback(final Entity entity) {
+
+    }
+
+    @Override
+    protected void entityStartLoaded(final Entity entity) {
+
+    }
+
+    @Override
+    protected void entityEndLoaded(final Entity entity) {
+
+    }
+
+    @Override
+    protected void entityStartTicking(final Entity entity) {
+
+    }
+
+    @Override
+    protected void entityEndTicking(final Entity entity) {
+
+    }
+
     protected static final class DefaultLevelCallback implements LevelCallback<Entity> {
 
         @Override
