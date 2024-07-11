@@ -685,6 +685,8 @@ public final class ChunkHolderManager {
     }
 
     public void tick() {
+        ++this.currentTick;
+
         final int sectionShift = ((ChunkSystemServerLevel)this.world).moonrise$getRegionChunkShift();
 
         final Predicate<Ticket<?>> expireNow = (final Ticket<?> ticket) -> {
