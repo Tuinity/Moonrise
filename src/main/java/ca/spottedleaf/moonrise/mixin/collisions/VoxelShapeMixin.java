@@ -121,6 +121,7 @@ public abstract class VoxelShapeMixin implements CollisionVoxelShape {
         return this.rootCoordinatesZ;
     }
 
+    @Unique
     private static double[] extractRawArray(final DoubleList list) {
         if (list instanceof DoubleArrayList rawList) {
             final double[] raw = rawList.elements();
@@ -422,9 +423,27 @@ public abstract class VoxelShapeMixin implements CollisionVoxelShape {
         if (this.singleAABBRepresentation != null) {
             ret.add(this.singleAABBRepresentation);
         } else {
-            this.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
-                ret.add(new AABB(minX, minY, minZ, maxX, maxY, maxZ));
-            });
+            final double[] coordsX = this.rootCoordinatesX;
+            final double[] coordsY = this.rootCoordinatesY;
+            final double[] coordsZ = this.rootCoordinatesZ;
+
+            final double offX = this.offsetX;
+            final double offY = this.offsetY;
+            final double offZ = this.offsetZ;
+
+            this.shape.forAllBoxes((final int minX, final int minY, final int minZ,
+                                    final int maxX, final int maxY, final int maxZ) -> {
+                ret.add(new AABB(
+                        coordsX[minX] + offX,
+                        coordsY[minY] + offY,
+                        coordsZ[minZ] + offZ,
+
+
+                        coordsX[maxX] + offX,
+                        coordsY[maxY] + offY,
+                        coordsZ[maxZ] + offZ
+                ));
+            }, true);
         }
 
         // cache result
@@ -525,7 +544,7 @@ public abstract class VoxelShapeMixin implements CollisionVoxelShape {
     }
 
     @Override
-    public boolean moonrise$isFullBlock() {
+    public final boolean moonrise$isFullBlock() {
         final Boolean ret = this.isFullBlock;
 
         if (ret != null) {

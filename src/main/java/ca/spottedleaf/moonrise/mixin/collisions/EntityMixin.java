@@ -202,6 +202,7 @@ public abstract class EntityMixin {
             )
     )
     public void checkInsideBlocks(final Entity instance) {
+        // TODO unfuck these changes
         final AABB boundingBox = this.getBoundingBox();
         final BlockPos.MutableBlockPos tempPos = new BlockPos.MutableBlockPos();
 

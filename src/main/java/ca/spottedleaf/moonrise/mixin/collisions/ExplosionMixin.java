@@ -468,30 +468,39 @@ public abstract class ExplosionMixin {
             double distZ = entity.getZ() - this.z;
             final double distMag = Math.sqrt(distX * distX + distY * distY + distZ * distZ);
 
-            if (distMag != 0.0) {
-                distX /= distMag;
-                distY /= distMag;
-                distZ /= distMag;
+            if (distMag == 0.0) {
+                continue;
+            }
 
-                // route to new visible fraction calculation, using the existing block cache
-                final double intensityFraction = (1.0 - normalizedDistanceToCenter) * (double)this.getSeenFraction(center, entity, blockCache, blockPos);
+            distX /= distMag;
+            distY /= distMag;
+            distZ /= distMag;
 
-                entity.hurt(this.damageSource, (float)((int)((intensityFraction * intensityFraction + intensityFraction) / 2.0 * 7.0 * diameter + 1.0)));
+            // route to new visible fraction calculation, using the existing block cache
+            final double seenFraction = (double)this.getSeenFraction(center, entity, blockCache, blockPos);
+            if (this.damageCalculator.shouldDamageEntity((Explosion)(Object)this, entity)) {
+                // inline getEntityDamageAmount so that we can avoid double calling getSeenPercent, which is the MOST
+                // expensive part of this loop!!!!
+                final double factor = (1.0 - normalizedDistanceToCenter) * seenFraction;
+                entity.hurt(this.damageSource, (float)((factor * factor + factor) / 2.0 * 7.0 * diameter + 1.0));
+            }
 
-                final double knockbackFraction;
-                if (entity instanceof LivingEntity livingEntity) {
-                    knockbackFraction = intensityFraction * (1.0 - livingEntity.getAttributeValue(Attributes.EXPLOSION_KNOCKBACK_RESISTANCE));
-                } else {
-                    knockbackFraction = intensityFraction;
-                }
+            final double intensityFraction = (1.0 - normalizedDistanceToCenter) * seenFraction * (double)this.damageCalculator.getKnockbackMultiplier(entity);
 
-                final Vec3 knockback = new Vec3(distX * knockbackFraction, distY * knockbackFraction, distZ * knockbackFraction);
-                entity.setDeltaMovement(entity.getDeltaMovement().add(knockback));
 
-                if (entity instanceof Player player) {
-                    if (!player.isSpectator() && (!player.isCreative() || !player.getAbilities().flying)) {
-                        this.hitPlayers.put(player, knockback);
-                    }
+            final double knockbackFraction;
+            if (entity instanceof LivingEntity livingEntity) {
+                knockbackFraction = intensityFraction * (1.0 - livingEntity.getAttributeValue(Attributes.EXPLOSION_KNOCKBACK_RESISTANCE));
+            } else {
+                knockbackFraction = intensityFraction;
+            }
+
+            final Vec3 knockback = new Vec3(distX * knockbackFraction, distY * knockbackFraction, distZ * knockbackFraction);
+            entity.setDeltaMovement(entity.getDeltaMovement().add(knockback));
+
+            if (entity instanceof Player player) {
+                if (!player.isSpectator() && (!player.isCreative() || !player.getAbilities().flying)) {
+                    this.hitPlayers.put(player, knockback);
                 }
             }
         }
