@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 public abstract class FarmBlockMixin {
 
     /**
-     * @reason Avoid usage of betweenClsed, this can become very hot when
+     * @reason Avoid usage of betweenClosed, this can become very hot when
      *         there are significant numbers of farm blocks in the world
      * @author Spottedleaf
      */

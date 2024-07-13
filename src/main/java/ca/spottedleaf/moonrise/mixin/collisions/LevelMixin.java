@@ -391,6 +391,8 @@ public abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoC
                 final int newChunkZ = currZ >> 4;
 
                 if (((newChunkX ^ lastChunkX) | (newChunkZ ^ lastChunkZ)) != 0) {
+                    lastChunkX = newChunkX;
+                    lastChunkZ = newChunkZ;
                     lastChunk = (LevelChunk)chunkSource.getChunk(newChunkX, newChunkZ, ChunkStatus.FULL, false);
                 }
 
