@@ -16,6 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -48,6 +49,8 @@ public abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoC
     @Shadow
     public abstract LevelChunk getChunk(int x, int z);
 
+    @Shadow
+    public abstract WorldBorder getWorldBorder();
 
 
     @Unique
@@ -329,6 +332,16 @@ public abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoC
                 CollisionUtil.COLLISION_FLAG_CHECK_BORDER,
                 null
         );
+
+        final WorldBorder worldBorder = this.getWorldBorder();
+        if (worldBorder != null) {
+            aabbs.removeIf((final AABB aabb) -> {
+                return !worldBorder.isWithinBounds(aabb);
+            });
+            voxels.removeIf((final VoxelShape shape) -> {
+                return !worldBorder.isWithinBounds(shape.bounds());
+            });
+        }
 
         // push voxels into aabbs
         for (int i = 0, len = voxels.size(); i < len; ++i) {
