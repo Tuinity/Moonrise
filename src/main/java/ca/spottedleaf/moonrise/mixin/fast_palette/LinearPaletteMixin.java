@@ -16,7 +16,7 @@ public abstract class LinearPaletteMixin<T> implements Palette<T>, FastPalette<T
     private T[] values;
 
     @Override
-    public T[] moonrise$getRawPalette(final FastPaletteData<T> container) {
+    public final T[] moonrise$getRawPalette(final FastPaletteData<T> container) {
         return this.values;
     }
 }

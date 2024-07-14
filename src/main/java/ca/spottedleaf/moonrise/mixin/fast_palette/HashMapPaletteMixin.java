@@ -17,7 +17,7 @@ public abstract class HashMapPaletteMixin<T> implements Palette<T>, FastPalette<
     private CrudeIncrementalIntIdentityHashBiMap<T> values;
 
     @Override
-    public T[] moonrise$getRawPalette(final FastPaletteData<T> container) {
+    public final T[] moonrise$getRawPalette(final FastPaletteData<T> container) {
         return ((FastPalette<T>)this.values).moonrise$getRawPalette(container);
     }
 }

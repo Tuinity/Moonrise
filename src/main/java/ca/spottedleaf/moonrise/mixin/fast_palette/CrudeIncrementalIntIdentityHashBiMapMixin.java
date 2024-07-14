@@ -22,7 +22,7 @@ public abstract class CrudeIncrementalIntIdentityHashBiMapMixin<K> implements Id
     private FastPaletteData<K> reference;
 
     @Override
-    public K[] moonrise$getRawPalette(final FastPaletteData<K> src) {
+    public final K[] moonrise$getRawPalette(final FastPaletteData<K> src) {
         this.reference = src;
         return this.byId;
     }
