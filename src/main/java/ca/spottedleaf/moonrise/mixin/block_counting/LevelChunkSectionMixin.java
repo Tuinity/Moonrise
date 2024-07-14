@@ -1,9 +1,15 @@
-package ca.spottedleaf.moonrise.mixin.collisions;
+package ca.spottedleaf.moonrise.mixin.block_counting;
 
+import ca.spottedleaf.moonrise.common.list.IBlockDataList;
+import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingBitStorage;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
-import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevelChunkSection;
+import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
+import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.util.BitStorage;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -20,10 +26,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 @Mixin(LevelChunkSection.class)
-public abstract class LevelChunkSectionMixin implements CollisionLevelChunkSection {
+public abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
 
     @Shadow
     @Final
@@ -41,30 +48,62 @@ public abstract class LevelChunkSectionMixin implements CollisionLevelChunkSecti
     @Shadow
     public abstract boolean maybeHas(Predicate<BlockState> predicate);
 
+    @Unique
+    private static final IntArrayList FULL_LIST = new IntArrayList(16*16*16);
+    static {
+        for (int i = 0; i < (16*16*16); ++i) {
+            FULL_LIST.add(i);
+        }
+    }
 
     @Unique
     private int specialCollidingBlocks;
 
+    @Unique
+    private final IBlockDataList tickingBlocks = new IBlockDataList();
+
+    @Override
+    public final int moonrise$getSpecialCollidingBlocks() {
+        return this.specialCollidingBlocks;
+    }
+
+    @Override
+    public final IBlockDataList moonrise$getTickingBlockList() {
+        return this.tickingBlocks;
+    }
+
     /**
-     * @reason Callback used to update the known collision data on block update.
+     * @reason Callback used to update block counts on block change.
      * @author Spottedleaf
      */
     @Inject(
             method = "setBlockState(IIILnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;",
-            at = @At("RETURN")
+            at = @At(
+                    "RETURN"
+            )
     )
-    private void updateBlockCallback(final int x, final int y, final int z, final BlockState state, final boolean lock,
-                                     final CallbackInfoReturnable<BlockState> cir) {
-        if (CollisionUtil.isSpecialCollidingBlock(state)) {
+    private void updateBlockCallback(final int x, final int y, final int z, final BlockState newState, final boolean lock,
+                                     final CallbackInfoReturnable<BlockState> cir, @Local(ordinal = 1) final BlockState oldState) {
+        if (oldState == newState) {
+            return;
+        }
+        if (CollisionUtil.isSpecialCollidingBlock(oldState)) {
+            --this.specialCollidingBlocks;
+        }
+        if (CollisionUtil.isSpecialCollidingBlock(newState)) {
             ++this.specialCollidingBlocks;
         }
-        if (CollisionUtil.isSpecialCollidingBlock(cir.getReturnValue())) {
-            --this.specialCollidingBlocks;
+
+        if (oldState.isRandomlyTicking()) {
+            this.tickingBlocks.remove(x, y, z);
+        }
+        if (newState.isRandomlyTicking()) {
+            this.tickingBlocks.add(x, y, z, newState);
         }
     }
 
     /**
-     * @reason Insert known collision data counting
+     * @reason Calculate block counts after deserialization.
      * @author Spottedleaf
      */
     @Overwrite
@@ -74,6 +113,7 @@ public abstract class LevelChunkSectionMixin implements CollisionLevelChunkSecti
         this.tickingBlockCount = (short)0;
         this.tickingFluidCount = (short)0;
         this.specialCollidingBlocks = (short)0;
+        this.tickingBlocks.clear();
 
         if (this.maybeHas((final BlockState state) -> !state.isAir())) {
             final PalettedContainer.Data<BlockState> data = this.states.data;
@@ -81,19 +121,19 @@ public abstract class LevelChunkSectionMixin implements CollisionLevelChunkSecti
             final int paletteSize = palette.getSize();
             final BitStorage storage = data.storage;
 
-            final Int2IntOpenHashMap counts = new Int2IntOpenHashMap(paletteSize);
+            final Int2ObjectOpenHashMap<IntArrayList> counts;
             if (paletteSize == 1) {
-                counts.addTo(0, storage.getSize());
+                counts = new Int2ObjectOpenHashMap<>(1);
+                counts.put(0, FULL_LIST);
             } else {
-                storage.getAll((final int paletteIdx) -> {
-                    counts.addTo(paletteIdx, 1);
-                });
+                counts = ((BlockCountingBitStorage)storage).moonrise$countEntries();
             }
 
-            for (final Iterator<Int2IntMap.Entry> iterator = counts.int2IntEntrySet().fastIterator(); iterator.hasNext();) {
-                final Int2IntMap.Entry entry = iterator.next();
+            for (final Iterator<Int2ObjectMap.Entry<IntArrayList>> iterator = counts.int2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
+                final Int2ObjectMap.Entry<IntArrayList> entry = iterator.next();
                 final int paletteIdx = entry.getIntKey();
-                final int paletteCount = entry.getIntValue();
+                final IntArrayList coordinates = entry.getValue();
+                final int paletteCount = coordinates.size();
 
                 final BlockState state = palette.valueFor(paletteIdx);
 
@@ -107,6 +147,12 @@ public abstract class LevelChunkSectionMixin implements CollisionLevelChunkSecti
                 this.nonEmptyBlockCount += paletteCount;
                 if (state.isRandomlyTicking()) {
                     this.tickingBlockCount += paletteCount;
+                    final int[] raw = coordinates.elements();
+
+                    Objects.checkFromToIndex(0, paletteCount, raw.length);
+                    for (int i = 0; i < paletteCount; ++i) {
+                        this.tickingBlocks.add(raw[i], state);
+                    }
                 }
 
                 final FluidState fluid = state.getFluidState();
@@ -122,8 +168,7 @@ public abstract class LevelChunkSectionMixin implements CollisionLevelChunkSecti
     }
 
     /**
-     * @reason recalcBlockCounts is not called on the client, so we need to insert the call somewhere for our collision
-     * state caches
+     * @reason Call recalcBlockCounts on the client, as the client does not invoke it when deserializing chunk sections.
      * @author Spottedleaf
      */
     @Inject(
@@ -134,10 +179,5 @@ public abstract class LevelChunkSectionMixin implements CollisionLevelChunkSecti
     )
     private void callRecalcBlocksClient(final CallbackInfo ci) {
         this.recalcBlockCounts();
-    }
-
-    @Override
-    public final int moonrise$getSpecialCollidingBlocks() {
-        return this.specialCollidingBlocks;
     }
 }

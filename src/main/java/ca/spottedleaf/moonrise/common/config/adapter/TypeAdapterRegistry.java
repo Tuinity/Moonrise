@@ -186,9 +186,14 @@ public final class TypeAdapterRegistry {
                             adapter = findOrMakeAdapter(registry, field.getType());
                         }
 
+                        String serializedKey = serializable.serializedKey();
+                        if (serializedKey.isEmpty()) {
+                            serializedKey = makeSerializedKey(field.getName());
+                        }
+
                         ret.add(new SerializableField(
                                 field, serializable.required(), serializable.comment(), adapter,
-                                serializable.serialize(), makeSerializedKey(field.getName())
+                                serializable.serialize(), serializedKey
                         ));
                     }
                 }

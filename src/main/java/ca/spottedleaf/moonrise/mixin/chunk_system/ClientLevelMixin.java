@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.client.ClientEntityLookup;
+import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -12,6 +13,9 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.entity.EntityAccess;
 import net.minecraft.world.level.entity.LevelEntityGetter;
@@ -33,6 +37,10 @@ public abstract class ClientLevelMixin extends Level implements ChunkSystemLevel
 
     @Shadow
     private TransientEntitySectionManager<Entity> entityStorage;
+
+    @Shadow
+    @Final
+    private ClientChunkCache chunkSource;
 
     protected ClientLevelMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l, int i) {
         super(writableLevelData, resourceKey, registryAccess, holder, supplier, bl, bl2, l, i);
@@ -63,6 +71,30 @@ public abstract class ClientLevelMixin extends Level implements ChunkSystemLevel
     @Overwrite
     public int getEntityCount() {
         return this.moonrise$getEntityLookup().getEntityCount();
+    }
+
+    /**
+     * @reason The implementation in Level will perform two virtual invokes:
+     *         1. When retrieving the ChunkSource
+     *         2. When calling getChunk on the ChunkSource
+     *         We can reduce the virtual invokes to 1 by instead directly implementing getChunk
+     *         in both ServerLevel and ClientLevel. Additionally, for dedicated servers, the virtual invoke
+     *         may be elided entirely as ClientLevel is not used. For code only used by the server, it may
+     *         also be elided.
+     * @author Spottedleaf
+     */
+    @Override
+    public ChunkAccess getChunk(final int x, final int z, final ChunkStatus status, final boolean load) {
+        // client never returns null for load=true, so do not null check the result
+        return this.chunkSource.getChunk(x, z, status, load);
+    }
+
+    /**
+     * @author Spottedleaf
+     */
+    @Override
+    public LevelChunk getChunk(final int x, final int z) {
+        return (LevelChunk)this.chunkSource.getChunk(x, z, ChunkStatus.FULL, true);
     }
 
     /**

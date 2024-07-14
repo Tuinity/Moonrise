@@ -1,10 +1,9 @@
-package ca.spottedleaf.moonrise.common.config;
+package ca.spottedleaf.moonrise.common.config.moonrise;
 
-import ca.spottedleaf.moonrise.common.config.adapter.TypeAdapterRegistry;
 import ca.spottedleaf.moonrise.common.config.annotation.Adaptable;
 import ca.spottedleaf.moonrise.common.config.annotation.Serializable;
+import ca.spottedleaf.moonrise.common.config.moonrise.type.DefaultedValue;
 import ca.spottedleaf.moonrise.common.config.type.Duration;
-import java.util.concurrent.TimeUnit;
 
 @Adaptable
 public final class MoonriseConfig {
@@ -158,5 +157,27 @@ public final class MoonriseConfig {
                         """
         )
         public boolean populationGenParallelism = false;
+    }
+
+    @Serializable
+    public BugFixes bugFixes = new BugFixes();
+
+    @Adaptable
+    public static final class BugFixes {
+
+        public static final Boolean FIX_MC224294_DEFAULT = Boolean.TRUE;
+
+        @Serializable(
+                serializedKey = "fix-MC-224294",
+                comment = """
+                        Fixes https://bugs.mojang.com/browse/MC-224294. By avoiding double ticking lava blocks during
+                        chunk random ticking, the cost of world random ticking is significantly reduced.
+                        This configuration has three options:
+                        default -> Current default is "true".
+                        true    -> Does not double tick lava. This is different from Vanilla behavior.
+                        false   -> Does double tick lava. This is the same behavior as Vanilla.
+                        """
+        )
+        public DefaultedValue<Boolean> fixMC224294 = new DefaultedValue<>();
     }
 }

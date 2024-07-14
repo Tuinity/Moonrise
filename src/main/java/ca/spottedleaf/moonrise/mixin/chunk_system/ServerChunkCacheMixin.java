@@ -135,7 +135,7 @@ public abstract class ServerChunkCacheMixin extends ChunkSource implements Chunk
     @Override
     @Overwrite
     public LevelChunk getChunkNow(final int chunkX, final int chunkZ) {
-        return ((ChunkSystemServerLevel)this.level).moonrise$getFullChunkIfLoaded(chunkX, chunkZ);
+        return this.fullChunks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
     }
 
     /**

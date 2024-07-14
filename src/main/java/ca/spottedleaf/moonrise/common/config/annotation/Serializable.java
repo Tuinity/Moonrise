@@ -37,4 +37,9 @@ public @interface Serializable {
      */
     public boolean serialize() default true;
 
+    /**
+     * When not empty, this value overrides the auto generated serialized key in the config.
+     */
+    public String serializedKey() default "";
+
 }

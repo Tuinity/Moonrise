@@ -4,6 +4,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.dfl.DefaultEntityLookup;
 import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemEntityGetter;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
@@ -14,6 +15,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -32,6 +34,12 @@ public abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityG
 
     @Shadow
     public abstract ProfilerFiller getProfiler();
+
+    @Shadow
+    public abstract LevelChunk getChunk(int i, int j);
+
+    @Shadow
+    public abstract int getHeight(Heightmap.Types types, int i, int j);
 
 
     @Unique
@@ -192,6 +200,32 @@ public abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityG
     @Override
     public void moonrise$midTickTasks() {
         // no-op on ClientLevel
+    }
+
+    /**
+     * @reason Declare method in this class so that any invocations are virtual, and not interface.
+     * @author Spottedleaf
+     */
+    @Override
+    public boolean hasChunk(final int x, final int z) {
+        return this.getChunkSource().hasChunk(x, z);
+    }
+
+    /**
+     * @reason Turn all getChunk(x, z, status) calls into virtual invokes, instead of interface invokes:
+     *         1. The interface invoke is expensive
+     *         2. The method makes other interface invokes (again, expensive)
+     *         Instead, we just directly call getChunk(x, z, status, true) which avoids the interface invokes entirely.
+     * @author Spottedleaf
+     */
+    @Override
+    public ChunkAccess getChunk(final int x, final int z, final ChunkStatus status) {
+        return ((Level)(Object)this).getChunk(x, z, status, true);
+    }
+
+    @Override
+    public BlockPos getHeightmapPos(Heightmap.Types types, BlockPos blockPos) {
+        return new BlockPos(blockPos.getX(), this.getHeight(types, blockPos.getX(), blockPos.getZ()), blockPos.getZ());
     }
 
     /**

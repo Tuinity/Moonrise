@@ -24,6 +24,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.DistanceManager;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -32,6 +33,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.CustomSpawner;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -73,6 +75,10 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
     @Shadow
     @Final
     private MinecraftServer server;
+
+    @Shadow
+    @Final
+    private ServerChunkCache chunkSource;
 
     protected ServerLevelMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l, int i) {
         super(writableLevelData, resourceKey, registryAccess, holder, supplier, bl, bl2, l, i);
@@ -138,16 +144,7 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
 
     @Override
     public final LevelChunk moonrise$getFullChunkIfLoaded(final int chunkX, final int chunkZ) {
-        final NewChunkHolder newChunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(CoordinateUtils.getChunkKey(chunkX, chunkZ));
-        if (newChunkHolder == null || !newChunkHolder.isFullChunkReady()) {
-            return null;
-        }
-
-        if (newChunkHolder.getCurrentChunk() instanceof LevelChunk levelChunk) {
-            return levelChunk;
-        }
-        // race condition: chunk unloaded, only happens off-main
-        return null;
+        return this.chunkSource.getChunkNow(chunkX, chunkZ);
     }
 
     @Override
@@ -313,6 +310,39 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
     @Override
     public final NearbyPlayers moonrise$getNearbyPlayers() {
         return this.nearbyPlayers;
+    }
+
+    /**
+     * @reason Declare method in this class so that any invocations are virtual, and not interface.
+     * @author Spottedleaf
+     */
+    @Override
+    public boolean hasChunk(final int x, final int z) {
+        return this.moonrise$getFullChunkIfLoaded(x, z) != null;
+    }
+
+    /**
+     * @reason The implementation in Level will perform two virtual invokes:
+     *         1. When retrieving the ChunkSource
+     *         2. When calling getChunk on the ChunkSource
+     *         We can reduce the virtual invokes to 1 by instead directly implementing getChunk
+     *         in both ServerLevel and ClientLevel. Additionally, for dedicated servers, the virtual invoke
+     *         may be elided entirely as ClientLevel is not used. For code only used by the server/client,
+     *         it may also be elided.
+     * @author Spottedleaf
+     */
+    @Override
+    public ChunkAccess getChunk(final int x, final int z, final ChunkStatus status, final boolean load) {
+        // ServerChunkCache performs the null check for us, so don't duplicate it
+        return this.chunkSource.getChunk(x, z, status, load);
+    }
+
+    /**
+     * @author Spottedleaf
+     */
+    @Override
+    public LevelChunk getChunk(final int x, final int z) {
+        return (LevelChunk)this.chunkSource.getChunk(x, z, ChunkStatus.FULL, true);
     }
 
     /**

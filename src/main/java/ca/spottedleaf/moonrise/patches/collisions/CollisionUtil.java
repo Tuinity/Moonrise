@@ -7,7 +7,7 @@ import ca.spottedleaf.moonrise.patches.collisions.shape.CachedShapeData;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionDiscreteVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevel;
-import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevelChunkSection;
+import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.core.BlockPos;
@@ -1697,7 +1697,7 @@ public final class CollisionUtil {
                         continue;
                     }
 
-                    final boolean hasSpecial = ((CollisionLevelChunkSection)section).moonrise$getSpecialCollidingBlocks() != 0;
+                    final boolean hasSpecial = ((BlockCountingChunkSection)section).moonrise$getSpecialCollidingBlocks() != 0;
                     final int sectionAdjust = !hasSpecial ? 1 : 0;
 
                     final PalettedContainer<BlockState> blocks = section.states;

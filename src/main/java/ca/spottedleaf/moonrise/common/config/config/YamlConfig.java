@@ -31,7 +31,7 @@ import java.util.TreeMap;
 
 public final class YamlConfig<T> {
 
-    public final TypeAdapterRegistry typeAdapters = new TypeAdapterRegistry();
+    public final TypeAdapterRegistry typeAdapters;
 
     private final Class<? extends T> clazz;
 
@@ -40,8 +40,13 @@ public final class YamlConfig<T> {
     private final Yaml yaml;
 
     public YamlConfig(final Class<? extends T> clazz, final T dfl) throws Exception {
+        this(clazz, dfl, new TypeAdapterRegistry());
+    }
+
+    public YamlConfig(final Class<? extends T> clazz, final T dfl, final TypeAdapterRegistry registry) throws Exception {
         this.clazz = clazz;
         this.config = dfl;
+        this.typeAdapters = registry;
         this.typeAdapters.makeAdapter(clazz);
 
         final LoaderOptions loaderOptions = new LoaderOptions();
