@@ -92,7 +92,7 @@ public abstract class ServerLevelMixin extends Level implements WorldGenLevel {
                 final int randomX = (location & 15);
                 final int randomY = ((location >>> (4 + 4)) & 255);
                 final int randomZ = ((location >>> 4) & 15);
-                final BlockState state = states.get(randomX | (randomZ << 4) | (randomZ << 8));
+                final BlockState state = states.get(randomX | (randomZ << 4) | (randomY << 8));
 
                 // do not use a mutable pos, as some random tick implementations store the input without calling immutable()!
                 final BlockPos pos = new BlockPos(randomX | offsetX, randomY | offsetY, randomZ | offsetZ);
