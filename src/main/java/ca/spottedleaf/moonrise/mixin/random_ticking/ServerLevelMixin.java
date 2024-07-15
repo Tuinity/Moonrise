@@ -20,6 +20,7 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.WritableLevelData;
@@ -67,6 +68,7 @@ public abstract class ServerLevelMixin extends Level implements WorldGenLevel {
         for (int sectionIndex = 0, sectionsLen = sections.length; sectionIndex < sectionsLen; sectionIndex++) {
             final int offsetY = (sectionIndex + minSection) << 4;
             final LevelChunkSection section = sections[sectionIndex];
+            final PalettedContainer<BlockState> states = section.states;
             if (section == null || !section.isRandomlyTickingBlocks()) {
                 continue;
             }
@@ -86,14 +88,14 @@ public abstract class ServerLevelMixin extends Level implements WorldGenLevel {
                 }
 
                 final long raw = tickList.getRaw(index);
-                final BlockState state = IBlockDataList.getBlockDataFromRaw(raw);
                 final int location = IBlockDataList.getLocationFromRaw(raw);
-                final int randomX = (location & 15) | offsetX;
-                final int randomY = ((location >>> (4 + 4)) & 255) | offsetY;
-                final int randomZ = ((location >>> 4) & 15) | offsetZ;
+                final int randomX = (location & 15);
+                final int randomY = ((location >>> (4 + 4)) & 255);
+                final int randomZ = ((location >>> 4) & 15);
+                final BlockState state = states.get(randomX | (randomZ << 4) | (randomZ << 8));
 
                 // do not use a mutable pos, as some random tick implementations store the input without calling immutable()!
-                final BlockPos pos = new BlockPos(randomX, randomY, randomZ);
+                final BlockPos pos = new BlockPos(randomX | offsetX, randomY | offsetY, randomZ | offsetZ);
 
                 state.randomTick((ServerLevel)(Object)this, pos, random);
                 if (tickFluids) {
