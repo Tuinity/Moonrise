@@ -89,6 +89,7 @@
     "poi_lookup.PoiManagerMixin",
     "poi_lookup.PortalForcerMixin",
     "random_ticking.BiomeMixin",
+    "random_ticking.LevelMixin",
     "random_ticking.ServerLevelMixin",
     "serverlist.ConnectionMixin",
     "starlight.blockstate.BlockStateBaseMixin",
