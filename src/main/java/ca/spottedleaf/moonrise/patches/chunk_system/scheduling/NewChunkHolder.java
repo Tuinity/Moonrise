@@ -534,7 +534,7 @@ public final class NewChunkHolder {
             return us == null ? dfl : us;
         }
         if (us == null) {
-            return dfl;
+            return neighbour;
         }
 
         return PrioritisedExecutor.Priority.max(us, neighbour);
@@ -580,7 +580,7 @@ public final class NewChunkHolder {
 
     // must hold scheduling lock
     public void raisePriority(final PrioritisedExecutor.Priority priority) {
-        if (this.priority == null || this.priority.isHigherOrEqualPriority(priority)) {
+        if (this.priority != null && this.priority.isHigherOrEqualPriority(priority)) {
             return;
         }
         this.setPriority(priority);
@@ -611,7 +611,7 @@ public final class NewChunkHolder {
 
     // must hold scheduling lock
     public void lowerPriority(final PrioritisedExecutor.Priority priority) {
-        if (this.priority == null || this.priority.isLowerOrEqualPriority(priority)) {
+        if (this.priority != null && this.priority.isLowerOrEqualPriority(priority)) {
             return;
         }
         this.setPriority(priority);
