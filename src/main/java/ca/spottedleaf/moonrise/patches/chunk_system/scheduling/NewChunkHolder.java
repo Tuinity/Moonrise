@@ -1813,7 +1813,7 @@ public final class NewChunkHolder {
             }
             chunk.setUnsaved(false);
         } catch (final Throwable thr) {
-            LOGGER.error("Failed to save chunk data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'");
+            LOGGER.error("Failed to save chunk data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'", thr);
             if (unloading && !completing) {
                 this.completeAsyncUnloadDataSave(RegionFileIOThread.RegionFileType.CHUNK_DATA, null);
             }
@@ -1859,7 +1859,7 @@ public final class NewChunkHolder {
                 this.lastEntityUnload = save;
             }
         } catch (final Throwable thr) {
-            LOGGER.error("Failed to save entity data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'");
+            LOGGER.error("Failed to save entity data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'", thr);
         }
 
         return true;
@@ -1883,7 +1883,7 @@ public final class NewChunkHolder {
                 this.poiDataUnload.completable().complete(save);
             }
         } catch (final Throwable thr) {
-            LOGGER.error("Failed to save poi data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'");
+            LOGGER.error("Failed to save poi data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'", thr);
         }
 
         return true;
