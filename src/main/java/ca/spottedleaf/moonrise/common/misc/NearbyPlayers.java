@@ -3,7 +3,7 @@ package ca.spottedleaf.moonrise.common.misc;
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
-import ca.spottedleaf.moonrise.patches.chunk_system.ChunkSystem;
+import ca.spottedleaf.moonrise.common.util.ChunkSystem;
 import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickConstants;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;

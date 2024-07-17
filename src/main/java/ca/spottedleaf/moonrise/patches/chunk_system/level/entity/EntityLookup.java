@@ -91,6 +91,8 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
 
     protected abstract void entityEndTicking(final Entity entity);
 
+    protected abstract boolean screenEntity(final Entity entity);
+
     private static Entity maskNonAccessible(final Entity entity) {
         if (entity == null) {
             return null;
@@ -409,6 +411,10 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
 
         if (((ChunkSystemEntity)entity).moonrise$isUpdatingSectionStatus()) {
             LOGGER.warn("Entity " + entity + " is currently prevented from being added/removed to world since it is processing section status updates", new Throwable());
+            return false;
+        }
+
+        if (!this.screenEntity(entity)) {
             return false;
         }
 

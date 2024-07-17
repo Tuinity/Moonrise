@@ -96,6 +96,11 @@ public final class ClientEntityLookup extends EntityLookup {
 
     }
 
+    @Override
+    protected boolean screenEntity(final Entity entity) {
+        return true;
+    }
+
     public void markTicking(final long pos) {
         if (this.tickingChunks.add(pos)) {
             final int chunkX = CoordinateUtils.getChunkX(pos);

@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.patches.chunk_system;
+package ca.spottedleaf.moonrise.common.util;
 
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
@@ -36,7 +36,6 @@ public final class ChunkSystem {
         ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkLoad(chunkX, chunkZ, gen, toStatus, addTicket, priority, onComplete);
     }
 
-    // Paper - rewrite chunk system
     public static void scheduleChunkLoad(final ServerLevel level, final int chunkX, final int chunkZ, final ChunkStatus toStatus,
                                          final boolean addTicket, final PrioritisedExecutor.Priority priority, final Consumer<ChunkAccess> onComplete) {
         ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkLoad(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
@@ -68,8 +67,8 @@ public final class ChunkSystem {
         return getUpdatingChunkHolderCount(level) != 0;
     }
 
-    public static void onEntityPreAdd(final ServerLevel level, final Entity entity) {
-
+    public static boolean screenEntity(final ServerLevel level, final Entity entity) {
+        return true;
     }
 
     public static void onChunkHolderCreate(final ServerLevel level, final ChunkHolder holder) {

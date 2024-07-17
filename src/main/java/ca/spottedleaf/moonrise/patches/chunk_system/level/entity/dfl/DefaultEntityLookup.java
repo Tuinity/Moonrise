@@ -83,6 +83,11 @@ public final class DefaultEntityLookup extends EntityLookup {
 
     }
 
+    @Override
+    protected boolean screenEntity(final Entity entity) {
+        return true;
+    }
+
     protected static final class DefaultLevelCallback implements LevelCallback<Entity> {
 
         @Override
