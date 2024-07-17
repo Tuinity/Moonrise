@@ -64,7 +64,7 @@ public abstract class ChunkHolderMixin extends GenerationChunkHolder implements 
     private NewChunkHolder newChunkHolder;
 
     @Unique
-    private final ReferenceList<ServerPlayer> playersSentChunkTo = new ReferenceList<>(EMPTY_PLAYER_ARRAY, 0);
+    private final ReferenceList<ServerPlayer> playersSentChunkTo = new ReferenceList<>(EMPTY_PLAYER_ARRAY);
 
     @Unique
     private ChunkMap getChunkMap() {

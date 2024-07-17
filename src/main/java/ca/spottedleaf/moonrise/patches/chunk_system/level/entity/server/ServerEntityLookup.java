@@ -15,8 +15,8 @@ public final class ServerEntityLookup extends EntityLookup {
     private static final Entity[] EMPTY_ENTITY_ARRAY = new Entity[0];
 
     private final ServerLevel serverWorld;
-    public final ReferenceList<Entity> trackerEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY, 0); // Moonrise - entity tracker
-    public final ReferenceList<Entity> trackerUnloadedEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY, 0); // Moonrise - entity tracker
+    public final ReferenceList<Entity> trackerEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY); // Moonrise - entity tracker
+    public final ReferenceList<Entity> trackerUnloadedEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY); // Moonrise - entity tracker
 
     public ServerEntityLookup(final ServerLevel world, final LevelCallback<Entity> worldCallback) {
         super(world, worldCallback);

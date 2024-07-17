@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
@@ -113,6 +114,18 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
 
     @Unique
     private final NearbyPlayers nearbyPlayers = new NearbyPlayers((ServerLevel)(Object)this);
+
+    @Unique
+    private static final ServerChunkCache.ChunkAndHolder[] EMPTY_CHUNK_AND_HOLDERS = new ServerChunkCache.ChunkAndHolder[0];
+
+    @Unique
+    private final ReferenceList<ServerChunkCache.ChunkAndHolder> loadedChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
+
+    @Unique
+    private final ReferenceList<ServerChunkCache.ChunkAndHolder> tickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
+
+    @Unique
+    private final ReferenceList<ServerChunkCache.ChunkAndHolder> entityTickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
 
     /**
      * @reason Initialise fields / destroy entity manager state
@@ -310,6 +323,21 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
     @Override
     public final NearbyPlayers moonrise$getNearbyPlayers() {
         return this.nearbyPlayers;
+    }
+
+    @Override
+    public final ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getLoadedChunks() {
+        return this.loadedChunks;
+    }
+
+    @Override
+    public final ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getTickingChunks() {
+        return this.tickingChunks;
+    }
+
+    @Override
+    public final ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getEntityTickingChunks() {
+        return this.entityTickingChunks;
     }
 
     /**

@@ -190,6 +190,7 @@ mutable field net/minecraft/server/level/DistanceManager ticketThrottlerInput Ln
 mutable field net/minecraft/server/level/DistanceManager ticketThrottlerReleaser Lnet/minecraft/util/thread/ProcessorHandle;
 mutable field net/minecraft/server/level/DistanceManager ticketsToRelease Lit/unimi/dsi/fastutil/longs/LongSet;
 mutable field net/minecraft/server/level/DistanceManager mainThreadExecutor Ljava/util/concurrent/Executor;
+mutable field net/minecraft/server/level/DistanceManager naturalSpawnChunkCounter Lnet/minecraft/server/level/DistanceManager$FixedPlayerDistanceChunkTracker;
 
 
 # DistanceManager$ChunkTicketTracker
@@ -269,3 +270,8 @@ mutable field net/minecraft/server/level/GenerationChunkHolder generationRefCoun
 # ChunkMap.TrackedEntity
 accessible class net/minecraft/server/level/ChunkMap$TrackedEntity
 accessible field net/minecraft/server/level/ChunkMap$TrackedEntity serverEntity Lnet/minecraft/server/level/ServerEntity;
+
+
+# ServerChunkCache$ChunkAndHolder
+accessible class net/minecraft/server/level/ServerChunkCache$ChunkAndHolder
+accessible method net/minecraft/server/level/ServerChunkCache$ChunkAndHolder <init> (Lnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/server/level/ChunkHolder;)V

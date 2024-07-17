@@ -86,11 +86,15 @@ public final class ChunkSystem {
     }
 
     public static void onChunkBorder(final LevelChunk chunk, final ChunkHolder holder) {
-
+        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().add(
+                ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
+        );
     }
 
     public static void onChunkNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
-
+        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().remove(
+                ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
+        );
     }
 
     public static void onChunkPostNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
@@ -99,6 +103,9 @@ public final class ChunkSystem {
     }
 
     public static void onChunkTicking(final LevelChunk chunk, final ChunkHolder holder) {
+        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().add(
+                ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
+        );
         if (!((ChunkSystemLevelChunk)chunk).moonrise$isPostProcessingDone()) {
             chunk.postProcessGeneration();
         }
@@ -107,15 +114,21 @@ public final class ChunkSystem {
     }
 
     public static void onChunkNotTicking(final LevelChunk chunk, final ChunkHolder holder) {
-
+        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().remove(
+                ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
+        );
     }
 
     public static void onChunkEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
-
+        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getEntityTickingChunks().add(
+                ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
+        );
     }
 
     public static void onChunkNotEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
-
+        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getEntityTickingChunks().remove(
+                ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
+        );
     }
 
     public static ChunkHolder getUnloadingChunkHolder(final ServerLevel level, final int chunkX, final int chunkZ) {

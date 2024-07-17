@@ -4,7 +4,7 @@ import ca.spottedleaf.concurrentutil.util.IntegerUtil;
 
 public abstract class SingleUserAreaMap<T> {
 
-    private static final int NOT_SET = Integer.MIN_VALUE;
+    public static final int NOT_SET = Integer.MIN_VALUE;
 
     private final T parameter;
     private int lastChunkX = NOT_SET;
@@ -13,6 +13,22 @@ public abstract class SingleUserAreaMap<T> {
 
     public SingleUserAreaMap(final T parameter) {
         this.parameter = parameter;
+    }
+
+    public final T getParameter() {
+        return this.parameter;
+    }
+
+    public final int getLastChunkX() {
+        return this.lastChunkX;
+    }
+
+    public final int getLastChunkZ() {
+        return this.lastChunkZ;
+    }
+
+    public final int getLastDistance() {
+        return this.distance;
     }
 
     /* math sign function except 0 returns 1 */

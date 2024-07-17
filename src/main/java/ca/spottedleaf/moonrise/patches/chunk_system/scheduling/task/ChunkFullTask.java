@@ -3,11 +3,12 @@ package ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task;
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.poi.ChunkSystemPoiManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.poi.PoiChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
-import net.minecraft.server.level.ChunkMap;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ImposterProtoChunk;
@@ -64,6 +65,8 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
                 });
                 this.chunkHolder.replaceProtoChunk(new ImposterProtoChunk(chunk, false));
             }
+
+            ((ChunkSystemLevelChunk)chunk).moonrise$setChunkAndHolder(new ServerChunkCache.ChunkAndHolder(chunk, this.chunkHolder.vanillaChunkHolder));
 
             final NewChunkHolder chunkHolder = this.chunkHolder;
 

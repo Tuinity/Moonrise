@@ -7,23 +7,30 @@ import java.util.NoSuchElementException;
 
 public final class ReferenceList<E> implements Iterable<E> {
 
-    private final Reference2IntOpenHashMap<E> referenceToIndex = new Reference2IntOpenHashMap<>(2, 0.8f);
-    {
-        this.referenceToIndex.defaultReturnValue(Integer.MIN_VALUE);
-    }
-
     private static final Object[] EMPTY_LIST = new Object[0];
 
+    private final Reference2IntOpenHashMap<E> referenceToIndex;
     private E[] references;
     private int count;
 
     public ReferenceList() {
-        this((E[])EMPTY_LIST, 0);
+        this((E[])EMPTY_LIST);
     }
 
-    public ReferenceList(final E[] array, final int count) {
-        this.references = array;
+    public ReferenceList(final E[] referenceArray) {
+        this.references = referenceArray;
+        this.referenceToIndex = new Reference2IntOpenHashMap<>(2, 0.8f);
+        this.referenceToIndex.defaultReturnValue(Integer.MIN_VALUE);
+    }
+
+    private ReferenceList(final E[] references, final int count, final Reference2IntOpenHashMap<E> referenceToIndex) {
+        this.references = references;
         this.count = count;
+        this.referenceToIndex = referenceToIndex;
+    }
+
+    public ReferenceList<E> copy() {
+        return new ReferenceList<>(this.references.clone(), this.count, this.referenceToIndex.clone());
     }
 
     public int size() {

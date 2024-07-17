@@ -3,6 +3,7 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticks.ChunkSystemLevelChunkTicks;
 import net.minecraft.core.Registry;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
@@ -46,9 +47,22 @@ public abstract class LevelChunkMixin extends ChunkAccess implements ChunkSystem
     @Unique
     private boolean postProcessingDone;
 
+    @Unique
+    private ServerChunkCache.ChunkAndHolder chunkAndHolder;
+
     @Override
     public final boolean moonrise$isPostProcessingDone() {
         return this.postProcessingDone;
+    }
+
+    @Override
+    public final ServerChunkCache.ChunkAndHolder moonrise$getChunkAndHolder() {
+        return this.chunkAndHolder;
+    }
+
+    @Override
+    public final void moonrise$setChunkAndHolder(final ServerChunkCache.ChunkAndHolder holder) {
+        this.chunkAndHolder = holder;
     }
 
     /**

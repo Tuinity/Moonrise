@@ -1,11 +1,13 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.level;
 
 import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import java.util.List;
@@ -52,4 +54,10 @@ public interface ChunkSystemServerLevel extends ChunkSystemLevel {
     public void moonrise$setLastMidTickFailure(final long time);
 
     public NearbyPlayers moonrise$getNearbyPlayers();
+
+    public ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getLoadedChunks();
+
+    public ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getTickingChunks();
+
+    public ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getEntityTickingChunks();
 }

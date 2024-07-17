@@ -4,6 +4,7 @@ import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.patches.chunk_system.ChunkSystem;
+import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickConstants;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.core.BlockPos;
@@ -19,7 +20,7 @@ public final class NearbyPlayers {
         GENERAL_REALLY_SMALL,
         TICK_VIEW_DISTANCE,
         VIEW_DISTANCE,
-        SPAWN_RANGE,
+        SPAWN_RANGE, // Moonrise - chunk tick iteration
     }
 
     private static final NearbyMapType[] MAP_TYPES = NearbyMapType.values();
@@ -82,6 +83,7 @@ public final class NearbyPlayers {
         players[NearbyMapType.GENERAL_REALLY_SMALL.ordinal()].update(chunk.x, chunk.z, GENERAL_REALLY_SMALL_VIEW_DISTANCE);
         players[NearbyMapType.TICK_VIEW_DISTANCE.ordinal()].update(chunk.x, chunk.z, ChunkSystem.getTickViewDistance(player));
         players[NearbyMapType.VIEW_DISTANCE.ordinal()].update(chunk.x, chunk.z, ChunkSystem.getLoadViewDistance(player));
+        players[NearbyMapType.SPAWN_RANGE.ordinal()].update(chunk.x, chunk.z, ChunkTickConstants.PLAYER_SPAWN_TRACK_RANGE); // Moonrise - chunk tick iteration
     }
 
     public TrackedChunk getChunk(final ChunkPos pos) {
@@ -143,7 +145,7 @@ public final class NearbyPlayers {
             final ReferenceList<ServerPlayer> list = this.players[idx];
             if (list == null) {
                 ++this.nonEmptyLists;
-                (this.players[idx] = new ReferenceList<>(EMPTY_PLAYERS_ARRAY, 0)).add(player);
+                (this.players[idx] = new ReferenceList<>(EMPTY_PLAYERS_ARRAY)).add(player);
                 return;
             }
 
