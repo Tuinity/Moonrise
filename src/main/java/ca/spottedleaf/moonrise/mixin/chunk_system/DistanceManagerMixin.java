@@ -86,8 +86,7 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
                     value = "RETURN"
             )
     )
-    private void destroyFields(final Executor executor, final Executor executor2,
-                               final CallbackInfo ci) {
+    private void destroyFields(final CallbackInfo ci) {
         this.tickets = null;
         this.ticketTracker = null;
         this.tickingTicketsTracker = null;

@@ -16,6 +16,7 @@ import net.minecraft.server.level.ChunkResult;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -297,5 +298,37 @@ public abstract class ServerChunkCacheMixin extends ChunkSource implements Chunk
         }
 
         ((ChunkSystemMinecraftServer)this.level.getServer()).moonrise$executeMidTickTasks();
+    }
+
+    /**
+     * @reason In the chunk system, ticking chunks always have loaded entities. Of course, they are also always
+     *         marked to be as ticking as well.
+     * @author Spottedleaf
+     */
+    @Redirect(
+            method = "tickChunks",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/server/level/ServerLevel;isNaturalSpawningAllowed(Lnet/minecraft/world/level/ChunkPos;)Z"
+            )
+    )
+    private boolean shortNaturalSpawning(final ServerLevel instance, final ChunkPos chunkPos) {
+        return true;
+    }
+
+    /**
+     * @reason In the chunk system, ticking chunks always have loaded entities. Of course, they are also always
+     *         marked to be as ticking as well.
+     * @author Spottedleaf
+     */
+    @Redirect(
+            method = "tickChunks",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/server/level/ServerLevel;shouldTickBlocksAt(J)Z"
+            )
+    )
+    private boolean shortShouldTickBlocks(final ServerLevel instance, final long pos) {
+        return true;
     }
 }
