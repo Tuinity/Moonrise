@@ -371,7 +371,9 @@ public final class ChunkTaskScheduler {
     public void scheduleTickingState(final int chunkX, final int chunkZ, final FullChunkStatus toStatus,
                                      final boolean addTicket, final PrioritisedExecutor.Priority priority,
                                      final Consumer<LevelChunk> onComplete) {
-        if (!TickThread.isTickThread()) {
+        final int radius = toStatus.ordinal() - 1; // 0 -> BORDER, 1 -> TICKING, 2 -> ENTITY_TICKING
+
+        if (!TickThread.isTickThreadFor(this.world, chunkX, chunkZ, Math.max(0, radius))) {
             this.scheduleChunkTask(chunkX, chunkZ, () -> {
                 ChunkTaskScheduler.this.scheduleTickingState(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
             }, priority);
@@ -398,7 +400,7 @@ public final class ChunkTaskScheduler {
             this.chunkHolderManager.processTicketUpdates();
         }
 
-        final Consumer<LevelChunk> loadCallback = (final LevelChunk chunk) -> {
+        final Consumer<LevelChunk> loadCallback = onComplete == null && !addTicket ? null : (final LevelChunk chunk) -> {
             try {
                 if (onComplete != null) {
                     onComplete.accept(chunk);
@@ -429,7 +431,6 @@ public final class ChunkTaskScheduler {
                         scheduled = true;
                         chunk = null;
 
-                        final int radius = toStatus.ordinal() - 1; // 0 -> BORDER, 1 -> TICKING, 2 -> ENTITY_TICKING
                         for (int dz = -radius; dz <= radius; ++dz) {
                             for (int dx = -radius; dx <= radius; ++dx) {
                                 final NewChunkHolder neighbour =
@@ -441,7 +442,9 @@ public final class ChunkTaskScheduler {
                         }
 
                         // ticket level should schedule for us
-                        chunkHolder.addFullStatusConsumer(toStatus, loadCallback);
+                        if (loadCallback != null) {
+                            chunkHolder.addFullStatusConsumer(toStatus, loadCallback);
+                        }
                     }
                 }
             } finally {
@@ -451,7 +454,7 @@ public final class ChunkTaskScheduler {
             this.chunkHolderManager.ticketLockArea.unlock(ticketLock);
         }
 
-        if (!scheduled) {
+        if (loadCallback != null && !scheduled) {
             // couldn't schedule
             try {
                 loadCallback.accept(chunk);
@@ -562,7 +565,7 @@ public final class ChunkTaskScheduler {
 
     public void scheduleChunkLoad(final int chunkX, final int chunkZ, final ChunkStatus toStatus, final boolean addTicket,
                                   final PrioritisedExecutor.Priority priority, final Consumer<ChunkAccess> onComplete) {
-        if (!TickThread.isTickThread()) {
+        if (!TickThread.isTickThreadFor(this.world, chunkX, chunkZ)) {
             this.scheduleChunkTask(chunkX, chunkZ, () -> {
                 ChunkTaskScheduler.this.scheduleChunkLoad(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
             }, priority);
@@ -834,7 +837,7 @@ public final class ChunkTaskScheduler {
     }
 
     public PrioritisedExecutor.PrioritisedTask scheduleChunkTask(final int chunkX, final int chunkZ, final Runnable run) {
-        return this.mainThreadExecutor.queueRunnable(run);
+        return this.scheduleChunkTask(chunkX, chunkZ, run, PrioritisedExecutor.Priority.NORMAL);
     }
 
     public PrioritisedExecutor.PrioritisedTask scheduleChunkTask(final int chunkX, final int chunkZ, final Runnable run,
