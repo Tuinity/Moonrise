@@ -116,6 +116,7 @@
     "collisions.ParticleMixin",
     "render.SectionRenderDispatcherMixin",
     "serverlist.ClientConnectionMixin",
+    "serverlist.ServerAddressResolverMixin",
     "serverlist.ServerSelectionListMixin",
     "starlight.multiplayer.ClientPacketListenerMixin"
   ],
