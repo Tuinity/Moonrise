@@ -275,3 +275,7 @@ accessible field net/minecraft/server/level/ChunkMap$TrackedEntity serverEntity 
 # ServerChunkCache$ChunkAndHolder
 accessible class net/minecraft/server/level/ServerChunkCache$ChunkAndHolder
 accessible method net/minecraft/server/level/ServerChunkCache$ChunkAndHolder <init> (Lnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/server/level/ChunkHolder;)V
+
+
+# LevelLoadStatusManager$Status
+accessible class net/minecraft/client/multiplayer/LevelLoadStatusManager$Status

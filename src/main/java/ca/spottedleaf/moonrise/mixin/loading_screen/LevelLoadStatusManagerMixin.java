@@ -1,38 +1,33 @@
 package ca.spottedleaf.moonrise.mixin.loading_screen;
 
-import net.minecraft.client.gui.screens.ReceivingLevelScreen;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.multiplayer.LevelLoadStatusManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ReceivingLevelScreen.class)
-public abstract class ReceivingLevelScreenMixin extends Screen {
+@Mixin(LevelLoadStatusManager.class)
+public abstract class LevelLoadStatusManagerMixin {
 
     @Shadow
-    public abstract void onClose();
-
-    protected ReceivingLevelScreenMixin(Component component) {
-        super(component);
-    }
+    private LevelLoadStatusManager.Status status;
 
     /**
      * @reason Close the loading screen immediately
      * @author Spottedleaf
      */
     @Inject(
-            method = "tick",
+            method = "loadingPacketsReceived",
             cancellable = true,
             at = @At(
                     value = "HEAD"
             )
     )
     private void immediatelyClose(final CallbackInfo ci) {
-        this.onClose();
-        ci.cancel();
+        if (this.status == LevelLoadStatusManager.Status.WAITING_FOR_SERVER) {
+            this.status = LevelLoadStatusManager.Status.LEVEL_READY;
+            ci.cancel();
+        }
     }
-
 }

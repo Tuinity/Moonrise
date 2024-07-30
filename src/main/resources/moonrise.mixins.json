@@ -114,7 +114,7 @@
     "chunk_system.OptionsMixin",
     "collisions.LiquidBlockRendererMixin",
     "collisions.ParticleMixin",
-    "loading_screen.ReceivingLevelScreenMixin",
+    "loading_screen.LevelLoadStatusManagerMixin",
     "render.SectionRenderDispatcherMixin",
     "serverlist.ClientConnectionMixin",
     "serverlist.ServerAddressResolverMixin",
