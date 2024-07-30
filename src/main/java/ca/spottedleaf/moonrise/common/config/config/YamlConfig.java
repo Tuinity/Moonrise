@@ -38,6 +38,8 @@ public final class YamlConfig<T> {
     public volatile T config;
 
     private final Yaml yaml;
+    private final LoaderOptions loaderOptions;
+    private final DumperOptions dumperOptions;
 
     public YamlConfig(final Class<? extends T> clazz, final T dfl) throws Exception {
         this(clazz, dfl, new TypeAdapterRegistry());
@@ -56,6 +58,8 @@ public final class YamlConfig<T> {
         dumperOptions.setProcessComments(true);
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
 
+        this.loaderOptions = loaderOptions;
+        this.dumperOptions = dumperOptions;
         this.yaml = new Yaml(new YamlConstructor(loaderOptions), new YamlRepresenter(dumperOptions), dumperOptions, loaderOptions);
     }
 
@@ -116,12 +120,13 @@ public final class YamlConfig<T> {
         }
 
         final StringBuilder ret = new StringBuilder();
+        final String lineBreak = this.dumperOptions.getLineBreak().getString();
 
         for (final String line : header.split("\n")) {
-            ret.append("# ").append(line).append('\n');
+            ret.append("# ").append(line.trim()).append(lineBreak);
         }
 
-        ret.append('\n');
+        ret.append(lineBreak);
 
         return ret.append(this.saveToString()).toString();
     }
@@ -139,7 +144,6 @@ public final class YamlConfig<T> {
             super(options);
 
             this.representers.put(TypeAdapterRegistry.CommentedData.class, new CommentedDataRepresenter());
-
         }
 
         private final class CommentedDataRepresenter implements Represent {
