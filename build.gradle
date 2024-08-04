@@ -1,7 +1,7 @@
 plugins {
-    id 'fabric-loom' version '1.6.9'
+    id 'fabric-loom' version '1.7.3'
     id 'maven-publish'
-    id 'io.github.goooler.shadow' version '8.1.7'
+    id 'io.github.goooler.shadow' version '8.1.8'
 }
 
 /*
@@ -90,14 +90,13 @@ jar {
 shadowJar {
     archiveClassifier = "dev-all"
     destinationDirectory = layout.buildDirectory.dir("devlibs")
+    configurations = [project.configurations.shadow]
+    exclude("META-INF")
+    relocate 'ca.spottedleaf.concurrentutil', 'ca.spottedleaf.moonrise.libs.ca.spottedleaf.concurrentutil'
+    relocate 'org.yaml.snakeyaml', 'ca.spottedleaf.moonrise.libs.org.yaml.snakeyaml'
 }
 remapJar {
     inputFile = shadowJar.archiveFile
-}
-
-shadowJar {
-    configurations = [project.configurations.shadow]
-    exclude("META-INF")
 }
 
 // configure the maven publication
