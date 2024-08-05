@@ -13,6 +13,13 @@ repositories {
     }
 }
 
+configurations.create("libs")
+configurations.shadow {
+    extendsFrom(configurations.libs)
+}
+configurations.forgeExtra {
+    extendsFrom(configurations.libs)
+}
 configurations.implementation {
     extendsFrom(configurations.shadow)
 }
@@ -21,8 +28,8 @@ dependencies {
     add('shadow', project([path: ":", configuration: "namedElements"]))
     neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
 
-    shadow('ca.spottedleaf:concurrentutil:0.0.1-SNAPSHOT')
-    shadow("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
+    libs('ca.spottedleaf:concurrentutil:0.0.1-SNAPSHOT')
+    libs("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
 }
 
 processResources {

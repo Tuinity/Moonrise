@@ -4,16 +4,21 @@ plugins {
     id 'io.github.goooler.shadow'
 }
 
+configurations.create("libs")
+configurations.shadow {
+    extendsFrom(configurations.libs)
+}
 configurations.implementation {
-    extendsFrom(configurations.shadow)
+    extendsFrom(configurations.libs)
 }
 
 dependencies {
     add('shadow', project([path: ":", configuration: "namedElements"]))
+    runtimeOnly(project(":").sourceSets.main.output)
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    shadow('ca.spottedleaf:concurrentutil:0.0.1-SNAPSHOT')
-    shadow("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
+    libs('ca.spottedleaf:concurrentutil:0.0.1-SNAPSHOT')
+    libs("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
 }
 
 processResources {

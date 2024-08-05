@@ -75,3 +75,12 @@ allprojects {
         }
     }
 }
+
+subprojects {
+    loom.mods {
+        main {
+            sourceSet("main")
+            sourceSet("main", project.rootProject)
+        }
+    }
+}
