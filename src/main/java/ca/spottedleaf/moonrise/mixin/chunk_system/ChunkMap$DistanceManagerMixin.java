@@ -11,7 +11,7 @@ import java.util.concurrent.Executor;
 @Mixin(ChunkMap.DistanceManager.class)
 public abstract class ChunkMap$DistanceManagerMixin extends net.minecraft.server.level.DistanceManager implements ChunkSystemDistanceManager {
 
-    @Shadow
+    @Shadow(aliases = "this$0")
     @Final
     ChunkMap field_17443;
 

@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "GPLv3"
+issueTrackerURL = "https://github.com/Tuinity/Moonrise"
+showAsResourcePack = false
+
+[[mods]]
+modId = "moonrise"
+version = "${version}"
+displayName = "Moonrise"
+displayURL = "https://github.com/Tuinity/Moonrise"
+authors = "Spottedleaf"
+description = "Moonrise NeoForge"
+displayTest = "IGNORE_ALL_VERSION"
+
+[[dependencies.moonrise]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.moonrise]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21,1.22)"
+ordering = "NONE"
+side = "BOTH"
+
+[[mixins]]
+config = "moonrise.mixins.json"

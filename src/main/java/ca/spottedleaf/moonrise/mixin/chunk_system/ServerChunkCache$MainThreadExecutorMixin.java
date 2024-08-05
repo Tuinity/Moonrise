@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(ServerChunkCache.MainThreadExecutor.class)
 public abstract class ServerChunkCache$MainThreadExecutorMixin extends BlockableEventLoop<Runnable> {
 
-    @Shadow
+    @Shadow(aliases = "this$0")
     @Final
     ServerChunkCache field_18810;
 

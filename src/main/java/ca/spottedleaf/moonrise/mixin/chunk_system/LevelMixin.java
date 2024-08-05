@@ -233,7 +233,11 @@ public abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityG
      * @author Spottedleaf
      */
     @Redirect(
-            method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z",
+            method = {
+                    "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z",
+                    // NeoForge splits logic from the original method into this one
+                    "markAndNotifyBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;II)V"
+            },
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/server/level/FullChunkStatus;isOrAfter(Lnet/minecraft/server/level/FullChunkStatus;)Z"

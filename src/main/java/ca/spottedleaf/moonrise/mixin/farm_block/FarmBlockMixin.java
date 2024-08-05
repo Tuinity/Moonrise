@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 @Mixin(FarmBlock.class)
 public abstract class FarmBlockMixin {
 
+	// TODO: NeoForge - APIs this method calls require a BlockPos, so is there much advantage to not using betweenClosed anymore?
     /**
      * @reason Avoid usage of betweenClosed, this can become very hot when
      *         there are significant numbers of farm blocks in the world

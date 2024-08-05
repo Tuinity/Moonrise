@@ -1,5 +1,8 @@
+import net.fabricmc.loom.task.RemapJarTask
+import net.fabricmc.loom.util.aw2at.Aw2At
+
 plugins {
-    id 'fabric-loom' version '1.7.3'
+    id("xyz.jpenilla.quiet-architectury-loom") version "1.7-SNAPSHOT"
     id 'maven-publish'
     id 'io.github.goooler.shadow' version '8.1.8'
 }
@@ -30,6 +33,10 @@ repositories {
             includeModule("ca.spottedleaf", "concurrentutil")
         }
     }
+    maven {
+        name = 'NeoForged'
+        url = 'https://maven.neoforged.net/releases/'
+    }
 }
 
 configurations.implementation {
@@ -39,7 +46,8 @@ configurations.implementation {
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    // modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    neoForge 'net.neoforged:neoforge:21.0.153'
 
     shadow('ca.spottedleaf:concurrentutil:0.0.2-SNAPSHOT')
     shadow('org.yaml:snakeyaml:2.2')
@@ -48,7 +56,7 @@ dependencies {
 processResources {
     inputs.property "version", project.version
 
-    filesMatching("fabric.mod.json") {
+    filesMatching("META-INF/neoforge.mods.toml") {
         expand "version": project.version, "minecraft_version": minecraft_version, "loader_version": loader_version, "mod_version": mod_version
     }
 }
@@ -89,9 +97,8 @@ jar {
 
 shadowJar {
     archiveClassifier = "dev-all"
-    destinationDirectory = layout.buildDirectory.dir("devlibs")
+    destinationDirectory = layout.buildDirectory.dir("libs")
     configurations = [project.configurations.shadow]
-    exclude("META-INF")
     relocate 'ca.spottedleaf.concurrentutil', 'ca.spottedleaf.moonrise.libs.ca.spottedleaf.concurrentutil'
     relocate 'org.yaml.snakeyaml', 'ca.spottedleaf.moonrise.libs.org.yaml.snakeyaml'
 }
@@ -108,3 +115,4 @@ publishing {
     }
 }
 
+Aw2At.setup(getProject(), tasks.remapJar)

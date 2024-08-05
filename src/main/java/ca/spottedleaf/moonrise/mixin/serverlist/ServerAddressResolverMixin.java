@@ -18,7 +18,10 @@ public interface ServerAddressResolverMixin {
      * @author Spottedleaf
      */
     @Redirect(
-            method = "method_36903",
+            method = {
+                    "method_36903",
+                    "*(Lnet/minecraft/client/multiplayer/resolver/ServerAddress;)Ljava/util/Optional;"
+            },
             at = @At(
                     value = "INVOKE",
                     target = "Ljava/net/InetAddress;getByName(Ljava/lang/String;)Ljava/net/InetAddress;"

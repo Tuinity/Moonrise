@@ -146,7 +146,7 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
      * @author Spottedleaf
      */
     @Overwrite
-    public <T> void addRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier) {
+    public <T> void addRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier, boolean forceTicks) { // TODO: Neo added param
         this.getChunkHolderManager().addTicketAtLevel(type, pos, ChunkLevel.byStatus(FullChunkStatus.FULL) - radius, identifier);
     }
 
@@ -155,7 +155,7 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
      * @author Spottedleaf
      */
     @Overwrite
-    public <T> void removeRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier) {
+    public <T> void removeRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier, boolean forceTicks) { // TODO: Neo added param
         this.getChunkHolderManager().removeTicketAtLevel(type, pos, ChunkLevel.byStatus(FullChunkStatus.FULL) - radius, identifier);
     }
 

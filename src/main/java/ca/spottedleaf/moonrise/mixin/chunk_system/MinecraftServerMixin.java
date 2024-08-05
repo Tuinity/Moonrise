@@ -178,6 +178,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
      * @reason Make server thread an instance of TickThread for thread checks
      * @author Spottedleaf
      */
+    /* TODO NeoForge adds ThreadGroup
     @Redirect(
             method = "spin",
             at = @At(
@@ -187,6 +188,22 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     )
     private static Thread createTickThread(final Runnable target, final String name) {
         return new TickThread(target, name);
+    }
+     */
+
+    /**
+     * @reason Make server thread an instance of TickThread for thread checks
+     * @author Spottedleaf
+     */
+    @Redirect(
+            method = "spin",
+            at = @At(
+                    value = "NEW",
+                    target = "(Ljava/lang/ThreadGroup;Ljava/lang/Runnable;Ljava/lang/String;)Ljava/lang/Thread;"
+            )
+    )
+    private static Thread createTickThreadNeo(final ThreadGroup group, final Runnable task, final String name) {
+        return new TickThread(task, name, group);
     }
 
 

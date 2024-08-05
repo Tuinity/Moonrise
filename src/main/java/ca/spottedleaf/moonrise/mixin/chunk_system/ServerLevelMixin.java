@@ -17,6 +17,10 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskSchedule
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ThreadedTicketLevelPropagator;
 import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.CrashReportCategory;
+import net.minecraft.CrashReportDetail;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -379,7 +383,10 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
      * @author Spottedleaf
      */
     @Redirect(
-            method = "method_31420",
+            method = {
+                    "method_31420",
+                    "*(Lnet/minecraft/world/TickRateManager;Lnet/minecraft/util/profiling/ProfilerFiller;Lnet/minecraft/world/entity/Entity;)V"
+            },
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/server/level/DistanceManager;inEntityTickingRange(J)Z"
@@ -447,7 +454,7 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
             method = "addPlayer",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;addNewEntity(Lnet/minecraft/world/level/entity/EntityAccess;)Z"
+                    target = "Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;*(Lnet/minecraft/world/level/entity/EntityAccess;)Z"
             )
     )
     private <T extends EntityAccess> boolean redirectAddPlayerEntity(final PersistentEntitySectionManager<T> instance, final T entity) {
@@ -685,15 +692,15 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
      * @reason Redirect to new entity manager
      * @author Spottedleaf
      */
-    @Redirect(
-            method = "method_54438",
+    @WrapOperation(
+            method = "fillReportDetails",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;count()I"
+                    target = "Lnet/minecraft/CrashReportCategory;setDetail(Ljava/lang/String;Lnet/minecraft/CrashReportDetail;)Lnet/minecraft/CrashReportCategory;"
             )
     )
-    private int redirectCrashCount(final PersistentEntitySectionManager<Entity> instance) {
-        return this.moonrise$getEntityLookup().getEntityCount();
+    private CrashReportCategory redirectCrashCount(final CrashReportCategory instance, final String s, final CrashReportDetail<String> string, final Operation<CrashReportCategory> original) {
+        return original.call(instance, s, (CrashReportDetail<String>) () -> String.valueOf(this.moonrise$getEntityLookup().getEntityCount()));
     }
 
     /**
