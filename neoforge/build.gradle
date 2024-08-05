@@ -1,0 +1,44 @@
+import net.fabricmc.loom.util.aw2at.Aw2At
+
+plugins {
+    id("xyz.jpenilla.quiet-architectury-loom")
+    id 'maven-publish'
+    id 'io.github.goooler.shadow'
+}
+
+repositories {
+    maven {
+        name = 'NeoForged'
+        url = 'https://maven.neoforged.net/releases/'
+    }
+}
+
+configurations.implementation {
+    extendsFrom(configurations.shadow)
+}
+
+dependencies {
+    add('shadow', project([path: ":", configuration: "namedElements"]))
+    neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
+
+    shadow('ca.spottedleaf:concurrentutil:0.0.1-SNAPSHOT')
+    shadow("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
+}
+
+processResources {
+    inputs.property "version", project.version
+
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand "version": project.version, "minecraft_version": minecraft_version, "loader_version": loader_version, "mod_version": mod_version
+    }
+}
+
+shadowJar {
+    archiveClassifier = "dev-all"
+    destinationDirectory = layout.buildDirectory.dir("libs")
+    configurations = [project.configurations.shadow]
+    relocate 'ca.spottedleaf.concurrentutil', 'ca.spottedleaf.moonrise.libs.ca.spottedleaf.concurrentutil'
+    relocate 'org.yaml.snakeyaml', 'ca.spottedleaf.moonrise.libs.org.yaml.snakeyaml'
+}
+
+Aw2At.setup(getProject(), tasks.remapJar)

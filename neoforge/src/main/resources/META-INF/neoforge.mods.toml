@@ -3,6 +3,7 @@ loaderVersion = "[1,)"
 license = "GPLv3"
 issueTrackerURL = "https://github.com/Tuinity/Moonrise"
 showAsResourcePack = false
+logoFile = "assets/moonrise/icon.png"
 
 [[mods]]
 modId = "moonrise"
@@ -29,3 +30,6 @@ side = "BOTH"
 
 [[mixins]]
 config = "moonrise.mixins.json"
+
+[[mixins]]
+config = "moonrise-neoforge.mixins.json"

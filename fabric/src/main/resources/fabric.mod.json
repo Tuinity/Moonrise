@@ -24,7 +24,8 @@
   "environment": "*",
   "entrypoints": {},
   "mixins": [
-    "moonrise.mixins.json"
+    "moonrise.mixins.json",
+    "moonrise-fabric.mixins.json"
   ],
   "accessWidener" : "moonrise.accesswidener",
   "depends": {

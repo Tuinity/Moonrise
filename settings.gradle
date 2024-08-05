@@ -24,6 +24,13 @@ pluginManagement {
 
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+    id("xyz.jpenilla.quiet-architectury-loom") version "1.7-SNAPSHOT" apply false
+    id 'io.github.goooler.shadow' version '8.1.8' apply false
 }
 
 rootProject.name = "Moonrise"
+
+include("fabric")
+findProject(":fabric").name = "Moonrise-Fabric"
+include("neoforge")
+findProject(":neoforge").name = "Moonrise-NeoForge"
