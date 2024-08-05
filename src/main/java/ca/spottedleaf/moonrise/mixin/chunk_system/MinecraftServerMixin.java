@@ -1,7 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
-import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
@@ -173,39 +172,6 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             throw new RuntimeException("Chunk system crash propagated to tick()", crash);
         }
     }
-
-    /**
-     * @reason Make server thread an instance of TickThread for thread checks
-     * @author Spottedleaf
-     */
-    /* TODO NeoForge adds ThreadGroup
-    @Redirect(
-            method = "spin",
-            at = @At(
-                    value = "NEW",
-                    target = "(Ljava/lang/Runnable;Ljava/lang/String;)Ljava/lang/Thread;"
-            )
-    )
-    private static Thread createTickThread(final Runnable target, final String name) {
-        return new TickThread(target, name);
-    }
-     */
-
-    /**
-     * @reason Make server thread an instance of TickThread for thread checks
-     * @author Spottedleaf
-     */
-    @Redirect(
-            method = "spin",
-            at = @At(
-                    value = "NEW",
-                    target = "(Ljava/lang/ThreadGroup;Ljava/lang/Runnable;Ljava/lang/String;)Ljava/lang/Thread;"
-            )
-    )
-    private static Thread createTickThreadNeo(final ThreadGroup group, final Runnable task, final String name) {
-        return new TickThread(task, name, group);
-    }
-
 
     /**
      * @reason Close logic is re-written so that we do not wait for tasks to complete and unload everything

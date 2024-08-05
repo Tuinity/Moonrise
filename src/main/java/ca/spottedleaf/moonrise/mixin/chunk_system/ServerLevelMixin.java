@@ -454,6 +454,7 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
             method = "addPlayer",
             at = @At(
                     value = "INVOKE",
+                    // TODO - this is currently covering addEntity & addNewEntityWithoutEvent on NeoForge - split into Fabric & Neo mixins?
                     target = "Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;*(Lnet/minecraft/world/level/entity/EntityAccess;)Z"
             )
     )

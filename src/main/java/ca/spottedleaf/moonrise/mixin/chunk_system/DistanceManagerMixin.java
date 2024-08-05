@@ -7,11 +7,9 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.server.level.ChunkHolder;
-import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ChunkTaskPriorityQueueSorter;
 import net.minecraft.server.level.DistanceManager;
-import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.Ticket;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.server.level.TickingTracker;
@@ -22,7 +20,6 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -100,8 +97,8 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
         this.simulationDistance = -1;
     }
 
-    @Unique
-    private ChunkHolderManager getChunkHolderManager() {
+    @Override
+    public ChunkHolderManager moonrise$getChunkHolderManager() {
         return ((ChunkSystemServerLevel)this.moonrise$getChunkMap().level).moonrise$getChunkTaskScheduler().chunkHolderManager;
     }
 
@@ -111,7 +108,7 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
      */
     @Overwrite
     public void purgeStaleTickets() {
-        this.getChunkHolderManager().tick();
+        this.moonrise$getChunkHolderManager().tick();
     }
 
     /**
@@ -120,7 +117,7 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
      */
     @Overwrite
     public boolean runAllUpdates(final ChunkMap chunkStorage) {
-        return this.getChunkHolderManager().processTicketUpdates();
+        return this.moonrise$getChunkHolderManager().processTicketUpdates();
     }
 
     /**
@@ -129,7 +126,7 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
      */
     @Overwrite
     public void addTicket(final long pos, final Ticket<?> ticket) {
-        this.getChunkHolderManager().addTicketAtLevel((TicketType)ticket.getType(), pos, ticket.getTicketLevel(), ticket.key);
+        this.moonrise$getChunkHolderManager().addTicketAtLevel((TicketType)ticket.getType(), pos, ticket.getTicketLevel(), ticket.key);
     }
 
     /**
@@ -138,25 +135,7 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
      */
     @Overwrite
     public void removeTicket(final long pos, final Ticket<?> ticket) {
-        this.getChunkHolderManager().removeTicketAtLevel((TicketType)ticket.getType(), pos, ticket.getTicketLevel(), ticket.key);
-    }
-
-    /**
-     * @reason Route to new chunk system
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public <T> void addRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier, boolean forceTicks) { // TODO: Neo added param
-        this.getChunkHolderManager().addTicketAtLevel(type, pos, ChunkLevel.byStatus(FullChunkStatus.FULL) - radius, identifier);
-    }
-
-    /**
-     * @reason Route to new chunk system
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public <T> void removeRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier, boolean forceTicks) { // TODO: Neo added param
-        this.getChunkHolderManager().removeTicketAtLevel(type, pos, ChunkLevel.byStatus(FullChunkStatus.FULL) - radius, identifier);
+        this.moonrise$getChunkHolderManager().removeTicketAtLevel((TicketType)ticket.getType(), pos, ticket.getTicketLevel(), ticket.key);
     }
 
     /**
@@ -175,9 +154,9 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
     @Overwrite
     public void updateChunkForced(final ChunkPos pos, final boolean forced) {
         if (forced) {
-            this.getChunkHolderManager().addTicketAtLevel(TicketType.FORCED, pos, ChunkMap.FORCED_TICKET_LEVEL, pos);
+            this.moonrise$getChunkHolderManager().addTicketAtLevel(TicketType.FORCED, pos, ChunkMap.FORCED_TICKET_LEVEL, pos);
         } else {
-            this.getChunkHolderManager().removeTicketAtLevel(TicketType.FORCED, pos, ChunkMap.FORCED_TICKET_LEVEL, pos);
+            this.moonrise$getChunkHolderManager().removeTicketAtLevel(TicketType.FORCED, pos, ChunkMap.FORCED_TICKET_LEVEL, pos);
         }
     }
 
@@ -282,7 +261,7 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
      */
     @Overwrite
     public boolean inEntityTickingRange(final long pos) {
-        final NewChunkHolder chunkHolder = this.getChunkHolderManager().getChunkHolder(pos);
+        final NewChunkHolder chunkHolder = this.moonrise$getChunkHolderManager().getChunkHolder(pos);
         return chunkHolder != null && chunkHolder.isEntityTickingReady();
     }
 
@@ -292,7 +271,7 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
      */
     @Overwrite
     public boolean inBlockTickingRange(final long pos) {
-        final NewChunkHolder chunkHolder = this.getChunkHolderManager().getChunkHolder(pos);
+        final NewChunkHolder chunkHolder = this.moonrise$getChunkHolderManager().getChunkHolder(pos);
         return chunkHolder != null && chunkHolder.isTickingReady();
     }
 
@@ -302,7 +281,7 @@ public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager
      */
     @Overwrite
     public String getTicketDebugString(final long pos) {
-        return this.getChunkHolderManager().getTicketDebugString(pos);
+        return this.moonrise$getChunkHolderManager().getTicketDebugString(pos);
     }
 
     /**

@@ -77,14 +77,14 @@ public class TickThread extends Thread {
     }
 
     public TickThread(final Runnable run, final String name) {
-        this(run, name, null);
+        this(null, run, name);
     }
 
-    public TickThread(final Runnable run, final String name, final ThreadGroup group) {
-        this(run, name, group, ID_GENERATOR.incrementAndGet());
+    public TickThread(final ThreadGroup group, final Runnable run, final String name) {
+        this(group, run, name, ID_GENERATOR.incrementAndGet());
     }
 
-    private TickThread(final Runnable run, final String name, final ThreadGroup group, final int id) {
+    private TickThread(final ThreadGroup group, final Runnable run, final String name, final int id) {
         super(group, run, name);
         this.id = id;
     }

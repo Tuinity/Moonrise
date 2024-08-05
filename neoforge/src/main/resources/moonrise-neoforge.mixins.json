@@ -2,6 +2,8 @@
   "parent": "moonrise.mixins.json",
   "package": "ca.spottedleaf.moonrise.neoforge.mixin",
   "mixins": [
+    "chunk_system.NeoForgeDistanceManagerMixin",
+    "chunk_system.NeoForgeMinecraftServerMixin"
   ],
   "client": [
   ]

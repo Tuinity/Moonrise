@@ -2,6 +2,8 @@
   "parent": "moonrise.mixins.json",
   "package": "ca.spottedleaf.moonrise.fabric.mixin",
   "mixins": [
+    "chunk_system.FabricDistanceManagerMixin",
+    "chunk_system.FabricMinecraftServerMixin"
   ],
   "client": [
   ]
