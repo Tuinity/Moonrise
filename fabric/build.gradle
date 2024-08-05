@@ -17,7 +17,7 @@ dependencies {
     runtimeOnly(project(":").sourceSets.main.output)
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    libs('ca.spottedleaf:concurrentutil:0.0.1-SNAPSHOT')
+    libs("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     libs("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
 }
 

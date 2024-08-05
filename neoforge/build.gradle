@@ -28,7 +28,7 @@ dependencies {
     add('shadow', project([path: ":", configuration: "namedElements"]))
     neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
 
-    libs('ca.spottedleaf:concurrentutil:0.0.1-SNAPSHOT')
+    libs("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     libs("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
 }
 

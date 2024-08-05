@@ -19,7 +19,7 @@ def getGitCommit = { ->
 dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    api('ca.spottedleaf:concurrentutil:0.0.2-SNAPSHOT')
+    api("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     api("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
 }
 
