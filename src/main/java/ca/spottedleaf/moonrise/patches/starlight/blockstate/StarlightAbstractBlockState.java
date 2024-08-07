@@ -4,6 +4,4 @@ public interface StarlightAbstractBlockState {
 
     public boolean starlight$isConditionallyFullOpaque();
 
-    public int starlight$getOpacityIfCached();
-
 }

@@ -451,22 +451,6 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
      * @author Spottedleaf
      */
     @Redirect(
-            method = "addPlayer",
-            at = @At(
-                    value = "INVOKE",
-                    // TODO - this is currently covering addEntity & addNewEntityWithoutEvent on NeoForge - split into Fabric & Neo mixins?
-                    target = "Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;*(Lnet/minecraft/world/level/entity/EntityAccess;)Z"
-            )
-    )
-    private <T extends EntityAccess> boolean redirectAddPlayerEntity(final PersistentEntitySectionManager<T> instance, final T entity) {
-        return this.moonrise$getEntityLookup().addNewEntity((Entity)entity);
-    }
-
-    /**
-     * @reason Redirect to new entity manager
-     * @author Spottedleaf
-     */
-    @Redirect(
             method = "addEntity",
             at = @At(
                     value = "INVOKE",

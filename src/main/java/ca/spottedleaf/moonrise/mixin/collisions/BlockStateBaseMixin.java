@@ -91,6 +91,7 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
                 this.constantCollisionShape = this.getCollisionShape(null, null, null);
                 this.constantAABBCollision = this.constantCollisionShape == null ? null : ((CollisionVoxelShape)this.constantCollisionShape).moonrise$getSingleAABBRepresentation();
             } catch (final Throwable throwable) {
+                // :(
                 this.constantCollisionShape = null;
                 this.constantAABBCollision = null;
             }

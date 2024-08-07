@@ -3,7 +3,8 @@
   "package": "ca.spottedleaf.moonrise.neoforge.mixin",
   "mixins": [
     "chunk_system.NeoForgeDistanceManagerMixin",
-    "chunk_system.NeoForgeMinecraftServerMixin"
+    "chunk_system.NeoForgeMinecraftServerMixin",
+    "chunk_system.NeoForgeServerLevelMixin"
   ],
   "client": [
   ]

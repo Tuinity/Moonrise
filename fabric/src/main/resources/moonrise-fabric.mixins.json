@@ -3,7 +3,8 @@
   "package": "ca.spottedleaf.moonrise.fabric.mixin",
   "mixins": [
     "chunk_system.FabricDistanceManagerMixin",
-    "chunk_system.FabricMinecraftServerMixin"
+    "chunk_system.FabricMinecraftServerMixin",
+    "chunk_system.FabricServerLevelMixin"
   ],
   "client": [
   ]

@@ -91,7 +91,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
 
     protected abstract void entityEndTicking(final Entity entity);
 
-    protected abstract boolean screenEntity(final Entity entity);
+    protected abstract boolean screenEntity(final Entity entity, final boolean fromDisk, final boolean event);
 
     private static Entity maskNonAccessible(final Entity entity) {
         if (entity == null) {
@@ -347,7 +347,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
     }
 
     protected void addRecursivelySafe(final Entity root, final boolean fromDisk) {
-        if (!this.addEntity(root, fromDisk)) {
+        if (!this.addEntity(root, fromDisk, true)) {
             // possible we are a passenger, and so should dismount from any valid entity in the world
             root.stopRiding();
             return;
@@ -386,7 +386,11 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
     }
 
     public boolean addNewEntity(final Entity entity) {
-        return this.addEntity(entity, false);
+        return this.addNewEntity(entity, true);
+    }
+
+    public boolean addNewEntity(final Entity entity, final boolean event) {
+        return this.addEntity(entity, false, event);
     }
 
     public static Visibility getEntityStatus(final Entity entity) {
@@ -397,7 +401,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
         return Visibility.fromFullChunkStatus(entityStatus == null ? FullChunkStatus.INACCESSIBLE : entityStatus);
     }
 
-    protected boolean addEntity(final Entity entity, final boolean fromDisk) {
+    protected boolean addEntity(final Entity entity, final boolean fromDisk, final boolean event) {
         final BlockPos pos = entity.blockPosition();
         final int sectionX = pos.getX() >> 4;
         final int sectionY = Mth.clamp(pos.getY() >> 4, this.minSection, this.maxSection);
@@ -414,7 +418,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
             return false;
         }
 
-        if (!this.screenEntity(entity)) {
+        if (!this.screenEntity(entity, fromDisk, event)) {
             return false;
         }
 

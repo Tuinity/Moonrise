@@ -3,6 +3,7 @@ package ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task;
 import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.concurrentutil.util.Priority;
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.poi.ChunkSystemPoiManager;
@@ -44,6 +45,8 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
 
     @Override
     public void run() {
+        final PlatformHooks platformHooks = PlatformHooks.get();
+
         // See Vanilla ChunkPyramid#LOADING_PYRAMID.FULL for what this function should be doing
         final LevelChunk chunk;
         try {
@@ -72,7 +75,12 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
             final NewChunkHolder chunkHolder = this.chunkHolder;
 
             chunk.setFullStatus(chunkHolder::getChunkStatus);
-            chunk.runPostLoad();
+            try {
+                platformHooks.setCurrentlyLoading(this.chunkHolder.vanillaChunkHolder, chunk);
+                chunk.runPostLoad();
+            } finally {
+                platformHooks.setCurrentlyLoading(this.chunkHolder.vanillaChunkHolder, null);
+            }
             // Unlike Vanilla, we load the entity chunk here, as we load the NBT in empty status (unlike Vanilla)
             // This brings entity addition back in line with older versions of the game
             // Since we load the NBT in the empty status, this will never block for I/O
@@ -80,8 +88,14 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
 
             // we don't need the entitiesInLevel, not sure why it's there
             chunk.setLoaded(true);
-            chunk.registerAllBlockEntitiesAfterLevelLoad();
-            chunk.registerTickContainerInLevel(this.world);
+            try {
+                platformHooks.setCurrentlyLoading(this.chunkHolder.vanillaChunkHolder, chunk);
+                chunk.registerAllBlockEntitiesAfterLevelLoad();
+                chunk.registerTickContainerInLevel(this.world);
+                platformHooks.chunkFullStatusComplete(chunk, (ProtoChunk)this.fromChunk);
+            } finally {
+                platformHooks.setCurrentlyLoading(this.chunkHolder.vanillaChunkHolder, null);
+            }
         } catch (final Throwable throwable) {
             this.complete(null, throwable);
             return;

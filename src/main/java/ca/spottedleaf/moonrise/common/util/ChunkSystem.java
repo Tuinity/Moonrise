@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.common.util;
 
 import ca.spottedleaf.concurrentutil.util.Priority;
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
@@ -67,7 +68,10 @@ public final class ChunkSystem {
         return getUpdatingChunkHolderCount(level) != 0;
     }
 
-    public static boolean screenEntity(final ServerLevel level, final Entity entity) {
+    public static boolean screenEntity(final ServerLevel level, final Entity entity, final boolean fromDisk, final boolean event) {
+        if (!PlatformHooks.get().screenEntity(level, entity, fromDisk, event)) {
+            return false;
+        }
         return true;
     }
 

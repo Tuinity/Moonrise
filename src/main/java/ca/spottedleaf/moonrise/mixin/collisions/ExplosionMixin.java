@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_getblock.GetBlockChunk;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
@@ -81,7 +82,8 @@ abstract class ExplosionMixin {
     private boolean fire;
 
     @Shadow
-    @Final private DamageSource damageSource;
+    @Final
+    private DamageSource damageSource;
 
 
     @Unique
@@ -445,16 +447,18 @@ abstract class ExplosionMixin {
                         (double)Mth.floor(this.x + (diameter + 1.0)),
                         (double)Mth.floor(this.y + (diameter + 1.0)),
                         (double)Mth.floor(this.z + (diameter + 1.0))
-                ),
-                null
+                )
         );
         final Vec3 center = new Vec3(this.x, this.y, this.z);
 
         final BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
 
+        final PlatformHooks platformHooks = PlatformHooks.get();
+
+        platformHooks.onExplosion(this.level, (Explosion)(Object)this, entities, diameter);
         for (int i = 0, len = entities.size(); i < len; ++i) {
             final Entity entity = entities.get(i);
-            if (entity.isSpectator() || entity.ignoreExplosion((Explosion)(Object)this)) {
+            if (entity.ignoreExplosion((Explosion)(Object)this)) {
                 continue;
             }
 
@@ -495,7 +499,8 @@ abstract class ExplosionMixin {
                 knockbackFraction = intensityFraction;
             }
 
-            final Vec3 knockback = new Vec3(distX * knockbackFraction, distY * knockbackFraction, distZ * knockbackFraction);
+            Vec3 knockback = new Vec3(distX * knockbackFraction, distY * knockbackFraction, distZ * knockbackFraction);
+            knockback = platformHooks.modifyExplosionKnockback(this.level, (Explosion)(Object)this, entity, knockback);
             entity.setDeltaMovement(entity.getDeltaMovement().add(knockback));
 
             if (entity instanceof Player player) {
@@ -503,6 +508,8 @@ abstract class ExplosionMixin {
                     this.hitPlayers.put(player, knockback);
                 }
             }
+
+            entity.onExplosionHit(this.source); // TODO port to paper
         }
 
         this.blockCache = null;

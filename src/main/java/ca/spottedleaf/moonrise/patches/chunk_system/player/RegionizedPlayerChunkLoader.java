@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.patches.chunk_system.player;
 
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.concurrentutil.util.Priority;
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.misc.AllocatingRateLimiter;
 import ca.spottedleaf.moonrise.common.misc.SingleUserAreaMap;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
@@ -418,7 +419,11 @@ public final class RegionizedPlayerChunkLoader {
             if (this.sentChunks.add(CoordinateUtils.getChunkKey(chunkX, chunkZ))) {
                 ((ChunkSystemChunkHolder)((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().chunkHolderManager
                         .getChunkHolder(chunkX, chunkZ).vanillaChunkHolder).moonrise$addReceivedChunk(this.player);
-                PlayerChunkSender.sendChunk(this.player.connection, this.world, ((ChunkSystemLevel)this.world).moonrise$getFullChunkIfLoaded(chunkX, chunkZ));
+
+                final LevelChunk chunk = ((ChunkSystemLevel)this.world).moonrise$getFullChunkIfLoaded(chunkX, chunkZ);
+
+                PlatformHooks.get().onChunkWatch(this.world, chunk, this.player);
+                PlayerChunkSender.sendChunk(this.player.connection, this.world, chunk);
                 return;
             }
             throw new IllegalStateException();
@@ -428,6 +433,7 @@ public final class RegionizedPlayerChunkLoader {
             if (!this.sentChunks.remove(CoordinateUtils.getChunkKey(chunkX, chunkZ))) {
                 return;
             }
+            PlatformHooks.get().onChunkUnWatch(this.world, new ChunkPos(chunkX, chunkZ), this.player);
             this.sendUnloadChunkRaw(chunkX, chunkZ);
         }
 
@@ -864,7 +870,6 @@ public final class RegionizedPlayerChunkLoader {
             final int clientViewDistance = getClientViewDistance(this.player);
             final int sendViewDistance = getSendViewDistance(loadViewDistance, clientViewDistance, playerDistances.sendViewDistance, worldDistances.sendViewDistance);
 
-            // TODO check PlayerList diff in paper chunk system patch
             // send view distances
             this.player.connection.send(this.updateClientChunkRadius(sendViewDistance));
             this.player.connection.send(this.updateClientSimulationDistance(tickViewDistance));

@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.level.entity.client;
 
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.ChunkEntitySlices;
@@ -63,7 +64,11 @@ public final class ClientEntityLookup extends EntityLookup {
     protected void entitySectionChangeCallback(final Entity entity,
                                                final int oldSectionX, final int oldSectionY, final int oldSectionZ,
                                                final int newSectionX, final int newSectionY, final int newSectionZ) {
-
+        PlatformHooks.get().entityMove(
+            entity,
+            CoordinateUtils.getChunkSectionKey(oldSectionX, oldSectionY, oldSectionZ),
+            CoordinateUtils.getChunkSectionKey(newSectionX, newSectionY, newSectionZ)
+        );
     }
 
     @Override
@@ -97,7 +102,7 @@ public final class ClientEntityLookup extends EntityLookup {
     }
 
     @Override
-    protected boolean screenEntity(final Entity entity) {
+    protected boolean screenEntity(final Entity entity, final boolean fromDisk, final boolean event) {
         return true;
     }
 

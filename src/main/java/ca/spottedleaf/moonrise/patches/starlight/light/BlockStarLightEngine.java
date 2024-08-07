@@ -1,8 +1,10 @@
 package ca.spottedleaf.moonrise.patches.starlight.light;
 
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.patches.starlight.blockstate.StarlightAbstractBlockState;
 import ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -91,7 +93,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
 
         final int currentLevel = this.getLightLevel(worldX, worldY, worldZ);
         final BlockState blockState = this.getBlockState(worldX, worldY, worldZ);
-        final int emittedLevel = blockState.getLightEmission() & emittedMask;
+        final int emittedLevel = (PlatformHooks.get().getLightEmission(blockState, lightAccess.getLevel(), this.mutablePos1.set(worldX, worldY, worldZ))) & emittedMask;
 
         this.setLightLevel(worldX, worldY, worldZ, emittedLevel);
         // this accounts for change in emitted light that would cause an increase
@@ -124,32 +126,28 @@ public final class BlockStarLightEngine extends StarLightEngine {
     @Override
     protected int calculateLightValue(final LightChunkGetter lightAccess, final int worldX, final int worldY, final int worldZ,
                                       final int expect) {
+        this.recalcCenterPos.set(worldX, worldY, worldZ);
+
         final BlockState centerState = this.getBlockState(worldX, worldY, worldZ);
-        int level = centerState.getLightEmission() & 0xF;
+        final BlockGetter world = lightAccess.getLevel();
+        int level = (PlatformHooks.get().getLightEmission(centerState, world, this.recalcCenterPos)) & this.emittedLightMask;
 
         if (level >= (15 - 1) || level > expect) {
             return level;
         }
 
-        final int sectionOffset = this.chunkSectionIndexOffset;
-        final BlockState conditionallyOpaqueState;
-        int opacity = ((StarlightAbstractBlockState)centerState).starlight$getOpacityIfCached();
-
-        if (opacity == -1) {
-            this.recalcCenterPos.set(worldX, worldY, worldZ);
-            opacity = centerState.getLightBlock(lightAccess.getLevel(), this.recalcCenterPos);
-            if (((StarlightAbstractBlockState)centerState).starlight$isConditionallyFullOpaque()) {
-                conditionallyOpaqueState = centerState;
-            } else {
-                conditionallyOpaqueState = null;
-            }
-        } else if (opacity >= 15) {
+        final int opacity = Math.max(1, centerState.getLightBlock(world, this.recalcCenterPos));
+        if (opacity >= 15) {
             return level;
+        }
+        final BlockState conditionallyOpaqueState;
+        if (((StarlightAbstractBlockState)centerState).starlight$isConditionallyFullOpaque()) {
+            conditionallyOpaqueState = centerState;
         } else {
             conditionallyOpaqueState = null;
         }
-        opacity = Math.max(1, opacity);
 
+        final int sectionOffset = this.chunkSectionIndexOffset;
         for (final AxisDirection direction : AXIS_DIRECTIONS) {
             final int offX = worldX + direction.x;
             final int offY = worldY + direction.y;
@@ -205,6 +203,9 @@ public final class BlockStarLightEngine extends StarLightEngine {
         final int offX = chunk.getPos().x << 4;
         final int offZ = chunk.getPos().z << 4;
 
+        final PlatformHooks platformHooks = PlatformHooks.get();
+
+        final BlockGetter world = lightAccess.getLevel();
         final LevelChunkSection[] sections = chunk.getSections();
         for (int sectionY = this.minSection; sectionY <= this.maxSection; ++sectionY) {
             final LevelChunkSection section = sections[sectionY - this.minSection];
@@ -212,9 +213,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
                 // no sources in empty sections
                 continue;
             }
-            if (!section.maybeHas((final BlockState state) -> {
-                return state.getLightEmission() > 0;
-            })) {
+            if (!section.maybeHas(platformHooks.maybeHasLightEmission())) {
                 // no light sources in palette
                 continue;
             }
@@ -223,12 +222,14 @@ public final class BlockStarLightEngine extends StarLightEngine {
 
             for (int index = 0; index < (16 * 16 * 16); ++index) {
                 final BlockState state = states.get(index);
-                if (state.getLightEmission() <= 0) {
+                this.mutablePos1.set(offX | (index & 15), offY | (index >>> 8), offZ | ((index >>> 4) & 15));
+
+                if ((platformHooks.getLightEmission(state, world, this.mutablePos1)) == 0) {
                     continue;
                 }
 
                 // index = x | (z << 4) | (y << 8)
-                sources.add(new BlockPos(offX | (index & 15), offY | (index >>> 8), offZ | ((index >>> 4) & 15)));
+                sources.add(this.mutablePos1.immutable());
             }
         }
 
@@ -238,12 +239,15 @@ public final class BlockStarLightEngine extends StarLightEngine {
     @Override
     public void lightChunk(final LightChunkGetter lightAccess, final ChunkAccess chunk, final boolean needsEdgeChecks) {
         // setup sources
+        final BlockGetter world = lightAccess.getLevel();
+        final PlatformHooks platformHooks = PlatformHooks.get();
+
         final int emittedMask = this.emittedLightMask;
         final List<BlockPos> positions = this.getSources(lightAccess, chunk);
         for (int i = 0, len = positions.size(); i < len; ++i) {
             final BlockPos pos = positions.get(i);
             final BlockState blockState = this.getBlockState(pos.getX(), pos.getY(), pos.getZ());
-            final int emittedLight = blockState.getLightEmission() & emittedMask;
+            final int emittedLight = platformHooks.getLightEmission(blockState, world, pos) & emittedMask;
 
             if (emittedLight <= this.getLightLevel(pos.getX(), pos.getY(), pos.getZ())) {
                 // some other source is brighter

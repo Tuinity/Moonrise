@@ -31,9 +31,6 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
     protected BlockBehaviour.BlockStateBase.Cache cache;
 
     @Unique
-    private int opacityIfCached;
-
-    @Unique
     private boolean isConditionallyFullOpaque;
 
     protected BlockStateBaseMixin(Block object, Reference2ObjectArrayMap<Property<?>, Comparable<?>> reference2ObjectArrayMap, MapCodec<BlockState> mapCodec) {
@@ -49,16 +46,10 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
     )
     public void initLightAccessState(final CallbackInfo ci) {
         this.isConditionallyFullOpaque = this.canOcclude & this.useShapeForLightOcclusion;
-        this.opacityIfCached = this.cache == null || this.isConditionallyFullOpaque ? -1 : this.cache.lightBlock;
     }
 
     @Override
     public final boolean starlight$isConditionallyFullOpaque() {
         return this.isConditionallyFullOpaque;
-    }
-
-    @Override
-    public final int starlight$getOpacityIfCached() {
-        return this.opacityIfCached;
     }
 }

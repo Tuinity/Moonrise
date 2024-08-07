@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.dfl.DefaultEntityLookup;
@@ -84,6 +85,8 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
 
         ((ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities(entity, boundingBox, ret, predicate);
 
+        PlatformHooks.get().addToGetEntities((Level)(Object)this, entity, boundingBox, predicate, ret);
+
         return ret;
     }
 
@@ -100,9 +103,11 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
         if (entityTypeTest instanceof EntityType<T> byType) {
             if (maxCount != Integer.MAX_VALUE) {
                 ((ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities(byType, boundingBox, into, predicate, maxCount);
+                PlatformHooks.get().addToGetEntities((Level)(Object)this, entityTypeTest, boundingBox, predicate, into, maxCount);
                 return;
             } else {
                 ((ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities(byType, boundingBox, into, predicate);
+                PlatformHooks.get().addToGetEntities((Level)(Object)this, entityTypeTest, boundingBox, predicate, into, maxCount);
                 return;
             }
         }
@@ -110,9 +115,11 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
         if (entityTypeTest == null) {
             if (maxCount != Integer.MAX_VALUE) {
                 ((ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities((Entity)null, boundingBox, (List)into, (Predicate)predicate, maxCount);
+                PlatformHooks.get().addToGetEntities((Level)(Object)this, entityTypeTest, boundingBox, predicate, into, maxCount);
                 return;
             } else {
                 ((ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities((Entity)null, boundingBox, (List)into, (Predicate)predicate);
+                PlatformHooks.get().addToGetEntities((Level)(Object)this, entityTypeTest, boundingBox, predicate, into, maxCount);
                 return;
             }
         }
@@ -138,17 +145,21 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
         if (base == null || base == Entity.class) {
             if (maxCount != Integer.MAX_VALUE) {
                 ((ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities((Entity)null, boundingBox, (List)into, (Predicate)modifiedPredicate, maxCount);
+                PlatformHooks.get().addToGetEntities((Level)(Object)this, entityTypeTest, boundingBox, predicate, into, maxCount);
                 return;
             } else {
                 ((ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities((Entity)null, boundingBox, (List)into, (Predicate)modifiedPredicate);
+                PlatformHooks.get().addToGetEntities((Level)(Object)this, entityTypeTest, boundingBox, predicate, into, maxCount);
                 return;
             }
         } else {
             if (maxCount != Integer.MAX_VALUE) {
                 ((ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities(base, null, boundingBox, (List)into, (Predicate)modifiedPredicate, maxCount);
+                PlatformHooks.get().addToGetEntities((Level)(Object)this, entityTypeTest, boundingBox, predicate, into, maxCount);
                 return;
             } else {
                 ((ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities(base, null, boundingBox, (List)into, (Predicate)modifiedPredicate);
+                PlatformHooks.get().addToGetEntities((Level)(Object)this, entityTypeTest, boundingBox, predicate, into, maxCount);
                 return;
             }
         }
@@ -164,6 +175,10 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
         final List<T> ret = new ArrayList<>();
 
         ((ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities(entityClass, null, boundingBox, ret, predicate);
+        // note: superclass would have entered the above method, so we do need this hook here
+        PlatformHooks.get().addToGetEntities(
+            (Level)(Object)this, EntityTypeTest.forClass(entityClass), boundingBox, predicate, ret, Integer.MAX_VALUE
+        );
 
         return ret;
     }

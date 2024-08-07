@@ -302,20 +302,14 @@ public final class SkyStarLightEngine extends StarLightEngine {
 
         final int sectionOffset = this.chunkSectionIndexOffset;
         final BlockState centerState = this.getBlockState(worldX, worldY, worldZ);
-        int opacity = ((StarlightAbstractBlockState)centerState).starlight$getOpacityIfCached();
 
         final BlockState conditionallyOpaqueState;
-        if (opacity < 0) {
-            this.recalcCenterPos.set(worldX, worldY, worldZ);
-            opacity = Math.max(1, centerState.getLightBlock(lightAccess.getLevel(), this.recalcCenterPos));
-            if (((StarlightAbstractBlockState)centerState).starlight$isConditionallyFullOpaque()) {
-                conditionallyOpaqueState = centerState;
-            } else {
-                conditionallyOpaqueState = null;
-            }
+        this.recalcCenterPos.set(worldX, worldY, worldZ);
+        final int opacity = Math.max(1, centerState.getLightBlock(lightAccess.getLevel(), this.recalcCenterPos));
+        if (((StarlightAbstractBlockState)centerState).starlight$isConditionallyFullOpaque()) {
+            conditionallyOpaqueState = centerState;
         } else {
             conditionallyOpaqueState = null;
-            opacity = Math.max(1, opacity);
         }
 
         int level = 0;
@@ -642,48 +636,32 @@ public final class SkyStarLightEngine extends StarLightEngine {
                 fromShape = Shapes.empty();
             }
 
-            final int opacityIfCached = ((StarlightAbstractBlockState)current).starlight$getOpacityIfCached();
             // does light propagate from the top down?
-            if (opacityIfCached != -1) {
-                if (opacityIfCached != 0) {
-                    // we cannot propagate 15 through this
+            mutablePos.set(worldX, startY, worldZ);
+            long flags = 0L;
+            if (((StarlightAbstractBlockState)current).starlight$isConditionallyFullOpaque()) {
+                final VoxelShape cullingFace = current.getFaceOcclusionShape(world, mutablePos, AxisDirection.POSITIVE_Y.nms);
+
+                if (Shapes.faceShapeOccludes(fromShape, cullingFace)) {
+                    // can't propagate here, we're done on this column.
                     break;
                 }
-                // most of the time it falls here.
-                // add to propagate
-                // light set delayed until we determine if this nibble section is null
-                this.appendToIncreaseQueue(
-                        ((worldX + (worldZ << 6) + (startY << (6 + 6)) + encodeOffset) & ((1L << (6 + 6 + 16)) - 1))
-                                | (15L << (6 + 6 + 16)) // we know we're at full lit here
-                                | (propagateDirection << (6 + 6 + 16 + 4))
-                );
-            } else {
-                mutablePos.set(worldX, startY, worldZ);
-                long flags = 0L;
-                if (((StarlightAbstractBlockState)current).starlight$isConditionallyFullOpaque()) {
-                    final VoxelShape cullingFace = current.getFaceOcclusionShape(world, mutablePos, AxisDirection.POSITIVE_Y.nms);
-
-                    if (Shapes.faceShapeOccludes(fromShape, cullingFace)) {
-                        // can't propagate here, we're done on this column.
-                        break;
-                    }
-                    flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
-                }
-
-                final int opacity = current.getLightBlock(world, mutablePos);
-                if (opacity > 0) {
-                    // let the queued value (if any) handle it from here.
-                    break;
-                }
-
-                // light set delayed until we determine if this nibble section is null
-                this.appendToIncreaseQueue(
-                        ((worldX + (worldZ << 6) + (startY << (6 + 6)) + encodeOffset) & ((1L << (6 + 6 + 16)) - 1))
-                                | (15L << (6 + 6 + 16)) // we know we're at full lit here
-                                | (propagateDirection << (6 + 6 + 16 + 4))
-                                | flags
-                );
+                flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
             }
+
+            final int opacity = current.getLightBlock(world, mutablePos);
+            if (opacity > 0) {
+                // let the queued value (if any) handle it from here.
+                break;
+            }
+
+            // light set delayed until we determine if this nibble section is null
+            this.appendToIncreaseQueue(
+                    ((worldX + (worldZ << 6) + (startY << (6 + 6)) + encodeOffset) & ((1L << (6 + 6 + 16)) - 1))
+                            | (15L << (6 + 6 + 16)) // we know we're at full lit here
+                            | (propagateDirection << (6 + 6 + 16 + 4))
+                            | flags
+            );
 
             above = current;
 

@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
 import ca.spottedleaf.concurrentutil.util.Priority;
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
@@ -105,6 +106,13 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
             return ifPresent;
         }
 
+        if (currentChunk != null) {
+            final ChunkAccess loading = PlatformHooks.get().getCurrentlyLoadingChunk(currentChunk.vanillaChunkHolder);
+            if (loading != null && TickThread.isTickThread()) {
+                return loading;
+            }
+        }
+
         return load ? this.syncLoad(chunkX, chunkZ, toStatus) : null;
     }
 
@@ -136,7 +144,22 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
     @Override
     @Overwrite
     public LevelChunk getChunkNow(final int chunkX, final int chunkZ) {
-        return this.fullChunks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
+        final LevelChunk ret = this.fullChunks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
+        if (!PlatformHooks.get().hasCurrentlyLoadingChunk()) {
+            return ret;
+        }
+
+        if (ret != null) {
+            return ret;
+        }
+
+        final NewChunkHolder holder = ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler()
+            .chunkHolderManager.getChunkHolder(chunkX, chunkZ);
+        if (holder == null) {
+            return ret;
+        }
+
+        return PlatformHooks.get().getCurrentlyLoadingChunk(holder.vanillaChunkHolder);
     }
 
     /**

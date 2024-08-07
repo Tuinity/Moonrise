@@ -3,6 +3,7 @@ package ca.spottedleaf.moonrise.patches.chunk_system.scheduling;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
 import ca.spottedleaf.concurrentutil.util.Priority;
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.TickThread;
@@ -1296,6 +1297,9 @@ public final class ChunkHolderManager {
         if (BLOCK_TICKET_UPDATES.get() == Boolean.TRUE) {
             throw new IllegalStateException("Cannot update ticket level while unloading chunks or updating entity manager");
         }
+        if (!PlatformHooks.get().allowAsyncTicketUpdates() && !TickThread.isTickThread()) {
+            TickThread.ensureTickThread("Cannot asynchronously process ticket updates");
+        }
 
         List<NewChunkHolder> changedFullStatus = null;
 
@@ -1311,10 +1315,15 @@ public final class ChunkHolderManager {
             }
             changedFullStatus = new ArrayList<>();
 
-            ret |= this.ticketLevelPropagator.performUpdates(
-                this.ticketLockArea, this.taskScheduler.schedulingLockArea,
-                scheduledTasks, changedFullStatus
-            );
+            this.blockTicketUpdates();
+            try {
+                ret |= this.ticketLevelPropagator.performUpdates(
+                    this.ticketLockArea, this.taskScheduler.schedulingLockArea,
+                    scheduledTasks, changedFullStatus
+                );
+            } finally {
+                this.unblockTicketUpdates(Boolean.FALSE);
+            }
         }
 
         if (changedFullStatus != null) {

@@ -37,7 +37,7 @@ abstract class PortalForcerMixin {
      * @author Spottedleaf
      */
     @Overwrite
-    public Optional<BlockUtil.FoundRectangle> findClosestPortalPosition(BlockPos blockPos, boolean bl, WorldBorder worldBorder) {
+    public Optional<BlockPos> findClosestPortalPosition(BlockPos blockPos, boolean bl, WorldBorder worldBorder) {
         PoiManager poiManager = this.level.getPoiManager();
         int i = bl ? 16 : 128;
         List<PoiRecord> records = new ArrayList<>();
@@ -70,15 +70,6 @@ abstract class PortalForcerMixin {
             }
         }
         // now we're done
-        if (lowestYRecord == null) {
-            return Optional.empty();
-        }
-
-        BlockPos blockPos1 = lowestYRecord.getPos();
-        this.level.getChunkSource().addRegionTicket(TicketType.PORTAL, new ChunkPos(blockPos1), 3, blockPos1);
-        BlockState blockState = this.level.getBlockState(blockPos1);
-        return Optional.of(BlockUtil.getLargestRectangleAround(blockPos1, blockState.getValue(BlockStateProperties.HORIZONTAL_AXIS), 21, Direction.Axis.Y, 21, (blockPosx) -> {
-            return this.level.getBlockState(blockPosx) == blockState;
-        }));
+        return Optional.ofNullable(lowestYRecord == null ? null : lowestYRecord.getPos());
     }
 }

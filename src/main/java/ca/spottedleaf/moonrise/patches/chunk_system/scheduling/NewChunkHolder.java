@@ -6,6 +6,7 @@ import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.concurrentutil.util.Priority;
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.misc.LazyRunnable;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
@@ -895,6 +896,7 @@ public final class NewChunkHolder {
         if (chunk != null) {
             if (chunk instanceof LevelChunk levelChunk) {
                 levelChunk.setLoaded(false);
+                PlatformHooks.get().chunkUnloadFromWorld(levelChunk);
             }
 
             if (!shouldLevelChunkNotSave) {
@@ -1069,6 +1071,9 @@ public final class NewChunkHolder {
         if (oldUnloaded != newUnloaded) {
             this.checkUnload();
         }
+
+        // Don't really have a choice but to place this hook here
+        PlatformHooks.get().onChunkHolderTicketChange(this.world, this, oldLevel, newLevel);
     }
 
     static final int NEIGHBOUR_RADIUS = 2;
@@ -1816,6 +1821,7 @@ public final class NewChunkHolder {
             }
 
             final CompoundTag save = ChunkSerializer.write(this.world, chunk);
+            PlatformHooks.get().chunkSyncSave(this.world, chunk, save);
 
             if (unloading) {
                 completing = true;
