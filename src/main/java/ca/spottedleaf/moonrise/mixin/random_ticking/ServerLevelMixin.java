@@ -58,8 +58,7 @@ public abstract class ServerLevelMixin extends Level implements WorldGenLevel {
         final LevelChunkSection[] sections = chunk.getSections();
         final int minSection = WorldUtil.getMinSection((ServerLevel)(Object)this);
         final RandomSource random = this.random;
-        final boolean tickFluids = !MoonriseCommon.getConfig().bugFixes.fixMC224294
-                .getOrDefault(MoonriseConfig.BugFixes.FIX_MC224294_DEFAULT).booleanValue();
+        final boolean tickFluids = !MoonriseCommon.getConfig().bugFixes.fixMC224294;
 
         final ChunkPos cpos = chunk.getPos();
         final int offsetX = cpos.x << 4;

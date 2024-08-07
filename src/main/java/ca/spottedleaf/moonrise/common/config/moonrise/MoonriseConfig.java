@@ -2,14 +2,17 @@ package ca.spottedleaf.moonrise.common.config.moonrise;
 
 import ca.spottedleaf.moonrise.common.config.PostDeserializeHook;
 import ca.spottedleaf.moonrise.common.config.annotation.Adaptable;
+import ca.spottedleaf.moonrise.common.config.ui.ClothConfig;
 import ca.spottedleaf.moonrise.common.config.annotation.Serializable;
-import ca.spottedleaf.moonrise.common.config.moonrise.type.DefaultedValue;
 import ca.spottedleaf.moonrise.common.config.type.Duration;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 
 @Adaptable
 public final class MoonriseConfig {
+
+    private static final String BUG_FIX_SECTION = "category.moonrise.bugfixes";
+    private static final String CHUNK_SYSTEM_SECTION = "category.moonrise.chunksystem";
 
     @Serializable(
             comment = """
@@ -50,6 +53,11 @@ public final class MoonriseConfig {
                             then there is no rate limit.
                             """
             )
+            @ClothConfig(
+                    tooltip = "tooltip.moonrise.loadrate",
+                    fieldKeyName = "option.moonrise.loadrate",
+                    section = CHUNK_SYSTEM_SECTION
+            )
             public double playerMaxLoadRate = -1.0;
 
             @Serializable(
@@ -57,6 +65,11 @@ public final class MoonriseConfig {
                             The maximum rate of chunks to generate for given player, per second. If this value is <= 0,
                             then there is no rate limit.
                             """
+            )
+            @ClothConfig(
+                    tooltip = "tooltip.moonrise.genrate",
+                    fieldKeyName = "option.moonrise.genrate",
+                    section = CHUNK_SYSTEM_SECTION
             )
             public double playerMaxGenRate = -1.0;
         }
@@ -142,6 +155,11 @@ public final class MoonriseConfig {
                     of threads will automatically be determined.
                     """
         )
+        @ClothConfig(
+                tooltip = "tooltip.moonrise.workerthreads",
+                fieldKeyName = "option.moonrise.workerthreads",
+                section = CHUNK_SYSTEM_SECTION
+        )
         public int workerThreads = -1;
 
         @Override
@@ -164,6 +182,11 @@ public final class MoonriseConfig {
                         and when you have determined that I/O is the bottleneck for chunk loading/saving.
                         """
         )
+        @ClothConfig(
+                tooltip = "tooltip.moonrise.iothreads",
+                fieldKeyName = "option.moonrise.iothreads",
+                section = CHUNK_SYSTEM_SECTION
+        )
         public int ioThreads = -1;
 
         @Serializable(
@@ -173,6 +196,11 @@ public final class MoonriseConfig {
                         gen and are saturating the population generation (~10 threads of the worker pool generating
                         chunks), you may set this to true to possibly increase generation speed.
                         """
+        )
+        @ClothConfig(
+                tooltip = "tooltip.moonrise.populatorparallelism",
+                fieldKeyName = "option.moonrise.populatorparallelism",
+                section = CHUNK_SYSTEM_SECTION
         )
         public boolean populationGenParallelism = false;
 
@@ -195,12 +223,16 @@ public final class MoonriseConfig {
                 comment = """
                         Fixes https://bugs.mojang.com/browse/MC-224294. By avoiding double ticking lava blocks during
                         chunk random ticking, the cost of world random ticking is significantly reduced.
-                        This configuration has three options:
-                        default -> Current default is "true".
+                        This configuration has two options:
                         true    -> Does not double tick lava. This is different from Vanilla behavior.
                         false   -> Does double tick lava. This is the same behavior as Vanilla.
                         """
         )
-        public DefaultedValue<Boolean> fixMC224294 = new DefaultedValue<>();
+        @ClothConfig(
+                tooltip = "tooltip.moonrise.fixMC224294",
+                fieldKeyName = "option.moonrise.fixMC224294",
+                section = BUG_FIX_SECTION
+        )
+        public boolean fixMC224294 = true;
     }
 }

@@ -29,5 +29,4 @@ abstract class NeoForgeDistanceManagerMixin implements ChunkSystemDistanceManage
 	public <T> void removeRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier, final boolean forceTicks) {
 		this.moonrise$getChunkHolderManager().removeTicketAtLevel(type, pos, ChunkLevel.byStatus(FullChunkStatus.FULL) - radius, identifier);
 	}
-
 }
