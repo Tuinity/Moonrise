@@ -30,6 +30,9 @@ dependencies {
 
     libs("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     libs("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
+
+    modImplementation "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_version}"
+    include "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_version}"
 }
 
 processResources {

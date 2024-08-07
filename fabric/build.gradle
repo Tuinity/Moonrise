@@ -19,6 +19,10 @@ dependencies {
 
     libs("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     libs("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
+
+    modImplementation "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
+    include "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
+    modImplementation "com.terraformersmc:modmenu:11.0.1"
 }
 
 processResources {

@@ -22,7 +22,9 @@
   "license": "GPL-3.0-only",
   "icon": "assets/moonrise/icon.png",
   "environment": "*",
-  "entrypoints": {},
+  "entrypoints": {
+    "modmenu": ["ca.spottedleaf.moonrise.fabric.MoonriseModMenuHook"]
+  },
   "mixins": [
     "moonrise.mixins.json",
     "moonrise-fabric.mixins.json"
