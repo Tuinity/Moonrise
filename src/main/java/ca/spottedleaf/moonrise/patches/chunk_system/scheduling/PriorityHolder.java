@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import java.lang.invoke.VarHandle;
 
 public abstract class PriorityHolder {
@@ -28,8 +28,8 @@ public abstract class PriorityHolder {
         PRIORITY_HANDLE.set((PriorityHolder)this, (int)val);
     }
 
-    protected PriorityHolder(final PrioritisedExecutor.Priority priority) {
-        if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+    protected PriorityHolder(final Priority priority) {
+        if (!Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
         this.setPriorityPlain(priority.priority);
@@ -69,7 +69,7 @@ public abstract class PriorityHolder {
             return;
         }
 
-        this.scheduleTask(PrioritisedExecutor.Priority.getPriority(priority));
+        this.scheduleTask(Priority.getPriority(priority));
 
         int failures = 0;
         for (;;) {
@@ -86,7 +86,7 @@ public abstract class PriorityHolder {
                 return;
             }
 
-            this.setPriorityScheduled(PrioritisedExecutor.Priority.getPriority(priority));
+            this.setPriorityScheduled(Priority.getPriority(priority));
 
             ++failures;
             for (int i = 0; i < failures; ++i) {
@@ -95,19 +95,19 @@ public abstract class PriorityHolder {
         }
     }
 
-    public final PrioritisedExecutor.Priority getPriority() {
+    public final Priority getPriority() {
         final int ret = this.getPriorityVolatile();
         if ((ret & PRIORITY_EXECUTED) != 0) {
-            return PrioritisedExecutor.Priority.COMPLETING;
+            return Priority.COMPLETING;
         }
         if ((ret & PRIORITY_SCHEDULED) != 0) {
             return this.getScheduledPriority();
         }
-        return PrioritisedExecutor.Priority.getPriority(ret);
+        return Priority.getPriority(ret);
     }
 
-    public final void lowerPriority(final PrioritisedExecutor.Priority priority) {
-        if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+    public final void lowerPriority(final Priority priority) {
+        if (!Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
 
@@ -139,8 +139,8 @@ public abstract class PriorityHolder {
         }
     }
 
-    public final void setPriority(final PrioritisedExecutor.Priority priority) {
-        if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+    public final void setPriority(final Priority priority) {
+        if (!Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
 
@@ -168,8 +168,8 @@ public abstract class PriorityHolder {
         }
     }
 
-    public final void raisePriority(final PrioritisedExecutor.Priority priority) {
-        if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+    public final void raisePriority(final Priority priority) {
+        if (!Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
 
@@ -203,13 +203,13 @@ public abstract class PriorityHolder {
 
     protected abstract void cancelScheduled();
 
-    protected abstract PrioritisedExecutor.Priority getScheduledPriority();
+    protected abstract Priority getScheduledPriority();
 
-    protected abstract void scheduleTask(final PrioritisedExecutor.Priority priority);
+    protected abstract void scheduleTask(final Priority priority);
 
-    protected abstract void lowerPriorityScheduled(final PrioritisedExecutor.Priority priority);
+    protected abstract void lowerPriorityScheduled(final Priority priority);
 
-    protected abstract void setPriorityScheduled(final PrioritisedExecutor.Priority priority);
+    protected abstract void setPriorityScheduled(final Priority priority);
 
-    protected abstract void raisePriorityScheduled(final PrioritisedExecutor.Priority priority);
+    protected abstract void raisePriorityScheduled(final Priority priority);
 }

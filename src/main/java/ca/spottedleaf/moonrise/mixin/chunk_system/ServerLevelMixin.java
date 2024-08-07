@@ -1,11 +1,10 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
-import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
-import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.ChunkDataController;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.EntityDataController;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.PoiDataController;
@@ -34,7 +33,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.CustomSpawner;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -98,10 +96,10 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
     private EntityDataController entityDataController;
 
     @Unique
-    private final PoiDataController poiDataController = new PoiDataController((ServerLevel)(Object)this);
+    private PoiDataController poiDataController;
 
     @Unique
-    private final ChunkDataController chunkDataController = new ChunkDataController((ServerLevel)(Object)this);
+    private ChunkDataController chunkDataController;
 
     @Unique
     private ChunkTaskScheduler chunkTaskScheduler;
@@ -144,15 +142,18 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
                       CallbackInfo ci) {
         this.entityManager = null;
 
+        this.moonrise$setEntityLookup(new ServerEntityLookup((ServerLevel)(Object)this, ((ServerLevel)(Object)this).new EntityCallbacks()));
+        this.chunkTaskScheduler = new ChunkTaskScheduler((ServerLevel)(Object)this);
         this.entityDataController = new EntityDataController(
                 new EntityDataController.EntityRegionFileStorage(
                         new RegionStorageInfo(levelStorageAccess.getLevelId(), resourceKey, "entities"),
                         levelStorageAccess.getDimensionPath(resourceKey).resolve("entities"),
                         minecraftServer.forceSynchronousWrites()
-                )
+                ),
+                this.chunkTaskScheduler
         );
-        this.moonrise$setEntityLookup(new ServerEntityLookup((ServerLevel)(Object)this, ((ServerLevel)(Object)this).new EntityCallbacks()));
-        this.chunkTaskScheduler = new ChunkTaskScheduler((ServerLevel)(Object)this, MoonriseCommon.WORKER_POOL);
+        this.poiDataController = new PoiDataController((ServerLevel)(Object)this, this.chunkTaskScheduler);
+        this.chunkDataController = new ChunkDataController((ServerLevel)(Object)this, this.chunkTaskScheduler);
     }
 
     @Override
@@ -195,17 +196,17 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
     }
 
     @Override
-    public final RegionFileIOThread.ChunkDataController moonrise$getChunkDataController() {
+    public final MoonriseRegionFileIO.RegionDataController moonrise$getChunkDataController() {
         return this.chunkDataController;
     }
 
     @Override
-    public final RegionFileIOThread.ChunkDataController moonrise$getPoiChunkDataController() {
+    public final MoonriseRegionFileIO.RegionDataController moonrise$getPoiChunkDataController() {
         return this.poiDataController;
     }
 
     @Override
-    public final RegionFileIOThread.ChunkDataController moonrise$getEntityChunkDataController() {
+    public final MoonriseRegionFileIO.RegionDataController moonrise$getEntityChunkDataController() {
         return this.entityDataController;
     }
 
@@ -233,7 +234,7 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
 
     @Override
     public final void moonrise$loadChunksAsync(final BlockPos pos, final int radiusBlocks,
-                                               final PrioritisedExecutor.Priority priority,
+                                               final Priority priority,
                                                final Consumer<List<ChunkAccess>> onLoad) {
         this.moonrise$loadChunksAsync(
                 (pos.getX() - radiusBlocks) >> 4,
@@ -246,7 +247,7 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
 
     @Override
     public final void moonrise$loadChunksAsync(final BlockPos pos, final int radiusBlocks,
-                                               final ChunkStatus chunkStatus, final PrioritisedExecutor.Priority priority,
+                                               final ChunkStatus chunkStatus, final Priority priority,
                                                final Consumer<List<ChunkAccess>> onLoad) {
         this.moonrise$loadChunksAsync(
                 (pos.getX() - radiusBlocks) >> 4,
@@ -259,14 +260,14 @@ public abstract class ServerLevelMixin extends Level implements ChunkSystemServe
 
     @Override
     public final void moonrise$loadChunksAsync(final int minChunkX, final int maxChunkX, final int minChunkZ, final int maxChunkZ,
-                                               final PrioritisedExecutor.Priority priority,
+                                               final Priority priority,
                                                final Consumer<List<ChunkAccess>> onLoad) {
         this.moonrise$loadChunksAsync(minChunkX, maxChunkX, minChunkZ, maxChunkZ, ChunkStatus.FULL, priority, onLoad);
     }
 
     @Override
     public final void moonrise$loadChunksAsync(final int minChunkX, final int maxChunkX, final int minChunkZ, final int maxChunkZ,
-                                               final ChunkStatus chunkStatus, final PrioritisedExecutor.Priority priority,
+                                               final ChunkStatus chunkStatus, final Priority priority,
                                                final Consumer<List<ChunkAccess>> onLoad) {
         final ChunkTaskScheduler chunkTaskScheduler = this.moonrise$getChunkTaskScheduler();
         final ChunkHolderManager chunkHolderManager = chunkTaskScheduler.chunkHolderManager;

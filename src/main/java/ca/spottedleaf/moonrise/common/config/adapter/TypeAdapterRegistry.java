@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.common.config.adapter;
 
+import ca.spottedleaf.moonrise.common.config.PostDeserializeHook;
 import ca.spottedleaf.moonrise.common.config.adapter.collection.CollectionTypeAdapter;
 import ca.spottedleaf.moonrise.common.config.adapter.collection.ListTypeAdapter;
 import ca.spottedleaf.moonrise.common.config.adapter.collection.SortedMapTypeAdapter;
@@ -226,6 +227,10 @@ public final class TypeAdapterRegistry {
                     }
 
                     field.field.set(ret, field.adapter.deserialize(registry, fieldValue, field.field.getGenericType()));
+                }
+
+                if (ret instanceof PostDeserializeHook hook) {
+                    hook.deserialize();
                 }
 
                 return ret;

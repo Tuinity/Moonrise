@@ -279,3 +279,11 @@ accessible method net/minecraft/server/level/ServerChunkCache$ChunkAndHolder <in
 
 # LevelLoadStatusManager$Status
 accessible class net/minecraft/client/multiplayer/LevelLoadStatusManager$Status
+
+
+# RegionFile
+accessible method net/minecraft/world/level/chunk/storage/RegionFile write (Lnet/minecraft/world/level/ChunkPos;Ljava/nio/ByteBuffer;)V
+
+
+# RegionFile$ChunkBuffer
+accessible class net/minecraft/world/level/chunk/storage/RegionFile$ChunkBuffer

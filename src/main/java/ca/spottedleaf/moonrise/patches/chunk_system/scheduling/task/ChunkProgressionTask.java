@@ -1,8 +1,8 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task;
 
 import ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue;
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import net.minecraft.server.level.ServerLevel;
@@ -46,15 +46,15 @@ public abstract class ChunkProgressionTask {
     /* May be called multiple times */
     public abstract void cancel();
 
-    public abstract PrioritisedExecutor.Priority getPriority();
+    public abstract Priority getPriority();
 
     /* Schedule lock is always held for the priority update calls */
 
-    public abstract void lowerPriority(final PrioritisedExecutor.Priority priority);
+    public abstract void lowerPriority(final Priority priority);
 
-    public abstract void setPriority(final PrioritisedExecutor.Priority priority);
+    public abstract void setPriority(final Priority priority);
 
-    public abstract void raisePriority(final PrioritisedExecutor.Priority priority);
+    public abstract void raisePriority(final Priority priority);
 
     public final void onComplete(final BiConsumer<ChunkAccess, Throwable> onComplete) {
         if (!this.waiters.add(onComplete)) {

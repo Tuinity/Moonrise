@@ -1,9 +1,12 @@
 package ca.spottedleaf.moonrise.common.config.moonrise;
 
+import ca.spottedleaf.moonrise.common.config.PostDeserializeHook;
 import ca.spottedleaf.moonrise.common.config.annotation.Adaptable;
 import ca.spottedleaf.moonrise.common.config.annotation.Serializable;
 import ca.spottedleaf.moonrise.common.config.moonrise.type.DefaultedValue;
 import ca.spottedleaf.moonrise.common.config.type.Duration;
+import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 
 @Adaptable
 public final class MoonriseConfig {
@@ -125,18 +128,33 @@ public final class MoonriseConfig {
 
     @Serializable(
             comment = """
+                    Configuration options which control the behavior of the common threadpool workers.
+                    """
+    )
+    public WorkerPool workerPool = new WorkerPool();
+
+    @Adaptable
+    public static final class WorkerPool implements PostDeserializeHook {
+        @Serializable(
+                comment = """
                     Set the number of shared worker threads to be used by chunk rendering,
                     chunk loading, chunk generation. If the value is <= 0, then the number
                     of threads will automatically be determined.
                     """
-    )
-    public int workerThreads = -1;
+        )
+        public int workerThreads = -1;
+
+        @Override
+        public void deserialize() {
+            MoonriseCommon.adjustWorkerThreads(this);
+        }
+    }
 
     @Serializable
     public ChunkSystem chunkSystem = new ChunkSystem();
 
     @Adaptable
-    public static final class ChunkSystem {
+    public static final class ChunkSystem implements PostDeserializeHook {
 
         @Serializable(
                 comment = """
@@ -157,6 +175,11 @@ public final class MoonriseConfig {
                         """
         )
         public boolean populationGenParallelism = false;
+
+        @Override
+        public void deserialize() {
+            ChunkTaskScheduler.init(this);
+        }
     }
 
     @Serializable

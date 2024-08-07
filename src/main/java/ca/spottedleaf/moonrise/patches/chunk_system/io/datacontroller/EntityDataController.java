@@ -1,6 +1,8 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller;
 
-import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.ChunkSystemRegionFileStorage;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.EntityStorage;
@@ -9,12 +11,12 @@ import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public final class EntityDataController extends RegionFileIOThread.ChunkDataController {
+public final class EntityDataController extends MoonriseRegionFileIO.RegionDataController {
 
     private final EntityRegionFileStorage storage;
 
-    public EntityDataController(final EntityRegionFileStorage storage) {
-        super(RegionFileIOThread.RegionFileType.ENTITY_DATA);
+    public EntityDataController(final EntityRegionFileStorage storage, final ChunkTaskScheduler taskScheduler) {
+        super(MoonriseRegionFileIO.RegionFileType.ENTITY_DATA, taskScheduler.ioExecutor, taskScheduler.compressionExecutor);
         this.storage = storage;
     }
 
@@ -24,13 +26,35 @@ public final class EntityDataController extends RegionFileIOThread.ChunkDataCont
     }
 
     @Override
-    public void writeData(final int chunkX, final int chunkZ, final CompoundTag compound) throws IOException {
-        this.storage.write(new ChunkPos(chunkX, chunkZ), compound);
+    public WriteData startWrite(final int chunkX, final int chunkZ, final CompoundTag compound) throws IOException {
+        checkPosition(new ChunkPos(chunkX, chunkZ), compound);
+
+        return ((ChunkSystemRegionFileStorage)this.getCache()).moonrise$startWrite(chunkX, chunkZ, compound);
     }
 
     @Override
-    public CompoundTag readData(final int chunkX, final int chunkZ) throws IOException {
-        return this.storage.read(new ChunkPos(chunkX, chunkZ));
+    public void finishWrite(final int chunkX, final int chunkZ, final WriteData writeData) throws IOException {
+        ((ChunkSystemRegionFileStorage)this.getCache()).moonrise$finishWrite(chunkX, chunkZ, writeData);
+    }
+
+    @Override
+    public ReadData readData(final int chunkX, final int chunkZ) throws IOException {
+        return ((ChunkSystemRegionFileStorage)this.getCache()).moonrise$readData(chunkX, chunkZ);
+    }
+
+    @Override
+    public CompoundTag finishRead(final int chunkX, final int chunkZ, final ReadData readData) throws IOException {
+        return ((ChunkSystemRegionFileStorage)this.getCache()).moonrise$finishRead(chunkX, chunkZ, readData);
+    }
+
+    private static void checkPosition(final ChunkPos pos, final CompoundTag nbt) {
+        final ChunkPos nbtPos = nbt == null ? null : EntityStorage.readChunkPos(nbt);
+        if (nbtPos != null && !pos.equals(nbtPos)) {
+            throw new IllegalArgumentException(
+                    "Entity chunk coordinate and serialized data do not have matching coordinates, trying to serialize coordinate " + pos.toString()
+                            + " but compound says coordinate is " + nbtPos
+            );
+        }
     }
 
     public static final class EntityRegionFileStorage extends RegionFileStorage {
@@ -42,13 +66,7 @@ public final class EntityDataController extends RegionFileIOThread.ChunkDataCont
 
         @Override
         public void write(final ChunkPos pos, final CompoundTag nbt) throws IOException {
-            final ChunkPos nbtPos = nbt == null ? null : EntityStorage.readChunkPos(nbt);
-            if (nbtPos != null && !pos.equals(nbtPos)) {
-                throw new IllegalArgumentException(
-                        "Entity chunk coordinate and serialized data do not have matching coordinates, trying to serialize coordinate " + pos.toString()
-                                + " but compound says coordinate is " + nbtPos + " for world: " + this
-                );
-            }
+            checkPosition(pos, nbt);
             super.write(pos, nbt);
         }
     }

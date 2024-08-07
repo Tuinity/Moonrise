@@ -1,18 +1,19 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling;
 
-import ca.spottedleaf.concurrentutil.completable.Completable;
+import ca.spottedleaf.concurrentutil.completable.CallbackCompletable;
 import ca.spottedleaf.concurrentutil.executor.Cancellable;
-import ca.spottedleaf.concurrentutil.executor.standard.DelayedPrioritisedTask;
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
+import ca.spottedleaf.concurrentutil.util.Priority;
+import ca.spottedleaf.moonrise.common.misc.LazyRunnable;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.common.util.ChunkSystem;
 import ca.spottedleaf.moonrise.patches.chunk_system.ChunkSystemFeatures;
 import ca.spottedleaf.moonrise.patches.chunk_system.async_save.AsyncChunkSaveData;
-import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkStatus;
@@ -173,7 +174,7 @@ public final class NewChunkHolder {
                     // no tasks to schedule _for_
                 } else {
                     entityDataLoadTask = this.entityDataLoadTask = new ChunkLoadTask.EntityDataLoadTask(
-                        this.scheduler, this.world, this.chunkX, this.chunkZ, this.getEffectivePriority(PrioritisedExecutor.Priority.NORMAL)
+                        this.scheduler, this.world, this.chunkX, this.chunkZ, this.getEffectivePriority(Priority.NORMAL)
                     );
                     entityDataLoadTask.addCallback(this::completeEntityLoad);
                     // need one schedule() per waiter
@@ -220,7 +221,7 @@ public final class NewChunkHolder {
 
         if (this.entityDataLoadTask == null) {
             this.entityDataLoadTask = new ChunkLoadTask.EntityDataLoadTask(
-                this.scheduler, this.world, this.chunkX, this.chunkZ, this.getEffectivePriority(PrioritisedExecutor.Priority.NORMAL)
+                this.scheduler, this.world, this.chunkX, this.chunkZ, this.getEffectivePriority(Priority.NORMAL)
             );
             this.entityDataLoadTask.addCallback(this::completeEntityLoad);
             this.entityDataLoadTaskWaiters = new ArrayList<>();
@@ -294,7 +295,7 @@ public final class NewChunkHolder {
                     // no tasks to schedule _for_
                 } else {
                     poiDataLoadTask = this.poiDataLoadTask = new ChunkLoadTask.PoiDataLoadTask(
-                        this.scheduler, this.world, this.chunkX, this.chunkZ, this.getEffectivePriority(PrioritisedExecutor.Priority.NORMAL)
+                        this.scheduler, this.world, this.chunkX, this.chunkZ, this.getEffectivePriority(Priority.NORMAL)
                     );
                     poiDataLoadTask.addCallback(this::completePoiLoad);
                     // need one schedule() per waiter
@@ -340,7 +341,7 @@ public final class NewChunkHolder {
 
         if (this.poiDataLoadTask == null) {
             this.poiDataLoadTask = new ChunkLoadTask.PoiDataLoadTask(
-                this.scheduler, this.world, this.chunkX, this.chunkZ, this.getEffectivePriority(PrioritisedExecutor.Priority.NORMAL)
+                this.scheduler, this.world, this.chunkX, this.chunkZ, this.getEffectivePriority(Priority.NORMAL)
             );
             this.poiDataLoadTask.addCallback(this::completePoiLoad);
             this.poiDataLoadTaskWaiters = new ArrayList<>();
@@ -519,15 +520,15 @@ public final class NewChunkHolder {
     // priority state
 
     // the target priority for this chunk to generate at
-    private PrioritisedExecutor.Priority priority = null;
+    private Priority priority = null;
     private boolean priorityLocked;
 
     // the priority neighbouring chunks have requested this chunk generate at
-    private PrioritisedExecutor.Priority neighbourRequestedPriority = null;
+    private Priority neighbourRequestedPriority = null;
 
-    public PrioritisedExecutor.Priority getEffectivePriority(final PrioritisedExecutor.Priority dfl) {
-        final PrioritisedExecutor.Priority neighbour = this.neighbourRequestedPriority;
-        final PrioritisedExecutor.Priority us = this.priority;
+    public Priority getEffectivePriority(final Priority dfl) {
+        final Priority neighbour = this.neighbourRequestedPriority;
+        final Priority us = this.priority;
 
         if (neighbour == null) {
             return us == null ? dfl : us;
@@ -536,7 +537,7 @@ public final class NewChunkHolder {
             return neighbour;
         }
 
-        return PrioritisedExecutor.Priority.max(us, neighbour);
+        return Priority.max(us, neighbour);
     }
 
     private void recalculateNeighbourRequestedPriority() {
@@ -545,18 +546,18 @@ public final class NewChunkHolder {
             return;
         }
 
-        PrioritisedExecutor.Priority max = null;
+        Priority max = null;
 
         for (final NewChunkHolder holder : this.neighboursWaitingForUs.keySet()) {
-            final PrioritisedExecutor.Priority neighbourPriority = holder.getEffectivePriority(null);
+            final Priority neighbourPriority = holder.getEffectivePriority(null);
             if (neighbourPriority != null && (max == null || neighbourPriority.isHigherPriority(max))) {
                 max = neighbourPriority;
             }
         }
 
-        final PrioritisedExecutor.Priority current = this.getEffectivePriority(PrioritisedExecutor.Priority.NORMAL);
+        final Priority current = this.getEffectivePriority(Priority.NORMAL);
         this.neighbourRequestedPriority = max;
-        final PrioritisedExecutor.Priority next = this.getEffectivePriority(PrioritisedExecutor.Priority.NORMAL);
+        final Priority next = this.getEffectivePriority(Priority.NORMAL);
 
         if (current == next) {
             return;
@@ -578,7 +579,7 @@ public final class NewChunkHolder {
     }
 
     // must hold scheduling lock
-    public void raisePriority(final PrioritisedExecutor.Priority priority) {
+    public void raisePriority(final Priority priority) {
         if (this.priority != null && this.priority.isHigherOrEqualPriority(priority)) {
             return;
         }
@@ -591,13 +592,13 @@ public final class NewChunkHolder {
     }
 
     // must hold scheduling lock
-    public void setPriority(final PrioritisedExecutor.Priority priority) {
+    public void setPriority(final Priority priority) {
         if (this.priorityLocked) {
             return;
         }
-        final PrioritisedExecutor.Priority old = this.getEffectivePriority(null);
+        final Priority old = this.getEffectivePriority(null);
         this.priority = priority;
-        final PrioritisedExecutor.Priority newPriority = this.getEffectivePriority(PrioritisedExecutor.Priority.NORMAL);
+        final Priority newPriority = this.getEffectivePriority(Priority.NORMAL);
 
         if (old != newPriority) {
             if (this.generationTask != null) {
@@ -609,7 +610,7 @@ public final class NewChunkHolder {
     }
 
     // must hold scheduling lock
-    public void lowerPriority(final PrioritisedExecutor.Priority priority) {
+    public void lowerPriority(final Priority priority) {
         if (this.priority != null && this.priority.isLowerOrEqualPriority(priority)) {
             return;
         }
@@ -788,9 +789,10 @@ public final class NewChunkHolder {
     private UnloadTask entityDataUnload;
     private UnloadTask poiDataUnload;
 
-    public static final record UnloadTask(Completable<CompoundTag> completable, DelayedPrioritisedTask task) {}
+    public static final record UnloadTask(CallbackCompletable<CompoundTag> completable, PrioritisedExecutor.PrioritisedTask task,
+                                          LazyRunnable toRun) {}
 
-    public UnloadTask getUnloadTask(final RegionFileIOThread.RegionFileType type) {
+    public UnloadTask getUnloadTask(final MoonriseRegionFileIO.RegionFileType type) {
         switch (type) {
             case CHUNK_DATA:
                 return this.chunkDataUnload;
@@ -803,7 +805,7 @@ public final class NewChunkHolder {
         }
     }
 
-    private void removeUnloadTask(final RegionFileIOThread.RegionFileType type) {
+    private void removeUnloadTask(final MoonriseRegionFileIO.RegionFileType type) {
         switch (type) {
             case CHUNK_DATA: {
                 this.chunkDataUnload = null;
@@ -851,22 +853,23 @@ public final class NewChunkHolder {
         this.priorityLocked = false;
 
         if (chunk != null) {
-            this.chunkDataUnload = new UnloadTask(new Completable<>(), new DelayedPrioritisedTask(PrioritisedExecutor.Priority.NORMAL));
+            final LazyRunnable toRun = new LazyRunnable();
+            this.chunkDataUnload = new UnloadTask(new CallbackCompletable<>(), this.scheduler.loadExecutor.createTask(toRun), toRun);
         }
         if (poiChunk != null) {
-            this.poiDataUnload = new UnloadTask(new Completable<>(), null);
+            this.poiDataUnload = new UnloadTask(new CallbackCompletable<>(), null, null);
         }
         if (entityChunk != null) {
-            this.entityDataUnload = new UnloadTask(new Completable<>(), null);
+            this.entityDataUnload = new UnloadTask(new CallbackCompletable<>(), null, null);
         }
 
         return this.unloadState = (chunk != null || entityChunk != null || poiChunk != null) ? new UnloadState(this, chunk, entityChunk, poiChunk) : null;
     }
 
     // data is null if failed or does not need to be saved
-    void completeAsyncUnloadDataSave(final RegionFileIOThread.RegionFileType type, final CompoundTag data) {
+    void completeAsyncUnloadDataSave(final MoonriseRegionFileIO.RegionFileType type, final CompoundTag data) {
         if (data != null) {
-            RegionFileIOThread.scheduleSave(this.world, this.chunkX, this.chunkZ, data, type);
+            MoonriseRegionFileIO.scheduleSave(this.world, this.chunkX, this.chunkZ, data, type);
         }
 
         this.getUnloadTask(type).completable().complete(data);
@@ -897,7 +900,7 @@ public final class NewChunkHolder {
             if (!shouldLevelChunkNotSave) {
                 this.saveChunk(chunk, true);
             } else {
-                this.completeAsyncUnloadDataSave(RegionFileIOThread.RegionFileType.CHUNK_DATA, null);
+                this.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, null);
             }
 
             if (chunk instanceof LevelChunk levelChunk) {
@@ -1386,7 +1389,7 @@ public final class NewChunkHolder {
                     LOGGER.error("Failed to process chunk status callback", thr);
                 }
             }
-        }, PrioritisedExecutor.Priority.HIGHEST);
+        }, Priority.HIGHEST);
     }
 
     private final Reference2ObjectOpenHashMap<FullChunkStatus, List<Consumer<LevelChunk>>> fullStatusWaiters = new Reference2ObjectOpenHashMap<>();
@@ -1414,7 +1417,7 @@ public final class NewChunkHolder {
                     LOGGER.error("Failed to process chunk status callback", thr);
                 }
             }
-        }, PrioritisedExecutor.Priority.HIGHEST);
+        }, Priority.HIGHEST);
     }
 
     // note: must hold scheduling lock
@@ -1670,6 +1673,8 @@ public final class NewChunkHolder {
 
     public static final record SaveStat(boolean savedChunk, boolean savedEntityChunk, boolean savedPoiChunk) {}
 
+    private static final MoonriseRegionFileIO.RegionFileType[] REGION_FILE_TYPES = MoonriseRegionFileIO.RegionFileType.values();
+
     public SaveStat save(final boolean shutdown) {
         TickThread.ensureTickThread(this.world, this.chunkX, this.chunkZ, "Cannot save data off-main");
 
@@ -1677,6 +1682,7 @@ public final class NewChunkHolder {
         PoiChunk poi = this.getPoiChunk();
         ChunkEntitySlices entities = this.getEntityChunk();
         boolean executedUnloadTask = false;
+        final boolean[] executedUnloadTasks = new boolean[REGION_FILE_TYPES.length];
 
         if (shutdown) {
             // make sure that the async unloads complete
@@ -1686,12 +1692,17 @@ public final class NewChunkHolder {
                 poi = this.unloadState.poiChunk();
                 entities = this.unloadState.entityChunk();
             }
-            final UnloadTask chunkUnloadTask = this.chunkDataUnload;
-            final DelayedPrioritisedTask chunkDataUnloadTask = chunkUnloadTask == null ? null : chunkUnloadTask.task();
-            if (chunkDataUnloadTask != null) {
-                final PrioritisedExecutor.PrioritisedTask unloadTask = chunkDataUnloadTask.getTask();
-                if (unloadTask != null) {
-                    executedUnloadTask = unloadTask.execute();
+            for (final MoonriseRegionFileIO.RegionFileType regionFileType : REGION_FILE_TYPES) {
+                final UnloadTask unloadTask = this.getUnloadTask(regionFileType);
+                if (unloadTask == null) {
+                    continue;
+                }
+
+                final PrioritisedExecutor.PrioritisedTask task = unloadTask.task();
+                if (task != null && task.isQueued()) {
+                    final boolean executed = task.execute();
+                    executedUnloadTask |= executed;
+                    executedUnloadTasks[regionFileType.ordinal()] = executed;
                 }
             }
         }
@@ -1717,7 +1728,13 @@ public final class NewChunkHolder {
             }
         }
 
-        return executedUnloadTask | canSaveChunk | canSaveEntities | canSavePOI ? new SaveStat(executedUnloadTask || canSaveChunk, canSaveEntities, canSavePOI): null;
+        return executedUnloadTask | canSaveChunk | canSaveEntities | canSavePOI ?
+                new SaveStat(
+                        canSaveChunk | executedUnloadTasks[MoonriseRegionFileIO.RegionFileType.CHUNK_DATA.ordinal()],
+                        canSaveEntities | executedUnloadTasks[MoonriseRegionFileIO.RegionFileType.ENTITY_DATA.ordinal()],
+                        canSavePOI | executedUnloadTasks[MoonriseRegionFileIO.RegionFileType.POI_DATA.ordinal()]
+                )
+                : null;
     }
 
     static final class AsyncChunkSerializeTask implements Runnable {
@@ -1749,17 +1766,17 @@ public final class NewChunkHolder {
                         synchronousSave = ChunkSystemFeatures.saveChunkAsync(AsyncChunkSerializeTask.this.world, AsyncChunkSerializeTask.this.chunk, AsyncChunkSerializeTask.this.asyncSaveData);
                     } catch (final Throwable throwable2) {
                         LOGGER.error("Failed to synchronously save chunk " + AsyncChunkSerializeTask.this.chunk.getPos() + " for world '" + WorldUtil.getWorldName(AsyncChunkSerializeTask.this.world) + "', chunk data will be lost", throwable2);
-                        AsyncChunkSerializeTask.this.toComplete.completeAsyncUnloadDataSave(RegionFileIOThread.RegionFileType.CHUNK_DATA, null);
+                        AsyncChunkSerializeTask.this.toComplete.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, null);
                         return;
                     }
 
-                    AsyncChunkSerializeTask.this.toComplete.completeAsyncUnloadDataSave(RegionFileIOThread.RegionFileType.CHUNK_DATA, synchronousSave);
+                    AsyncChunkSerializeTask.this.toComplete.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, synchronousSave);
                     LOGGER.info("Successfully serialized chunk " + AsyncChunkSerializeTask.this.chunk.getPos() + " for world '" + WorldUtil.getWorldName(AsyncChunkSerializeTask.this.world) + "' synchronously");
 
-                }, PrioritisedExecutor.Priority.HIGHEST);
+                }, Priority.HIGHEST);
                 return;
             }
-            this.toComplete.completeAsyncUnloadDataSave(RegionFileIOThread.RegionFileType.CHUNK_DATA, toSerialize);
+            this.toComplete.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, toSerialize);
         }
 
         @Override
@@ -1773,7 +1790,7 @@ public final class NewChunkHolder {
     private boolean saveChunk(final ChunkAccess chunk, final boolean unloading) {
         if (!chunk.isUnsaved()) {
             if (unloading) {
-                this.completeAsyncUnloadDataSave(RegionFileIOThread.RegionFileType.CHUNK_DATA, null);
+                this.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, null);
             }
             return false;
         }
@@ -1784,13 +1801,11 @@ public final class NewChunkHolder {
                 try {
                     final AsyncChunkSaveData asyncSaveData = ChunkSystemFeatures.getAsyncSaveData(this.world, chunk);
 
-                    final PrioritisedExecutor.PrioritisedTask task = this.scheduler.loadExecutor.createTask(new AsyncChunkSerializeTask(this.world, chunk, asyncSaveData, this));
-
-                    this.chunkDataUnload.task().setTask(task);
+                    this.chunkDataUnload.toRun().setRunnable(new AsyncChunkSerializeTask(this.world, chunk, asyncSaveData, this));
 
                     chunk.setUnsaved(false);
 
-                    task.queue();
+                    this.chunkDataUnload.task().queue();
 
                     return true;
                 } catch (final Throwable thr) {
@@ -1804,18 +1819,18 @@ public final class NewChunkHolder {
 
             if (unloading) {
                 completing = true;
-                this.completeAsyncUnloadDataSave(RegionFileIOThread.RegionFileType.CHUNK_DATA, save);
+                this.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, save);
                 if (failedAsyncPrepare) {
                     LOGGER.info("Successfully serialized chunk data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "' synchronously");
                 }
             } else {
-                RegionFileIOThread.scheduleSave(this.world, this.chunkX, this.chunkZ, save, RegionFileIOThread.RegionFileType.CHUNK_DATA);
+                MoonriseRegionFileIO.scheduleSave(this.world, this.chunkX, this.chunkZ, save, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA);
             }
             chunk.setUnsaved(false);
         } catch (final Throwable thr) {
             LOGGER.error("Failed to save chunk data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'", thr);
             if (unloading && !completing) {
-                this.completeAsyncUnloadDataSave(RegionFileIOThread.RegionFileType.CHUNK_DATA, null);
+                this.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, null);
             }
         }
 
@@ -1834,7 +1849,7 @@ public final class NewChunkHolder {
                     return false;
                 }
                 try {
-                    mergeFrom = RegionFileIOThread.loadData(this.world, this.chunkX, this.chunkZ, RegionFileIOThread.RegionFileType.ENTITY_DATA, PrioritisedExecutor.Priority.BLOCKING);
+                    mergeFrom = MoonriseRegionFileIO.loadData(this.world, this.chunkX, this.chunkZ, MoonriseRegionFileIO.RegionFileType.ENTITY_DATA, Priority.BLOCKING);
                 } catch (final Exception ex) {
                     LOGGER.error("Cannot merge transient entities for chunk (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "', data on disk will be replaced", ex);
                 }
@@ -1853,7 +1868,7 @@ public final class NewChunkHolder {
                 return false;
             }
 
-            RegionFileIOThread.scheduleSave(this.world, this.chunkX, this.chunkZ, save, RegionFileIOThread.RegionFileType.ENTITY_DATA);
+            MoonriseRegionFileIO.scheduleSave(this.world, this.chunkX, this.chunkZ, save, MoonriseRegionFileIO.RegionFileType.ENTITY_DATA);
             this.lastEntitySaveNull = save == null;
             if (unloading) {
                 this.lastEntityUnload = save;
@@ -1877,7 +1892,7 @@ public final class NewChunkHolder {
                 return false;
             }
 
-            RegionFileIOThread.scheduleSave(this.world, this.chunkX, this.chunkZ, save, RegionFileIOThread.RegionFileType.POI_DATA);
+            MoonriseRegionFileIO.scheduleSave(this.world, this.chunkX, this.chunkZ, save, MoonriseRegionFileIO.RegionFileType.POI_DATA);
             this.lastPoiSaveNull = save == null;
             if (unloading) {
                 this.poiDataUnload.completable().complete(save);
@@ -1924,7 +1939,7 @@ public final class NewChunkHolder {
         return element == null ? JsonNull.INSTANCE : new JsonPrimitive(element.toString());
     }
 
-    private static JsonObject serializeCompletable(final Completable<?> completable) {
+    private static JsonObject serializeCompletable(final CallbackCompletable<?> completable) {
         final JsonObject ret = new JsonObject();
 
         if (completable == null) {
@@ -2019,13 +2034,13 @@ public final class NewChunkHolder {
         ret.add("poi_unload_completable", serializeCompletable(poiDataUnload == null ? null : poiDataUnload.completable()));
         ret.add("chunk_unload_completable", serializeCompletable(chunkDataUnload == null ? null : chunkDataUnload.completable()));
 
-        final DelayedPrioritisedTask unloadTask = chunkDataUnload == null ? null : chunkDataUnload.task();
+        final PrioritisedExecutor.PrioritisedTask unloadTask = chunkDataUnload == null ? null : chunkDataUnload.task();
         if (unloadTask == null) {
             ret.addProperty("unload_task_priority", "null");
-            ret.addProperty("unload_task_priority_raw", "null");
+            ret.addProperty("unload_task_suborder", Long.valueOf(0L));
         } else {
             ret.addProperty("unload_task_priority", Objects.toString(unloadTask.getPriority()));
-            ret.addProperty("unload_task_priority_raw", Integer.valueOf(unloadTask.getPriorityInternal()));
+            ret.addProperty("unload_task_suborder", Long.valueOf(unloadTask.getSubOrder()));
         }
 
         ret.addProperty("killed", Boolean.valueOf(this.unloaded));

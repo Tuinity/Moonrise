@@ -1,9 +1,9 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.level;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
-import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import net.minecraft.core.BlockPos;
@@ -17,11 +17,11 @@ public interface ChunkSystemServerLevel extends ChunkSystemLevel {
 
     public ChunkTaskScheduler moonrise$getChunkTaskScheduler();
 
-    public RegionFileIOThread.ChunkDataController moonrise$getChunkDataController();
+    public MoonriseRegionFileIO.RegionDataController moonrise$getChunkDataController();
 
-    public RegionFileIOThread.ChunkDataController moonrise$getPoiChunkDataController();
+    public MoonriseRegionFileIO.RegionDataController moonrise$getPoiChunkDataController();
 
-    public RegionFileIOThread.ChunkDataController moonrise$getEntityChunkDataController();
+    public MoonriseRegionFileIO.RegionDataController moonrise$getEntityChunkDataController();
 
     public int moonrise$getRegionChunkShift();
 
@@ -32,19 +32,19 @@ public interface ChunkSystemServerLevel extends ChunkSystemLevel {
     public RegionizedPlayerChunkLoader moonrise$getPlayerChunkLoader();
 
     public void moonrise$loadChunksAsync(final BlockPos pos, final int radiusBlocks,
-                                         final PrioritisedExecutor.Priority priority,
+                                         final Priority priority,
                                          final Consumer<List<ChunkAccess>> onLoad);
 
     public void moonrise$loadChunksAsync(final BlockPos pos, final int radiusBlocks,
-                                         final ChunkStatus chunkStatus, final PrioritisedExecutor.Priority priority,
+                                         final ChunkStatus chunkStatus, final Priority priority,
                                          final Consumer<List<ChunkAccess>> onLoad);
 
     public void moonrise$loadChunksAsync(final int minChunkX, final int maxChunkX, final int minChunkZ, final int maxChunkZ,
-                                         final PrioritisedExecutor.Priority priority,
+                                         final Priority priority,
                                          final Consumer<List<ChunkAccess>> onLoad);
 
     public void moonrise$loadChunksAsync(final int minChunkX, final int maxChunkX, final int minChunkZ, final int maxChunkZ,
-                                         final ChunkStatus chunkStatus, final PrioritisedExecutor.Priority priority,
+                                         final ChunkStatus chunkStatus, final Priority priority,
                                          final Consumer<List<ChunkAccess>> onLoad);
 
     public RegionizedPlayerChunkLoader.ViewDistanceHolder moonrise$getViewDistanceHolder();

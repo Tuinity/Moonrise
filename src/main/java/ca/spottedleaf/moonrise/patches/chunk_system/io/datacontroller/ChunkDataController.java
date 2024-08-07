@@ -1,22 +1,24 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller;
 
-import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.ChunkSystemRegionFileStorage;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemChunkMap;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemChunkStorage;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-public final class ChunkDataController extends RegionFileIOThread.ChunkDataController {
+public final class ChunkDataController extends MoonriseRegionFileIO.RegionDataController {
 
     private final ServerLevel world;
 
-    public ChunkDataController(final ServerLevel world) {
-        super(RegionFileIOThread.RegionFileType.CHUNK_DATA);
+    public ChunkDataController(final ServerLevel world, final ChunkTaskScheduler taskScheduler) {
+        super(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, taskScheduler.ioExecutor, taskScheduler.compressionExecutor);
         this.world = world;
     }
 
@@ -26,31 +28,23 @@ public final class ChunkDataController extends RegionFileIOThread.ChunkDataContr
     }
 
     @Override
-    public void writeData(final int chunkX, final int chunkZ, final CompoundTag compound) throws IOException {
-        final CompletableFuture<Void> future = this.world.getChunkSource().chunkMap.write(new ChunkPos(chunkX, chunkZ), compound);
-
-        try {
-            if (future != null) {
-                // rets non-null when sync writing (i.e. future should be completed here)
-                future.join();
-            }
-        } catch (final CompletionException ex) {
-            if (ex.getCause() instanceof IOException ioException) {
-                throw ioException;
-            }
-            throw ex;
-        }
+    public WriteData startWrite(final int chunkX, final int chunkZ, final CompoundTag compound) throws IOException {
+        return ((ChunkSystemRegionFileStorage)this.getCache()).moonrise$startWrite(chunkX, chunkZ, compound);
     }
 
     @Override
-    public CompoundTag readData(final int chunkX, final int chunkZ) throws IOException {
-        try {
-            return this.world.getChunkSource().chunkMap.read(new ChunkPos(chunkX, chunkZ)).join().orElse(null);
-        } catch (final CompletionException ex) {
-            if (ex.getCause() instanceof IOException ioException) {
-                throw ioException;
-            }
-            throw ex;
-        }
+    public void finishWrite(final int chunkX, final int chunkZ, final WriteData writeData) throws IOException {
+        ((ChunkSystemChunkMap)this.world.getChunkSource().chunkMap).moonrise$writeFinishCallback(new ChunkPos(chunkX, chunkZ));
+        ((ChunkSystemRegionFileStorage)this.getCache()).moonrise$finishWrite(chunkX, chunkZ, writeData);
+    }
+
+    @Override
+    public ReadData readData(final int chunkX, final int chunkZ) throws IOException {
+        return ((ChunkSystemRegionFileStorage)this.getCache()).moonrise$readData(chunkX, chunkZ);
+    }
+
+    @Override
+    public CompoundTag finishRead(final int chunkX, final int chunkZ, final ReadData readData) throws IOException {
+        return ((ChunkSystemRegionFileStorage)this.getCache()).moonrise$finishRead(chunkX, chunkZ, readData);
     }
 }

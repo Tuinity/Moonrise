@@ -1,6 +1,8 @@
 package ca.spottedleaf.moonrise.mixin.render;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.executor.thread.PrioritisedThreadPool;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,8 +17,8 @@ import java.util.function.Supplier;
 public abstract class SectionRenderDispatcherMixin {
 
     @Unique
-    private static final PrioritisedExecutor RENDER_EXECUTOR = MoonriseCommon.WORKER_POOL.createExecutor(
-            "Moonrise Render Executor", 1, MoonriseCommon.WORKER_THREADS
+    private static final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor RENDER_EXECUTOR = MoonriseCommon.RENDER_EXECUTOR_GROUP.createExecutor(
+            -1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0
     );
 
     /**
@@ -36,7 +38,7 @@ public abstract class SectionRenderDispatcherMixin {
         return CompletableFuture.supplyAsync(
                 supplier,
                 (final Runnable task) -> {
-                    RENDER_EXECUTOR.queueRunnable(task, PrioritisedExecutor.Priority.NORMAL);
+                    RENDER_EXECUTOR.queueTask(task, Priority.NORMAL);
                 }
         );
     }

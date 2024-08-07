@@ -4,7 +4,7 @@ import ca.spottedleaf.moonrise.common.misc.Delayed26WayDistancePropagator3D;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
-import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.poi.ChunkSystemPoiManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.poi.ChunkSystemPoiSection;
@@ -261,21 +261,14 @@ public abstract class PoiManagerMixin extends SectionStorage<Object> implements 
 
     @Override
     public final CompoundTag moonrise$read(final int chunkX, final int chunkZ) throws IOException {
-        if (!RegionFileIOThread.isRegionFileThread()) {
-            return RegionFileIOThread.loadData(
-                this.world, chunkX, chunkZ, RegionFileIOThread.RegionFileType.POI_DATA,
-                RegionFileIOThread.getIOBlockingPriorityForCurrentThread()
-            );
-        }
-        return this.moonrise$getRegionStorage().read(new ChunkPos(chunkX, chunkZ));
+        return MoonriseRegionFileIO.loadData(
+                this.world, chunkX, chunkZ, MoonriseRegionFileIO.RegionFileType.POI_DATA,
+                MoonriseRegionFileIO.getIOBlockingPriorityForCurrentThread()
+        );
     }
 
     @Override
     public final void moonrise$write(final int chunkX, final int chunkZ, final CompoundTag data) throws IOException {
-        if (!RegionFileIOThread.isRegionFileThread()) {
-            RegionFileIOThread.scheduleSave(this.world, chunkX, chunkZ, data, RegionFileIOThread.RegionFileType.POI_DATA);
-            return;
-        }
-        this.moonrise$getRegionStorage().write(new ChunkPos(chunkX, chunkZ), data);
+        MoonriseRegionFileIO.scheduleSave(this.world, chunkX, chunkZ, data, MoonriseRegionFileIO.RegionFileType.POI_DATA);
     }
 }

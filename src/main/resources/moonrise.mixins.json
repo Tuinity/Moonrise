@@ -18,6 +18,7 @@
     "blockstate_propertyaccess.StateHolderMixin",
     "chunk_getblock.ChunkAccessMixin",
     "chunk_getblock.LevelChunkMixin",
+    "chunk_system.ChunkBufferMixin",
     "chunk_system.ChunkGeneratorMixin",
     "chunk_system.ChunkHolderMixin",
     "chunk_system.ChunkMap$DistanceManagerMixin",

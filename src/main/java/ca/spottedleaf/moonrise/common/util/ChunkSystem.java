@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.common.util;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
@@ -23,27 +23,27 @@ public final class ChunkSystem {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run) {
-        scheduleChunkTask(level, chunkX, chunkZ, run, PrioritisedExecutor.Priority.NORMAL);
+        scheduleChunkTask(level, chunkX, chunkZ, run, Priority.NORMAL);
     }
 
-    public static void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run, final PrioritisedExecutor.Priority priority) {
+    public static void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run, final Priority priority) {
         ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkTask(chunkX, chunkZ, run, priority);
     }
 
     public static void scheduleChunkLoad(final ServerLevel level, final int chunkX, final int chunkZ, final boolean gen,
-                                         final ChunkStatus toStatus, final boolean addTicket, final PrioritisedExecutor.Priority priority,
+                                         final ChunkStatus toStatus, final boolean addTicket, final Priority priority,
                                          final Consumer<ChunkAccess> onComplete) {
         ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkLoad(chunkX, chunkZ, gen, toStatus, addTicket, priority, onComplete);
     }
 
     public static void scheduleChunkLoad(final ServerLevel level, final int chunkX, final int chunkZ, final ChunkStatus toStatus,
-                                         final boolean addTicket, final PrioritisedExecutor.Priority priority, final Consumer<ChunkAccess> onComplete) {
+                                         final boolean addTicket, final Priority priority, final Consumer<ChunkAccess> onComplete) {
         ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkLoad(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
     }
 
     public static void scheduleTickingState(final ServerLevel level, final int chunkX, final int chunkZ,
                                             final FullChunkStatus toStatus, final boolean addTicket,
-                                            final PrioritisedExecutor.Priority priority, final Consumer<LevelChunk> onComplete) {
+                                            final Priority priority, final Consumer<LevelChunk> onComplete) {
         ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleTickingState(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
     }
 

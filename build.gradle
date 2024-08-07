@@ -41,7 +41,7 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    shadow('ca.spottedleaf:concurrentutil:0.0.1-SNAPSHOT')
+    shadow('ca.spottedleaf:concurrentutil:0.0.2-SNAPSHOT')
     shadow('org.yaml:snakeyaml:2.2')
 }
 

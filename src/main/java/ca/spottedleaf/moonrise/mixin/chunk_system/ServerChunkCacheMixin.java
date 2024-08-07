@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
@@ -73,7 +73,7 @@ public abstract class ServerChunkCacheMixin extends ChunkSource implements Chunk
         final ChunkTaskScheduler chunkTaskScheduler = ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler();
         final CompletableFuture<ChunkAccess> completable = new CompletableFuture<>();
         chunkTaskScheduler.scheduleChunkLoad(
-                chunkX, chunkZ, toStatus, true, PrioritisedExecutor.Priority.BLOCKING,
+                chunkX, chunkZ, toStatus, true, Priority.BLOCKING,
                 completable::complete
         );
 
@@ -182,7 +182,7 @@ public abstract class ServerChunkCacheMixin extends ChunkSource implements Chunk
 
             ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().scheduleChunkLoad(
                 chunkX, chunkZ, toStatus, true,
-                PrioritisedExecutor.Priority.HIGHER,
+                Priority.HIGHER,
                 complete
             );
 

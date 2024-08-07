@@ -1,8 +1,9 @@
 package ca.spottedleaf.moonrise.patches.starlight.light;
 
 import ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue;
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
@@ -745,34 +746,34 @@ public final class StarLightInterface {
             super(lightInterface);
         }
 
-        public void lowerPriority(final int chunkX, final int chunkZ, final PrioritisedExecutor.Priority priority) {
+        public void lowerPriority(final int chunkX, final int chunkZ, final Priority priority) {
             final ServerChunkTasks task = this.chunkTasks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
             if (task != null) {
                 task.lowerPriority(priority);
             }
         }
 
-        public void setPriority(final int chunkX, final int chunkZ, final PrioritisedExecutor.Priority priority) {
+        public void setPriority(final int chunkX, final int chunkZ, final Priority priority) {
             final ServerChunkTasks task = this.chunkTasks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
             if (task != null) {
                 task.setPriority(priority);
             }
         }
 
-        public void raisePriority(final int chunkX, final int chunkZ, final PrioritisedExecutor.Priority priority) {
+        public void raisePriority(final int chunkX, final int chunkZ, final Priority priority) {
             final ServerChunkTasks task = this.chunkTasks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
             if (task != null) {
                 task.raisePriority(priority);
             }
         }
 
-        public PrioritisedExecutor.Priority getPriority(final int chunkX, final int chunkZ) {
+        public Priority getPriority(final int chunkX, final int chunkZ) {
             final ServerChunkTasks task = this.chunkTasks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
             if (task != null) {
                 return task.getPriority();
             }
 
-            return PrioritisedExecutor.Priority.COMPLETING;
+            return Priority.COMPLETING;
         }
 
         @Override
@@ -816,7 +817,7 @@ public final class StarLightInterface {
             return ret;
         }
 
-        public ServerChunkTasks queueChunkLightTask(final ChunkPos pos, final BooleanSupplier lightTask, final PrioritisedExecutor.Priority priority) {
+        public ServerChunkTasks queueChunkLightTask(final ChunkPos pos, final BooleanSupplier lightTask, final Priority priority) {
             final ServerChunkTasks ret = this.chunkTasks.compute(CoordinateUtils.getChunkKey(pos), (final long keyInMap, ServerChunkTasks valueInMap) -> {
                 if (valueInMap == null) {
                     valueInMap = new ServerChunkTasks(
@@ -879,11 +880,11 @@ public final class StarLightInterface {
 
             public ServerChunkTasks(final long chunkCoordinate, final StarLightInterface lightEngine,
                                     final ServerLightQueue queue) {
-                this(chunkCoordinate, lightEngine, queue, PrioritisedExecutor.Priority.NORMAL);
+                this(chunkCoordinate, lightEngine, queue, Priority.NORMAL);
             }
 
             public ServerChunkTasks(final long chunkCoordinate, final StarLightInterface lightEngine,
-                                    final ServerLightQueue queue, final PrioritisedExecutor.Priority priority) {
+                                    final ServerLightQueue queue, final Priority priority) {
                 super(chunkCoordinate, lightEngine, queue);
                 this.task = ((ChunkSystemServerLevel)(ServerLevel)lightEngine.getWorld()).moonrise$getChunkTaskScheduler().radiusAwareScheduler.createTask(
                         CoordinateUtils.getChunkX(chunkCoordinate), CoordinateUtils.getChunkZ(chunkCoordinate),
@@ -903,19 +904,19 @@ public final class StarLightInterface {
                 return this.task.cancel();
             }
 
-            public PrioritisedExecutor.Priority getPriority() {
+            public Priority getPriority() {
                 return this.task.getPriority();
             }
 
-            public void lowerPriority(final PrioritisedExecutor.Priority priority) {
+            public void lowerPriority(final Priority priority) {
                 this.task.lowerPriority(priority);
             }
 
-            public void setPriority(final PrioritisedExecutor.Priority priority) {
+            public void setPriority(final Priority priority) {
                 this.task.setPriority(priority);
             }
 
-            public void raisePriority(final PrioritisedExecutor.Priority priority) {
+            public void raisePriority(final Priority priority) {
                 this.task.raisePriority(priority);
             }
 

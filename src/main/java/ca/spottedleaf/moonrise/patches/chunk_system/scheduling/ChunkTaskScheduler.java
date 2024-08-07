@@ -1,16 +1,17 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedThreadPool;
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedThreadedTaskQueue;
+import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.executor.queue.PrioritisedTaskQueue;
+import ca.spottedleaf.concurrentutil.executor.thread.PrioritisedThreadPool;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
+import ca.spottedleaf.concurrentutil.util.Priority;
+import ca.spottedleaf.moonrise.common.config.moonrise.MoonriseConfig;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.JsonUtil;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
-import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkStatus;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer;
@@ -54,7 +55,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -66,34 +66,18 @@ public final class ChunkTaskScheduler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChunkTaskScheduler.class);
 
-    static int newChunkSystemIOThreads;
-    static int newChunkSystemGenParallelism;
-    static int newChunkSystemGenPopulationParallelism;
-    static int newChunkSystemLoadParallelism;
+    public static void init(final MoonriseConfig.ChunkSystem config) {
+        final int newChunkSystemIOThreads = Math.max(1, config.ioThreads);
 
-    private static boolean initialised = false;
+        final boolean useParallelGen = config.populationGenParallelism;
 
-    public static void init() {
-        if (initialised) {
-            return;
-        }
-        initialised = true;
-        newChunkSystemIOThreads = MoonriseCommon.getConfig().chunkSystem.ioThreads;
-        if (newChunkSystemIOThreads <= 0) {
-            newChunkSystemIOThreads = 1;
-        } else {
-            newChunkSystemIOThreads = Math.max(1, newChunkSystemIOThreads);
+        MoonriseCommon.IO_POOL.adjustThreadCount(newChunkSystemIOThreads);
+
+        for (final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor executor : MoonriseCommon.RADIUS_AWARE_GROUP.getAllExecutors()) {
+            executor.setMaxParallelism(useParallelGen ? -1 : 1);
         }
 
-        boolean useParallelGen = MoonriseCommon.getConfig().chunkSystem.populationGenParallelism;
-
-        ChunkTaskScheduler.newChunkSystemGenParallelism = MoonriseCommon.WORKER_THREADS;
-        ChunkTaskScheduler.newChunkSystemGenPopulationParallelism = useParallelGen ? MoonriseCommon.WORKER_THREADS : 1;
-        ChunkTaskScheduler.newChunkSystemLoadParallelism = MoonriseCommon.WORKER_THREADS;
-
-        RegionFileIOThread.init(newChunkSystemIOThreads);
-
-        LOGGER.info("Chunk system is using " + newChunkSystemIOThreads + " I/O threads, " + MoonriseCommon.WORKER_THREADS + " worker threads, and population gen parallelism of " + ChunkTaskScheduler.newChunkSystemGenPopulationParallelism + " threads");
+        LOGGER.info("Chunk system is using " + newChunkSystemIOThreads + " I/O threads, " + MoonriseCommon.WORKER_POOL.getCoreThreads().length + " worker threads, population gen parallelism: " + useParallelGen);
     }
 
     public static final TicketType<Long> CHUNK_LOAD = TicketType.create("chunk_system:chunk_load", Long::compareTo);
@@ -137,13 +121,14 @@ public final class ChunkTaskScheduler {
     }
 
     public final ServerLevel world;
-    public final PrioritisedThreadPool workers;
     public final RadiusAwarePrioritisedExecutor radiusAwareScheduler;
-    public final PrioritisedThreadPool.PrioritisedPoolExecutor parallelGenExecutor;
-    private final PrioritisedThreadPool.PrioritisedPoolExecutor radiusAwareGenExecutor;
-    public final PrioritisedThreadPool.PrioritisedPoolExecutor loadExecutor;
+    public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor parallelGenExecutor;
+    private final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor radiusAwareGenExecutor;
+    public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor loadExecutor;
+    public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor ioExecutor;
+    public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor compressionExecutor;
 
-    private final PrioritisedThreadedTaskQueue mainThreadExecutor = new PrioritisedThreadedTaskQueue();
+    private final PrioritisedTaskQueue mainThreadExecutor = new PrioritisedTaskQueue();
 
     public final ChunkHolderManager chunkHolderManager;
 
@@ -292,9 +277,8 @@ public final class ChunkTaskScheduler {
         return this.lockShift;
     }
 
-    public ChunkTaskScheduler(final ServerLevel world, final PrioritisedThreadPool workers) {
+    public ChunkTaskScheduler(final ServerLevel world) {
         this.world = world;
-        this.workers = workers;
         // must be >= region shift (in paper, doesn't exist) and must be >= ticket propagator section shift
         // it must be >= region shift since the regioniser assumes ticket updates do not occur in parallel for the region sections
         // it must be >= ticket propagator section shift so that the ticket propagator can assume that owning a position implies owning
@@ -303,11 +287,17 @@ public final class ChunkTaskScheduler {
         this.lockShift = Math.max(((ChunkSystemServerLevel)world).moonrise$getRegionChunkShift(), ThreadedTicketLevelPropagator.SECTION_SHIFT);
         this.schedulingLockArea = new ReentrantAreaLock(this.getChunkSystemLockShift());
 
+        final MoonriseConfig config = MoonriseCommon.getConfig();
+
         final String worldName = WorldUtil.getWorldName(world);
-        this.parallelGenExecutor = workers.createExecutor("Chunk parallel generation executor for world '" + worldName + "'", 1, Math.max(1, newChunkSystemGenParallelism));
-        this.radiusAwareGenExecutor = workers.createExecutor("Chunk radius aware generator for world '" + worldName + "'", 1, Math.max(1, newChunkSystemGenPopulationParallelism));
-        this.loadExecutor = workers.createExecutor("Chunk load executor for world '" + worldName + "'", 1, newChunkSystemLoadParallelism);
-        this.radiusAwareScheduler = new RadiusAwarePrioritisedExecutor(this.radiusAwareGenExecutor, Math.max(2, 1 + newChunkSystemGenPopulationParallelism));
+        this.parallelGenExecutor = MoonriseCommon.PARALLEL_GEN_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
+        this.radiusAwareGenExecutor = MoonriseCommon.RADIUS_AWARE_GROUP.createExecutor(config.chunkSystem.populationGenParallelism ? -1 : 1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
+        this.loadExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
+        // TODO proper max to schedule
+        this.radiusAwareScheduler = new RadiusAwarePrioritisedExecutor(this.radiusAwareGenExecutor, Math.max(2, 1 + 1));
+        this.ioExecutor = MoonriseCommon.SERVER_REGION_IO_GROUP.createExecutor(-1, MoonriseCommon.IO_QUEUE_HOLD_TIME, 0);
+        // we need a separate executor here so that on shutdown we can continue to process I/O tasks
+        this.compressionExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
         this.chunkHolderManager = new ChunkHolderManager(world, this);
     }
 
@@ -346,7 +336,7 @@ public final class ChunkTaskScheduler {
         };
 
         // this may not be good enough, specifically thanks to stupid ass plugins swallowing exceptions
-        this.scheduleChunkTask(chunkX, chunkZ, crash, PrioritisedExecutor.Priority.BLOCKING);
+        this.scheduleChunkTask(chunkX, chunkZ, crash, Priority.BLOCKING);
         // so, make the main thread pick it up
         ((ChunkSystemMinecraftServer)this.world.getServer()).moonrise$setChunkSystemCrash(new RuntimeException("Chunk system crash propagated from unrecoverableChunkSystemFailure", reportedException));
     }
@@ -356,20 +346,20 @@ public final class ChunkTaskScheduler {
         return this.mainThreadExecutor.executeTask();
     }
 
-    public void raisePriority(final int x, final int z, final PrioritisedExecutor.Priority priority) {
+    public void raisePriority(final int x, final int z, final Priority priority) {
         this.chunkHolderManager.raisePriority(x, z, priority);
     }
 
-    public void setPriority(final int x, final int z, final PrioritisedExecutor.Priority priority) {
+    public void setPriority(final int x, final int z, final Priority priority) {
         this.chunkHolderManager.setPriority(x, z, priority);
     }
 
-    public void lowerPriority(final int x, final int z, final PrioritisedExecutor.Priority priority) {
+    public void lowerPriority(final int x, final int z, final Priority priority) {
         this.chunkHolderManager.lowerPriority(x, z, priority);
     }
 
     public void scheduleTickingState(final int chunkX, final int chunkZ, final FullChunkStatus toStatus,
-                                     final boolean addTicket, final PrioritisedExecutor.Priority priority,
+                                     final boolean addTicket, final Priority priority,
                                      final Consumer<LevelChunk> onComplete) {
         final int radius = toStatus.ordinal() - 1; // 0 -> BORDER, 1 -> TICKING, 2 -> ENTITY_TICKING
 
@@ -465,7 +455,7 @@ public final class ChunkTaskScheduler {
     }
 
     public void scheduleChunkLoad(final int chunkX, final int chunkZ, final boolean gen, final ChunkStatus toStatus, final boolean addTicket,
-                                  final PrioritisedExecutor.Priority priority, final Consumer<ChunkAccess> onComplete) {
+                                  final Priority priority, final Consumer<ChunkAccess> onComplete) {
         if (gen) {
             this.scheduleChunkLoad(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
             return;
@@ -489,7 +479,7 @@ public final class ChunkTaskScheduler {
 
     // only appropriate to use with syncLoadNonFull
     public boolean beginChunkLoadForNonFullSync(final int chunkX, final int chunkZ, final ChunkStatus toStatus,
-                                                final PrioritisedExecutor.Priority priority) {
+                                                final Priority priority) {
         final int accessRadius = getAccessRadius(toStatus);
         final long chunkKey = CoordinateUtils.getChunkKey(chunkX, chunkZ);
         final int minLevel = ChunkTaskScheduler.getTicketLevel(toStatus);
@@ -544,7 +534,7 @@ public final class ChunkTaskScheduler {
         this.chunkHolderManager.addTicketAtLevel(NON_FULL_CHUNK_LOAD, chunkX, chunkZ, ticketLevel, ticketId);
         this.chunkHolderManager.processTicketUpdates();
 
-        this.beginChunkLoadForNonFullSync(chunkX, chunkZ, status, PrioritisedExecutor.Priority.BLOCKING);
+        this.beginChunkLoadForNonFullSync(chunkX, chunkZ, status, Priority.BLOCKING);
 
         // we could do a simple spinwait here, since we do not need to process tasks while performing this load
         // but we process tasks only because it's a better use of the time spent
@@ -564,7 +554,7 @@ public final class ChunkTaskScheduler {
     }
 
     public void scheduleChunkLoad(final int chunkX, final int chunkZ, final ChunkStatus toStatus, final boolean addTicket,
-                                  final PrioritisedExecutor.Priority priority, final Consumer<ChunkAccess> onComplete) {
+                                  final Priority priority, final Consumer<ChunkAccess> onComplete) {
         if (!TickThread.isTickThreadFor(this.world, chunkX, chunkZ)) {
             this.scheduleChunkTask(chunkX, chunkZ, () -> {
                 ChunkTaskScheduler.this.scheduleChunkLoad(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
@@ -656,7 +646,7 @@ public final class ChunkTaskScheduler {
 
     private ChunkProgressionTask createTask(final int chunkX, final int chunkZ, final ChunkAccess chunk,
                                             final NewChunkHolder chunkHolder, final StaticCache2D<GenerationChunkHolder> neighbours,
-                                            final ChunkStatus toStatus, final PrioritisedExecutor.Priority initialPriority) {
+                                            final ChunkStatus toStatus, final Priority initialPriority) {
         if (toStatus == ChunkStatus.EMPTY) {
             return new ChunkLoadTask(this, this.world, chunkX, chunkZ, chunkHolder, initialPriority);
         }
@@ -672,7 +662,7 @@ public final class ChunkTaskScheduler {
 
     ChunkProgressionTask schedule(final int chunkX, final int chunkZ, final ChunkStatus targetStatus, final NewChunkHolder chunkHolder,
                                   final List<ChunkProgressionTask> allTasks) {
-        return this.schedule(chunkX, chunkZ, targetStatus, chunkHolder, allTasks, chunkHolder.getEffectivePriority(PrioritisedExecutor.Priority.NORMAL));
+        return this.schedule(chunkX, chunkZ, targetStatus, chunkHolder, allTasks, chunkHolder.getEffectivePriority(Priority.NORMAL));
     }
 
     // rets new task scheduled for the _specified_ chunk
@@ -681,7 +671,7 @@ public final class ChunkTaskScheduler {
     // schedule will ignore the generation target, so it should be checked by the caller to ensure the target is not regressed!
     private ChunkProgressionTask schedule(final int chunkX, final int chunkZ, final ChunkStatus targetStatus,
                                           final NewChunkHolder chunkHolder, final List<ChunkProgressionTask> allTasks,
-                                          final PrioritisedExecutor.Priority minPriority) {
+                                          final Priority minPriority) {
         if (!this.schedulingLockArea.isHeldByCurrentThread(chunkX, chunkZ, getAccessRadius(targetStatus))) {
             throw new IllegalStateException("Not holding scheduling lock");
         }
@@ -691,8 +681,8 @@ public final class ChunkTaskScheduler {
             return null;
         }
 
-        final PrioritisedExecutor.Priority requestedPriority = PrioritisedExecutor.Priority.max(
-                minPriority, chunkHolder.getEffectivePriority(PrioritisedExecutor.Priority.NORMAL)
+        final Priority requestedPriority = Priority.max(
+                minPriority, chunkHolder.getEffectivePriority(Priority.NORMAL)
         );
         final ChunkStatus currentGenStatus = chunkHolder.getCurrentGenStatus();
         final ChunkAccess chunk = chunkHolder.getCurrentChunk();
@@ -769,7 +759,7 @@ public final class ChunkTaskScheduler {
 
         final ChunkProgressionTask task = this.createTask(
                 chunkX, chunkZ, chunk, chunkHolder, neighbours, toStatus,
-                chunkHolder.getEffectivePriority(PrioritisedExecutor.Priority.NORMAL)
+                chunkHolder.getEffectivePriority(Priority.NORMAL)
         );
         allTasks.add(task);
 
@@ -780,7 +770,7 @@ public final class ChunkTaskScheduler {
 
     // rets true if the neighbour is not at the required status, false otherwise
     private boolean checkNeighbour(final int chunkX, final int chunkZ, final ChunkStatus requiredStatus, final NewChunkHolder center,
-                                   final List<ChunkProgressionTask> tasks, final PrioritisedExecutor.Priority minPriority) {
+                                   final List<ChunkProgressionTask> tasks, final Priority minPriority) {
         final NewChunkHolder chunkHolder = this.chunkHolderManager.getChunkHolder(chunkX, chunkZ);
 
         if (chunkHolder == null) {
@@ -816,46 +806,67 @@ public final class ChunkTaskScheduler {
      */
     @Deprecated
     public PrioritisedExecutor.PrioritisedTask scheduleChunkTask(final Runnable run) {
-        return this.scheduleChunkTask(run, PrioritisedExecutor.Priority.NORMAL);
+        return this.scheduleChunkTask(run, Priority.NORMAL);
     }
 
     /**
      * @deprecated Chunk tasks must be tied to coordinates in the future
      */
     @Deprecated
-    public PrioritisedExecutor.PrioritisedTask scheduleChunkTask(final Runnable run, final PrioritisedExecutor.Priority priority) {
-        return this.mainThreadExecutor.queueRunnable(run, priority);
+    public PrioritisedExecutor.PrioritisedTask scheduleChunkTask(final Runnable run, final Priority priority) {
+        return this.mainThreadExecutor.queueTask(run, priority);
     }
 
     public PrioritisedExecutor.PrioritisedTask createChunkTask(final int chunkX, final int chunkZ, final Runnable run) {
-        return this.createChunkTask(chunkX, chunkZ, run, PrioritisedExecutor.Priority.NORMAL);
+        return this.createChunkTask(chunkX, chunkZ, run, Priority.NORMAL);
     }
 
     public PrioritisedExecutor.PrioritisedTask createChunkTask(final int chunkX, final int chunkZ, final Runnable run,
-                                                               final PrioritisedExecutor.Priority priority) {
+                                                               final Priority priority) {
         return this.mainThreadExecutor.createTask(run, priority);
     }
 
     public PrioritisedExecutor.PrioritisedTask scheduleChunkTask(final int chunkX, final int chunkZ, final Runnable run) {
-        return this.scheduleChunkTask(chunkX, chunkZ, run, PrioritisedExecutor.Priority.NORMAL);
+        return this.scheduleChunkTask(chunkX, chunkZ, run, Priority.NORMAL);
     }
 
     public PrioritisedExecutor.PrioritisedTask scheduleChunkTask(final int chunkX, final int chunkZ, final Runnable run,
-                                                                 final PrioritisedExecutor.Priority priority) {
-        return this.mainThreadExecutor.queueRunnable(run, priority);
+                                                                 final Priority priority) {
+        return this.mainThreadExecutor.queueTask(run, priority);
     }
 
     public boolean halt(final boolean sync, final long maxWaitNS) {
         this.radiusAwareGenExecutor.halt();
         this.parallelGenExecutor.halt();
         this.loadExecutor.halt();
-        final long time = System.nanoTime();
         if (sync) {
+            final long time = System.nanoTime();
             for (long failures = 9L;; failures = ConcurrentUtil.linearLongBackoff(failures, 500_000L, 50_000_000L)) {
                 if (
                         !this.radiusAwareGenExecutor.isActive() &&
                         !this.parallelGenExecutor.isActive() &&
                         !this.loadExecutor.isActive()
+                ) {
+                    return true;
+                }
+                if ((System.nanoTime() - time) >= maxWaitNS) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public boolean haltIO(final boolean sync, final long maxWaitNS) {
+        this.ioExecutor.halt();
+        this.compressionExecutor.halt();
+        if (sync) {
+            final long time = System.nanoTime();
+            for (long failures = 9L;; failures = ConcurrentUtil.linearLongBackoff(failures, 500_000L, 50_000_000L)) {
+                if (
+                        !this.ioExecutor.isActive() &&
+                        !this.compressionExecutor.isActive()
                 ) {
                     return true;
                 }

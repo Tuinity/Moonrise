@@ -1,7 +1,8 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkStatus;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
@@ -36,9 +37,9 @@ public final class ChunkUpgradeGenericStatusTask extends ChunkProgressionTask im
 
     public ChunkUpgradeGenericStatusTask(final ChunkTaskScheduler scheduler, final ServerLevel world, final int chunkX,
                                          final int chunkZ, final ChunkAccess chunk, final StaticCache2D<GenerationChunkHolder> neighbours,
-                                         final ChunkStatus toStatus, final PrioritisedExecutor.Priority priority) {
+                                         final ChunkStatus toStatus, final Priority priority) {
         super(scheduler, world, chunkX, chunkZ);
-        if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+        if (!Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
         this.fromChunk = chunk;
@@ -187,29 +188,29 @@ public final class ChunkUpgradeGenericStatusTask extends ChunkProgressionTask im
     }
 
     @Override
-    public PrioritisedExecutor.Priority getPriority() {
+    public Priority getPriority() {
         return this.generateTask.getPriority();
     }
 
     @Override
-    public void lowerPriority(final PrioritisedExecutor.Priority priority) {
-        if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+    public void lowerPriority(final Priority priority) {
+        if (!Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
         this.generateTask.lowerPriority(priority);
     }
 
     @Override
-    public void setPriority(final PrioritisedExecutor.Priority priority) {
-        if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+    public void setPriority(final Priority priority) {
+        if (!Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
         this.generateTask.setPriority(priority);
     }
 
     @Override
-    public void raisePriority(final PrioritisedExecutor.Priority priority) {
-        if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+    public void raisePriority(final Priority priority) {
+        if (!Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
         this.generateTask.raisePriority(priority);

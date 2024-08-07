@@ -1,12 +1,13 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task;
 
 import ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue;
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.patches.chunk_system.ChunkSystemConverters;
 import ca.spottedleaf.moonrise.patches.chunk_system.ChunkSystemFeatures;
-import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.poi.PoiChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
@@ -41,7 +42,7 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
     private final AtomicInteger taskCountToComplete = new AtomicInteger(3); // one for poi, one for entity, and one for chunk data
 
     public ChunkLoadTask(final ChunkTaskScheduler scheduler, final ServerLevel world, final int chunkX, final int chunkZ,
-                         final NewChunkHolder chunkHolder, final PrioritisedExecutor.Priority priority) {
+                         final NewChunkHolder chunkHolder, final Priority priority) {
         super(scheduler, world, chunkX, chunkZ);
         this.chunkHolder = chunkHolder;
         this.loadTask = new ChunkDataLoadTask(scheduler, world, chunkX, chunkZ, priority);
@@ -170,12 +171,12 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
     }
 
     @Override
-    public PrioritisedExecutor.Priority getPriority() {
+    public Priority getPriority() {
         return this.loadTask.getPriority();
     }
 
     @Override
-    public void lowerPriority(final PrioritisedExecutor.Priority priority) {
+    public void lowerPriority(final Priority priority) {
         final EntityDataLoadTask entityLoad = this.chunkHolder.getEntityDataLoadTask();
         if (entityLoad != null) {
             entityLoad.lowerPriority(priority);
@@ -191,7 +192,7 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
     }
 
     @Override
-    public void setPriority(final PrioritisedExecutor.Priority priority) {
+    public void setPriority(final Priority priority) {
         final EntityDataLoadTask entityLoad = this.chunkHolder.getEntityDataLoadTask();
         if (entityLoad != null) {
             entityLoad.setPriority(priority);
@@ -207,7 +208,7 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
     }
 
     @Override
-    public void raisePriority(final PrioritisedExecutor.Priority priority) {
+    public void raisePriority(final Priority priority) {
         final EntityDataLoadTask entityLoad = this.chunkHolder.getEntityDataLoadTask();
         if (entityLoad != null) {
             entityLoad.raisePriority(priority);
@@ -231,8 +232,8 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
         protected static final VarHandle COMPLETED_HANDLE = ConcurrentUtil.getVarHandle(CallbackDataLoadTask.class, "completed", boolean.class);
 
         protected CallbackDataLoadTask(final ChunkTaskScheduler scheduler, final ServerLevel world, final int chunkX,
-                                       final int chunkZ, final RegionFileIOThread.RegionFileType type,
-                                       final PrioritisedExecutor.Priority priority) {
+                                       final int chunkZ, final MoonriseRegionFileIO.RegionFileType type,
+                                       final Priority priority) {
             super(scheduler, world, chunkX, chunkZ, type, priority);
         }
 
@@ -274,8 +275,8 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
 
     private static final class ChunkDataLoadTask extends CallbackDataLoadTask<CompoundTag, ChunkAccess> {
         private ChunkDataLoadTask(final ChunkTaskScheduler scheduler, final ServerLevel world, final int chunkX,
-                                    final int chunkZ, final PrioritisedExecutor.Priority priority) {
-            super(scheduler, world, chunkX, chunkZ, RegionFileIOThread.RegionFileType.CHUNK_DATA, priority);
+                                    final int chunkZ, final Priority priority) {
+            super(scheduler, world, chunkX, chunkZ, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, priority);
         }
 
         @Override
@@ -289,12 +290,12 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
         }
 
         @Override
-        protected PrioritisedExecutor.PrioritisedTask createOffMain(final Runnable run, final PrioritisedExecutor.Priority priority) {
+        protected PrioritisedExecutor.PrioritisedTask createOffMain(final Runnable run, final Priority priority) {
             return this.scheduler.loadExecutor.createTask(run, priority);
         }
 
         @Override
-        protected PrioritisedExecutor.PrioritisedTask createOnMain(final Runnable run, final PrioritisedExecutor.Priority priority) {
+        protected PrioritisedExecutor.PrioritisedTask createOnMain(final Runnable run, final Priority priority) {
             return this.scheduler.createChunkTask(this.chunkX, this.chunkZ, run, priority);
         }
 
@@ -368,8 +369,8 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
     public static final class PoiDataLoadTask extends CallbackDataLoadTask<PoiChunk, PoiChunk> {
 
         public PoiDataLoadTask(final ChunkTaskScheduler scheduler, final ServerLevel world, final int chunkX,
-                               final int chunkZ, final PrioritisedExecutor.Priority priority) {
-            super(scheduler, world, chunkX, chunkZ, RegionFileIOThread.RegionFileType.POI_DATA, priority);
+                               final int chunkZ, final Priority priority) {
+            super(scheduler, world, chunkX, chunkZ, MoonriseRegionFileIO.RegionFileType.POI_DATA, priority);
         }
 
         @Override
@@ -383,12 +384,12 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
         }
 
         @Override
-        protected PrioritisedExecutor.PrioritisedTask createOffMain(final Runnable run, final PrioritisedExecutor.Priority priority) {
+        protected PrioritisedExecutor.PrioritisedTask createOffMain(final Runnable run, final Priority priority) {
             return this.scheduler.loadExecutor.createTask(run, priority);
         }
 
         @Override
-        protected PrioritisedExecutor.PrioritisedTask createOnMain(final Runnable run, final PrioritisedExecutor.Priority priority) {
+        protected PrioritisedExecutor.PrioritisedTask createOnMain(final Runnable run, final Priority priority) {
             throw new UnsupportedOperationException();
         }
 
@@ -430,8 +431,8 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
     public static final class EntityDataLoadTask extends CallbackDataLoadTask<CompoundTag, CompoundTag> {
 
         public EntityDataLoadTask(final ChunkTaskScheduler scheduler, final ServerLevel world, final int chunkX,
-                                  final int chunkZ, final PrioritisedExecutor.Priority priority) {
-            super(scheduler, world, chunkX, chunkZ, RegionFileIOThread.RegionFileType.ENTITY_DATA, priority);
+                                  final int chunkZ, final Priority priority) {
+            super(scheduler, world, chunkX, chunkZ, MoonriseRegionFileIO.RegionFileType.ENTITY_DATA, priority);
         }
 
         @Override
@@ -445,12 +446,12 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
         }
 
         @Override
-        protected PrioritisedExecutor.PrioritisedTask createOffMain(final Runnable run, final PrioritisedExecutor.Priority priority) {
+        protected PrioritisedExecutor.PrioritisedTask createOffMain(final Runnable run, final Priority priority) {
             return this.scheduler.loadExecutor.createTask(run, priority);
         }
 
         @Override
-        protected PrioritisedExecutor.PrioritisedTask createOnMain(final Runnable run, final PrioritisedExecutor.Priority priority) {
+        protected PrioritisedExecutor.PrioritisedTask createOnMain(final Runnable run, final Priority priority) {
             throw new UnsupportedOperationException();
         }
 

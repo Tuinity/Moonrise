@@ -1,14 +1,14 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.common.util.ChunkSystem;
-import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.ChunkEntitySlices;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.poi.PoiChunk;
@@ -189,7 +189,7 @@ public final class ChunkHolderManager {
         if (halt) {
             LOGGER.info("Waiting 60s for chunk system to halt for world '" + WorldUtil.getWorldName(this.world) + "'");
             if (!this.taskScheduler.halt(true, TimeUnit.SECONDS.toNanos(60L))) {
-                LOGGER.warn("Failed to halt world generation/loading tasks for world '" + WorldUtil.getWorldName(this.world) + "'");
+                LOGGER.warn("Failed to halt generation/loading tasks for world '" + WorldUtil.getWorldName(this.world) + "'");
             } else {
                 LOGGER.info("Halted chunk system for world '" + WorldUtil.getWorldName(this.world) + "'");
             }
@@ -199,21 +199,21 @@ public final class ChunkHolderManager {
             this.saveAllChunks(true, true, true);
         }
 
-        boolean hasTasks = false;
-        for (final RegionFileIOThread.RegionFileType type : RegionFileIOThread.RegionFileType.values()) {
-            if (RegionFileIOThread.getControllerFor(this.world, type).hasTasks()) {
-                hasTasks = true;
-                break;
+        MoonriseRegionFileIO.flush(this.world);
+
+        if (halt) {
+            LOGGER.info("Waiting 60s for chunk I/O to halt for world '" + WorldUtil.getWorldName(this.world) + "'");
+            if (!this.taskScheduler.haltIO(true, TimeUnit.SECONDS.toNanos(60L))) {
+                LOGGER.warn("Failed to halt I/O tasks for world '" + WorldUtil.getWorldName(this.world) + "'");
+            } else {
+                LOGGER.info("Halted I/O scheduler for world '" + WorldUtil.getWorldName(this.world) + "'");
             }
-        }
-        if (hasTasks) {
-            RegionFileIOThread.flush();
         }
 
         // kill regionfile cache
-        for (final RegionFileIOThread.RegionFileType type : RegionFileIOThread.RegionFileType.values()) {
+        for (final MoonriseRegionFileIO.RegionFileType type : MoonriseRegionFileIO.RegionFileType.values()) {
             try {
-                RegionFileIOThread.getControllerFor(this.world, type).getCache().close();
+                MoonriseRegionFileIO.getControllerFor(this.world, type).getCache().close();
             } catch (final IOException ex) {
                 LOGGER.error("Failed to close '" + type.name() + "' regionfile cache for world '" + WorldUtil.getWorldName(this.world) + "'", ex);
             }
@@ -271,8 +271,8 @@ public final class ChunkHolderManager {
 
         long start = System.nanoTime();
         long lastLog = start;
-        boolean needsFlush = false;
-        final int flushInterval = 50;
+        final int flushInterval = 200;
+        int lastFlush = 0;
 
         int savedChunk = 0;
         int savedEntity = 0;
@@ -283,43 +283,52 @@ public final class ChunkHolderManager {
             try {
                 final NewChunkHolder.SaveStat saveStat = holder.save(shutdown);
                 if (saveStat != null) {
-                    ++saved;
-                    needsFlush = flush;
                     if (saveStat.savedChunk()) {
                         ++savedChunk;
+                        ++saved;
                     }
                     if (saveStat.savedEntityChunk()) {
                         ++savedEntity;
+                        ++saved;
                     }
                     if (saveStat.savedPoiChunk()) {
                         ++savedPoi;
+                        ++saved;
                     }
                 }
             } catch (final Throwable thr) {
                 LOGGER.error("Failed to save chunk (" + holder.chunkX + "," + holder.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'", thr);
             }
-            if (needsFlush && (saved % flushInterval) == 0) {
-                needsFlush = false;
-                RegionFileIOThread.partialFlush(flushInterval / 2);
+            if (flush && (saved - lastFlush) > (flushInterval / 2)) {
+                lastFlush = saved;
+                MoonriseRegionFileIO.partialFlush(this.world, flushInterval / 2);
             }
             if (logProgress) {
                 final long currTime = System.nanoTime();
                 if ((currTime - lastLog) > TimeUnit.SECONDS.toNanos(10L)) {
                     lastLog = currTime;
-                    LOGGER.info("Saved " + saved + " chunks (" + format.format((double)(i+1)/(double)len * 100.0) + "%) in world '" + WorldUtil.getWorldName(this.world) + "'");
+                    LOGGER.info(
+                            "Saved " + savedChunk + " block chunks, " + savedEntity + " entity chunks, " + savedPoi
+                                    + " poi chunks in world '" + WorldUtil.getWorldName(this.world) + "', progress: "
+                                    + format.format((double)(i+1)/(double)len * 100.0)
+                    );
                 }
             }
         }
         if (flush) {
-            RegionFileIOThread.flush();
+            MoonriseRegionFileIO.flush(this.world);
             try {
-                RegionFileIOThread.flushRegionStorages(this.world);
+                MoonriseRegionFileIO.flushRegionStorages(this.world);
             } catch (final IOException ex) {
                 LOGGER.error("Exception when flushing regions in world '" + WorldUtil.getWorldName(this.world) + "'", ex);
             }
         }
         if (logProgress) {
-            LOGGER.info("Saved " + savedChunk + " block chunks, " + savedEntity + " entity chunks, " + savedPoi + " poi chunks in world '" + WorldUtil.getWorldName(this.world) + "' in " + format.format(1.0E-9 * (System.nanoTime() - start)) + "s");
+            LOGGER.info(
+                    "Saved " + savedChunk + " block chunks, " + savedEntity + " entity chunks, " + savedPoi
+                            + " poi chunks in world '" + WorldUtil.getWorldName(this.world) + "' in "
+                            + format.format(1.0E-9 * (System.nanoTime() - start)) + "s"
+            );
         }
     }
 
@@ -772,21 +781,21 @@ public final class ChunkHolderManager {
         return this.chunkHolders.get(position);
     }
 
-    public void raisePriority(final int x, final int z, final PrioritisedExecutor.Priority priority) {
+    public void raisePriority(final int x, final int z, final Priority priority) {
         final NewChunkHolder chunkHolder = this.getChunkHolder(x, z);
         if (chunkHolder != null) {
             chunkHolder.raisePriority(priority);
         }
     }
 
-    public void setPriority(final int x, final int z, final PrioritisedExecutor.Priority priority) {
+    public void setPriority(final int x, final int z, final Priority priority) {
         final NewChunkHolder chunkHolder = this.getChunkHolder(x, z);
         if (chunkHolder != null) {
             chunkHolder.setPriority(priority);
         }
     }
 
-    public void lowerPriority(final int x, final int z, final PrioritisedExecutor.Priority priority) {
+    public void lowerPriority(final int x, final int z, final Priority priority) {
         final NewChunkHolder chunkHolder = this.getChunkHolder(x, z);
         if (chunkHolder != null) {
             chunkHolder.lowerPriority(priority);
@@ -869,7 +878,7 @@ public final class ChunkHolderManager {
                         final ChunkLoadTask.EntityDataLoadTask entityLoad = current.getEntityDataLoadTask();
 
                         if (entityLoad != null) {
-                            entityLoad.raisePriority(PrioritisedExecutor.Priority.BLOCKING);
+                            entityLoad.raisePriority(Priority.BLOCKING);
                         }
                     }
                 }
@@ -945,7 +954,7 @@ public final class ChunkHolderManager {
                     final ChunkLoadTask.PoiDataLoadTask poiLoad = current.getPoiDataLoadTask();
 
                     if (poiLoad != null) {
-                        poiLoad.raisePriority(PrioritisedExecutor.Priority.BLOCKING);
+                        poiLoad.raisePriority(Priority.BLOCKING);
                     }
                 }
             } finally {
@@ -992,7 +1001,7 @@ public final class ChunkHolderManager {
                 }
 
                 ChunkHolderManager.this.processPendingFullUpdate();
-            }, PrioritisedExecutor.Priority.HIGHEST);
+            }, Priority.HIGHEST);
         } else {
             final ArrayDeque<NewChunkHolder> pendingFullLoadUpdate = this.pendingFullLoadUpdate;
             for (int i = 0, len = changedFullStatus.size(); i < len; ++i) {

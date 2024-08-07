@@ -2,7 +2,8 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.common.util.ChunkSystem;
-import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemChunkMap;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
@@ -51,7 +52,7 @@ import java.util.function.IntFunction;
 import java.util.function.IntSupplier;
 
 @Mixin(ChunkMap.class)
-public abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.PlayerProvider, GeneratingChunkMap {
+public abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap, ChunkHolder.PlayerProvider, GeneratingChunkMap {
 
     @Shadow
     @Final
@@ -86,6 +87,12 @@ public abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.
 
     public ChunkMapMixin(RegionStorageInfo regionStorageInfo, Path path, DataFixer dataFixer, boolean bl) {
         super(regionStorageInfo, path, dataFixer, bl);
+    }
+
+    @Override
+    public final void moonrise$writeFinishCallback(final ChunkPos pos) throws IOException {
+        // see ChunkStorage#write
+        this.handleLegacyStructureIndex(pos);
     }
 
     /**
@@ -433,38 +440,31 @@ public abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.
 
     @Override
     public CompletableFuture<Optional<CompoundTag>> read(final ChunkPos pos) {
-        if (!RegionFileIOThread.isRegionFileThread()) {
-            try {
-                return CompletableFuture.completedFuture(
-                        Optional.ofNullable(
-                                RegionFileIOThread.loadData(
-                                        this.level, pos.x, pos.z, RegionFileIOThread.RegionFileType.CHUNK_DATA,
-                                        RegionFileIOThread.getIOBlockingPriorityForCurrentThread()
-                                )
-                        )
-                );
-            } catch (final Throwable thr) {
-                return CompletableFuture.failedFuture(thr);
-            }
+        try {
+            return CompletableFuture.completedFuture(
+                    Optional.ofNullable(
+                            MoonriseRegionFileIO.loadData(
+                                    this.level, pos.x, pos.z, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA,
+                                    MoonriseRegionFileIO.getIOBlockingPriorityForCurrentThread()
+                            )
+                    )
+            );
+        } catch (final Throwable thr) {
+            return CompletableFuture.failedFuture(thr);
         }
-        return super.read(pos);
     }
 
     @Override
     public CompletableFuture<Void> write(final ChunkPos pos, final CompoundTag tag) {
-        if (!RegionFileIOThread.isRegionFileThread()) {
-            RegionFileIOThread.scheduleSave(
+        MoonriseRegionFileIO.scheduleSave(
                 this.level, pos.x, pos.z, tag,
-                RegionFileIOThread.RegionFileType.CHUNK_DATA);
-            return null;
-        }
-        super.write(pos, tag);
+                MoonriseRegionFileIO.RegionFileType.CHUNK_DATA);
         return null;
     }
 
     @Override
     public void flushWorker() {
-        RegionFileIOThread.flush();
+        MoonriseRegionFileIO.flush(this.level);
     }
 
     /**

@@ -1,10 +1,14 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.patches.chunk_system.io.ChunkSystemRegionFileStorage;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
+import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemRegionFile;
+import ca.spottedleaf.moonrise.patches.chunk_system.util.stream.ExternalChunkStreamMarker;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import net.minecraft.FileUtil;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.StreamTagVisitor;
 import net.minecraft.util.ExceptionCollector;
 import net.minecraft.world.level.ChunkPos;
@@ -22,6 +26,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -167,6 +173,97 @@ public abstract class RegionFileStorageMixin implements ChunkSystemRegionFileSto
             this.regionCache.putAndMoveToFirst(key, ret);
 
             return ret;
+        }
+    }
+
+    @Override
+    public final MoonriseRegionFileIO.RegionDataController.WriteData moonrise$startWrite(
+            final int chunkX, final int chunkZ, final CompoundTag compound
+    ) throws IOException {
+        if (compound == null) {
+            return new MoonriseRegionFileIO.RegionDataController.WriteData(
+                    compound, MoonriseRegionFileIO.RegionDataController.WriteData.WriteResult.DELETE,
+                    null, null
+            );
+        }
+
+        final ChunkPos pos = new ChunkPos(chunkX, chunkZ);
+        final RegionFile regionFile = this.getRegionFile(pos);
+
+        // note: not required to keep regionfile loaded after this call, as the write param takes a regionfile as input
+        // (and, the regionfile parameter is unused for writing until the write call)
+        final MoonriseRegionFileIO.RegionDataController.WriteData writeData = ((ChunkSystemRegionFile)regionFile).moonrise$startWrite(compound, pos);
+
+        try {
+            NbtIo.write(compound, writeData.output());
+        } finally {
+            writeData.output().close();
+        }
+
+        return writeData;
+    }
+
+    @Override
+    public final void moonrise$finishWrite(
+            final int chunkX, final int chunkZ, final MoonriseRegionFileIO.RegionDataController.WriteData writeData
+    ) throws IOException {
+        final ChunkPos pos = new ChunkPos(chunkX, chunkZ);
+        if (writeData.result() == MoonriseRegionFileIO.RegionDataController.WriteData.WriteResult.DELETE) {
+            final RegionFile regionFile = this.moonrise$getRegionFileIfExists(chunkX, chunkZ);
+            if (regionFile != null) {
+                regionFile.clear(pos);
+            } // else: didn't exist
+
+            return;
+        }
+
+        writeData.write().run(this.getRegionFile(pos));
+    }
+
+    @Override
+    public final MoonriseRegionFileIO.RegionDataController.ReadData moonrise$readData(
+            final int chunkX, final int chunkZ
+    ) throws IOException {
+        final RegionFile regionFile = this.moonrise$getRegionFileIfExists(chunkX, chunkZ);
+
+        final DataInputStream input = regionFile == null ? null : regionFile.getChunkDataInputStream(new ChunkPos(chunkX, chunkZ));
+
+        if (input == null) {
+            return new MoonriseRegionFileIO.RegionDataController.ReadData(
+                    MoonriseRegionFileIO.RegionDataController.ReadData.ReadResult.NO_DATA, null, null
+            );
+        }
+
+        final MoonriseRegionFileIO.RegionDataController.ReadData ret = new MoonriseRegionFileIO.RegionDataController.ReadData(
+                MoonriseRegionFileIO.RegionDataController.ReadData.ReadResult.HAS_DATA, input, null
+        );
+
+        if (!(input instanceof ExternalChunkStreamMarker)) {
+            // internal stream, which is fully read
+            return ret;
+        }
+
+        final CompoundTag syncRead = this.moonrise$finishRead(chunkX, chunkZ, ret);
+
+        if (syncRead == null) {
+            // need to try again
+            return this.moonrise$readData(chunkX, chunkZ);
+        }
+
+        return new MoonriseRegionFileIO.RegionDataController.ReadData(
+                MoonriseRegionFileIO.RegionDataController.ReadData.ReadResult.SYNC_READ, null, syncRead
+        );
+    }
+
+    // if the return value is null, then the caller needs to re-try with a new call to readData()
+    @Override
+    public final CompoundTag moonrise$finishRead(
+            final int chunkX, final int chunkZ, final MoonriseRegionFileIO.RegionDataController.ReadData readData
+    ) throws IOException {
+        try {
+            return NbtIo.read(readData.input());
+        } finally {
+            readData.input().close();
         }
     }
 

@@ -1,17 +1,19 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
+import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.TickThread;
-import ca.spottedleaf.moonrise.patches.chunk_system.io.RegionFileIOThread;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
-import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerInfo;
 import net.minecraft.server.ServerTickRateManager;
 import net.minecraft.server.TickTask;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -21,9 +23,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import java.util.Iterator;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -42,6 +41,10 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
 
     @Shadow
     protected abstract boolean haveTime();
+
+    @Shadow
+    @Final
+    private static Logger LOGGER;
 
     public MinecraftServerMixin(String string) {
         super(string);
@@ -172,21 +175,6 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     }
 
     /**
-     * @reason Initialise chunk system threads hook
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "spin",
-            at = @At(
-                    value = "HEAD"
-            )
-    )
-    private static <S> void initHook(Function<Thread, S> function, CallbackInfoReturnable<S> cir) {
-        // TODO better place?
-        ChunkTaskScheduler.init();
-    }
-
-    /**
      * @reason Make server thread an instance of TickThread for thread checks
      * @author Spottedleaf
      */
@@ -257,7 +245,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     private void noOpClose(final ServerLevel instance) {}
 
     /**
-     * @reason Halt regionfile threads after everything is closed
+     * @reason Halt all executors
      * @author Spottedleaf
      */
     @Inject(
@@ -267,7 +255,10 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             )
     )
     private void closeIOThreads(final CallbackInfo ci) {
-        // TODO reinit code needs to be put somewhere
-        RegionFileIOThread.deinit();
+        LOGGER.info("Waiting for I/O tasks to complete...");
+        MoonriseRegionFileIO.flush((MinecraftServer)(Object)this);
+        if ((Object)this instanceof DedicatedServer) {
+            MoonriseCommon.haltExecutors();
+        }
     }
 }

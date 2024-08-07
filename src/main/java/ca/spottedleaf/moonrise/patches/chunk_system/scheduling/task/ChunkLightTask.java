@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.PriorityHolder;
@@ -25,9 +25,9 @@ public final class ChunkLightTask extends ChunkProgressionTask {
     private final LightTaskPriorityHolder priorityHolder;
 
     public ChunkLightTask(final ChunkTaskScheduler scheduler, final ServerLevel world, final int chunkX, final int chunkZ,
-                          final ChunkAccess chunk, final PrioritisedExecutor.Priority priority) {
+                          final ChunkAccess chunk, final Priority priority) {
         super(scheduler, world, chunkX, chunkZ);
-        if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+        if (!Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
         this.priorityHolder = new LightTaskPriorityHolder(priority, this);
@@ -55,22 +55,22 @@ public final class ChunkLightTask extends ChunkProgressionTask {
     }
 
     @Override
-    public PrioritisedExecutor.Priority getPriority() {
+    public Priority getPriority() {
         return this.priorityHolder.getPriority();
     }
 
     @Override
-    public void lowerPriority(final PrioritisedExecutor.Priority priority) {
+    public void lowerPriority(final Priority priority) {
         this.priorityHolder.raisePriority(priority);
     }
 
     @Override
-    public void setPriority(final PrioritisedExecutor.Priority priority) {
+    public void setPriority(final Priority priority) {
         this.priorityHolder.setPriority(priority);
     }
 
     @Override
-    public void raisePriority(final PrioritisedExecutor.Priority priority) {
+    public void raisePriority(final Priority priority) {
         this.priorityHolder.raisePriority(priority);
     }
 
@@ -78,7 +78,7 @@ public final class ChunkLightTask extends ChunkProgressionTask {
 
         private final ChunkLightTask task;
 
-        private LightTaskPriorityHolder(final PrioritisedExecutor.Priority priority, final ChunkLightTask task) {
+        private LightTaskPriorityHolder(final Priority priority, final ChunkLightTask task) {
             super(priority);
             this.task = task;
         }
@@ -90,13 +90,13 @@ public final class ChunkLightTask extends ChunkProgressionTask {
         }
 
         @Override
-        protected PrioritisedExecutor.Priority getScheduledPriority() {
+        protected Priority getScheduledPriority() {
             final ChunkLightTask task = this.task;
             return ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).starlight$getLightEngine().getServerLightQueue().getPriority(task.chunkX, task.chunkZ);
         }
 
         @Override
-        protected void scheduleTask(final PrioritisedExecutor.Priority priority) {
+        protected void scheduleTask(final Priority priority) {
             final ChunkLightTask task = this.task;
             final StarLightInterface starLightInterface = ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).starlight$getLightEngine();
             final StarLightInterface.ServerLightQueue lightQueue = starLightInterface.getServerLightQueue();
@@ -105,7 +105,7 @@ public final class ChunkLightTask extends ChunkProgressionTask {
         }
 
         @Override
-        protected void lowerPriorityScheduled(final PrioritisedExecutor.Priority priority) {
+        protected void lowerPriorityScheduled(final Priority priority) {
             final ChunkLightTask task = this.task;
             final StarLightInterface starLightInterface = ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).starlight$getLightEngine();
             final StarLightInterface.ServerLightQueue lightQueue = starLightInterface.getServerLightQueue();
@@ -113,7 +113,7 @@ public final class ChunkLightTask extends ChunkProgressionTask {
         }
 
         @Override
-        protected void setPriorityScheduled(final PrioritisedExecutor.Priority priority) {
+        protected void setPriorityScheduled(final Priority priority) {
             final ChunkLightTask task = this.task;
             final StarLightInterface starLightInterface = ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).starlight$getLightEngine();
             final StarLightInterface.ServerLightQueue lightQueue = starLightInterface.getServerLightQueue();
@@ -121,7 +121,7 @@ public final class ChunkLightTask extends ChunkProgressionTask {
         }
 
         @Override
-        protected void raisePriorityScheduled(final PrioritisedExecutor.Priority priority) {
+        protected void raisePriorityScheduled(final Priority priority) {
             final ChunkLightTask task = this.task;
             final StarLightInterface starLightInterface = ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).starlight$getLightEngine();
             final StarLightInterface.ServerLightQueue lightQueue = starLightInterface.getServerLightQueue();

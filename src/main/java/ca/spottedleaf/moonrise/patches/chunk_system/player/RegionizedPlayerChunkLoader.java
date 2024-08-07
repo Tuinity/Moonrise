@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.player;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.misc.AllocatingRateLimiter;
 import ca.spottedleaf.moonrise.common.misc.SingleUserAreaMap;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
@@ -709,7 +709,7 @@ public final class RegionizedPlayerChunkLoader {
                     final int queuedChunkX = CoordinateUtils.getChunkX(queuedLoadChunk);
                     final int queuedChunkZ = CoordinateUtils.getChunkZ(queuedLoadChunk);
                     ((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().scheduleChunkLoad(
-                        queuedChunkX, queuedChunkZ, ChunkStatus.EMPTY, false, PrioritisedExecutor.Priority.NORMAL, null
+                        queuedChunkX, queuedChunkZ, ChunkStatus.EMPTY, false, Priority.NORMAL, null
                     );
                     if (this.removed) {
                         return;

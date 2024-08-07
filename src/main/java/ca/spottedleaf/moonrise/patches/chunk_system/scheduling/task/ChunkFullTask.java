@@ -1,7 +1,8 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.poi.ChunkSystemPoiManager;
@@ -29,7 +30,7 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
     private final PrioritisedExecutor.PrioritisedTask convertToFullTask;
 
     public ChunkFullTask(final ChunkTaskScheduler scheduler, final ServerLevel world, final int chunkX, final int chunkZ,
-                         final NewChunkHolder chunkHolder, final ChunkAccess fromChunk, final PrioritisedExecutor.Priority priority) {
+                         final NewChunkHolder chunkHolder, final ChunkAccess fromChunk, final Priority priority) {
         super(scheduler, world, chunkX, chunkZ);
         this.chunkHolder = chunkHolder;
         this.fromChunk = fromChunk;
@@ -112,29 +113,29 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
     }
 
     @Override
-    public PrioritisedExecutor.Priority getPriority() {
+    public Priority getPriority() {
         return this.convertToFullTask.getPriority();
     }
 
     @Override
-    public void lowerPriority(final PrioritisedExecutor.Priority priority) {
-        if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+    public void lowerPriority(final Priority priority) {
+        if (!Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
         this.convertToFullTask.lowerPriority(priority);
     }
 
     @Override
-    public void setPriority(final PrioritisedExecutor.Priority priority) {
-        if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+    public void setPriority(final Priority priority) {
+        if (!Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
         this.convertToFullTask.setPriority(priority);
     }
 
     @Override
-    public void raisePriority(final PrioritisedExecutor.Priority priority) {
-        if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+    public void raisePriority(final Priority priority) {
+        if (!Priority.isValidPriority(priority)) {
             throw new IllegalArgumentException("Invalid priority " + priority);
         }
         this.convertToFullTask.raisePriority(priority);

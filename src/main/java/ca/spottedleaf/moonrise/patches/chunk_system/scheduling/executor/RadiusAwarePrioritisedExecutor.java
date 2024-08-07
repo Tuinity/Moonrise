@@ -1,10 +1,10 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling.executor;
 
-import ca.spottedleaf.concurrentutil.executor.standard.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -16,12 +16,15 @@ public class RadiusAwarePrioritisedExecutor {
         return Long.compare(t1.id, t2.id);
     };
 
-    private final DependencyTree[] queues = new DependencyTree[PrioritisedExecutor.Priority.TOTAL_SCHEDULABLE_PRIORITIES];
+    private final PrioritisedExecutor executor;
+    private final DependencyTree[] queues = new DependencyTree[Priority.TOTAL_SCHEDULABLE_PRIORITIES];
     private static final int NO_TASKS_QUEUED = -1;
     private int selectedQueue = NO_TASKS_QUEUED;
     private boolean canQueueTasks = true;
 
     public RadiusAwarePrioritisedExecutor(final PrioritisedExecutor executor, final int maxToSchedule) {
+        this.executor = executor;
+
         for (int i = 0; i < this.queues.length; ++i) {
             this.queues[i] = new DependencyTree(this, executor, maxToSchedule, i);
         }
@@ -56,7 +59,7 @@ public class RadiusAwarePrioritisedExecutor {
         return null;
     }
 
-    private List<PrioritisedExecutor.PrioritisedTask> queue(final Task task, final PrioritisedExecutor.Priority priority) {
+    private List<PrioritisedExecutor.PrioritisedTask> queue(final Task task, final Priority priority) {
         final int priorityId = priority.priority;
         final DependencyTree queue = this.queues[priorityId];
 
@@ -79,7 +82,7 @@ public class RadiusAwarePrioritisedExecutor {
             return null;
         }
 
-        if (PrioritisedExecutor.Priority.isHigherPriority(priorityId, this.selectedQueue)) {
+        if (Priority.isHigherPriority(priorityId, this.selectedQueue)) {
             // prevent the lower priority tree from queueing more tasks
             this.canQueueTasks = false;
             return null;
@@ -90,7 +93,7 @@ public class RadiusAwarePrioritisedExecutor {
     }
 
     public PrioritisedExecutor.PrioritisedTask createTask(final int chunkX, final int chunkZ, final int radius,
-                                                          final Runnable run, final PrioritisedExecutor.Priority priority) {
+                                                          final Runnable run, final Priority priority) {
         if (radius < 0) {
             throw new IllegalArgumentException("Radius must be > 0: " + radius);
         }
@@ -99,11 +102,11 @@ public class RadiusAwarePrioritisedExecutor {
 
     public PrioritisedExecutor.PrioritisedTask createTask(final int chunkX, final int chunkZ, final int radius,
                                                           final Runnable run) {
-        return this.createTask(chunkX, chunkZ, radius, run, PrioritisedExecutor.Priority.NORMAL);
+        return this.createTask(chunkX, chunkZ, radius, run, Priority.NORMAL);
     }
 
     public PrioritisedExecutor.PrioritisedTask queueTask(final int chunkX, final int chunkZ, final int radius,
-                                                         final Runnable run, final PrioritisedExecutor.Priority priority) {
+                                                         final Runnable run, final Priority priority) {
         final PrioritisedExecutor.PrioritisedTask ret = this.createTask(chunkX, chunkZ, radius, run, priority);
 
         ret.queue();
@@ -120,15 +123,15 @@ public class RadiusAwarePrioritisedExecutor {
         return ret;
     }
 
-    public PrioritisedExecutor.PrioritisedTask createInfiniteRadiusTask(final Runnable run, final PrioritisedExecutor.Priority priority) {
+    public PrioritisedExecutor.PrioritisedTask createInfiniteRadiusTask(final Runnable run, final Priority priority) {
         return new Task(this, 0, 0, -1, run, priority);
     }
 
     public PrioritisedExecutor.PrioritisedTask createInfiniteRadiusTask(final Runnable run) {
-        return this.createInfiniteRadiusTask(run, PrioritisedExecutor.Priority.NORMAL);
+        return this.createInfiniteRadiusTask(run, Priority.NORMAL);
     }
 
-    public PrioritisedExecutor.PrioritisedTask queueInfiniteRadiusTask(final Runnable run, final PrioritisedExecutor.Priority priority) {
+    public PrioritisedExecutor.PrioritisedTask queueInfiniteRadiusTask(final Runnable run, final Priority priority) {
         final PrioritisedExecutor.PrioritisedTask ret = this.createInfiniteRadiusTask(run, priority);
 
         ret.queue();
@@ -137,7 +140,7 @@ public class RadiusAwarePrioritisedExecutor {
     }
 
     public PrioritisedExecutor.PrioritisedTask queueInfiniteRadiusTask(final Runnable run) {
-        final PrioritisedExecutor.PrioritisedTask ret = this.createInfiniteRadiusTask(run, PrioritisedExecutor.Priority.NORMAL);
+        final PrioritisedExecutor.PrioritisedTask ret = this.createInfiniteRadiusTask(run, Priority.NORMAL);
 
         ret.queue();
 
@@ -412,13 +415,13 @@ public class RadiusAwarePrioritisedExecutor {
         private final int chunkZ;
         private final int radius;
         private Runnable run;
-        private PrioritisedExecutor.Priority priority;
+        private Priority priority;
 
         private DependencyNode dependencyNode;
         private PrioritisedExecutor.PrioritisedTask queuedTask;
 
         private Task(final RadiusAwarePrioritisedExecutor scheduler, final int chunkX, final int chunkZ, final int radius,
-                     final Runnable run, final PrioritisedExecutor.Priority priority) {
+                     final Runnable run, final Priority priority) {
             this.scheduler = scheduler;
             this.chunkX = chunkX;
             this.chunkZ = chunkZ;
@@ -461,6 +464,11 @@ public class RadiusAwarePrioritisedExecutor {
         }
 
         @Override
+        public PrioritisedExecutor getExecutor() {
+            return this.scheduler.executor;
+        }
+
+        @Override
         public void run() {
             final Runnable run = this.run;
             this.run = null;
@@ -475,7 +483,7 @@ public class RadiusAwarePrioritisedExecutor {
         public boolean queue() {
             final List<PrioritisedExecutor.PrioritisedTask> toSchedule;
             synchronized (this.scheduler) {
-                if (this.queuedTask != null || this.dependencyNode != null || this.priority == PrioritisedExecutor.Priority.COMPLETING) {
+                if (this.queuedTask != null || this.dependencyNode != null || this.priority == Priority.COMPLETING) {
                     return false;
                 }
 
@@ -487,15 +495,22 @@ public class RadiusAwarePrioritisedExecutor {
         }
 
         @Override
+        public boolean isQueued() {
+            synchronized (this.scheduler) {
+                return (this.queuedTask != null || this.dependencyNode != null) && this.priority != Priority.COMPLETING;
+            }
+        }
+
+        @Override
         public boolean cancel() {
             final PrioritisedExecutor.PrioritisedTask task;
             synchronized (this.scheduler) {
                 if ((task = this.queuedTask) == null) {
-                    if (this.priority == PrioritisedExecutor.Priority.COMPLETING) {
+                    if (this.priority == Priority.COMPLETING) {
                         return false;
                     }
 
-                    this.priority = PrioritisedExecutor.Priority.COMPLETING;
+                    this.priority = Priority.COMPLETING;
                     if (this.dependencyNode != null) {
                         this.dependencyNode.purged = true;
                         this.dependencyNode = null;
@@ -519,11 +534,11 @@ public class RadiusAwarePrioritisedExecutor {
             final PrioritisedExecutor.PrioritisedTask task;
             synchronized (this.scheduler) {
                 if ((task = this.queuedTask) == null) {
-                    if (this.priority == PrioritisedExecutor.Priority.COMPLETING) {
+                    if (this.priority == Priority.COMPLETING) {
                         return false;
                     }
 
-                    this.priority = PrioritisedExecutor.Priority.COMPLETING;
+                    this.priority = Priority.COMPLETING;
                     if (this.dependencyNode != null) {
                         this.dependencyNode.purged = true;
                         this.dependencyNode = null;
@@ -543,7 +558,7 @@ public class RadiusAwarePrioritisedExecutor {
         }
 
         @Override
-        public PrioritisedExecutor.Priority getPriority() {
+        public Priority getPriority() {
             final PrioritisedExecutor.PrioritisedTask task;
             synchronized (this.scheduler) {
                 if ((task = this.queuedTask) == null) {
@@ -555,8 +570,8 @@ public class RadiusAwarePrioritisedExecutor {
         }
 
         @Override
-        public boolean setPriority(final PrioritisedExecutor.Priority priority) {
-            if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+        public boolean setPriority(final Priority priority) {
+            if (!Priority.isValidPriority(priority)) {
                 throw new IllegalArgumentException("Invalid priority " + priority);
             }
 
@@ -564,7 +579,7 @@ public class RadiusAwarePrioritisedExecutor {
             List<PrioritisedExecutor.PrioritisedTask> toSchedule = null;
             synchronized (this.scheduler) {
                 if ((task = this.queuedTask) == null) {
-                    if (this.priority == PrioritisedExecutor.Priority.COMPLETING) {
+                    if (this.priority == Priority.COMPLETING) {
                         return false;
                     }
 
@@ -592,8 +607,8 @@ public class RadiusAwarePrioritisedExecutor {
         }
 
         @Override
-        public boolean raisePriority(final PrioritisedExecutor.Priority priority) {
-            if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+        public boolean raisePriority(final Priority priority) {
+            if (!Priority.isValidPriority(priority)) {
                 throw new IllegalArgumentException("Invalid priority " + priority);
             }
 
@@ -601,7 +616,7 @@ public class RadiusAwarePrioritisedExecutor {
             List<PrioritisedExecutor.PrioritisedTask> toSchedule = null;
             synchronized (this.scheduler) {
                 if ((task = this.queuedTask) == null) {
-                    if (this.priority == PrioritisedExecutor.Priority.COMPLETING) {
+                    if (this.priority == Priority.COMPLETING) {
                         return false;
                     }
 
@@ -629,8 +644,8 @@ public class RadiusAwarePrioritisedExecutor {
         }
 
         @Override
-        public boolean lowerPriority(final PrioritisedExecutor.Priority priority) {
-            if (!PrioritisedExecutor.Priority.isValidPriority(priority)) {
+        public boolean lowerPriority(final Priority priority) {
+            if (!Priority.isValidPriority(priority)) {
                 throw new IllegalArgumentException("Invalid priority " + priority);
             }
 
@@ -638,7 +653,7 @@ public class RadiusAwarePrioritisedExecutor {
             List<PrioritisedExecutor.PrioritisedTask> toSchedule = null;
             synchronized (this.scheduler) {
                 if ((task = this.queuedTask) == null) {
-                    if (this.priority == PrioritisedExecutor.Priority.COMPLETING) {
+                    if (this.priority == Priority.COMPLETING) {
                         return false;
                     }
 
@@ -663,6 +678,36 @@ public class RadiusAwarePrioritisedExecutor {
             scheduleTasks(toSchedule);
 
             return true;
+        }
+
+        @Override
+        public long getSubOrder() {
+            // TODO implement
+            return 0;
+        }
+
+        @Override
+        public boolean setSubOrder(final long subOrder) {
+            // TODO implement
+            return false;
+        }
+
+        @Override
+        public boolean raiseSubOrder(final long subOrder) {
+            // TODO implement
+            return false;
+        }
+
+        @Override
+        public boolean lowerSubOrder(final long subOrder) {
+            // TODO implement
+            return false;
+        }
+
+        @Override
+        public boolean setPriorityAndSubOrder(final Priority priority, final long subOrder) {
+            // TODO implement
+            return this.setPriority(priority);
         }
     }
 }
