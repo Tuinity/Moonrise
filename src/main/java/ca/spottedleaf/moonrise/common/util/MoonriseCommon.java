@@ -117,6 +117,14 @@ public final class MoonriseCommon {
     }
 
     public static boolean reloadConfig() {
+        final boolean ret = reloadConfig0();
+
+        CONFIG.callInitialisers();
+
+        return ret;
+    }
+
+    private static boolean reloadConfig0() {
         synchronized (CONFIG) {
             if (CONFIG_FILE.exists()) {
                 try {

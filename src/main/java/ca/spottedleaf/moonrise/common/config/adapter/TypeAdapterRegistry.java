@@ -1,10 +1,9 @@
 package ca.spottedleaf.moonrise.common.config.adapter;
 
-import ca.spottedleaf.moonrise.common.config.PostDeserializeHook;
+import ca.spottedleaf.moonrise.common.config.InitialiseHook;
 import ca.spottedleaf.moonrise.common.config.adapter.collection.CollectionTypeAdapter;
 import ca.spottedleaf.moonrise.common.config.adapter.collection.ListTypeAdapter;
 import ca.spottedleaf.moonrise.common.config.adapter.collection.SortedMapTypeAdapter;
-import ca.spottedleaf.moonrise.common.config.adapter.collection.UnsortedMapTypeAdapter;
 import ca.spottedleaf.moonrise.common.config.adapter.primitive.BooleanTypeAdapter;
 import ca.spottedleaf.moonrise.common.config.adapter.primitive.ByteTypeAdapter;
 import ca.spottedleaf.moonrise.common.config.adapter.primitive.DoubleTypeAdapter;
@@ -32,7 +31,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public final class TypeAdapterRegistry {
 
@@ -115,6 +113,20 @@ public final class TypeAdapterRegistry {
         this.putAdapter(clazz, ret);
 
         return ret;
+    }
+
+    public <T> void callInitialisers(final T object) {
+        if (object == null) {
+            return;
+        }
+
+        final TypeAdapter<?, ?> adapter = this.getAdapter(object.getClass());
+
+        if (!(adapter instanceof AutoTypeAdapter<?> autoTypeAdapter)) {
+            return;
+        }
+
+        ((AutoTypeAdapter<T>)autoTypeAdapter).callInitialisers(object);
     }
 
     private static final class AutoTypeAdapter<T> extends TypeAdapter<T, Map<Object, Object>> {
@@ -229,10 +241,6 @@ public final class TypeAdapterRegistry {
                     field.field.set(ret, field.adapter.deserialize(registry, fieldValue, field.field.getGenericType()));
                 }
 
-                if (ret instanceof PostDeserializeHook hook) {
-                    hook.deserialize();
-                }
-
                 return ret;
             } catch (final Exception ex) {
                 throw new RuntimeException(ex);
@@ -266,6 +274,23 @@ public final class TypeAdapterRegistry {
             }
 
             return ret;
+        }
+
+        public void callInitialisers(final T value) {
+            for (final SerializableField field : this.fields) {
+                final Object fieldValue;
+                try {
+                    fieldValue = field.field.get(value);
+                } catch (final Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+
+                if (fieldValue instanceof InitialiseHook initialiseHook) {
+                    initialiseHook.initialise();
+                }
+
+                this.registry.callInitialisers(fieldValue);
+            }
         }
     }
 

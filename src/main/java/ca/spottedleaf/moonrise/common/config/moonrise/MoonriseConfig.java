@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.common.config.moonrise;
 
-import ca.spottedleaf.moonrise.common.config.PostDeserializeHook;
+import ca.spottedleaf.moonrise.common.config.InitialiseHook;
 import ca.spottedleaf.moonrise.common.config.annotation.Adaptable;
 import ca.spottedleaf.moonrise.common.config.ui.ClothConfig;
 import ca.spottedleaf.moonrise.common.config.annotation.Serializable;
@@ -147,7 +147,7 @@ public final class MoonriseConfig {
     public WorkerPool workerPool = new WorkerPool();
 
     @Adaptable
-    public static final class WorkerPool implements PostDeserializeHook {
+    public static final class WorkerPool implements InitialiseHook {
         @Serializable(
                 comment = """
                     Set the number of shared worker threads to be used by chunk rendering,
@@ -163,7 +163,7 @@ public final class MoonriseConfig {
         public int workerThreads = -1;
 
         @Override
-        public void deserialize() {
+        public void initialise() {
             MoonriseCommon.adjustWorkerThreads(this);
         }
     }
@@ -172,7 +172,7 @@ public final class MoonriseConfig {
     public ChunkSystem chunkSystem = new ChunkSystem();
 
     @Adaptable
-    public static final class ChunkSystem implements PostDeserializeHook {
+    public static final class ChunkSystem implements InitialiseHook {
 
         @Serializable(
                 comment = """
@@ -205,7 +205,7 @@ public final class MoonriseConfig {
         public boolean populationGenParallelism = false;
 
         @Override
-        public void deserialize() {
+        public void initialise() {
             ChunkTaskScheduler.init(this);
         }
     }

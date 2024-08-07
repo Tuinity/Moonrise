@@ -131,6 +131,10 @@ public final class YamlConfig<T> {
         return ret.append(this.saveToString()).toString();
     }
 
+    public void callInitialisers() {
+        this.typeAdapters.callInitialisers(this.config);
+    }
+
     private static final class YamlConstructor extends Constructor {
 
         public YamlConstructor(final LoaderOptions loadingConfig) {
