@@ -90,7 +90,7 @@ abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseabl
      * @author Spottedleaf
      */
     @Override
-    public final boolean isUnobstructed(final Entity entity) {
+    public boolean isUnobstructed(final Entity entity) {
         final AABB boundingBox = entity.getBoundingBox();
         if (CollisionUtil.isEmpty(boundingBox)) {
             return false;
@@ -260,7 +260,7 @@ abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseabl
      * @author Spottedleaf
      */
     @Override
-    public final BlockHitResult clip(final ClipContext clipContext) {
+    public BlockHitResult clip(final ClipContext clipContext) {
         // can only do this in this class, as not everything that implements BlockGetter can retrieve chunks
         return fastClip(clipContext.getFrom(), clipContext.getTo(), (Level)(Object)this, clipContext);
     }
@@ -270,7 +270,7 @@ abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseabl
      * @author Spottedleaf
      */
     @Override
-    public final boolean noCollision(final Entity entity, final AABB box) {
+    public boolean noCollision(final Entity entity, final AABB box) {
         final int flags = entity == null ? (CollisionUtil.COLLISION_FLAG_CHECK_BORDER | CollisionUtil.COLLISION_FLAG_CHECK_ONLY) : CollisionUtil.COLLISION_FLAG_CHECK_ONLY;
         if (CollisionUtil.getCollisionsForBlocksOrWorldBorder((Level)(Object)this, entity, box, null, null, flags, null)) {
             return false;
@@ -284,7 +284,7 @@ abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseabl
      * @author Spottedleaf
      */
     @Override
-    public final boolean collidesWithSuffocatingBlock(final Entity entity, final AABB box) {
+    public boolean collidesWithSuffocatingBlock(final Entity entity, final AABB box) {
         return CollisionUtil.getCollisionsForBlocksOrWorldBorder((Level)(Object)this, entity, box, null, null,
                 CollisionUtil.COLLISION_FLAG_CHECK_ONLY,
                 (final BlockState state, final BlockPos pos) -> {
@@ -311,7 +311,7 @@ abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseabl
      * @author Spottedleaf
      */
     @Override
-    public final Optional<Vec3> findFreePosition(final Entity entity, final VoxelShape boundsShape, final Vec3 fromPosition,
+    public Optional<Vec3> findFreePosition(final Entity entity, final VoxelShape boundsShape, final Vec3 fromPosition,
                                                  final double rangeX, final double rangeY, final double rangeZ) {
         if (boundsShape.isEmpty()) {
             return Optional.empty();
@@ -371,7 +371,7 @@ abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseabl
      * @author Spottedleaf
      */
     @Override
-    public final Optional<BlockPos> findSupportingBlock(final Entity entity, final AABB aabb) {
+    public Optional<BlockPos> findSupportingBlock(final Entity entity, final AABB aabb) {
         final int minBlockX = Mth.floor(aabb.minX - CollisionUtil.COLLISION_EPSILON) - 1;
         final int maxBlockX = Mth.floor(aabb.maxX + CollisionUtil.COLLISION_EPSILON) + 1;
 
