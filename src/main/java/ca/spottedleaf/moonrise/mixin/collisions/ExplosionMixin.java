@@ -509,7 +509,7 @@ abstract class ExplosionMixin {
                 }
             }
 
-            entity.onExplosionHit(this.source); // TODO port to paper
+            entity.onExplosionHit(this.source);
         }
 
         this.blockCache = null;
