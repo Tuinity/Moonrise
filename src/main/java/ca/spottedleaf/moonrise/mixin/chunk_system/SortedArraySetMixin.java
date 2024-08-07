@@ -11,7 +11,7 @@ import java.util.Comparator;
 import java.util.function.Predicate;
 
 @Mixin(SortedArraySet.class)
-public abstract class SortedArraySetMixin<T> extends AbstractSet<T> implements ChunkSystemSortedArraySet<T> {
+abstract class SortedArraySetMixin<T> extends AbstractSet<T> implements ChunkSystemSortedArraySet<T> {
 
     @Shadow
     int size;

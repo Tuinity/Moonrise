@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Mixin(Util.class)
-public abstract class UtilMixin {
+abstract class UtilMixin {
 
     @Shadow
     @Final

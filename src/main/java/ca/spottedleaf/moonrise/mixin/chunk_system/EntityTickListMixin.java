@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.function.Consumer;
 
 @Mixin(EntityTickList.class)
-public abstract class EntityTickListMixin {
+abstract class EntityTickListMixin {
 
     @Shadow
     private Int2ObjectMap<Entity> active;

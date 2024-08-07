@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Mixin(SectionStorage.class)
-public abstract class SectionStorageMixin implements ChunkSystemSectionStorage, AutoCloseable {
+abstract class SectionStorageMixin implements ChunkSystemSectionStorage, AutoCloseable {
 
     @Shadow
     private SimpleRegionStorage simpleRegionStorage;

@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Mixin(StructureTemplate.Palette.class)
-public abstract class StructureTemplate$PaletteMixin {
+abstract class StructureTemplate$PaletteMixin {
 
     @Shadow
     private Map<Block, List<StructureTemplate.StructureBlockInfo>> cache;

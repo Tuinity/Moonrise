@@ -26,7 +26,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 @Mixin(MinecraftServer.class)
-public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements ChunkSystemMinecraftServer, ServerInfo, CommandSource, AutoCloseable {
+abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements ChunkSystemMinecraftServer, ServerInfo, CommandSource, AutoCloseable {
 
     @Shadow
     public abstract Iterable<ServerLevel> getAllLevels();

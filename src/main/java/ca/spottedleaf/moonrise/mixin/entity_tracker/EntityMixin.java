@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(Entity.class)
-public abstract class EntityMixin implements EntityTrackerEntity {
+abstract class EntityMixin implements EntityTrackerEntity {
 
     @Shadow
     private ImmutableList<Entity> passengers;

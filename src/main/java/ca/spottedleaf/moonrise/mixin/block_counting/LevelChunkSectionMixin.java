@@ -30,7 +30,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 @Mixin(LevelChunkSection.class)
-public abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
+abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
 
     @Shadow
     @Final

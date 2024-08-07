@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(BitStorage.class)
-public interface BitStorageMixin extends BlockCountingBitStorage {
+interface BitStorageMixin extends BlockCountingBitStorage {
 
     @Shadow
     int getBits();

@@ -10,7 +10,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(EmptyLevelChunk.class)
-public abstract class EmptyLevelChunkMixin extends LevelChunk implements StarlightChunk {
+abstract class EmptyLevelChunkMixin extends LevelChunk implements StarlightChunk {
 
     public EmptyLevelChunkMixin(final Level level, final ChunkPos pos) {
         super(level, pos);

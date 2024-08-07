@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Mixin(BlockBehaviour.BlockStateBase.class)
-public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implements CollisionBlockState {
+abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implements CollisionBlockState {
 
     @Shadow
     protected BlockBehaviour.BlockStateBase.Cache cache;

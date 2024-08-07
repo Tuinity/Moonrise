@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ChunkAccess.class)
-public abstract class ChunkAccessMixin implements BlockGetter, BiomeManager.NoiseBiomeSource, LightChunk, StructureAccess {
+abstract class ChunkAccessMixin implements BlockGetter, BiomeManager.NoiseBiomeSource, LightChunk, StructureAccess {
 
     @Shadow
     @Final

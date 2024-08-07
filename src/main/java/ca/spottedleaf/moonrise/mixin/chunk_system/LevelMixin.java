@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 @Mixin(Level.class)
-public abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, LevelAccessor, AutoCloseable {
+abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, LevelAccessor, AutoCloseable {
 
     @Shadow
     public abstract ProfilerFiller getProfiler();

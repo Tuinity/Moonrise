@@ -14,7 +14,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
 @Mixin(SimpleBitStorage.class)
-public abstract class SimpleBitStorageMixin implements BitStorage {
+abstract class SimpleBitStorageMixin implements BitStorage {
 
     @Shadow
     @Final

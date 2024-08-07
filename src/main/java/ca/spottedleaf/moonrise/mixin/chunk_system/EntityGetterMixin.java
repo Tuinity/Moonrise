@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 @Mixin(EntityGetter.class)
-public interface EntityGetterMixin extends ChunkSystemEntityGetter {
+interface EntityGetterMixin extends ChunkSystemEntityGetter {
 
     @Shadow
     List<Entity> getEntities(Entity entity, AABB aABB, Predicate<? super Entity> predicate);

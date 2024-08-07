@@ -33,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.function.Supplier;
 
 @Mixin(ClientLevel.class)
-public abstract class ClientLevelMixin extends Level implements ChunkSystemLevel {
+abstract class ClientLevelMixin extends Level implements ChunkSystemLevel {
 
     @Shadow
     private TransientEntitySectionManager<Entity> entityStorage;

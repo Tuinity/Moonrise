@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Mixin(Level.class)
-public abstract class LevelMixin implements LevelAccessor, AutoCloseable {
+abstract class LevelMixin implements LevelAccessor, AutoCloseable {
 
     @Shadow
     protected List<TickingBlockEntity> blockEntityTickers;

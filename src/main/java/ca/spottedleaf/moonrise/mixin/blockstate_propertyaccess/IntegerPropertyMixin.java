@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(IntegerProperty.class)
-public abstract class IntegerPropertyMixin extends Property<Integer> implements PropertyAccess<Integer> {
+abstract class IntegerPropertyMixin extends Property<Integer> implements PropertyAccess<Integer> {
 
     @Shadow
     @Final

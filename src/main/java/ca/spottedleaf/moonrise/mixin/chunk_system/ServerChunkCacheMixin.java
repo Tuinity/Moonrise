@@ -36,7 +36,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 @Mixin(ServerChunkCache.class)
-public abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemServerChunkCache {
+abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemServerChunkCache {
 
     @Shadow
     @Final

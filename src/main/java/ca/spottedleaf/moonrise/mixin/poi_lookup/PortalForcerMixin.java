@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Mixin(PortalForcer.class)
-public abstract class PortalForcerMixin {
+abstract class PortalForcerMixin {
 
     @Shadow
     @Final

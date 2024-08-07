@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Mixin(Level.class)
-public abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseable {
+abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseable {
 
     @Shadow
     public abstract ProfilerFiller getProfiler();

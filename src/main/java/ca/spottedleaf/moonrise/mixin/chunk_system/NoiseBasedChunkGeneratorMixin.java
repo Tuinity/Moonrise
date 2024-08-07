@@ -17,7 +17,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 @Mixin(NoiseBasedChunkGenerator.class)
-public abstract class NoiseBasedChunkGeneratorMixin {
+abstract class NoiseBasedChunkGeneratorMixin {
 
     /**
      * @reason Use Runnable:run, as we schedule onto the moonrise common pool

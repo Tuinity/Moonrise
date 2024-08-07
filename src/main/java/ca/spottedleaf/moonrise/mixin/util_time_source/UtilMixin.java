@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(Util.class)
-public abstract class UtilMixin {
+abstract class UtilMixin {
 
     /**
      * @reason GLFW clock will use the same one as nanoTime, except that it is JNI

@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 @Mixin(RegionFile.ChunkBuffer.class)
-public abstract class ChunkBufferMixin extends ByteArrayOutputStream implements ChunkSystemChunkBuffer {
+abstract class ChunkBufferMixin extends ByteArrayOutputStream implements ChunkSystemChunkBuffer {
 
     @Shadow
     @Final

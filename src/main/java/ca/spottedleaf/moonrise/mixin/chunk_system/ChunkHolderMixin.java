@@ -32,7 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 @Mixin(ChunkHolder.class)
-public abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSystemChunkHolder {
+abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSystemChunkHolder {
 
     @Shadow
     @Final

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.net.InetSocketAddress;
 
 @Mixin(Connection.class)
-public abstract class ClientConnectionMixin extends SimpleChannelInboundHandler<Packet<?>> implements ServerListConnection {
+abstract class ClientConnectionMixin extends SimpleChannelInboundHandler<Packet<?>> implements ServerListConnection {
 
     /**
      * @reason Dirty hack to set the timeout before connecting for server ping list

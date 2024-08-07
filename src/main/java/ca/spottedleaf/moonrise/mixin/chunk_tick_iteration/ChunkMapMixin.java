@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Mixin(ChunkMap.class)
-public abstract class ChunkMapMixin {
+abstract class ChunkMapMixin {
 
     @Shadow
     @Final

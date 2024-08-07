@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Mixin(Explosion.class)
-public abstract class ExplosionMixin {
+abstract class ExplosionMixin {
 
     @Shadow
     @Final

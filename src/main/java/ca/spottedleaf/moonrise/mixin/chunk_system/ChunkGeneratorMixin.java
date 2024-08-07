@@ -19,7 +19,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 @Mixin(ChunkGenerator.class)
-public abstract class ChunkGeneratorMixin {
+abstract class ChunkGeneratorMixin {
 
     /**
      * @reason Use Runnable:run, as we schedule onto the moonrise common pool

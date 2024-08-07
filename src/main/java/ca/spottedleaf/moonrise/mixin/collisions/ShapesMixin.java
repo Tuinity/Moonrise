@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.function.Supplier;
 
 @Mixin(Shapes.class)
-public abstract class ShapesMixin {
+abstract class ShapesMixin {
 
     @Shadow
     protected static int findBits(double d, double e) {

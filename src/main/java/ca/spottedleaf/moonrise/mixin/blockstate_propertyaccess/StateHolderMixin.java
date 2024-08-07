@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Mixin(StateHolder.class)
-public abstract class StateHolderMixin<O, S> {
+abstract class StateHolderMixin<O, S> {
 
     @Shadow
     private Table<Property<?>, Comparable<?>, S> neighbours;

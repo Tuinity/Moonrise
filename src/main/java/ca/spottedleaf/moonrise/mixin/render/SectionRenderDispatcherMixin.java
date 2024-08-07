@@ -14,7 +14,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 @Mixin(SectionRenderDispatcher.class)
-public abstract class SectionRenderDispatcherMixin {
+abstract class SectionRenderDispatcherMixin {
 
     @Unique
     private static final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor RENDER_EXECUTOR = MoonriseCommon.RENDER_EXECUTOR_GROUP.createExecutor(

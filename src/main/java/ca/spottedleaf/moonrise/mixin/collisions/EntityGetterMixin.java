@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 @Mixin(EntityGetter.class)
-public interface EntityGetterMixin {
+interface EntityGetterMixin {
 
     @Shadow
     List<Entity> getEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate);

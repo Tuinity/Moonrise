@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(LiquidBlockRenderer.class)
-public abstract class LiquidBlockRendererMixin {
+abstract class LiquidBlockRendererMixin {
 
     /**
      * @reason Eliminate uncached extrusion of the water block height shape

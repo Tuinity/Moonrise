@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Mixin(PoiSection.class)
-public abstract class PoiSectionMixin implements ChunkSystemPoiSection {
+abstract class PoiSectionMixin implements ChunkSystemPoiSection {
 
     @Shadow
     private boolean isValid;

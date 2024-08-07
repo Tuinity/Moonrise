@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import java.util.Objects;
 
 @Mixin(SimpleBitStorage.class)
-public abstract class SimpleBitStorageMixin implements BitStorage, BlockCountingBitStorage {
+abstract class SimpleBitStorageMixin implements BitStorage, BlockCountingBitStorage {
 
     @Shadow
     @Final

@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PalettedContainer.class)
-public abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedContainerRO<T> {
+abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedContainerRO<T> {
 
     @Shadow
     public volatile PalettedContainer.Data<T> data;

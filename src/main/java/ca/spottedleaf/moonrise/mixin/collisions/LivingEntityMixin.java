@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import java.util.List;
 
 @Mixin(LivingEntity.class)
-public abstract class LivingEntityMixin extends Entity implements Attackable {
+abstract class LivingEntityMixin extends Entity implements Attackable {
 
     @Shadow
     protected abstract void doPush(Entity entity);

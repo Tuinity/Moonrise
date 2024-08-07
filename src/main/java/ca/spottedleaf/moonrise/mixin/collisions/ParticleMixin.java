@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(Particle.class)
-public abstract class ParticleMixin {
+abstract class ParticleMixin {
 
     @Shadow
     protected double x;

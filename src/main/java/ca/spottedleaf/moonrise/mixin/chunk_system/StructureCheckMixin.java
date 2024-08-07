@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Mixin(StructureCheck.class)
-public abstract class StructureCheckMixin {
+abstract class StructureCheckMixin {
 
     @Shadow
     private Long2ObjectMap<Object2IntMap<Structure>> loadedChunks;

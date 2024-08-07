@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(CubeVoxelShape.class)
-public abstract class CubeVoxelShapeMixin {
+abstract class CubeVoxelShapeMixin {
 
     /**
      * @reason Hook into the root constructor to pass along init data to superclass.

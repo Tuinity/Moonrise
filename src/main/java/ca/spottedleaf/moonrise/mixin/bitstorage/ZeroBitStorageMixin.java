@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(ZeroBitStorage.class)
-public abstract class ZeroBitStorageMixin implements BitStorage {
+abstract class ZeroBitStorageMixin implements BitStorage {
 
     /**
      * @reason Do not validate input

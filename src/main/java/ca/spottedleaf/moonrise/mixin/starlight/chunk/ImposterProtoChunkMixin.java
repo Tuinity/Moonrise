@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(ImposterProtoChunk.class)
-public abstract class ImposterProtoChunkMixin extends ProtoChunk implements StarlightChunk {
+abstract class ImposterProtoChunkMixin extends ProtoChunk implements StarlightChunk {
 
     @Final
     @Shadow

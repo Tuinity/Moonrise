@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPacketListener.class)
-public abstract class ClientPacketListenerMixin implements ClientGamePacketListener {
+abstract class ClientPacketListenerMixin implements ClientGamePacketListener {
 
     /*
       The call behaviors in the packet handler are much more clear about how they should affect the light engine,

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 @Mixin(ArmorStand.class)
-public abstract class ArmorStandMixin extends LivingEntity {
+abstract class ArmorStandMixin extends LivingEntity {
 
     @Shadow
     @Final

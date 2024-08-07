@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SliceShape.class)
-public abstract class SliceShapeMixin {
+abstract class SliceShapeMixin {
 
     /**
      * @reason Hook into the root constructor to pass along init data to superclass.

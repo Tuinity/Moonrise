@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.function.UnaryOperator;
 
 @Mixin(ChunkPyramid.class)
-public abstract class ChunkPyramidMixin {
+abstract class ChunkPyramidMixin {
 
     /**
      * @reason Starlight does not require loading neighbours for light data, as Starlight performs chunk edge checks on

@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import java.util.concurrent.Executor;
 
 @Mixin(ChunkMap.DistanceManager.class)
-public abstract class ChunkMap$DistanceManagerMixin extends net.minecraft.server.level.DistanceManager implements ChunkSystemDistanceManager {
+abstract class ChunkMap$DistanceManagerMixin extends net.minecraft.server.level.DistanceManager implements ChunkSystemDistanceManager {
 
     @Shadow(aliases = "this$0")
     @Final

@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Mixin(Property.class)
-public abstract class PropertyMixin<T extends Comparable<T>> implements PropertyAccess<T> {
+abstract class PropertyMixin<T extends Comparable<T>> implements PropertyAccess<T> {
 
     @Unique
     private static final AtomicInteger ID_GENERATOR = new AtomicInteger();

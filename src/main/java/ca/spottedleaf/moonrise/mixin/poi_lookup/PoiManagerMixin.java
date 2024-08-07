@@ -26,7 +26,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 @Mixin(PoiManager.class)
-public abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
+abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
 
     public PoiManagerMixin(SimpleRegionStorage simpleRegionStorage, Function<Runnable, Codec<PoiSection>> function, Function<Runnable, PoiSection> function2, RegistryAccess registryAccess, ChunkIOErrorReporter chunkIOErrorReporter, LevelHeightAccessor levelHeightAccessor) {
         super(simpleRegionStorage, function, function2, registryAccess, chunkIOErrorReporter, levelHeightAccessor);

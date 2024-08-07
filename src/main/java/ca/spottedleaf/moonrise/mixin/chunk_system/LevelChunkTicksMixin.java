@@ -20,7 +20,7 @@ import java.util.Queue;
 import java.util.function.Function;
 
 @Mixin(LevelChunkTicks.class)
-public abstract class LevelChunkTicksMixin<T> implements ChunkSystemLevelChunkTicks, SerializableTickContainer<T>, TickContainerAccess<T> {
+abstract class LevelChunkTicksMixin<T> implements ChunkSystemLevelChunkTicks, SerializableTickContainer<T>, TickContainerAccess<T> {
 
     @Shadow
     @Final

@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(PalettedContainer.Data.class)
-public abstract class PalettedContainer$DataMixin<T> implements FastPaletteData<T> {
+abstract class PalettedContainer$DataMixin<T> implements FastPaletteData<T> {
 
     @Unique
     private T[] palette;

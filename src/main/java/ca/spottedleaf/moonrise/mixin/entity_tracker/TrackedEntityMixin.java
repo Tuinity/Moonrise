@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.Unique;
 import java.util.Set;
 
 @Mixin(ChunkMap.TrackedEntity.class)
-public abstract class TrackedEntityMixin implements EntityTrackerTrackedEntity {
+abstract class TrackedEntityMixin implements EntityTrackerTrackedEntity {
     @Shadow
     @Final
     private Set<ServerPlayerConnection> seenBy;

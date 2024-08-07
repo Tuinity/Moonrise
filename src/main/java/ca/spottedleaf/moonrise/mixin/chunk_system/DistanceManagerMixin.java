@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 
 @Mixin(DistanceManager.class)
-public abstract class DistanceManagerMixin implements ChunkSystemDistanceManager {
+abstract class DistanceManagerMixin implements ChunkSystemDistanceManager {
 
     @Shadow
     Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> tickets;

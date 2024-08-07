@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 @Mixin(GenerationChunkHolder.class)
-public abstract class GenerationChunkHolderMixin {
+abstract class GenerationChunkHolderMixin {
 
     @Shadow
     public abstract int getTicketLevel();

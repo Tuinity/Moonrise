@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ChunkStep.class)
-public abstract class ChunkStepMixin implements ChunkSystemChunkStep {
+abstract class ChunkStepMixin implements ChunkSystemChunkStep {
 
     @Shadow
     public abstract int getAccumulatedRadiusOf(ChunkStatus chunkStatus);

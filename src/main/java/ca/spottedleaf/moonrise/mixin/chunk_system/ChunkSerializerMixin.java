@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ChunkSerializer.class)
-public abstract class ChunkSerializerMixin {
+abstract class ChunkSerializerMixin {
 
     /**
      * @reason Chunk system handles this during full transition

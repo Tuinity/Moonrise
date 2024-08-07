@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Mixin(Options.class)
-public abstract class OptionsMixin {
+abstract class OptionsMixin {
 
     /**
      * @reason Allow higher view distances

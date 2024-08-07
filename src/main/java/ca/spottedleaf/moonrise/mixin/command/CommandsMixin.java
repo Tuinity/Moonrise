@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Commands.class)
-public abstract class CommandsMixin {
+abstract class CommandsMixin {
 
     @Shadow
     @Final

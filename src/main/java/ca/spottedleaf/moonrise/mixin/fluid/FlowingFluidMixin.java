@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(FlowingFluid.class)
-public abstract class FlowingFluidMixin extends Fluid {
+abstract class FlowingFluidMixin extends Fluid {
 
     @Shadow
     public abstract Fluid getSource();

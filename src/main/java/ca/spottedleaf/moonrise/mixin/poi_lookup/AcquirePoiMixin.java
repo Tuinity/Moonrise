@@ -16,7 +16,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 @Mixin(AcquirePoi.class)
-public abstract class AcquirePoiMixin {
+abstract class AcquirePoiMixin {
 
     /**
      * @reason Limit return count for POI lookup to the limit vanilla will apply

@@ -48,7 +48,7 @@ import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 @Mixin(ThreadedLevelLightEngine.class)
-public abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements StarLightLightingProvider {
+abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements StarLightLightingProvider {
 
     @Shadow
     private ProcessorMailbox<Runnable> taskMailbox;

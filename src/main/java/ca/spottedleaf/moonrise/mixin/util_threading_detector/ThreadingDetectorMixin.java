@@ -10,7 +10,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Mixin(ThreadingDetector.class)
-public abstract class ThreadingDetectorMixin {
+abstract class ThreadingDetectorMixin {
 
     @Unique
     private static final ReentrantLock CANT_USE_NULL_IN_NEW_REDIRECT_MIXIN_WHAT_THE_FUCK_REENTRANTLOCK = new ReentrantLock();

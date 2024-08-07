@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(BlockPos.class)
-public abstract class BlockPosMixin extends Vec3i {
+abstract class BlockPosMixin extends Vec3i {
 
     public BlockPosMixin(int i, int j, int k) {
         super(i, j, k);

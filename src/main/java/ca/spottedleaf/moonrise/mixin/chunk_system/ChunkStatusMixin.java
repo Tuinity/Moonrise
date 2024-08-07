@@ -17,7 +17,7 @@ import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Mixin(ChunkStatus.class)
-public abstract class ChunkStatusMixin implements ChunkSystemChunkStatus {
+abstract class ChunkStatusMixin implements ChunkSystemChunkStatus {
 
     @Unique
     private boolean isParallelCapable;

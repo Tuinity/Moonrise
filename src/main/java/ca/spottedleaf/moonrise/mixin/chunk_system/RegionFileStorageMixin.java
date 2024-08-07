@@ -33,7 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Mixin(RegionFileStorage.class)
-public abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, AutoCloseable {
+abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, AutoCloseable {
 
     @Shadow
     @Final

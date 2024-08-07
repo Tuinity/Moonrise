@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ProtoChunk.class)
-public abstract class ProtoChunkMixin implements StarlightChunk {
+abstract class ProtoChunkMixin implements StarlightChunk {
 
     /**
      * @reason Remove unused skylight sources

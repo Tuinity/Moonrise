@@ -52,7 +52,7 @@ import java.util.function.IntFunction;
 import java.util.function.IntSupplier;
 
 @Mixin(ChunkMap.class)
-public abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap, ChunkHolder.PlayerProvider, GeneratingChunkMap {
+abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap, ChunkHolder.PlayerProvider, GeneratingChunkMap {
 
     @Shadow
     @Final

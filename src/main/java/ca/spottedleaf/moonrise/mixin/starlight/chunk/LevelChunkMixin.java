@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelChunk.class)
-public abstract class LevelChunkMixin implements StarlightChunk {
+abstract class LevelChunkMixin implements StarlightChunk {
 
     /**
      * Copies the nibble data from the protochunk.

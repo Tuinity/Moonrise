@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Unique;
 import java.util.Arrays;
 
 @Mixin(DiscreteVoxelShape.class)
-public abstract class DiscreteVoxelShapeMixin implements CollisionDiscreteVoxelShape {
+abstract class DiscreteVoxelShapeMixin implements CollisionDiscreteVoxelShape {
 
     // ignore race conditions on field read/write: the shape is static, so it doesn't matter
     @Unique

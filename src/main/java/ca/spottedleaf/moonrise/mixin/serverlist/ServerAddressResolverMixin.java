@@ -11,7 +11,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 @Mixin(ServerAddressResolver.class)
-public interface ServerAddressResolverMixin {
+interface ServerAddressResolverMixin {
 
     /**
      * @reason Avoid rDNS lookups for plain IP addresses

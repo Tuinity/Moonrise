@@ -23,7 +23,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 @Mixin(ServerChunkCache.class)
-public abstract class ServerChunkCacheMixin extends ChunkSource {
+abstract class ServerChunkCacheMixin extends ChunkSource {
 
     @Shadow
     @Final

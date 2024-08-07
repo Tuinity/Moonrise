@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ChunkSerializer.class)
-public abstract class ChunkSerializerMixin {
+abstract class ChunkSerializerMixin {
 
     /**
      * Overwrites vanilla's light data with our own.

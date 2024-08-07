@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Mixin(Entity.class)
-public abstract class EntityMixin {
+abstract class EntityMixin {
 
     @Shadow
     private Level level;

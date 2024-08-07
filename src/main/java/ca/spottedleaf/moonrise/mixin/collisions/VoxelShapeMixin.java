@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Mixin(VoxelShape.class)
-public abstract class VoxelShapeMixin implements CollisionVoxelShape {
+abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
     @Shadow
     public abstract DoubleList getCoords(final Direction.Axis axis);

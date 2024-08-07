@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(SingleValuePalette.class)
-public abstract class SingleValuePaletteMixin<T> implements Palette<T>, FastPalette<T> {
+abstract class SingleValuePaletteMixin<T> implements Palette<T>, FastPalette<T> {
 
     @Shadow
     private T value;

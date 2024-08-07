@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(Level.class)
-public abstract class LevelMixin implements LevelAccessor, AutoCloseable {
+abstract class LevelMixin implements LevelAccessor, AutoCloseable {
 
     @Shadow
     @Nullable

@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(Block.class)
-public abstract class BlockMixin {
+abstract class BlockMixin {
 
     /**
      * @reason Replace with an implementation that does not use join AND one that caches the result per VoxelShape instance

@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(Biome.class)
-public abstract class BiomeMixin {
+abstract class BiomeMixin {
 
     @Shadow
     protected abstract float getHeightAdjustedTemperature(BlockPos blockPos);

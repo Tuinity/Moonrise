@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelLoadStatusManager.class)
-public abstract class LevelLoadStatusManagerMixin {
+abstract class LevelLoadStatusManagerMixin {
 
     @Shadow
     private LevelLoadStatusManager.Status status;

@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Mixin(ChunkStorage.class)
-public abstract class ChunkStorageMixin implements ChunkSystemChunkStorage, AutoCloseable {
+abstract class ChunkStorageMixin implements ChunkSystemChunkStorage, AutoCloseable {
 
     @Shadow
     private IOWorker worker;

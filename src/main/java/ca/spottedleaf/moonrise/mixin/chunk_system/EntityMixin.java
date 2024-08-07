@@ -23,7 +23,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Mixin(Entity.class)
-public abstract class EntityMixin implements ChunkSystemEntity {
+abstract class EntityMixin implements ChunkSystemEntity {
 
     @Shadow
     private ImmutableList<Entity> passengers;

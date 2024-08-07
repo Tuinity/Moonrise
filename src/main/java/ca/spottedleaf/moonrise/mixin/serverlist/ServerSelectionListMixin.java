@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Mixin(ServerSelectionList.class)
-public abstract class ServerSelectionListMixin {
+abstract class ServerSelectionListMixin {
 
     /**
      * @reason Massively increase the threadpool count so that slow servers do not stall the pinging of other servers

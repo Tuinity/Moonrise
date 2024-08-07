@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EnumProperty.class)
-public abstract class EnumPropertyMixin<T extends Enum<T> & StringRepresentable> extends Property<T> implements PropertyAccess<T> {
+abstract class EnumPropertyMixin<T extends Enum<T> & StringRepresentable> extends Property<T> implements PropertyAccess<T> {
 
     @Unique
     private int[] idLookupTable;

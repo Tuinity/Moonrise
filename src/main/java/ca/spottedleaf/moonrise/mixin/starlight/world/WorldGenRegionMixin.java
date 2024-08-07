@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(WorldGenRegion.class)
-public abstract class WorldGenRegionMixin implements WorldGenLevel {
+abstract class WorldGenRegionMixin implements WorldGenLevel {
 
     @Shadow
     public abstract ChunkAccess getChunk(int i, int j);

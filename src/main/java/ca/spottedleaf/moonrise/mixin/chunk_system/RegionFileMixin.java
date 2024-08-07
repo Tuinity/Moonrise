@@ -19,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 @Mixin(RegionFile.class)
-public abstract class RegionFileMixin implements ChunkSystemRegionFile {
+abstract class RegionFileMixin implements ChunkSystemRegionFile {
 
     @Shadow
     @Final

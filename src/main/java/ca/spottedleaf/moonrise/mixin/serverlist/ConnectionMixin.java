@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Connection.class)
-public abstract class ConnectionMixin extends SimpleChannelInboundHandler<Packet<?>> implements ServerListConnection {
+abstract class ConnectionMixin extends SimpleChannelInboundHandler<Packet<?>> implements ServerListConnection {
 
     @Shadow
     private Channel channel;

@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Direction.class)
-public abstract class DirectionMixin implements CollisionDirection {
+abstract class DirectionMixin implements CollisionDirection {
 
     @Unique
     private static final int RANDOM_OFFSET = 2017601568;

@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 @Mixin(ChunkMap.class)
-public abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.PlayerProvider, GeneratingChunkMap {
+abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.PlayerProvider, GeneratingChunkMap {
     @Shadow
     @Final
     public ServerLevel level;

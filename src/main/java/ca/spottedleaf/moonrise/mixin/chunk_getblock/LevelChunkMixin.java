@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelChunk.class)
-public abstract class LevelChunkMixin extends ChunkAccess implements GetBlockChunk {
+abstract class LevelChunkMixin extends ChunkAccess implements GetBlockChunk {
 
     @Shadow
     @Final

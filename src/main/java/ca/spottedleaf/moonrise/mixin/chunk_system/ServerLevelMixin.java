@@ -70,7 +70,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 @Mixin(ServerLevel.class)
-public abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel, ChunkSystemLevelReader, WorldGenLevel {
+abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel, ChunkSystemLevelReader, WorldGenLevel {
 
     @Shadow
     private PersistentEntitySectionManager<Entity> entityManager;

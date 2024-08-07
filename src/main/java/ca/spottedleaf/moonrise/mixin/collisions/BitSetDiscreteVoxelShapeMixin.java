@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(BitSetDiscreteVoxelShape.class)
-public abstract class BitSetDiscreteVoxelShapeMixin extends DiscreteVoxelShape {
+abstract class BitSetDiscreteVoxelShapeMixin extends DiscreteVoxelShape {
 
     @Unique
     private static final boolean DEBUG_ALL_BOXES = false;

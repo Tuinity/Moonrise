@@ -11,7 +11,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(LevelReader.class)
-public interface LevelReaderMixin extends ChunkSystemLevelReader, BlockAndTintGetter, CollisionGetter, SignalGetter, BiomeManager.NoiseBiomeSource {
+interface LevelReaderMixin extends ChunkSystemLevelReader, BlockAndTintGetter, CollisionGetter, SignalGetter, BiomeManager.NoiseBiomeSource {
 
     @Override
     public default ChunkAccess moonrise$syncLoadNonFull(final int chunkX, final int chunkZ, final ChunkStatus status) {
