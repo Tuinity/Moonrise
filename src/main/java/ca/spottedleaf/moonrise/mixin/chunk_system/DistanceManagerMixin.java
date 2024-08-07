@@ -16,7 +16,6 @@ import net.minecraft.server.level.TickingTracker;
 import net.minecraft.util.SortedArraySet;
 import net.minecraft.util.thread.ProcessorHandle;
 import net.minecraft.world.level.ChunkPos;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -62,7 +61,6 @@ abstract class DistanceManagerMixin implements ChunkSystemDistanceManager {
     Executor mainThreadExecutor;
 
     @Shadow
-    @Final
     private DistanceManager.FixedPlayerDistanceChunkTracker naturalSpawnChunkCounter;
 
     @Shadow

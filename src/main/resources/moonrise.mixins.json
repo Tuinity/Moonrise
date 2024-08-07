@@ -78,7 +78,6 @@
     "entity_tracker.ChunkMapMixin",
     "entity_tracker.EntityMixin",
     "entity_tracker.TrackedEntityMixin",
-    "farm_block.FarmBlockMixin",
     "fast_palette.CrudeIncrementalIntIdentityHashBiMapMixin",
     "fast_palette.HashMapPaletteMixin",
     "fast_palette.LinearPaletteMixin",

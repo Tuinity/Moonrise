@@ -105,6 +105,6 @@ abstract class StateHolderMixin<O, S> {
      */
     @Overwrite
     public <T extends Comparable<T>> boolean hasProperty(final Property<T> property) {
-        return this.optimisedTable.get(property) != null; // Paper - optimise state lookup
+        return this.optimisedTable.get(property) != null;
     }
 }
