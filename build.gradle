@@ -87,4 +87,11 @@ subprojects {
             sourceSet("main", project.rootProject)
         }
     }
+    loom.runs.all {
+        ideConfigGenerated true
+    }
+}
+
+loom.runs.all {
+    ideConfigGenerated false
 }
