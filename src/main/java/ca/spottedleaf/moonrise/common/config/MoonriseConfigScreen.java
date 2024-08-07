@@ -10,24 +10,24 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 public final class MoonriseConfigScreen {
-	private MoonriseConfigScreen() {
-	}
+    private MoonriseConfigScreen() {
+    }
 
-	public static Screen create(final Screen parent) {
-		final ConfigBuilder builder = ConfigBuilder.create()
-				.setSavingRunnable(() -> {
-					MoonriseCommon.saveConfig();
-					MoonriseCommon.reloadConfig();
-				})
-				.setParentScreen(parent)
-				.setTitle(Component.translatable("title.moonrise.config"));
+    public static Screen create(final Screen parent) {
+        final ConfigBuilder builder = ConfigBuilder.create()
+                .setSavingRunnable(() -> {
+                    MoonriseCommon.saveConfig();
+                    MoonriseCommon.reloadConfig();
+                })
+                .setParentScreen(parent)
+                .setTitle(Component.translatable("title.moonrise.config"));
 
-		try {
-			ConfigWalker.walk(new MoonriseConfig(), MoonriseCommon.getConfig(), builder);
-		} catch (final Exception ex) {
-			throw new RuntimeException(ex);
-		}
+        try {
+            ConfigWalker.walk(new MoonriseConfig(), MoonriseCommon.getConfig(), builder);
+        } catch (final Exception ex) {
+            throw new RuntimeException(ex);
+        }
 
-		return builder.build();
-	}
+        return builder.build();
+    }
 }

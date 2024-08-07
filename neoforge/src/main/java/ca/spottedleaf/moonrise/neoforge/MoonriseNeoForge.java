@@ -9,12 +9,12 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
 @Mod("moonrise")
 public final class MoonriseNeoForge {
-	public MoonriseNeoForge(final IEventBus modBus) {
-		modBus.addListener(FMLClientSetupEvent.class, event -> {
-			ModLoadingContext.get().registerExtensionPoint(
-					IConfigScreenFactory.class,
-					() -> (modContainer, parent) -> MoonriseConfigScreen.create(parent)
-			);
-		});
-	}
+    public MoonriseNeoForge(final IEventBus modBus) {
+        modBus.addListener(FMLClientSetupEvent.class, event -> {
+            ModLoadingContext.get().registerExtensionPoint(
+                    IConfigScreenFactory.class,
+                    () -> (modContainer, parent) -> MoonriseConfigScreen.create(parent)
+            );
+        });
+    }
 }

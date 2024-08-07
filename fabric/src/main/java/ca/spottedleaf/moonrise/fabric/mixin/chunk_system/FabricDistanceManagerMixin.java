@@ -12,22 +12,22 @@ import org.spongepowered.asm.mixin.Overwrite;
 @Mixin(DistanceManager.class)
 abstract class FabricDistanceManagerMixin implements ChunkSystemDistanceManager {
 
-	/**
-	 * @reason Route to new chunk system
-	 * @author Spottedleaf
-	 */
-	@Overwrite
-	public <T> void addRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier) {
-		this.moonrise$getChunkHolderManager().addTicketAtLevel(type, pos, ChunkLevel.byStatus(FullChunkStatus.FULL) - radius, identifier);
-	}
+    /**
+     * @reason Route to new chunk system
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public <T> void addRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier) {
+        this.moonrise$getChunkHolderManager().addTicketAtLevel(type, pos, ChunkLevel.byStatus(FullChunkStatus.FULL) - radius, identifier);
+    }
 
-	/**
-	 * @reason Route to new chunk system
-	 * @author Spottedleaf
-	 */
-	@Overwrite
-	public <T> void removeRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier) {
-		this.moonrise$getChunkHolderManager().removeTicketAtLevel(type, pos, ChunkLevel.byStatus(FullChunkStatus.FULL) - radius, identifier);
-	}
+    /**
+     * @reason Route to new chunk system
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public <T> void removeRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier) {
+        this.moonrise$getChunkHolderManager().removeTicketAtLevel(type, pos, ChunkLevel.byStatus(FullChunkStatus.FULL) - radius, identifier);
+    }
 
 }

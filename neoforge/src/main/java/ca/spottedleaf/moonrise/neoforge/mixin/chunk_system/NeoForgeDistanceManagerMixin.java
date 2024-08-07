@@ -20,60 +20,60 @@ import org.spongepowered.asm.mixin.Unique;
 @Mixin(DistanceManager.class)
 abstract class NeoForgeDistanceManagerMixin implements ChunkSystemDistanceManager {
 
-	@Unique
-	private final ConcurrentLong2ReferenceChainedHashTable<SortedArraySet<Ticket<?>>> mtSafeForcedTickets = new ConcurrentLong2ReferenceChainedHashTable<>();
+    @Unique
+    private final ConcurrentLong2ReferenceChainedHashTable<SortedArraySet<Ticket<?>>> mtSafeForcedTickets = new ConcurrentLong2ReferenceChainedHashTable<>();
 
-	/**
-	 * @reason Route to new chunk system
-	 * @author Spottedleaf
-	 */
-	@Overwrite
-	public <T> void addRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier, final boolean forceTicks) {
-		final int level = ChunkLevel.byStatus(FullChunkStatus.FULL) - radius;
-		this.moonrise$getChunkHolderManager().addTicketAtLevel(type, pos, level, identifier);
-		if (forceTicks) {
-			final Ticket<T> forceTicket = new Ticket<>(type, level, identifier, forceTicks);
+    /**
+     * @reason Route to new chunk system
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public <T> void addRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier, final boolean forceTicks) {
+        final int level = ChunkLevel.byStatus(FullChunkStatus.FULL) - radius;
+        this.moonrise$getChunkHolderManager().addTicketAtLevel(type, pos, level, identifier);
+        if (forceTicks) {
+            final Ticket<T> forceTicket = new Ticket<>(type, level, identifier, forceTicks);
 
-			this.mtSafeForcedTickets.compute(pos.toLong(), (final long keyInMap, final SortedArraySet<Ticket<?>> valueInMap) -> {
-				final SortedArraySet<Ticket<?>> ret;
-				if (valueInMap != null) {
-					ret = valueInMap;
-				} else {
-					ret = SortedArraySet.create(4);
-				}
+            this.mtSafeForcedTickets.compute(pos.toLong(), (final long keyInMap, final SortedArraySet<Ticket<?>> valueInMap) -> {
+                final SortedArraySet<Ticket<?>> ret;
+                if (valueInMap != null) {
+                    ret = valueInMap;
+                } else {
+                    ret = SortedArraySet.create(4);
+                }
 
-				ret.add(forceTicket);
+                ret.add(forceTicket);
 
-				return ret;
-			});
-		}
-	}
+                return ret;
+            });
+        }
+    }
 
-	/**
-	 * @reason Route to new chunk system
-	 * @author Spottedleaf
-	 */
-	@Overwrite
-	public <T> void removeRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier, final boolean forceTicks) {
-		final int level = ChunkLevel.byStatus(FullChunkStatus.FULL) - radius;
-		this.moonrise$getChunkHolderManager().removeTicketAtLevel(type, pos, level, identifier);
-		if (forceTicks) {
-			final Ticket<T> forceTicket = new Ticket<>(type, level, identifier, forceTicks);
+    /**
+     * @reason Route to new chunk system
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public <T> void removeRegionTicket(final TicketType<T> type, final ChunkPos pos, final int radius, final T identifier, final boolean forceTicks) {
+        final int level = ChunkLevel.byStatus(FullChunkStatus.FULL) - radius;
+        this.moonrise$getChunkHolderManager().removeTicketAtLevel(type, pos, level, identifier);
+        if (forceTicks) {
+            final Ticket<T> forceTicket = new Ticket<>(type, level, identifier, forceTicks);
 
-			this.mtSafeForcedTickets.computeIfPresent(pos.toLong(), (final long keyInMap, final SortedArraySet<Ticket<?>> valueInMap) -> {
-				valueInMap.remove(forceTicket);
+            this.mtSafeForcedTickets.computeIfPresent(pos.toLong(), (final long keyInMap, final SortedArraySet<Ticket<?>> valueInMap) -> {
+                valueInMap.remove(forceTicket);
 
-				return valueInMap.isEmpty() ? null : valueInMap;
-			});
-		}
-	}
+                return valueInMap.isEmpty() ? null : valueInMap;
+            });
+        }
+    }
 
-	/**
-	 * @reason Make this API thread-safe
-	 * @author Spottedleaf
-	 */
-	@Overwrite
-	public boolean shouldForceTicks(final long chunkPos) {
-		return this.mtSafeForcedTickets.containsKey(chunkPos);
-	}
+    /**
+     * @reason Make this API thread-safe
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public boolean shouldForceTicks(final long chunkPos) {
+        return this.mtSafeForcedTickets.containsKey(chunkPos);
+    }
 }

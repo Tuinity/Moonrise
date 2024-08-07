@@ -9,10 +9,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(MinecraftServer.class)
 abstract class FabricMinecraftServerMixin {
 
-	/**
-	 * @reason Make server thread an instance of TickThread for thread checks
-	 * @author Spottedleaf
-	 */
+    /**
+     * @reason Make server thread an instance of TickThread for thread checks
+     * @author Spottedleaf
+     */
     @Redirect(
             method = "spin",
             at = @At(
