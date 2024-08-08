@@ -54,7 +54,12 @@ abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> {
             )
     )
     private void init(final CallbackInfo ci) {
-        this.amount = this.getType().getAmount((FluidState)(Object)this);
+        try {
+            this.amount = this.getType().getAmount((FluidState)(Object)this);
+        } catch (final Exception ex) {
+            // https://github.com/JDKDigital/productivetrees/issues/16
+            new RuntimeException("Failed to retrieve fluid amount for " + this, ex).printStackTrace();
+        }
         this.isEmpty = this.getType().isEmpty();
         this.isSource = this.getType().isSource((FluidState)(Object)this);
         this.ownHeight = this.getType().getOwnHeight((FluidState)(Object)this);

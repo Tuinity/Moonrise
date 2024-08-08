@@ -18,7 +18,7 @@ public final class MoonriseCommon {
     private static final Logger LOGGER = LoggerFactory.getLogger(MoonriseCommon.class);
 
     public static final PrioritisedThreadPool WORKER_POOL = new PrioritisedThreadPool(
-            new Consumer<Thread>() {
+            new Consumer<>() {
                 private final AtomicInteger idGenerator = new AtomicInteger();
 
                 @Override
@@ -66,7 +66,7 @@ public final class MoonriseCommon {
     }
 
     public static final PrioritisedThreadPool IO_POOL = new PrioritisedThreadPool(
-            new Consumer<Thread>() {
+            new Consumer<>() {
                 private final AtomicInteger idGenerator = new AtomicInteger();
 
                 @Override
