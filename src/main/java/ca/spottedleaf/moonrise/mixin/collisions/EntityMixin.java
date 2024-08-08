@@ -5,10 +5,14 @@ import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.util.EmptyStreamForMoveCall;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.floats.FloatArraySet;
+import it.unimi.dsi.fastutil.floats.FloatArrays;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -32,6 +36,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @Mixin(Entity.class)
@@ -91,6 +96,57 @@ abstract class EntityMixin {
     @Shadow
     protected abstract void onInsideBlock(BlockState blockState);
 
+    @Shadow
+    public abstract boolean onGround();
+
+    @Unique
+    private static float[] calculateStepHeights(final AABB box, final List<VoxelShape> voxels, final List<AABB> aabbs, final float stepHeight,
+                                                       final float collidedY) {
+        final FloatArraySet ret = new FloatArraySet();
+
+        for (int i = 0, len = voxels.size(); i < len; ++i) {
+            final VoxelShape shape = voxels.get(i);
+
+            final double[] yCoords = ((CollisionVoxelShape)shape).moonrise$rootCoordinatesY();
+            final double yOffset = ((CollisionVoxelShape)shape).moonrise$offsetY();
+
+            for (final double yUnoffset : yCoords) {
+                final double y = yUnoffset + yOffset;
+
+                final float step = (float)(y - box.minY);
+
+                if (step > stepHeight) {
+                    break;
+                }
+
+                if (step < 0.0f || !(step != stepHeight)) {
+                    continue;
+                }
+
+                ret.add(step);
+            }
+        }
+
+        for (int i = 0, len = aabbs.size(); i < len; ++i) {
+            final AABB shape = aabbs.get(i);
+
+            final float step1 = (float)(shape.minY - box.minY);
+            final float step2 = (float)(shape.maxY - box.minY);
+
+            if (!(step1 < 0.0f) && step1 != stepHeight && !(step1 > stepHeight)) {
+                ret.add(step1);
+            }
+
+            if (!(step2 < 0.0f) && step2 != stepHeight && !(step2 > stepHeight)) {
+                ret.add(step2);
+            }
+        }
+
+        final float[] steps = ret.toFloatArray();
+        FloatArrays.unstableSort(steps);
+        return steps;
+    }
+
     /**
      * @author Spottedleaf
      * @reason Optimise entire method
@@ -104,73 +160,67 @@ abstract class EntityMixin {
             return movement;
         }
 
-        final Level world = this.level;
-        final AABB currBoundingBox = this.getBoundingBox();
+        final AABB currentBox = this.getBoundingBox();
 
-        if (CollisionUtil.isEmpty(currBoundingBox)) {
-            return movement;
-        }
-
-        final List<AABB> potentialCollisionsBB = new ArrayList<>();
         final List<VoxelShape> potentialCollisionsVoxel = new ArrayList<>();
-        final double stepHeight = (double)this.maxUpStep();
-        final AABB collisionBox;
-        final boolean onGround = this.onGround;
+        final List<AABB> potentialCollisionsBB = new ArrayList<>();
 
+        final AABB initialCollisionBox;
         if (xZero & zZero) {
-            if (movement.y > 0.0) {
-                collisionBox = CollisionUtil.cutUpwards(currBoundingBox, movement.y);
-            } else {
-                collisionBox = CollisionUtil.cutDownwards(currBoundingBox, movement.y);
-            }
+            // note: xZero & zZero -> collision on x/z == 0 -> no step height calculation
+            // this specifically optimises entities standing still
+            initialCollisionBox = movement.y < 0.0 ?
+                CollisionUtil.cutDownwards(currentBox, movement.y) : CollisionUtil.cutUpwards(currentBox, movement.y);
         } else {
-            // note: xZero == false or zZero == false
-            if (stepHeight > 0.0 && (onGround || (movement.y < 0.0))) {
-                // don't bother getting the collisions if we don't need them.
-                if (movement.y <= 0.0) {
-                    collisionBox = CollisionUtil.expandUpwards(currBoundingBox.expandTowards(movement.x, movement.y, movement.z), stepHeight);
-                } else {
-                    collisionBox = currBoundingBox.expandTowards(movement.x, Math.max(stepHeight, movement.y), movement.z);
-                }
-            } else {
-                collisionBox = currBoundingBox.expandTowards(movement.x, movement.y, movement.z);
-            }
+            initialCollisionBox = currentBox.expandTowards(movement);
         }
 
-        CollisionUtil.getCollisions(
-                world, (Entity)(Object)this, collisionBox, potentialCollisionsVoxel, potentialCollisionsBB,
-                CollisionUtil.COLLISION_FLAG_CHECK_BORDER,
-                null, null
+        final List<AABB> entityAABBs = new ArrayList<>();
+        CollisionUtil.getEntityHardCollisions(
+            this.level, (Entity)(Object)this, initialCollisionBox, entityAABBs, 0, null
         );
 
-        if (potentialCollisionsVoxel.isEmpty() && potentialCollisionsBB.isEmpty()) {
-            return movement;
+        CollisionUtil.getCollisionsForBlocksOrWorldBorder(
+            this.level, (Entity)(Object)this, initialCollisionBox, potentialCollisionsVoxel, potentialCollisionsBB,
+            CollisionUtil.COLLISION_FLAG_CHECK_BORDER, null
+        );
+        potentialCollisionsBB.addAll(entityAABBs);
+        final Vec3 collided = CollisionUtil.performCollisions(movement, currentBox, potentialCollisionsVoxel, potentialCollisionsBB);
+
+        final boolean collidedX = collided.x != movement.x;
+        final boolean collidedY = collided.y != movement.y;
+        final boolean collidedZ = collided.z != movement.z;
+
+        final boolean collidedDownwards = collidedY && movement.y < 0.0;
+
+        final double stepHeight = (double)this.maxUpStep();
+
+        if (stepHeight <= 0.0 || (!collidedDownwards && !this.onGround()) || (!collidedX && !collidedZ)) {
+            return collided;
         }
 
-        final Vec3 limitedMoveVector = CollisionUtil.performCollisions(movement, currBoundingBox, potentialCollisionsVoxel, potentialCollisionsBB);
-
-        if (stepHeight > 0.0
-                && (onGround || (limitedMoveVector.y != movement.y && movement.y < 0.0))
-                && (limitedMoveVector.x != movement.x || limitedMoveVector.z != movement.z)) {
-            Vec3 vec3d2 = CollisionUtil.performCollisions(new Vec3(movement.x, stepHeight, movement.z), currBoundingBox, potentialCollisionsVoxel, potentialCollisionsBB);
-            final Vec3 vec3d3 = CollisionUtil.performCollisions(new Vec3(0.0, stepHeight, 0.0), currBoundingBox.expandTowards(movement.x, 0.0, movement.z), potentialCollisionsVoxel, potentialCollisionsBB);
-
-            if (vec3d3.y < stepHeight) {
-                final Vec3 vec3d4 = CollisionUtil.performCollisions(new Vec3(movement.x, 0.0D, movement.z), currBoundingBox.move(vec3d3), potentialCollisionsVoxel, potentialCollisionsBB).add(vec3d3);
-
-                if (vec3d4.horizontalDistanceSqr() > vec3d2.horizontalDistanceSqr()) {
-                    vec3d2 = vec3d4;
-                }
-            }
-
-            if (vec3d2.horizontalDistanceSqr() > limitedMoveVector.horizontalDistanceSqr()) {
-                return vec3d2.add(CollisionUtil.performCollisions(new Vec3(0.0D, -vec3d2.y + movement.y, 0.0D), currBoundingBox.move(vec3d2), potentialCollisionsVoxel, potentialCollisionsBB));
-            }
-
-            return limitedMoveVector;
-        } else {
-            return limitedMoveVector;
+        final AABB collidedYBox = collidedDownwards ? currentBox.move(0.0, collided.y, 0.0) : currentBox;
+        AABB stepRetrievalBox = collidedYBox.expandTowards(movement.x, stepHeight, movement.z);
+        if (!collidedDownwards) {
+            stepRetrievalBox = stepRetrievalBox.expandTowards(0.0, (double)-1.0E-5F, 0.0);
         }
+
+        final List<VoxelShape> stepVoxels = new ArrayList<>();
+        final List<AABB> stepAABBs = entityAABBs;
+
+        CollisionUtil.getCollisionsForBlocksOrWorldBorder(
+            this.level, (Entity)(Object)this, stepRetrievalBox, stepVoxels, stepAABBs,
+            CollisionUtil.COLLISION_FLAG_CHECK_BORDER, null
+        );
+
+        for (final float step : calculateStepHeights(collidedYBox, stepVoxels, stepAABBs, (float)stepHeight, (float)collided.y)) {
+            final Vec3 stepResult = CollisionUtil.performCollisions(new Vec3(movement.x, (double)step, movement.z), collidedYBox, stepVoxels, stepAABBs);
+            if (stepResult.horizontalDistanceSqr() > collided.horizontalDistanceSqr()) {
+                return stepResult.add(0.0, collidedYBox.minY - currentBox.minY, 0.0);
+            }
+        }
+
+        return collided;
     }
 
     /**

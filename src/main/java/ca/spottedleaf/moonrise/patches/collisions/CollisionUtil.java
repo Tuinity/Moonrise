@@ -1405,7 +1405,7 @@ public final class CollisionUtil {
             value = collideX(target, currentBoundingBox, value);
         }
 
-        return value;
+        return Math.abs(value) < COLLISION_EPSILON ? 0.0 : value;
     }
 
     public static double performAABBCollisionsY(final AABB currentBoundingBox, double value, final List<AABB> potentialCollisions) {
@@ -1417,7 +1417,7 @@ public final class CollisionUtil {
             value = collideY(target, currentBoundingBox, value);
         }
 
-        return value;
+        return Math.abs(value) < COLLISION_EPSILON ? 0.0 : value;
     }
 
     public static double performAABBCollisionsZ(final AABB currentBoundingBox, double value, final List<AABB> potentialCollisions) {
@@ -1429,7 +1429,7 @@ public final class CollisionUtil {
             value = collideZ(target, currentBoundingBox, value);
         }
 
-        return value;
+        return Math.abs(value) < COLLISION_EPSILON ? 0.0 : value;
     }
 
     public static double performVoxelCollisionsX(final AABB currentBoundingBox, double value, final List<VoxelShape> potentialCollisions) {
@@ -1441,7 +1441,7 @@ public final class CollisionUtil {
             value = collideX(target, currentBoundingBox, value);
         }
 
-        return value;
+        return Math.abs(value) < COLLISION_EPSILON ? 0.0 : value;
     }
 
     public static double performVoxelCollisionsY(final AABB currentBoundingBox, double value, final List<VoxelShape> potentialCollisions) {
@@ -1453,7 +1453,7 @@ public final class CollisionUtil {
             value = collideY(target, currentBoundingBox, value);
         }
 
-        return value;
+        return Math.abs(value) < COLLISION_EPSILON ? 0.0 : value;
     }
 
     public static double performVoxelCollisionsZ(final AABB currentBoundingBox, double value, final List<VoxelShape> potentialCollisions) {
@@ -1465,7 +1465,7 @@ public final class CollisionUtil {
             value = collideZ(target, currentBoundingBox, value);
         }
 
-        return value;
+        return Math.abs(value) < COLLISION_EPSILON ? 0.0 : value;
     }
 
     public static Vec3 performVoxelCollisions(final Vec3 moveVector, AABB axisalignedbb, final List<VoxelShape> potentialCollisions) {
