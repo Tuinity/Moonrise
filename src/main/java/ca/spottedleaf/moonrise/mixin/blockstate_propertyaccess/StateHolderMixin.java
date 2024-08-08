@@ -1,7 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.blockstate_propertyaccess;
 
 import ca.spottedleaf.moonrise.patches.blockstate_propertyaccess.util.ZeroCollidingReferenceStateTable;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.world.level.block.state.StateHolder;

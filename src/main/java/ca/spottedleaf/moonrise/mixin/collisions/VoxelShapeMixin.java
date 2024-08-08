@@ -45,9 +45,6 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
     @Final
     public DiscreteVoxelShape shape;
 
-    @Shadow
-    public abstract void forAllBoxes(final Shapes.DoubleLineConsumer doubleLineConsumer);
-
     @Unique
     private double offsetX;
     @Unique

@@ -4,23 +4,14 @@ import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
-import ca.spottedleaf.moonrise.patches.collisions.util.EmptyStreamForMoveCall;
-import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArraySet;
 import it.unimi.dsi.fastutil.floats.FloatArrays;
-import net.minecraft.CrashReport;
-import net.minecraft.CrashReportCategory;
-import net.minecraft.ReportedException;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -32,12 +23,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 @Mixin(Entity.class)
 abstract class EntityMixin {
@@ -49,13 +36,7 @@ abstract class EntityMixin {
     public abstract AABB getBoundingBox();
 
     @Shadow
-    public abstract void move(MoverType moverType, Vec3 vec3);
-
-    @Shadow
     public abstract float maxUpStep();
-
-    @Shadow
-    private boolean onGround;
 
     @Shadow
     public boolean noPhysics;
@@ -67,41 +48,11 @@ abstract class EntityMixin {
     public abstract Vec3 getEyePosition();
 
     @Shadow
-    public abstract Vec3 getEyePosition(float f);
-
-    @Shadow
-    public abstract Vec3 getViewVector(float f);
-
-    @Shadow
-    private int remainingFireTicks;
-
-    @Shadow
-    public abstract void setRemainingFireTicks(int i);
-
-    @Shadow
-    protected abstract int getFireImmuneTicks();
-
-    @Shadow
-    public boolean wasOnFire;
-
-    @Shadow
-    public boolean isInPowderSnow;
-
-    @Shadow
-    public abstract boolean isInWaterRainOrBubble();
-
-    @Shadow
-    protected abstract void playEntityOnFireExtinguishedSound();
-
-    @Shadow
-    protected abstract void onInsideBlock(BlockState blockState);
-
-    @Shadow
     public abstract boolean onGround();
 
     @Unique
     private static float[] calculateStepHeights(final AABB box, final List<VoxelShape> voxels, final List<AABB> aabbs, final float stepHeight,
-                                                       final float collidedY) {
+                                                final float collidedY) {
         final FloatArraySet ret = new FloatArraySet();
 
         for (int i = 0, len = voxels.size(); i < len; ++i) {
@@ -119,7 +70,7 @@ abstract class EntityMixin {
                     break;
                 }
 
-                if (step < 0.0f || !(step != stepHeight)) {
+                if (step < 0.0f || !(step != collidedY)) {
                     continue;
                 }
 
@@ -133,11 +84,11 @@ abstract class EntityMixin {
             final float step1 = (float)(shape.minY - box.minY);
             final float step2 = (float)(shape.maxY - box.minY);
 
-            if (!(step1 < 0.0f) && step1 != stepHeight && !(step1 > stepHeight)) {
+            if (!(step1 < 0.0f) && step1 != collidedY && !(step1 > stepHeight)) {
                 ret.add(step1);
             }
 
-            if (!(step2 < 0.0f) && step2 != stepHeight && !(step2 > stepHeight)) {
+            if (!(step2 < 0.0f) && step2 != collidedY && !(step2 > stepHeight)) {
                 ret.add(step2);
             }
         }

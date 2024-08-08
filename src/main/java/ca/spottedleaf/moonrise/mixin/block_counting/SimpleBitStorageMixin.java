@@ -8,7 +8,6 @@ import net.minecraft.util.SimpleBitStorage;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import java.util.Objects;
 
 @Mixin(SimpleBitStorage.class)
 abstract class SimpleBitStorageMixin implements BitStorage, BlockCountingBitStorage {

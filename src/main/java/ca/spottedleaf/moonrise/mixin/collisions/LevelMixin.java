@@ -44,9 +44,6 @@ import java.util.Optional;
 abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseable {
 
     @Shadow
-    public abstract ProfilerFiller getProfiler();
-
-    @Shadow
     public abstract LevelChunk getChunk(int x, int z);
 
     @Shadow

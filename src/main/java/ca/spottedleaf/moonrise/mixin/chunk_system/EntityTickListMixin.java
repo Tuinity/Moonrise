@@ -1,7 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.common.list.IteratorSafeOrderedReferenceSet;
-import ca.spottedleaf.moonrise.common.util.TickThread;
 import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.world.entity.Entity;

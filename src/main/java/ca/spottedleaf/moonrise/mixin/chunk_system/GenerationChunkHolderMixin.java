@@ -4,7 +4,6 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunk
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.server.level.ChunkGenerationTask;
-import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ChunkResult;
 import net.minecraft.server.level.FullChunkStatus;
@@ -29,9 +28,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 @Mixin(GenerationChunkHolder.class)
 abstract class GenerationChunkHolderMixin {
-
-    @Shadow
-    public abstract int getTicketLevel();
 
     @Shadow
     private AtomicReference<ChunkStatus> startedWork;

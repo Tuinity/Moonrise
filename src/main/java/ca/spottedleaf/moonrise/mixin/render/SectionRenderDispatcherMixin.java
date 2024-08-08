@@ -1,6 +1,5 @@
 package ca.spottedleaf.moonrise.mixin.render;
 
-import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.executor.thread.PrioritisedThreadPool;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;

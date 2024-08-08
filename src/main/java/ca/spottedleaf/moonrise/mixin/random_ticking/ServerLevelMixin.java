@@ -1,7 +1,5 @@
 package ca.spottedleaf.moonrise.mixin.random_ticking;
 
-
-import ca.spottedleaf.moonrise.common.config.moonrise.MoonriseConfig;
 import ca.spottedleaf.moonrise.common.list.IBlockDataList;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;

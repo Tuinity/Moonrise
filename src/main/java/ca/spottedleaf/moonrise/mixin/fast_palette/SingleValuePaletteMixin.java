@@ -2,7 +2,6 @@ package ca.spottedleaf.moonrise.mixin.fast_palette;
 
 import ca.spottedleaf.moonrise.patches.fast_palette.FastPalette;
 import ca.spottedleaf.moonrise.patches.fast_palette.FastPaletteData;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.chunk.Palette;
 import net.minecraft.world.level.chunk.SingleValuePalette;
 import org.objectweb.asm.Opcodes;
@@ -12,7 +11,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(SingleValuePalette.class)

@@ -32,10 +32,6 @@ abstract class SimpleBitStorageMixin implements BitStorage {
     @Final
     private int size;
 
-
-    @Unique
-    private static final VarHandle LONG_ARRAY_HANDLE = MethodHandles.arrayElementVarHandle(long[].class);
-
     /*
      Credit to https://lemire.me/blog/2019/02/08/faster-remainders-when-the-divisor-is-a-constant-beating-compilers-and-libdivide
      and https://github.com/Vrganj for the algorithm to determine a magic value to use for both division and mod operations

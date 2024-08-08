@@ -11,9 +11,6 @@ import org.spongepowered.asm.mixin.Shadow;
 interface BitStorageMixin extends BlockCountingBitStorage {
 
     @Shadow
-    int getBits();
-
-    @Shadow
     int getSize();
 
     @Shadow

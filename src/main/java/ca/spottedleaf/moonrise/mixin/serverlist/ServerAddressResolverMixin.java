@@ -2,7 +2,6 @@ package ca.spottedleaf.moonrise.mixin.serverlist;
 
 import net.minecraft.client.multiplayer.resolver.ServerAddressResolver;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import java.net.Inet4Address;
