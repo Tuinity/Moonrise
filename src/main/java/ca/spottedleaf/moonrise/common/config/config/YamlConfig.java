@@ -84,7 +84,12 @@ public final class YamlConfig<T> {
             throw new IOException("File is a directory");
         }
 
-        final File tmp = new File(file.getParentFile(), file.getName() + ".tmp");
+        final File parent = file.getParentFile();
+        if (parent != null) {
+            parent.mkdirs();
+        }
+
+        final File tmp = new File(parent, file.getName() + ".tmp");
         tmp.delete();
         tmp.createNewFile();
         try {

@@ -3,7 +3,7 @@
   "id": "moonrise",
   "version": "${version}",
   "name": "Moonrise",
-  "description": "Optimisation mod for dedicated and integrated server.",
+  "description": "Optimisation mod for the dedicated and integrated server.",
   "authors": [
     "Spottedleaf"
   ],

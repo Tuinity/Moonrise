@@ -57,7 +57,12 @@ public final class MoonriseCommon {
             workerThreads = defaultWorkerThreads;
         }
 
+        final int ioThreads = Math.max(1, config.ioThreads);
+
         WORKER_POOL.adjustThreadCount(workerThreads);
+        IO_POOL.adjustThreadCount(ioThreads);
+
+        LOGGER.info("Moonrise is using " + workerThreads + " worker threads, " + ioThreads + " I/O threads");
     }
 
     public static final PrioritisedThreadPool IO_POOL = new PrioritisedThreadPool(
@@ -80,7 +85,7 @@ public final class MoonriseCommon {
     public static final long IO_QUEUE_HOLD_TIME = (long)(100.0e6); // 100ms
     public static final PrioritisedThreadPool.ExecutorGroup SERVER_REGION_IO_GROUP = IO_POOL.createExecutorGroup(SERVER_DIVISION, 0);
 
-    private static final File CONFIG_FILE = new File(System.getProperty("Moonrise.ConfigFile", "moonrise.yml"));
+    private static final File CONFIG_FILE = new File(System.getProperty("Moonrise.ConfigFile", "config/moonrise.yml"));
     private static final TypeAdapterRegistry CONFIG_ADAPTERS = new TypeAdapterRegistry();
     private static final YamlConfig<MoonriseConfig> CONFIG;
     static {

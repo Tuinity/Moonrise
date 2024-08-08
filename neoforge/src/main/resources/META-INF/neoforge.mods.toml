@@ -11,7 +11,7 @@ version = "${version}"
 displayName = "Moonrise"
 displayURL = "https://github.com/Tuinity/Moonrise"
 authors = "Spottedleaf"
-description = "Moonrise NeoForge"
+description = "Optimisation mod for the dedicated and integrated server."
 displayTest = "IGNORE_ALL_VERSION"
 
 [[dependencies.moonrise]]

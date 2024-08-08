@@ -162,6 +162,21 @@ public final class MoonriseConfig {
         )
         public int workerThreads = -1;
 
+        @Serializable(
+            comment = """
+                        Set the number of threads dedicated to RegionFile I/O operations.
+                        If the value is <= 0, then the number of threads used is 1. Configuring
+                        a higher value than 1 is only recommended on SSDs (HDDs scale negatively)
+                        and when you have determined that I/O is the bottleneck for chunk loading/saving.
+                        """
+        )
+        @ClothConfig(
+            tooltip = "tooltip.moonrise.iothreads",
+            fieldKeyName = "option.moonrise.iothreads",
+            section = CHUNK_SYSTEM_SECTION
+        )
+        public int ioThreads = -1;
+
         @Override
         public void initialise() {
             MoonriseCommon.adjustWorkerThreads(this);
@@ -173,21 +188,6 @@ public final class MoonriseConfig {
 
     @Adaptable
     public static final class ChunkSystem implements InitialiseHook {
-
-        @Serializable(
-                comment = """
-                        Set the number of threads dedicated to RegionFile I/O operations.
-                        If the value is <= 0, then the number of threads used is 1. Configuring
-                        a higher value than 1 is only recommended on SSDs (HDDs scale negatively)
-                        and when you have determined that I/O is the bottleneck for chunk loading/saving.
-                        """
-        )
-        @ClothConfig(
-                tooltip = "tooltip.moonrise.iothreads",
-                fieldKeyName = "option.moonrise.iothreads",
-                section = CHUNK_SYSTEM_SECTION
-        )
-        public int ioThreads = -1;
 
         @Serializable(
                 comment = """

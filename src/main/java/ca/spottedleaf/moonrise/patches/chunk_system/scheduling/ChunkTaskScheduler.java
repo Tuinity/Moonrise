@@ -67,17 +67,13 @@ public final class ChunkTaskScheduler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChunkTaskScheduler.class);
 
     public static void init(final MoonriseConfig.ChunkSystem config) {
-        final int newChunkSystemIOThreads = Math.max(1, config.ioThreads);
-
         final boolean useParallelGen = config.populationGenParallelism;
-
-        MoonriseCommon.IO_POOL.adjustThreadCount(newChunkSystemIOThreads);
 
         for (final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor executor : MoonriseCommon.RADIUS_AWARE_GROUP.getAllExecutors()) {
             executor.setMaxParallelism(useParallelGen ? -1 : 1);
         }
 
-        LOGGER.info("Chunk system is using " + newChunkSystemIOThreads + " I/O threads, " + MoonriseCommon.WORKER_POOL.getCoreThreads().length + " worker threads, population gen parallelism: " + useParallelGen);
+        LOGGER.info("Chunk system is using population gen parallelism: " + useParallelGen);
     }
 
     public static final TicketType<Long> CHUNK_LOAD = TicketType.create("chunk_system:chunk_load", Long::compareTo);
