@@ -76,10 +76,11 @@ public final class ClientProfilerInstance implements ProfilerFiller {
         this.userRenderThreshold = -1;
     }
 
-    public void setThresholds(final double tickMs, final double renderMs) {
+    // TODO Dump meta about session into dir (ie tick/renderMs, maybe game info or a crash report..?)
+    public String setThresholds(final double tickMs, final double renderMs) {
         this.userTickThreshold = tickMs;
         this.userRenderThreshold = renderMs;
-        this.newDumpSession();
+        return this.newDumpSession();
     }
 
     public void reset() {
@@ -91,9 +92,11 @@ public final class ClientProfilerInstance implements ProfilerFiller {
         this.delayedFrameProfiler = new LeafProfiler(this.registry, new LProfileGraph());
     }
 
-    private void newDumpSession() {
-        this.currentPath = this.root.resolve(String.valueOf(System.currentTimeMillis()));
+    private String newDumpSession() {
+        final String sessionId = String.valueOf(System.currentTimeMillis());
+        this.currentPath = this.root.resolve(sessionId);
         LOGGER.info("Profiler dumping to {}", this.currentPath);
+        return sessionId;
     }
 
     @Override

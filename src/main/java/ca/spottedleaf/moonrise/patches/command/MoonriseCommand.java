@@ -17,6 +17,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
@@ -96,15 +97,17 @@ public final class MoonriseCommand {
 
     private static int clearProfilerThresholds(final CommandContext<CommandSourceStack> ctx) {
         ((ProfilerMinecraft) Minecraft.getInstance()).moonrise$profilerInstance().clearThresholds();
+        ctx.getSource().sendSuccess(() -> Component.literal("Reset profiler thresholds"), true);
         return Command.SINGLE_SUCCESS;
     }
 
     private static int setProfilerThresholds(final CommandContext<CommandSourceStack> ctx, final double tickMs, final double renderMs) {
         if (tickMs < 0 && renderMs < 0) {
-            ctx.getSource().sendFailure(Component.literal("Tick and render threshold cannot both be <0"));
+            ctx.getSource().sendFailure(Component.literal("Tick and render threshold cannot both be <0").withStyle(ChatFormatting.RED));
             return 0;
         }
-        ((ProfilerMinecraft) Minecraft.getInstance()).moonrise$profilerInstance().setThresholds(tickMs, renderMs);
+        final String sessionId = ((ProfilerMinecraft) Minecraft.getInstance()).moonrise$profilerInstance().setThresholds(tickMs, renderMs);
+        ctx.getSource().sendSuccess(() -> Component.literal("Started profiler session '" + sessionId + "'"), true);
         return Command.SINGLE_SUCCESS;
     }
 
