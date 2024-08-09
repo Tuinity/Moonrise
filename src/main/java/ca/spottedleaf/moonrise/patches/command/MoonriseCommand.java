@@ -24,6 +24,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.PlainTextContents;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -48,7 +49,7 @@ public final class MoonriseCommand {
         dispatcher.register(
                 literal("moonrise").requires((final CommandSourceStack src) -> {
                     return src.hasPermission(src.getServer().getOperatorUserPermissionLevel())
-                        || src.isPlayer() && Objects.requireNonNull(src.getPlayer()).isLocalPlayer();
+                        || !(src.getServer() instanceof DedicatedServer);
                 }).then(
                         literal("holderinfo")
                                 .executes(MoonriseCommand::holderInfo)
