@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.patches.command;
 
-import ca.spottedleaf.leafprofiler.client.MinecraftBridge;
+import ca.spottedleaf.moonrise.patches.profiler.ProfilerMinecraft;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.JsonUtil;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
@@ -95,7 +95,7 @@ public final class MoonriseCommand {
     }
 
     private static int clearProfilerThresholds(final CommandContext<CommandSourceStack> ctx) {
-        ((MinecraftBridge) Minecraft.getInstance()).moonrise$profilerInstance().clearThresholds();
+        ((ProfilerMinecraft) Minecraft.getInstance()).moonrise$profilerInstance().clearThresholds();
         return Command.SINGLE_SUCCESS;
     }
 
@@ -104,7 +104,7 @@ public final class MoonriseCommand {
             ctx.getSource().sendFailure(Component.literal("Tick and render threshold cannot both be <0"));
             return 0;
         }
-        ((MinecraftBridge) Minecraft.getInstance()).moonrise$profilerInstance().setThresholds(tickMs, renderMs);
+        ((ProfilerMinecraft) Minecraft.getInstance()).moonrise$profilerInstance().setThresholds(tickMs, renderMs);
         return Command.SINGLE_SUCCESS;
     }
 
