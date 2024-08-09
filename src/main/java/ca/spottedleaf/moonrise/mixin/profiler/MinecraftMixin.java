@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.profiler;
 
 import ca.spottedleaf.leafprofiler.client.ClientProfilerInstance;
+import ca.spottedleaf.leafprofiler.client.MinecraftBridge;
 import com.mojang.blaze3d.platform.WindowEventHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.profiling.InactiveProfiler;
@@ -14,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Minecraft.class)
-abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnable> implements WindowEventHandler {
+abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnable> implements WindowEventHandler, MinecraftBridge {
 
     public MinecraftMixin(String string) {
         super(string);
@@ -44,5 +45,10 @@ abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnable> impl
         }
 
         cir.setReturnValue(ProfilerFiller.tee(this.leafProfiler, ret));
+    }
+
+    @Override
+    public ClientProfilerInstance moonrise$profilerInstance() {
+        return this.leafProfiler;
     }
 }

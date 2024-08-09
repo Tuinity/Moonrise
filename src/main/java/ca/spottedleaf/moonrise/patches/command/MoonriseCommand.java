@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.patches.command;
 
+import ca.spottedleaf.leafprofiler.client.MinecraftBridge;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.JsonUtil;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
@@ -8,14 +9,17 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.util.Mth;
@@ -30,50 +34,78 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
+
 public final class MoonriseCommand {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
-                Commands.literal("moonrise").requires((final CommandSourceStack src) -> {
-                    return src.hasPermission(2);
+                literal("moonrise").requires((final CommandSourceStack src) -> {
+                    return src.hasPermission(src.getServer().getOperatorUserPermissionLevel());
                 }).then(
-                        Commands.literal("holderinfo")
-                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
-                                        return MoonriseCommand.holderInfo(ctx);
-                                })
+                        literal("holderinfo")
+                                .executes(MoonriseCommand::holderInfo)
                 ).then(
-                        Commands.literal("chunkinfo")
-                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
-                                    return MoonriseCommand.chunkInfo(ctx);
-                                })
+                        literal("chunkinfo")
+                                .executes(MoonriseCommand::chunkInfo)
                 ).then(
-                        Commands.literal("reload")
-                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
-                                    return MoonriseCommand.reload(ctx);
-                                })
+                        literal("reload")
+                                .executes(MoonriseCommand::reload)
                 ).then(
-                        Commands.literal("relight")
+                        literal("relight")
                                 .executes((final CommandContext<CommandSourceStack> ctx) -> {
                                     return MoonriseCommand.relight(ctx, 10);
                                 })
                                 .then(
-                                        Commands.argument("radius", IntegerArgumentType.integer(0, MoonriseConstants.MAX_VIEW_DISTANCE))
+                                        argument("radius", IntegerArgumentType.integer(0, MoonriseConstants.MAX_VIEW_DISTANCE))
                                                 .executes((final CommandContext<CommandSourceStack> ctx) -> {
                                                     return MoonriseCommand.relight(ctx, IntegerArgumentType.getInteger(ctx, "radius"));
                                                 })
                                 )
                 ).then(
-                        Commands.literal("debug")
+                        literal("debug")
                                 .then(
-                                        Commands.literal("chunks")
-                                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
-                                                    return MoonriseCommand.debugChunks(ctx);
-                                                })
+                                        literal("chunks")
+                                                .executes(MoonriseCommand::debugChunks)
                                 )
                 )
         );
+    }
+
+    public static void registerClient(final CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
+            literal("moonrise")
+                .then(literal("client")
+                    .then(literal("profiler")
+                        .then(literal("threshold")
+                            .then(literal("set")
+                                .then(argument("tick_ms", doubleArg(-1))
+                                    .then(argument("render_ms", doubleArg(-1))
+                                        .executes(ctx -> {
+                                            return MoonriseCommand.setProfilerThresholds(
+                                                ctx, DoubleArgumentType.getDouble(ctx, "tick_ms"), DoubleArgumentType.getDouble(ctx, "render_ms"));
+                                        }))))
+                            .then(literal("disable")
+                                .executes(MoonriseCommand::clearProfilerThresholds)))))
+        );
+    }
+
+    private static int clearProfilerThresholds(final CommandContext<CommandSourceStack> ctx) {
+        ((MinecraftBridge) Minecraft.getInstance()).moonrise$profilerInstance().clearThresholds();
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int setProfilerThresholds(final CommandContext<CommandSourceStack> ctx, final double tickMs, final double renderMs) {
+        if (tickMs < 0 && renderMs < 0) {
+            ctx.getSource().sendFailure(Component.literal("Tick and render threshold cannot both be <0"));
+            return 0;
+        }
+        ((MinecraftBridge) Minecraft.getInstance()).moonrise$profilerInstance().setThresholds(tickMs, renderMs);
+        return Command.SINGLE_SUCCESS;
     }
 
     public static int holderInfo(final CommandContext<CommandSourceStack> ctx) {
