@@ -50,6 +50,11 @@ abstract class BooleanPropertyMixin extends Property<Boolean> implements Propert
     }
 
     @Override
+    public final boolean moonrise$requiresDefaultImpl() {
+        return false;
+    }
+
+    @Override
     public final int moonrise$getIdFor(final Boolean value) {
         return value.booleanValue() ? 1 : 0;
     }

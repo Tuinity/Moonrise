@@ -34,6 +34,11 @@ abstract class IntegerPropertyMixin extends Property<Integer> implements Propert
     }
 
     @Override
+    public final boolean moonrise$requiresDefaultImpl() {
+        return false;
+    }
+
+    @Override
     public final int moonrise$getIdFor(final Integer value) {
         final int val = value.intValue();
         final int ret = val - this.min;
