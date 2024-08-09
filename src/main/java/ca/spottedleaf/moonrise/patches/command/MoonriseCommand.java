@@ -13,11 +13,12 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import java.util.Objects;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
@@ -80,37 +81,37 @@ public final class MoonriseCommand {
         );
     }
 
-    public static void registerClient(final CommandDispatcher<CommandSourceStack> dispatcher) {
+    public static void registerClient(final CommandDispatcher<CommonClientCommandSource> dispatcher) {
         dispatcher.register(
-            literal("moonrise")
-                .then(literal("client")
-                    .then(literal("profiler")
-                        .then(literal("threshold")
-                            .then(literal("set")
-                                .then(argument("tick_ms", doubleArg(-1))
-                                    .then(argument("render_ms", doubleArg(-1))
+            LiteralArgumentBuilder.<CommonClientCommandSource>literal("moonrise")
+                .then(LiteralArgumentBuilder.<CommonClientCommandSource>literal("client")
+                    .then(LiteralArgumentBuilder.<CommonClientCommandSource>literal("profiler")
+                        .then(LiteralArgumentBuilder.<CommonClientCommandSource>literal("threshold")
+                            .then(LiteralArgumentBuilder.<CommonClientCommandSource>literal("set")
+                                .then(RequiredArgumentBuilder.<CommonClientCommandSource, Double>argument("tick_ms", doubleArg(-1))
+                                    .then(RequiredArgumentBuilder.<CommonClientCommandSource, Double>argument("render_ms", doubleArg(-1))
                                         .executes(ctx -> {
                                             return MoonriseCommand.setProfilerThresholds(
                                                 ctx, DoubleArgumentType.getDouble(ctx, "tick_ms"), DoubleArgumentType.getDouble(ctx, "render_ms"));
                                         }))))
-                            .then(literal("disable")
+                            .then(LiteralArgumentBuilder.<CommonClientCommandSource>literal("disable")
                                 .executes(MoonriseCommand::clearProfilerThresholds)))))
         );
     }
 
-    private static int clearProfilerThresholds(final CommandContext<CommandSourceStack> ctx) {
+    private static int clearProfilerThresholds(final CommandContext<CommonClientCommandSource> ctx) {
         ((ProfilerMinecraft) Minecraft.getInstance()).moonrise$profilerInstance().clearThresholds();
-        ctx.getSource().sendSuccess(() -> Component.literal("Reset profiler thresholds"), true);
+        ctx.getSource().moonrise$sendSuccess(Component.literal("Reset profiler thresholds"));
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int setProfilerThresholds(final CommandContext<CommandSourceStack> ctx, final double tickMs, final double renderMs) {
+    private static int setProfilerThresholds(final CommandContext<CommonClientCommandSource> ctx, final double tickMs, final double renderMs) {
         if (tickMs < 0 && renderMs < 0) {
-            ctx.getSource().sendFailure(Component.literal("Tick and render threshold cannot both be <0").withStyle(ChatFormatting.RED));
+            ctx.getSource().moonrise$sendFailure(Component.literal("Tick and render threshold cannot both be <0").withStyle(ChatFormatting.RED));
             return 0;
         }
         final String sessionId = ((ProfilerMinecraft) Minecraft.getInstance()).moonrise$profilerInstance().setThresholds(tickMs, renderMs);
-        ctx.getSource().sendSuccess(() -> Component.literal("Started profiler session '" + sessionId + "'"), true);
+        ctx.getSource().moonrise$sendSuccess(Component.literal("Started profiler session '" + sessionId + "'"));
         return Command.SINGLE_SUCCESS;
     }
 

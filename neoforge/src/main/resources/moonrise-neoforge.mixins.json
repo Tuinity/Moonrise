@@ -7,5 +7,6 @@
     "chunk_system.NeoForgeServerLevelMixin"
   ],
   "client": [
+    "command.ClientCommandSourceStackMixin"
   ]
 }

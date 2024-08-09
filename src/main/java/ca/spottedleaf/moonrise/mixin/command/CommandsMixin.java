@@ -32,8 +32,5 @@ abstract class CommandsMixin {
     )
     private void registerCommands(final Commands.CommandSelection commandSelection, final CommandBuildContext commandBuildContext, final CallbackInfo ci) {
         MoonriseCommand.register(this.dispatcher);
-        if (commandSelection == Commands.CommandSelection.INTEGRATED) {
-            MoonriseCommand.registerClient(this.dispatcher);
-        }
     }
 }

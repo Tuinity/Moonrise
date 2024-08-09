@@ -23,7 +23,8 @@
   "icon": "assets/moonrise/icon.png",
   "environment": "*",
   "entrypoints": {
-    "modmenu": ["ca.spottedleaf.moonrise.fabric.MoonriseModMenuHook"]
+    "modmenu": ["ca.spottedleaf.moonrise.fabric.MoonriseModMenuHook"],
+    "client": ["ca.spottedleaf.moonrise.fabric.MoonriseFabricClient"]
   },
   "mixins": [
     "moonrise.mixins.json",
@@ -32,6 +33,7 @@
   "accessWidener" : "moonrise.accesswidener",
   "depends": {
     "fabricloader": ">=${loader_version}",
-    "minecraft": "${minecraft_version}"
+    "minecraft": "${minecraft_version}",
+    "fabric-command-api-v2": "*"
   }
 }
