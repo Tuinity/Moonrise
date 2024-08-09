@@ -70,6 +70,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
         this.reset();
     }
 
+    // TODO: Call when leaving server/SP world
     public void clearThresholds() {
         this.userTickThreshold = -1;
         this.userRenderThreshold = -1;
