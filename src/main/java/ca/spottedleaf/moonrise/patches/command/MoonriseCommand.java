@@ -17,6 +17,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import java.util.Objects;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
@@ -46,7 +47,8 @@ public final class MoonriseCommand {
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
                 literal("moonrise").requires((final CommandSourceStack src) -> {
-                    return src.hasPermission(src.getServer().getOperatorUserPermissionLevel());
+                    return src.hasPermission(src.getServer().getOperatorUserPermissionLevel())
+                        || src.isPlayer() && Objects.requireNonNull(src.getPlayer()).isLocalPlayer();
                 }).then(
                         literal("holderinfo")
                                 .executes(MoonriseCommand::holderInfo)
