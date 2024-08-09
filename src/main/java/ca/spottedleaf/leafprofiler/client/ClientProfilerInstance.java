@@ -31,6 +31,8 @@ public final class ClientProfilerInstance implements ProfilerFiller {
         }
     }
 
+    private static final double LARGE_TICK_THRESHOLD = 1.0 - 0.05;
+
     private final LProfilerRegistry registry = new LProfilerRegistry();
     private final TickAccumulator tickAccumulator = new TickAccumulator(TimeUnit.SECONDS.toNanos(1L));
 
@@ -44,20 +46,23 @@ public final class ClientProfilerInstance implements ProfilerFiller {
     private LeafProfiler delayedFrameProfiler;
     private LeafProfiler frameProfiler;
 
-    private static final double LARGE_TICK_THRESHOLD = 1.0 - 0.05;
-
     private long tick;
 
     private final List<LargeTick> largeTicks = new ArrayList<>();
 
     private static record LargeTick(long tickNum, LeafProfiler.ProfilingData profile) {}
 
-    public void startProfiler() {
-        this.delayedFrameProfiler = new LeafProfiler(this.registry, new LProfileGraph());
+    public ClientProfilerInstance() {
+        this.reset();
     }
 
-    public void stopProfiler() {
-        this.delayedFrameProfiler = null;
+    public void reset() {
+        this.previousTickStart = TickTime.DEADLINE_NOT_SET;
+        this.tickStart = TickTime.DEADLINE_NOT_SET;
+        this.tickStartCPU = TickTime.DEADLINE_NOT_SET;
+        this.tick = 0L;
+        this.largeTicks.clear();
+        this.delayedFrameProfiler = new LeafProfiler(this.registry, new LProfileGraph());
     }
 
     @Override

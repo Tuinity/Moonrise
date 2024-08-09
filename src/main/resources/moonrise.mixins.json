@@ -115,6 +115,7 @@
     "collisions.LiquidBlockRendererMixin",
     "collisions.ParticleMixin",
     "loading_screen.LevelLoadStatusManagerMixin",
+    "profiler.MinecraftMixin",
     "render.SectionRenderDispatcherMixin",
     "serverlist.ClientConnectionMixin",
     "serverlist.ServerAddressResolverMixin",
