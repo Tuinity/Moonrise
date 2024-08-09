@@ -1,4 +1,4 @@
-package ca.spottedleaf.leafprofiler;
+package ca.spottedleaf.moonrise.patches.profiler;
 
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
@@ -69,6 +69,11 @@ public final class LeafProfiler {
             this.accumulatedCounters = Arrays.copyOf(this.accumulatedCounters, this.counters.length);
         }
         add(this.accumulatedCounters, this.counters);
+        Arrays.fill(this.counters, 0L);
+    }
+
+    public void clearCurrent() {
+        Arrays.fill(this.timers, 0L);
         Arrays.fill(this.counters, 0L);
     }
 

@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.neoforge.mixin.command;
 
-import ca.spottedleaf.moonrise.patches.command.CommonClientCommandSource;
+import ca.spottedleaf.moonrise.patches.command.CommandClientCommandSource;
 import java.util.function.Supplier;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(ClientCommandSourceStack.class)
-abstract class ClientCommandSourceStackMixin extends CommandSourceStack implements CommonClientCommandSource {
+abstract class ClientCommandSourceStackMixin extends CommandSourceStack implements CommandClientCommandSource {
     public ClientCommandSourceStackMixin(CommandSource arg, Vec3 arg2, Vec2 arg3, ServerLevel arg4, int i, String string, Component arg5, MinecraftServer minecraftServer, @Nullable Entity arg6) {
         super(arg, arg2, arg3, arg4, i, string, arg5, minecraftServer, arg6);
     }

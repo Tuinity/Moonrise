@@ -1,4 +1,4 @@
-package ca.spottedleaf.leafprofiler;
+package ca.spottedleaf.moonrise.patches.profiler;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;

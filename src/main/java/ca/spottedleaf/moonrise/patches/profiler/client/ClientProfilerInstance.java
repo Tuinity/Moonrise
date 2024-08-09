@@ -1,11 +1,10 @@
-package ca.spottedleaf.leafprofiler.client;
+package ca.spottedleaf.moonrise.patches.profiler.client;
 
 import ca.spottedleaf.concurrentutil.executor.thread.PrioritisedThreadPool;
-import ca.spottedleaf.leafprofiler.LProfileGraph;
-import ca.spottedleaf.leafprofiler.LProfilerRegistry;
-import ca.spottedleaf.leafprofiler.LeafProfiler;
-import ca.spottedleaf.leafprofiler.TickAccumulator;
-import ca.spottedleaf.leafprofiler.TickTime;
+import ca.spottedleaf.moonrise.patches.profiler.LProfileGraph;
+import ca.spottedleaf.moonrise.patches.profiler.LProfilerRegistry;
+import ca.spottedleaf.moonrise.patches.profiler.LeafProfiler;
+import ca.spottedleaf.moonrise.patches.profiler.TickTime;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import com.mojang.logging.LogUtils;
 import java.io.IOException;
@@ -16,9 +15,10 @@ import net.minecraft.util.profiling.metrics.MetricCategory;
 import org.slf4j.Logger;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public final class ClientProfilerInstance implements ProfilerFiller {
@@ -36,17 +36,10 @@ public final class ClientProfilerInstance implements ProfilerFiller {
         }
     }
 
-    private static final double LARGE_TICK_THRESHOLD = 1.0 - 0.05;
-
     private final Path root;
     private final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor dumpPool;
-    private double userTickThreshold = -1;
-    private double userRenderThreshold = -1;
-
-    private Path currentPath;
 
     private final LProfilerRegistry registry = new LProfilerRegistry();
-    private final TickAccumulator tickAccumulator = new TickAccumulator(TimeUnit.SECONDS.toNanos(1L));
 
     public final int clientFrame = this.registry.createType(LProfilerRegistry.ProfileType.TIMER, "Client Frame");
     public final int clientTick = this.registry.createType(LProfilerRegistry.ProfileType.TIMER, "Client Tick");
@@ -60,43 +53,112 @@ public final class ClientProfilerInstance implements ProfilerFiller {
 
     private long tick;
 
-    private final List<LargeTick> largeTicks = new ArrayList<>();
+    private Path sessionPath;
+    // ns
+    private long averageThreshold;
+    // ns
+    private long recordThreshold;
 
-    private static record LargeTick(long tickNum, LeafProfiler.ProfilingData profile) {}
+    private final List<RecordedTick> recordedTicks = new ArrayList<>();
+
+    private static record RecordedTick(
+        TickTime tickTime, long tickNum, LeafProfiler.ProfilingData profilingData
+    ) {}
 
     public ClientProfilerInstance() {
-        this.root = Path.of("leafprofiler", "large_ticks");
-        this.dumpPool = MoonriseCommon.PROFILER_DUMP_IO_GROUP.createExecutor(1, MoonriseCommon.IO_QUEUE_HOLD_TIME, 0);
-        this.reset();
+        this.root = Path.of("moonrise", "profiler", "large_ticks");
+        this.dumpPool = MoonriseCommon.CLIENT_PROFILER_IO_GROUP.createExecutor(1, MoonriseCommon.IO_QUEUE_HOLD_TIME, 0);
     }
 
-    // TODO: Call when leaving server/SP world
-    public void clearThresholds() {
-        this.userTickThreshold = -1;
-        this.userRenderThreshold = -1;
-    }
-
-    // TODO Dump meta about session into dir (ie tick/renderMs, maybe game info or a crash report..?)
-    public String setThresholds(final double tickMs, final double renderMs) {
-        this.userTickThreshold = tickMs;
-        this.userRenderThreshold = renderMs;
-        return this.newDumpSession();
-    }
-
-    public void reset() {
+    private void reset() {
         this.previousTickStart = TickTime.DEADLINE_NOT_SET;
         this.tickStart = TickTime.DEADLINE_NOT_SET;
         this.tickStartCPU = TickTime.DEADLINE_NOT_SET;
         this.tick = 0L;
-        this.largeTicks.clear();
-        this.delayedFrameProfiler = new LeafProfiler(this.registry, new LProfileGraph());
+        this.delayedFrameProfiler = null;
+        this.sessionPath = null;
+        this.averageThreshold = 0L;
+        this.recordThreshold = 0L;
+        this.recordedTicks.clear();
     }
 
-    private String newDumpSession() {
-        final String sessionId = String.valueOf(System.currentTimeMillis());
-        this.currentPath = this.root.resolve(sessionId);
-        LOGGER.info("Profiler dumping to {}", this.currentPath);
-        return sessionId;
+    public boolean startSession(final long averageThresholdNS, final long recordThresholdNS)  {
+        if (this.sessionPath != null) {
+            return false;
+        }
+
+        final String sessionId = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss").format(LocalDateTime.now());
+        this.sessionPath = this.root.resolve(sessionId);
+        this.averageThreshold = averageThresholdNS < 0L ? Long.MAX_VALUE : averageThresholdNS;
+        this.recordThreshold = recordThresholdNS < 0L ? Long.MAX_VALUE : recordThresholdNS;
+        this.delayedFrameProfiler = new LeafProfiler(this.registry, new LProfileGraph());
+
+        LOGGER.info("Starting client profiler with avg_threshold=" + averageThresholdNS + "rec_threshold=" + recordThresholdNS + ",sessionId=" + sessionId);
+
+        return true;
+    }
+
+    public boolean endSession() {
+        if (this.sessionPath == null) {
+            return false;
+        }
+
+        LOGGER.info("Ending client profiler session");
+
+        this.write();
+
+        this.reset();
+        return true;
+    }
+
+    private void writeTick(final RecordedTick recordedTick) {
+        final Path path = this.sessionPath.resolve(recordedTick.tickNum + ".txt");
+
+        this.dumpPool.queueTask(() -> {
+            try {
+                if (!Files.isDirectory(path.getParent())) {
+                    Files.createDirectories(path.getParent());
+                }
+                Files.write(
+                    path,
+                    recordedTick.profilingData().dumpToString()
+                );
+            } catch (final IOException ex) {
+                throw new RuntimeException("Failed to write tick " + recordedTick, ex);
+            }
+        });
+    }
+
+    private void writeAverages() {
+        final Path path = this.sessionPath.resolve("averages.txt");
+
+        final LeafProfiler.ProfilingData profilingData = this.delayedFrameProfiler.copyAccumulated();
+
+        this.dumpPool.queueTask(() -> {
+            try {
+                if (!Files.isDirectory(path.getParent())) {
+                    Files.createDirectories(path.getParent());
+                }
+                Files.write(
+                    path,
+                    profilingData.dumpToString()
+                );
+            } catch (final IOException ex) {
+                throw new RuntimeException("Failed to write averages", ex);
+            }
+        });
+    }
+
+    private void write() {
+        for (final RecordedTick tick : this.recordedTicks) {
+            this.writeTick(tick);
+        }
+
+        this.writeAverages();
+    }
+
+    public boolean isActive() {
+        return this.delayedFrameProfiler != null;
     }
 
     @Override
@@ -122,52 +184,22 @@ public final class ClientProfilerInstance implements ProfilerFiller {
                 this.previousTickStart, this.tickStart, this.tickStart, this.tickStartCPU, time, cpuTime, MEASURE_CPU_TIME
         );
 
-        final int index = this.tickAccumulator.addDataFrom(tickTime);
-        final int count = this.tickAccumulator.size();
-
         if (this.frameProfiler != null) {
             this.frameProfiler.stopTimer(this.clientFrame, time);
 
-            if (count == 1 || (double)index/(double)(count - 1) >= LARGE_TICK_THRESHOLD) {
-                final LargeTick largeTick = new LargeTick(this.tick, this.frameProfiler.copyCurrent());
-                this.largeTicks.add(largeTick);
-                this.dumpIfOverThreshold(largeTick);
+            if (tickTime.tickLength() >= this.recordThreshold) {
+                this.recordedTicks.add(new RecordedTick(tickTime, this.tick, this.frameProfiler.copyCurrent()));
             }
 
-            this.frameProfiler.accumulate();
+            if (tickTime.tickLength() >= this.averageThreshold) {
+                this.frameProfiler.accumulate();
+            } else {
+                this.frameProfiler.clearCurrent();
+            }
         }
+
         this.frameProfiler = null;
         ++this.tick;
-    }
-
-    private void dumpIfOverThreshold(LargeTick largeTick) {
-        boolean dump = false;
-        if (this.userRenderThreshold >= 0) {
-            if (largeTick.profile.timers()[this.clientFrame] / 1_000_000.0 >= this.userRenderThreshold) {
-                dump = true;
-            }
-        }
-        if (this.userTickThreshold >= 0) {
-            if (largeTick.profile.timers()[this.clientTick] / 1_000_000.0 >= this.userTickThreshold) {
-                dump = true;
-            }
-        }
-        if (dump) {
-            final Path path = this.currentPath.resolve(largeTick.tickNum + ".txt");
-            this.dumpPool.queueTask(() -> {
-                try {
-                    if (!Files.isDirectory(path.getParent())) {
-                        Files.createDirectories(path.getParent());
-                    }
-                    Files.write(
-                        path,
-                        largeTick.profile().dumpToString()
-                    );
-                } catch (final IOException e) {
-                    throw new RuntimeException("Failed to dump large tick " + largeTick, e);
-                }
-            });
-        }
     }
 
     public void startRealClientTick() {

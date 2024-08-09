@@ -1,4 +1,4 @@
-package ca.spottedleaf.leafprofiler;
+package ca.spottedleaf.moonrise.patches.profiler;
 
 import ca.spottedleaf.concurrentutil.util.TimeUtil;
 import ca.spottedleaf.moonrise.common.list.SortedList;
