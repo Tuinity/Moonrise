@@ -1,12 +1,13 @@
 package ca.spottedleaf.moonrise.mixin.util_thread_counts;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.Util;
 import net.minecraft.util.Mth;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
@@ -41,7 +42,7 @@ abstract class UtilMixin {
      *         not lost due to some timeout, as G1GC has some issues cleaning up those.
      * @author Spottedleaf
      */
-    @Redirect(
+    @WrapOperation(
         method = "makeExecutor",
         at = @At(
             value = "NEW",
@@ -49,7 +50,8 @@ abstract class UtilMixin {
         )
     )
     private static ForkJoinPool modifyExecutor(final int parallelism, final ForkJoinPool.ForkJoinWorkerThreadFactory factory,
-                                               final Thread.UncaughtExceptionHandler handler, final boolean asyncMode) {
+                                               final Thread.UncaughtExceptionHandler handler, final boolean asyncMode,
+                                               final Operation<ForkJoinPool> original) {
         final int threads = getThreadCounts(1, getMaxThreads());
 
         return new ForkJoinPool(threads, factory, handler, asyncMode, 0, Integer.MAX_VALUE, 1, null, 365, TimeUnit.DAYS);
