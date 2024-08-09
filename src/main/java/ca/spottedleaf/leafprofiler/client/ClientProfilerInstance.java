@@ -144,7 +144,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
             }
         }
         if (this.userTickThreshold >= 0) {
-            if (largeTick.profile.timers()[this.clientTick] / 1_000_000.0 >= this.userRenderThreshold) {
+            if (largeTick.profile.timers()[this.clientTick] / 1_000_000.0 >= this.userTickThreshold) {
                 dump = true;
             }
         }
