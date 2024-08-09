@@ -52,6 +52,7 @@ abstract class EnumPropertyMixin<T extends Enum<T> & StringRepresentable> extend
 
     @Override
     public final int moonrise$getIdFor(final T value) {
-        return this.idLookupTable[value.ordinal()];
+        final Class<T> target = this.getValueClass();
+        return ((value.getClass() != target && value.getDeclaringClass() != target)) ? -1 : this.idLookupTable[value.ordinal()];
     }
 }
