@@ -1,4 +1,4 @@
-package ca.spottedleaf.leafprofiler;
+package ca.spottedleaf.moonrise.patches.profiler;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;

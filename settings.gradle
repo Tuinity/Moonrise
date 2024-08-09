@@ -28,6 +28,20 @@ plugins {
     id 'io.github.goooler.shadow' version '8.1.8' apply false
 }
 
+dependencyResolutionManagement {
+    repositories {
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+    }
+    versionCatalogs {
+        create("fabricApiLibs") {
+            from("net.fabricmc.fabric-api:fabric-api-catalog:0.102.0+1.21.1")
+        }
+    }
+}
+
 rootProject.name = "Moonrise"
 
 include("fabric")

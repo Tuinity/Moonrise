@@ -7,17 +7,24 @@ import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
+import ca.spottedleaf.moonrise.patches.profiler.client.ProfilerMinecraft;
 import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.contents.PlainTextContents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -30,50 +37,87 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
+
 public final class MoonriseCommand {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
-                Commands.literal("moonrise").requires((final CommandSourceStack src) -> {
-                    return src.hasPermission(2);
-                }).then(
-                        Commands.literal("holderinfo")
-                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
-                                        return MoonriseCommand.holderInfo(ctx);
-                                })
-                ).then(
-                        Commands.literal("chunkinfo")
-                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
-                                    return MoonriseCommand.chunkInfo(ctx);
-                                })
-                ).then(
-                        Commands.literal("reload")
-                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
-                                    return MoonriseCommand.reload(ctx);
-                                })
-                ).then(
-                        Commands.literal("relight")
-                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
-                                    return MoonriseCommand.relight(ctx, 10);
-                                })
-                                .then(
-                                        Commands.argument("radius", IntegerArgumentType.integer(0, MoonriseConstants.MAX_VIEW_DISTANCE))
-                                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
-                                                    return MoonriseCommand.relight(ctx, IntegerArgumentType.getInteger(ctx, "radius"));
-                                                })
-                                )
-                ).then(
-                        Commands.literal("debug")
-                                .then(
-                                        Commands.literal("chunks")
-                                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
-                                                    return MoonriseCommand.debugChunks(ctx);
-                                                })
-                                )
+            literal("moonrise").requires((final CommandSourceStack src) -> {
+                return src.hasPermission(src.getServer().getOperatorUserPermissionLevel()) || !(src.getServer() instanceof DedicatedServer);
+            }).then(literal("holderinfo")
+                .executes(MoonriseCommand::holderInfo)
+            ).then(literal("chunkinfo")
+                .executes(MoonriseCommand::chunkInfo)
+            ).then(literal("reload")
+                .executes(MoonriseCommand::reload)
+            ).then(literal("relight")
+                .executes((final CommandContext<CommandSourceStack> ctx) -> {
+                    return MoonriseCommand.relight(ctx, 10);
+                })
+                .then(argument("radius", IntegerArgumentType.integer(0, MoonriseConstants.MAX_VIEW_DISTANCE))
+                    .executes((final CommandContext<CommandSourceStack> ctx) -> {
+                        return MoonriseCommand.relight(ctx, IntegerArgumentType.getInteger(ctx, "radius"));
+                    })
+                )
+            ).then(literal("debug")
+                .then(literal("chunks")
+                    .executes(MoonriseCommand::debugChunks)
+                )
+            )
+        );
+    }
+
+    public static void registerClient(final CommandDispatcher<CommandClientCommandSource> dispatcher) {
+        dispatcher.register(
+            LiteralArgumentBuilder.<CommandClientCommandSource>literal("moonrisec")
+                .then(LiteralArgumentBuilder.<CommandClientCommandSource>literal("profiler")
+                    .then(LiteralArgumentBuilder.<CommandClientCommandSource>literal("start")
+                        .executes((final CommandContext<CommandClientCommandSource> ctx) -> {
+                            return MoonriseCommand.startClientProfiler(ctx, -1.0);
+                        })
+                        .then(RequiredArgumentBuilder.<CommandClientCommandSource, Double>argument("record_threshold", DoubleArgumentType.doubleArg(0.0, 10_000.0))
+                            .executes((final CommandContext<CommandClientCommandSource> ctx) -> {
+                                return MoonriseCommand.startClientProfiler(ctx, DoubleArgumentType.getDouble(ctx, "record_threshold"));
+                            })
+                        )
+                    )
+                    .then(LiteralArgumentBuilder.<CommandClientCommandSource>literal("stop")
+                        .executes(MoonriseCommand::stopClientProfiler)
+                    )
                 )
         );
+    }
+
+    private static int startClientProfiler(final CommandContext<CommandClientCommandSource> ctx, final double recordThreshold) {
+        final boolean started = ((ProfilerMinecraft)Minecraft.getInstance()).moonrise$profilerInstance().startSession(
+            0L, recordThreshold < 0.0 ? -1L : (long)Math.round(recordThreshold * 1.0E6)
+        );
+
+        if (!started) {
+            ctx.getSource().moonrise$sendFailure(Component.literal("Profiler is already running").withStyle(ChatFormatting.RED));
+            return 0;
+        }
+
+        ctx.getSource().moonrise$sendSuccess(Component.literal("Started client profiler").withStyle(ChatFormatting.BLUE));
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int stopClientProfiler(final CommandContext<CommandClientCommandSource> ctx) {
+        final boolean ended = ((ProfilerMinecraft)Minecraft.getInstance()).moonrise$profilerInstance().endSession();
+
+        if (!ended) {
+            ctx.getSource().moonrise$sendFailure(Component.literal("Profiler is not running").withStyle(ChatFormatting.RED));
+            return 0;
+        }
+
+        ctx.getSource().moonrise$sendSuccess(Component.literal("Stopped client profiler").withStyle(ChatFormatting.BLUE));
+
+        return Command.SINGLE_SUCCESS;
     }
 
     public static int holderInfo(final CommandContext<CommandSourceStack> ctx) {
@@ -105,13 +149,25 @@ public final class MoonriseCommand {
             }
         }
 
-        ctx.getSource().sendSystemMessage(MutableComponent.create(
-                new PlainTextContents.LiteralContents(
-                        "Total: " + total + " Unloadable: " + canUnload +
-                             " Null: " + nullChunks + " ReadOnly: " + readOnly +
-                             " Proto: " + protoChunk + " Full: " + fullChunk
-                )
-        ));
+        ctx.getSource().sendSystemMessage(
+            Component.literal("Total: ").withStyle(ChatFormatting.BLUE)
+                .append(Component.literal(Integer.toString(total)).withStyle(ChatFormatting.DARK_AQUA))
+
+                .append(Component.literal(" Unloadable: ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(Integer.toString(canUnload)).withStyle(ChatFormatting.DARK_AQUA))
+
+                .append(Component.literal(" Null: ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(Integer.toString(nullChunks)).withStyle(ChatFormatting.DARK_AQUA))
+
+                .append(Component.literal(" ReadOnly: ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(Integer.toString(readOnly)).withStyle(ChatFormatting.DARK_AQUA))
+
+                .append(Component.literal(" Proto: ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(Integer.toString(protoChunk)).withStyle(ChatFormatting.DARK_AQUA))
+
+                .append(Component.literal(" Full: ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(Integer.toString(fullChunk)).withStyle(ChatFormatting.DARK_AQUA))
+        );
 
         return total;
     }
@@ -153,13 +209,22 @@ public final class MoonriseCommand {
             }
         }
 
-        ctx.getSource().sendSystemMessage(MutableComponent.create(
-                new PlainTextContents.LiteralContents(
-                        "Total: " + total + " Inactive: " + inactive +
-                                " Full: " + full + " Block Ticking: " + blockTicking +
-                                " Entity Ticking: " + entityTicking
-                )
-        ));
+        ctx.getSource().sendSystemMessage(
+            Component.literal("Total: ").withStyle(ChatFormatting.BLUE)
+                .append(Component.literal(Integer.toString(total)).withStyle(ChatFormatting.DARK_AQUA))
+
+                .append(Component.literal(" Inactive: ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(Integer.toString(inactive)).withStyle(ChatFormatting.DARK_AQUA))
+
+                .append(Component.literal(" Full: ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(Integer.toString(full)).withStyle(ChatFormatting.DARK_AQUA))
+
+                .append(Component.literal(" Block Ticking: ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(Integer.toString(blockTicking)).withStyle(ChatFormatting.DARK_AQUA))
+
+                .append(Component.literal(" Entity Ticking: ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(Integer.toString(entityTicking)).withStyle(ChatFormatting.DARK_AQUA))
+        );
 
         return total;
     }
@@ -167,23 +232,17 @@ public final class MoonriseCommand {
     public static int reload(final CommandContext<CommandSourceStack> ctx) {
         if (MoonriseCommon.reloadConfig()) {
             ctx.getSource().sendSuccess(() -> {
-                return MutableComponent.create(
-                        new PlainTextContents.LiteralContents(
-                                "Reloaded Moonrise config."
-                        )
-                );
+                return Component.literal("Reloaded Moonrise config.")
+                    .withStyle(ChatFormatting.BLUE);
             }, true);
+            return Command.SINGLE_SUCCESS;
         } else {
             ctx.getSource().sendFailure(
-                    MutableComponent.create(
-                            new PlainTextContents.LiteralContents(
-                                    "Failed to reload Moonrise config."
-                            )
-                    )
+                Component.literal("Reloaded Moonrise config.")
+                    .withStyle(ChatFormatting.RED)
             );
+            return 0;
         }
-
-        return 0;
     }
 
     public static int relight(final CommandContext<CommandSourceStack> ctx, final int radius) {
@@ -239,11 +298,9 @@ public final class MoonriseCommand {
         );
 
         ctx.getSource().sendSuccess(() -> {
-            return MutableComponent.create(
-                    new PlainTextContents.LiteralContents(
-                            "Relighting " + ret + " chunks"
-                    )
-            );
+            return Component.literal("Relighting ").withStyle(ChatFormatting.BLUE)
+                .append(Component.literal(Integer.toString(ret)).withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal(" chunks").withStyle(ChatFormatting.BLUE));
         }, true);
 
         return ret;
@@ -253,31 +310,23 @@ public final class MoonriseCommand {
         final File file = ChunkTaskScheduler.getChunkDebugFile();
 
         ctx.getSource().sendSuccess(() -> {
-            return MutableComponent.create(
-                    new PlainTextContents.LiteralContents(
-                            "Writing chunk information dump to '" + file + "'"
-                    )
-            );
+            return Component.literal("Writing chunk information dump to '").withStyle(ChatFormatting.BLUE)
+                .append(Component.literal(file.toString()).withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal("'").withStyle(ChatFormatting.BLUE));
         }, true);
         try {
             JsonUtil.writeJson(ChunkTaskScheduler.debugAllWorlds(ctx.getSource().getServer()), file);
 
             ctx.getSource().sendSuccess(() -> {
-                return MutableComponent.create(
-                        new PlainTextContents.LiteralContents(
-                                "Wrote chunk information dump to '" + file + "'"
-                        )
-                );
+                return Component.literal("Wrote chunk information dump to '").withStyle(ChatFormatting.BLUE)
+                    .append(Component.literal(file.toString()).withStyle(ChatFormatting.DARK_AQUA))
+                    .append(Component.literal("'").withStyle(ChatFormatting.BLUE));
             }, true);
+            return Command.SINGLE_SUCCESS;
         } catch (final Throwable throwable) {
             LOGGER.error("Failed to dump chunk information to file '" + file.getAbsolutePath() + "'", throwable);
-            ctx.getSource().sendFailure(MutableComponent.create(
-                    new PlainTextContents.LiteralContents(
-                            "Failed to dump chunk information, see console"
-                    )
-            ));
+            ctx.getSource().sendFailure(Component.literal("Failed to dump chunk information, see console").withStyle(ChatFormatting.RED));
+            return 0;
         }
-
-        return 0;
     }
 }

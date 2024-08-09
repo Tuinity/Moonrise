@@ -1,4 +1,4 @@
-package ca.spottedleaf.leafprofiler;
+package ca.spottedleaf.moonrise.patches.profiler;
 
 public final record TickTime(
         long previousTickStart,

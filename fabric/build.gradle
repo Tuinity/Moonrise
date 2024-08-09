@@ -23,6 +23,10 @@ dependencies {
     modImplementation "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
     include "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
     modImplementation "com.terraformersmc:modmenu:11.0.1"
+
+    modImplementation fabricApiLibs.command.api.v2
+    include fabricApiLibs.command.api.v2
+    include fabricApiLibs.base
 }
 
 processResources {
