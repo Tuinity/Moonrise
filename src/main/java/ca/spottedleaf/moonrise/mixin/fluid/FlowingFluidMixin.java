@@ -62,35 +62,26 @@ abstract class FlowingFluidMixin extends Fluid {
      */
     @Unique
     private void init() {
-        for (final FluidState state : this.getFlowing().getStateDefinition().getPossibleStates()) {
-            if (!state.isSource()) {
-                if (this.flowingLookUp == null) {
-                    this.flowingLookUp = new FluidState[TOTAL_FLOWING_STATES];
-                }
-                final int index = (state.getValue(FALLING).booleanValue() ? 1 : 0) | ((state.getValue(LEVEL).intValue() - MIN_LEVEL) << 1);
-                if (this.flowingLookUp[index] != null) {
-                    throw new IllegalStateException("Already inited");
-                }
-                this.flowingLookUp[index] = state;
+        synchronized (this) {
+            if (this.init) {
+                return;
             }
-        }
-        for (final FluidState state : this.getSource().getStateDefinition().getPossibleStates()) {
-            if (state.isSource()) {
-                if (state.getValue(FALLING).booleanValue()) {
-                    if (this.sourceFalling != null) {
-                        throw new IllegalStateException("Already inited");
-                    }
-                    this.sourceFalling = state;
-                } else {
-                    if (this.sourceNotFalling != null) {
-                        throw new IllegalStateException("Already inited");
-                    }
-                    this.sourceNotFalling = state;
-                }
-            }
-        }
+            this.flowingLookUp = new FluidState[TOTAL_FLOWING_STATES];
+            final FluidState defaultFlowState = this.getFlowing().defaultFluidState();
+            for (int i = 0; i < TOTAL_FLOWING_STATES; ++i) {
+                final int falling = i & 1;
+                final int level = (i >>> 1) + MIN_LEVEL;
 
-        this.init = true;
+                this.flowingLookUp[i] = defaultFlowState.setValue(FALLING, falling == 1 ? Boolean.TRUE : Boolean.FALSE)
+                    .setValue(LEVEL, Integer.valueOf(level));
+            }
+
+            final FluidState defaultFallState = this.getSource().defaultFluidState();
+            this.sourceFalling = defaultFallState.setValue(FALLING, Boolean.TRUE);
+            this.sourceNotFalling = defaultFallState.setValue(FALLING, Boolean.FALSE);
+
+            this.init = true;
+        }
     }
 
     /**
