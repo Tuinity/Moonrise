@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.blockstate_propertyaccess;
 
+import ca.spottedleaf.moonrise.patches.blockstate_propertyaccess.PropertyAccessStateHolder;
 import ca.spottedleaf.moonrise.patches.blockstate_propertyaccess.util.ZeroCollidingReferenceStateTable;
-import com.google.common.collect.Table;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.world.level.block.state.StateHolder;
 import net.minecraft.world.level.block.state.properties.Property;
@@ -17,10 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Mixin(StateHolder.class)
-abstract class StateHolderMixin<O, S> {
-
-    @Shadow
-    private Table<Property<?>, Comparable<?>, S> neighbours;
+abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
 
     @Shadow
     @Final
@@ -31,7 +28,15 @@ abstract class StateHolderMixin<O, S> {
     private Reference2ObjectArrayMap<Property<?>, Comparable<?>> values;
 
     @Unique
-    protected ZeroCollidingReferenceStateTable optimisedTable;
+    protected ZeroCollidingReferenceStateTable<O, S> optimisedTable;
+
+    @Unique
+    protected long tableIndex;
+
+    @Override
+    public final long moonrise$getTableIndex() {
+        return this.tableIndex;
+    }
 
     /**
      * @reason Hook into constructor to init fields
@@ -44,7 +49,8 @@ abstract class StateHolderMixin<O, S> {
             )
     )
     private void init(final CallbackInfo ci) {
-        this.optimisedTable = new ZeroCollidingReferenceStateTable((StateHolder<O, S>)(Object)this, this.values); // Paper - optimise state lookup
+        this.optimisedTable = new ZeroCollidingReferenceStateTable<>(this.values.keySet());
+        this.tableIndex = this.optimisedTable.getIndex((StateHolder<O, S>)(Object)this);
     }
 
     /**
@@ -53,12 +59,24 @@ abstract class StateHolderMixin<O, S> {
      */
     @Inject(
             method = "populateNeighbours",
+            cancellable = true,
             at = @At(
-                    value = "RETURN"
+                    value = "HEAD"
             )
     )
     private void loadTable(final Map<Map<Property<?>, Comparable<?>>, S> map, final CallbackInfo ci) {
-        this.optimisedTable.loadInTable((Table<Property<?>, Comparable<?>, StateHolder<?,?>>)this.neighbours, this.values);
+        if (this.optimisedTable.isLoaded()) {
+            ci.cancel();
+            return;
+        }
+        this.optimisedTable.loadInTable(map);
+
+        // de-duplicate the tables
+        for (final S value : map.values()) {
+            ((StateHolderMixin<O, S>)(Object)(StateHolder<O, S>)value).optimisedTable = this.optimisedTable;
+        }
+
+        ci.cancel();
     }
 
     /**
@@ -67,7 +85,7 @@ abstract class StateHolderMixin<O, S> {
      */
     @Overwrite
     public <T extends Comparable<T>, V extends T> S setValue(final Property<T> property, final V value) {
-        final S ret = (S)this.optimisedTable.get(property, value);
+        final S ret = this.optimisedTable.set(this.tableIndex, property, value);
         if (ret == null) {
             throw new IllegalArgumentException("Cannot set property " + property + " to " + value + " on " + this.owner + ", it is not an allowed value");
         }
@@ -80,8 +98,7 @@ abstract class StateHolderMixin<O, S> {
      */
     @Overwrite
     public <T extends Comparable<T>> Optional<T> getOptionalValue(final Property<T> property) {
-        final Comparable<?> ret = this.optimisedTable.get(property);
-        return ret == null ? Optional.empty() : Optional.of((T)ret);
+        return Optional.ofNullable(this.optimisedTable.get(this.tableIndex, property));
     }
 
     /**
@@ -90,11 +107,11 @@ abstract class StateHolderMixin<O, S> {
      */
     @Overwrite
     public <T extends Comparable<T>> T getValue(final Property<T> property) {
-        final Comparable<?> ret = this.optimisedTable.get(property);
+        final T ret = this.optimisedTable.get(this.tableIndex, property);
         if (ret == null) {
             throw new IllegalArgumentException("Cannot get property " + property + " as it does not exist in " + this.owner);
         } else {
-            return (T)ret;
+            return ret;
         }
     }
 
@@ -104,6 +121,6 @@ abstract class StateHolderMixin<O, S> {
      */
     @Overwrite
     public <T extends Comparable<T>> boolean hasProperty(final Property<T> property) {
-        return this.optimisedTable.get(property) != null;
+        return this.optimisedTable.hasProperty(property);
     }
 }

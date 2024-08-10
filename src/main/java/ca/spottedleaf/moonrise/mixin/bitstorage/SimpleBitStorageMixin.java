@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.bitstorage;
 
+import ca.spottedleaf.concurrentutil.util.IntegerUtil;
 import net.minecraft.util.BitStorage;
 import net.minecraft.util.SimpleBitStorage;
 import org.spongepowered.asm.mixin.Final;
@@ -10,8 +11,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 
 @Mixin(SimpleBitStorage.class)
 abstract class SimpleBitStorageMixin implements BitStorage {
@@ -45,7 +44,7 @@ abstract class SimpleBitStorageMixin implements BitStorage {
         // since index is always [0, 4095] (i.e 12 bits), multiplication by a magic value here (20 bits)
         // fits exactly in an int and allows us to use integer arithmetic
         for (int bits = 1; bits < BETTER_MAGIC.length; ++bits) {
-            BETTER_MAGIC[bits] = (0xFFFFF / (64 / bits)) + 1;
+            BETTER_MAGIC[bits] = (int)IntegerUtil.getUnsignedDivisorMagic(64L / bits, 20);
         }
     }
 

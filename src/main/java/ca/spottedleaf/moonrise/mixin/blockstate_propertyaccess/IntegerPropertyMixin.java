@@ -7,6 +7,9 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(IntegerProperty.class)
 abstract class IntegerPropertyMixin extends Property<Integer> implements PropertyAccess<Integer> {
@@ -23,6 +26,14 @@ abstract class IntegerPropertyMixin extends Property<Integer> implements Propert
         super(string, class_);
     }
 
+    @Override
+    public final int moonrise$getIdFor(final Integer value) {
+        final int val = value.intValue();
+        final int ret = val - this.min;
+
+        return ret | ((this.max - ret) >> 31);
+    }
+
     /**
      * @reason Properties are identity comparable
      * @author Spottedleaf
@@ -33,16 +44,25 @@ abstract class IntegerPropertyMixin extends Property<Integer> implements Propert
         return this == obj;
     }
 
-    @Override
-    public final boolean moonrise$requiresDefaultImpl() {
-        return false;
-    }
+    /**
+     * @reason Hook into constructor to init fields
+     * @author Spottedleaf
+     */
+    @Inject(
+        method = "<init>",
+        at = @At(
+            value = "RETURN"
+        )
+    )
+    private void init(final CallbackInfo ci) {
+        final int min = this.min;
+        final int max = this.max;
 
-    @Override
-    public final int moonrise$getIdFor(final Integer value) {
-        final int val = value.intValue();
-        final int ret = val - this.min;
+        final Integer[] byId = new Integer[max - min + 1];
+        for (int i = min; i <= max; ++i) {
+            byId[i - min] = Integer.valueOf(i);
+        }
 
-        return ret | ((this.max - ret) >> 31);
+        this.moonrise$setById(byId);
     }
 }

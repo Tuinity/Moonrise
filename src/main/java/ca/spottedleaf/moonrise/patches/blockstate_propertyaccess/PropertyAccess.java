@@ -6,8 +6,7 @@ public interface PropertyAccess<T> {
 
     public int moonrise$getIdFor(final T value);
 
-    public default boolean moonrise$requiresDefaultImpl() {
-        return true;
-    }
+    public T moonrise$getById(final int id);
 
+    public void moonrise$setById(final T[] values);
 }
