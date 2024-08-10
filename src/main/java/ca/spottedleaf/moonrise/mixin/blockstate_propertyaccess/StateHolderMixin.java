@@ -87,7 +87,20 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
     public <T extends Comparable<T>, V extends T> S setValue(final Property<T> property, final V value) {
         final S ret = this.optimisedTable.set(this.tableIndex, property, value);
         if (ret == null) {
-            throw new IllegalArgumentException("Cannot set property " + property + " to " + value + " on " + this.owner + ", it is not an allowed value");
+            throw new IllegalArgumentException("Cannot set property " + property + " to " + value + " on " + this.owner);
+        }
+        return ret;
+    }
+
+    /**
+     * @reason Replace with optimisedTable
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public <T extends Comparable<T>, V extends T> S trySetValue(final Property<T> property, final V value) {
+        final S ret = this.optimisedTable.trySet(this.tableIndex, property, value, (S)(StateHolder<O, S>)(Object)this);
+        if (ret == null) {
+            throw new IllegalArgumentException("Cannot set property " + property + " to " + value + " on " + this.owner);
         }
         return ret;
     }

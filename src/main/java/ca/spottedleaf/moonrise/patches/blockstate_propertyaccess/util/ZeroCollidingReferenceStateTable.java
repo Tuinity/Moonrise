@@ -128,6 +128,28 @@ public final class ZeroCollidingReferenceStateTable<O, S> {
         return this.lookup[(int)newIndex];
     }
 
+    public <T extends Comparable<T>> S trySet(final long index, final Property<T> property, final T with, final S dfl) {
+        final Indexer indexer = this.propertyToIndexer.get(((PropertyAccess<T>)property).moonrise$getId());
+        if (indexer == null) {
+            return dfl;
+        }
+
+        final int newValueId = ((PropertyAccess<T>)property).moonrise$getIdFor(with);
+        if (newValueId < 0) {
+            return null;
+        }
+
+        final long divided = (index * indexer.multipleDivMagic) >>> 32;
+        final long modded = (((divided * indexer.modMagic) & 0xFFFFFFFFL) * indexer.totalValues) >>> 32;
+        // equiv to: divided = index / multiple
+        //           modded = divided % totalValues
+
+        // subtract out the old value, add in the new
+        final long newIndex = (((long)newValueId - modded) * indexer.multiple) + index;
+
+        return this.lookup[(int)newIndex];
+    }
+
     private static final record Indexer(
         int totalValues, int multiple, long multipleDivMagic, long modMagic
     ) {}
