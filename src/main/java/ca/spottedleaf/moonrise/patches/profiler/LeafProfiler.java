@@ -10,6 +10,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public final class LeafProfiler {
 
@@ -41,7 +42,9 @@ public final class LeafProfiler {
     }
 
     private static void add(final long[] dst, final long[] src) {
-        for (int i = 0; i < src.length; ++i) {
+        final int srcLen = src.length;
+        Objects.checkFromToIndex(0, srcLen, dst.length);
+        for (int i = 0; i < srcLen; ++i) {
             dst[i] += src[i];
         }
     }
