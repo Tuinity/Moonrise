@@ -27,7 +27,7 @@ abstract class StructureTemplate$PaletteMixin {
                     value = "RETURN"
             )
     )
-    private <K, V> void makeCacheCHM(final CallbackInfo ci) {
+    private void makeCacheCHM(final CallbackInfo ci) {
         this.cache = new ConcurrentHashMap<>();
     }
 }

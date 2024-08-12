@@ -11,9 +11,9 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(ServerChunkCache.MainThreadExecutor.class)
 abstract class ServerChunkCache$MainThreadExecutorMixin extends BlockableEventLoop<Runnable> {
 
-    @Shadow(aliases = "this$0")
+    @Shadow(aliases = "this$0") // Neoforge
     @Final
-    ServerChunkCache field_18810;
+    ServerChunkCache field_18810; // Fabric
 
     protected ServerChunkCache$MainThreadExecutorMixin(String string) {
         super(string);

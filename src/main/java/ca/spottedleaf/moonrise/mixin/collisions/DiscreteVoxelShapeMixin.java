@@ -60,7 +60,7 @@ abstract class DiscreteVoxelShapeMixin implements CollisionDiscreteVoxelShape {
             }
         }
 
-        final boolean hasSingleAABB = sizeX == 1 && sizeY == 1 && sizeZ == 1 && !isEmpty && discreteVoxelShape.isFull(0, 0, 0);
+        final boolean hasSingleAABB = sizeX == 1 && sizeY == 1 && sizeZ == 1 && !isEmpty && (voxelSet[0] & 1L) != 0L;
 
         final int minFullX = discreteVoxelShape.firstFull(Direction.Axis.X);
         final int minFullY = discreteVoxelShape.firstFull(Direction.Axis.Y);

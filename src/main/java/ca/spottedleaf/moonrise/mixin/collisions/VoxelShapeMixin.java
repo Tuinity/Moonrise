@@ -23,7 +23,6 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
 import net.minecraft.world.phys.shapes.OffsetDoubleList;
 import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.SliceShape;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -208,13 +207,13 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
         if (direction.getAxisDirection() == Direction.AxisDirection.POSITIVE) {
             if (DoubleMath.fuzzyEquals(this.max(axis), 1.0, CollisionUtil.COLLISION_EPSILON)) {
-                ret = tryForceBlock(new SliceShape((VoxelShape)(Object)this, axis, this.shape.getSize(axis) - 1));
+                ret = CollisionUtil.sliceShape((VoxelShape)(Object)this, axis, this.shape.getSize(axis) - 1);
             } else {
                 ret = Shapes.empty();
             }
         } else {
             if (DoubleMath.fuzzyEquals(this.min(axis), 0.0, CollisionUtil.COLLISION_EPSILON)) {
-                ret = tryForceBlock(new SliceShape((VoxelShape)(Object)this, axis, 0));
+                ret = CollisionUtil.sliceShape((VoxelShape)(Object)this, axis, 0);
             } else {
                 ret = Shapes.empty();
             }
@@ -223,24 +222,6 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
         cache[direction.ordinal()] = ret;
 
         return ret;
-    }
-
-    @Unique
-    private static VoxelShape tryForceBlock(final VoxelShape other) {
-        if (other == Shapes.block()) {
-            return other;
-        }
-
-        final AABB otherAABB = ((CollisionVoxelShape)other).moonrise$getSingleAABBRepresentation();
-        if (otherAABB == null) {
-            return other;
-        }
-
-        if (((CollisionVoxelShape)Shapes.block()).moonrise$getSingleAABBRepresentation().equals(otherAABB)) {
-            return Shapes.block();
-        }
-
-        return other;
     }
 
     @Unique
@@ -355,6 +336,115 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
     /**
      * @author Spottedleaf
+     * @reason Use cached bounds
+     */
+    @Overwrite
+    public VoxelShape singleEncompassing() {
+        if (this.isEmpty) {
+            return Shapes.empty();
+        }
+        return Shapes.create(this.bounds());
+    }
+
+    /**
+     * @author Spottedleaf
+     * @reason Optimise implementation to avoid indirection
+     */
+    @Overwrite
+    protected double get(final Direction.Axis axis, final int idx) {
+        switch (axis) {
+            case X: {
+                return this.rootCoordinatesX[idx] + this.offsetX;
+            }
+            case Y: {
+                return this.rootCoordinatesY[idx] + this.offsetY;
+            }
+            case Z: {
+                return this.rootCoordinatesZ[idx] + this.offsetZ;
+            }
+            default: {
+                throw new IllegalStateException("Unknown axis: " + axis);
+            }
+        }
+    }
+
+    /**
+     * @author Spottedleaf
+     * @reason Optimise implementation to avoid indirection
+     */
+    @Overwrite
+    public int findIndex(final Direction.Axis axis, final double value) {
+        switch (axis) {
+            case X: {
+                final double[] values = this.rootCoordinatesX;
+                return CollisionUtil.findFloor(
+                    values, value - this.offsetX, 0, values.length - 1
+                );
+            }
+            case Y: {
+                final double[] values = this.rootCoordinatesY;
+                return CollisionUtil.findFloor(
+                    values, value - this.offsetY, 0, values.length - 1
+                );
+            }
+            case Z: {
+                final double[] values = this.rootCoordinatesZ;
+                return CollisionUtil.findFloor(
+                    values, value - this.offsetZ, 0, values.length - 1
+                );
+            }
+            default: {
+                throw new IllegalStateException("Unknown axis: " + axis);
+            }
+        }
+    }
+
+    @Unique
+    private VoxelShape calculateFaceDirect(final Direction direction, final Direction.Axis axis, final double[] coords, final double offset) {
+        if (coords.length == 2 &&
+            DoubleMath.fuzzyEquals(coords[0] + offset, 0.0, CollisionUtil.COLLISION_EPSILON) &&
+            DoubleMath.fuzzyEquals(coords[1] + offset, 1.0, CollisionUtil.COLLISION_EPSILON)) {
+            return (VoxelShape)(Object)this;
+        }
+
+        final boolean positiveDir = direction.getAxisDirection() == Direction.AxisDirection.POSITIVE;
+
+        // see findIndex
+        final int index = CollisionUtil.findFloor(
+            coords, (positiveDir ? (1.0 - CollisionUtil.COLLISION_EPSILON) : (0.0 + CollisionUtil.COLLISION_EPSILON)) - offset,
+            0, coords.length - 1
+        );
+
+        return CollisionUtil.sliceShape(
+            (VoxelShape)(Object)this, axis, index
+        );
+    }
+
+    /**
+     * @author Spottedleaf
+     * @reason Avoid creating SliceShape
+     */
+    @Overwrite
+    public VoxelShape calculateFace(final Direction direction) {
+        final Direction.Axis axis = direction.getAxis();
+        switch (axis) {
+            case X: {
+                return this.calculateFaceDirect(direction, axis, this.rootCoordinatesX, this.offsetX);
+            }
+            case Y: {
+                return this.calculateFaceDirect(direction, axis, this.rootCoordinatesY, this.offsetY);
+            }
+            case Z: {
+                return this.calculateFaceDirect(direction, axis, this.rootCoordinatesZ, this.offsetZ);
+            }
+            default: {
+                throw new IllegalStateException("Unknown axis: " + axis);
+            }
+        }
+    }
+
+    /**
+     * @author Spottedleaf
      * @reason Route to optimized collision method
      */
     @Overwrite
@@ -382,11 +472,12 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
     }
 
     @Unique
-    private static DoubleList offsetList(final DoubleList src, final double by) {
-        if (src instanceof OffsetDoubleList offsetDoubleList) {
-            return new OffsetDoubleList(offsetDoubleList.delegate, by + offsetDoubleList.offset);
+    private static DoubleList offsetList(final double[] src, final double by) {
+        final DoubleArrayList wrap = DoubleArrayList.wrap(src);
+        if (by == 0.0) {
+            return wrap;
         }
-        return new OffsetDoubleList(src, by);
+        return new OffsetDoubleList(wrap, by);
     }
 
     /**
@@ -400,10 +491,10 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
         }
 
         final ArrayVoxelShape ret = new ArrayVoxelShape(
-                this.shape,
-                offsetList(this.getCoords(Direction.Axis.X), x),
-                offsetList(this.getCoords(Direction.Axis.Y), y),
-                offsetList(this.getCoords(Direction.Axis.Z), z)
+            this.shape,
+            offsetList(this.rootCoordinatesX, this.offsetX + x),
+            offsetList(this.rootCoordinatesY, this.offsetY + y),
+            offsetList(this.rootCoordinatesZ, this.offsetZ + z)
         );
 
         final CachedToAABBs cachedToAABBs = this.cachedToAABBs;
@@ -416,10 +507,12 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
     @Unique
     private List<AABB> toAabbsUncached() {
-        final List<AABB> ret = new ArrayList<>();
+        final List<AABB> ret;
         if (this.singleAABBRepresentation != null) {
+            ret = new ArrayList<>(1);
             ret.add(this.singleAABBRepresentation);
         } else {
+            ret = new ArrayList<>();
             final double[] coordsX = this.rootCoordinatesX;
             final double[] coordsY = this.rootCoordinatesY;
             final double[] coordsZ = this.rootCoordinatesZ;
@@ -717,6 +810,11 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
         }
 
         final List<AABB> aabbs = this.toAabbs();
+
+        if (aabbs.isEmpty()) {
+            // We are a SliceShape, which does not properly fill isEmpty for every case
+            return Shapes.empty();
+        }
 
         if (aabbs.size() == 1) {
             final AABB singleAABB = aabbs.get(0);

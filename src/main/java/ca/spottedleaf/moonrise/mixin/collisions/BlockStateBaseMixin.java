@@ -65,12 +65,18 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
     private AABB constantAABBCollision;
 
     @Unique
-    private static void initCaches(final VoxelShape shape) {
+    private static void initCaches(final VoxelShape shape, final boolean neighbours) {
         ((CollisionVoxelShape)shape).moonrise$isFullBlock();
         ((CollisionVoxelShape)shape).moonrise$occludesFullBlock();
         shape.toAabbs();
         if (!shape.isEmpty()) {
             shape.bounds();
+        }
+        if (neighbours) {
+            for (final Direction direction : DIRECTIONS_CACHED) {
+                initCaches(Shapes.getFaceShape(shape, direction), false);
+                initCaches(shape.getFaceShape(direction), false);
+            }
         }
     }
 
@@ -98,17 +104,13 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
             this.occludesFullBlock = ((CollisionVoxelShape)collisionShape).moonrise$occludesFullBlock();
             this.emptyCollisionShape = collisionShape.isEmpty();
             // init caches
-            initCaches(collisionShape);
-            if (collisionShape != Shapes.empty() && collisionShape != Shapes.block()) {
-                for (final Direction direction : DIRECTIONS_CACHED) {
-                    // initialise the directional face shape cache as well
-                    final VoxelShape shape = Shapes.getFaceShape(collisionShape, direction);
-                    initCaches(shape);
-                }
+            initCaches(collisionShape, true);
+            if (this.constantCollisionShape != null) {
+                initCaches(this.constantCollisionShape, true);
             }
             if (this.cache.occlusionShapes != null) {
                 for (final VoxelShape shape : this.cache.occlusionShapes) {
-                    initCaches(shape);
+                    initCaches(shape, false);
                 }
             }
         } else {

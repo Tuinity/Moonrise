@@ -4,8 +4,6 @@ import net.minecraft.client.multiplayer.resolver.ServerAddressResolver;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import java.net.Inet4Address;
-import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -29,9 +27,10 @@ interface ServerAddressResolverMixin {
     private static InetAddress eliminateRDNS(final String name) throws UnknownHostException {
         final InetAddress ret = InetAddress.getByName(name);
 
-        if (ret instanceof Inet4Address || ret instanceof Inet6Address) {
+        final byte[] address = ret.getAddress();
+        if (address != null) {
             // pass name to prevent rDNS
-            return InetAddress.getByAddress(name, ret.getAddress());
+            return InetAddress.getByAddress(name, address);
         }
 
         return ret;

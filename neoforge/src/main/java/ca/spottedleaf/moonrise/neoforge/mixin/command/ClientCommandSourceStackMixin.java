@@ -25,12 +25,12 @@ abstract class ClientCommandSourceStackMixin extends CommandSourceStack implemen
     public abstract void sendSuccess(Supplier<Component> message, boolean sendToAdmins);
 
     @Override
-    public void moonrise$sendFailure(final Component message) {
+    public final void moonrise$sendFailure(final Component message) {
         this.sendFailure(message);
     }
 
     @Override
-    public void moonrise$sendSuccess(final Component message) {
+    public final void moonrise$sendSuccess(final Component message) {
         this.sendSuccess(() -> message, true);
     }
 }

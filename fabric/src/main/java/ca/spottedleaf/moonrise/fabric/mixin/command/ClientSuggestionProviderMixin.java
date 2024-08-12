@@ -9,12 +9,12 @@ import org.spongepowered.asm.mixin.Mixin;
 @Mixin(ClientSuggestionProvider.class)
 abstract class ClientSuggestionProviderMixin implements CommandClientCommandSource, FabricClientCommandSource {
     @Override
-    public void moonrise$sendSuccess(final Component message) {
+    public final void moonrise$sendSuccess(final Component message) {
         this.sendFeedback(message);
     }
 
     @Override
-    public void moonrise$sendFailure(final Component message) {
+    public final void moonrise$sendFailure(final Component message) {
         this.sendError(message);
     }
 }

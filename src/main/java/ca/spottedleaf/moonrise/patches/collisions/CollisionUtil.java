@@ -35,9 +35,11 @@ import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.OffsetDoubleList;
 import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.SliceShape;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -162,7 +164,8 @@ public final class CollisionUtil {
 
     // startIndex and endIndex inclusive
     // assumes indices are in range of array
-    private static int findFloor(final double[] values, final double value, int startIndex, int endIndex) {
+    public static int findFloor(final double[] values, final double value, int startIndex, int endIndex) {
+        Objects.checkFromToIndex(startIndex, endIndex + 1, values.length);
         do {
             final int middle = (startIndex + endIndex) >>> 1;
             final double middleVal = values[middle];
@@ -175,6 +178,214 @@ public final class CollisionUtil {
         } while (startIndex <= endIndex);
 
         return startIndex - 1;
+    }
+
+    private static VoxelShape sliceShapeVanilla(final VoxelShape src, final Direction.Axis axis,
+                                                final int index) {
+        return new SliceShape(src, axis, index);
+    }
+
+    private static DoubleList offsetList(final double[] src, final double by) {
+        final DoubleArrayList wrap = DoubleArrayList.wrap(src);
+        if (by == 0.0) {
+            return wrap;
+        }
+        return new OffsetDoubleList(wrap, by);
+    }
+
+    private static VoxelShape sliceShapeOptimised(final VoxelShape src, final Direction.Axis axis,
+                                                  final int index) {
+        // assume index in range
+        final double off_x = ((CollisionVoxelShape)src).moonrise$offsetX();
+        final double off_y = ((CollisionVoxelShape)src).moonrise$offsetY();
+        final double off_z = ((CollisionVoxelShape)src).moonrise$offsetZ();
+
+        final double[] coords_x = ((CollisionVoxelShape)src).moonrise$rootCoordinatesX();
+        final double[] coords_y = ((CollisionVoxelShape)src).moonrise$rootCoordinatesY();
+        final double[] coords_z = ((CollisionVoxelShape)src).moonrise$rootCoordinatesZ();
+
+        final CachedShapeData cached_shape_data = ((CollisionVoxelShape)src).moonrise$getCachedVoxelData();
+
+        // note: size = coords.length - 1
+        final int size_x = cached_shape_data.sizeX();
+        final int size_y = cached_shape_data.sizeY();
+        final int size_z = cached_shape_data.sizeZ();
+
+        final long[] bitset = cached_shape_data.voxelSet();
+
+        final DoubleList list_x;
+        final DoubleList list_y;
+        final DoubleList list_z;
+        final int shape_sx;
+        final int shape_ex;
+        final int shape_sy;
+        final int shape_ey;
+        final int shape_sz;
+        final int shape_ez;
+
+        switch (axis) {
+            case X: {
+                // validate index
+                if (index < 0 || index >= size_x) {
+                    return Shapes.empty();
+                }
+
+                // test if input is already "sliced"
+                if (coords_x.length == 2 && (coords_x[0] + off_x) == 0.0 && (coords_x[1] + off_x) == 1.0) {
+                    return src;
+                }
+
+                // test if result would be full box
+                if (coords_y.length == 2 && coords_z.length == 2 &&
+                    (coords_y[0] + off_y) == 0.0 && (coords_y[1] + off_y) == 1.0 &&
+                    (coords_z[0] + off_z) == 0.0 && (coords_z[1] + off_z) == 1.0) {
+                    // note: size_y == size_z == 1
+                    final int bitIdx = 0 + 0*size_z + index*(size_z*size_y);
+                    return (bitset[bitIdx >>> 6] & (1L << bitIdx)) == 0L ? Shapes.empty() : Shapes.block();
+                }
+
+                list_x = ZERO_ONE;
+                list_y = offsetList(coords_y, off_y);
+                list_z = offsetList(coords_z, off_z);
+                shape_sx = index;
+                shape_ex = index + 1;
+                shape_sy = 0;
+                shape_ey = size_y;
+                shape_sz = 0;
+                shape_ez = size_z;
+
+                break;
+            }
+            case Y: {
+                // validate index
+                if (index < 0 || index >= size_y) {
+                    return Shapes.empty();
+                }
+
+                // test if input is already "sliced"
+                if (coords_y.length == 2 && (coords_y[0] + off_y) == 0.0 && (coords_y[1] + off_y) == 1.0) {
+                    return src;
+                }
+
+                // test if result would be full box
+                if (coords_x.length == 2 && coords_z.length == 2 &&
+                    (coords_x[0] + off_x) == 0.0 && (coords_x[1] + off_x) == 1.0 &&
+                    (coords_z[0] + off_z) == 0.0 && (coords_z[1] + off_z) == 1.0) {
+                    // note: size_x == size_z == 1
+                    final int bitIdx = 0 + index*size_z + 0*(size_z*size_y);
+                    return (bitset[bitIdx >>> 6] & (1L << bitIdx)) == 0L ? Shapes.empty() : Shapes.block();
+                }
+
+                list_x = offsetList(coords_x, off_x);
+                list_y = ZERO_ONE;
+                list_z = offsetList(coords_z, off_z);
+                shape_sx = 0;
+                shape_ex = size_x;
+                shape_sy = index;
+                shape_ey = index + 1;
+                shape_sz = 0;
+                shape_ez = size_z;
+
+                break;
+            }
+            case Z: {
+                // validate index
+                if (index < 0 || index >= size_z) {
+                    return Shapes.empty();
+                }
+
+                // test if input is already "sliced"
+                if (coords_z.length == 2 && (coords_z[0] + off_z) == 0.0 && (coords_z[1] + off_z) == 1.0) {
+                    return src;
+                }
+
+                // test if result would be full box
+                if (coords_x.length == 2 && coords_y.length == 2 &&
+                    (coords_x[0] + off_x) == 0.0 && (coords_x[1] + off_x) == 1.0 &&
+                    (coords_y[0] + off_y) == 0.0 && (coords_y[1] + off_y) == 1.0) {
+                    // note: size_x == size_y == 1
+                    final int bitIdx = index + 0*size_z + 0*(size_z*size_y);
+                    return (bitset[bitIdx >>> 6] & (1L << bitIdx)) == 0L ? Shapes.empty() : Shapes.block();
+                }
+
+                list_x = offsetList(coords_x, off_x);
+                list_y = offsetList(coords_y, off_y);
+                list_z = ZERO_ONE;
+                shape_sx = 0;
+                shape_ex = size_x;
+                shape_sy = 0;
+                shape_ey = size_y;
+                shape_sz = index;
+                shape_ez = index + 1;
+
+                break;
+            }
+            default: {
+                throw new IllegalStateException("Unknown axis: " + axis);
+            }
+        }
+
+        final int local_len_x = shape_ex - shape_sx;
+        final int local_len_y = shape_ey - shape_sy;
+        final int local_len_z = shape_ez - shape_sz;
+
+        final BitSetDiscreteVoxelShape shape = new BitSetDiscreteVoxelShape(local_len_x, local_len_y, local_len_z);
+
+        final int idx_off = shape_sz + shape_sy*size_z + shape_sx*(size_z*size_y);
+        for (int x = 0; x < local_len_x; ++x) {
+            boolean setX = false;
+            for (int y = 0; y < local_len_y; ++y) {
+                boolean setY = false;
+                for (int z = 0; z < local_len_z; ++z) {
+                    final int unslicedIdx = idx_off + z + y*size_z + x*(size_z*size_y);
+                    if ((bitset[unslicedIdx >>> 6] & (1L << unslicedIdx)) == 0L) {
+                        continue;
+                    }
+
+                    setY = true;
+                    setX = true;
+                    shape.zMin = Math.min(shape.zMin, z);
+                    shape.zMax = Math.max(shape.zMax, z + 1);
+
+                    shape.storage.set(
+                        z + y*local_len_z + x*(local_len_y*local_len_z)
+                    );
+                }
+
+                if (setY) {
+                    shape.yMin = Math.min(shape.yMin, y);
+                    shape.yMax = Math.max(shape.yMax, y + 1);
+                }
+            }
+            if (setX) {
+                shape.xMin = Math.min(shape.xMin, x);
+                shape.xMax = Math.max(shape.xMax, x + 1);
+            }
+        }
+
+        return shape.isEmpty() ? Shapes.empty() : new ArrayVoxelShape(
+            shape, list_x, list_y, list_z
+        );
+    }
+
+    private static final boolean DEBUG_SLICE_SHAPE = false;
+
+    public static VoxelShape sliceShape(final VoxelShape src, final Direction.Axis axis,
+                                        final int index) {
+        final VoxelShape ret = sliceShapeOptimised(src, axis, index);
+        if (DEBUG_SLICE_SHAPE) {
+            final VoxelShape vanilla = sliceShapeVanilla(src, axis, index);
+            if (!equals(ret, vanilla)) {
+                // special case: SliceShape is not empty when it should be!
+                if (areAnyFull(ret.shape) || areAnyFull(vanilla.shape)) {
+                    equals(ret, vanilla);
+                    sliceShapeOptimised(src, axis, index);
+                    throw new IllegalStateException("Slice shape mismatch");
+                }
+            }
+        }
+
+        return ret;
     }
 
     public static boolean voxelShapeIntersectNoEmpty(final VoxelShape voxel, final AABB aabb) {
@@ -1306,7 +1517,7 @@ public final class CollisionUtil {
             return true;
         } else if (isEmpty1 ^ isEmpty2) {
             return false;
-        }
+        } // else: isEmpty1 = isEmpty2 = false
 
         if (cachedShapeData1.hasSingleAABB() != cachedShapeData2.hasSingleAABB()) {
             return false;
@@ -1327,6 +1538,12 @@ public final class CollisionUtil {
 
     // useful only for testing
     public static boolean equals(final VoxelShape shape1, final VoxelShape shape2) {
+        if (shape1.isEmpty() & shape2.isEmpty()) {
+            return true;
+        } else if (shape1.isEmpty() ^ shape2.isEmpty()) {
+            return false;
+        }
+
         if (!equals(shape1.shape, shape2.shape)) {
             return false;
         }
@@ -1334,6 +1551,84 @@ public final class CollisionUtil {
         return shape1.getCoords(Direction.Axis.X).equals(shape2.getCoords(Direction.Axis.X)) &&
                 shape1.getCoords(Direction.Axis.Y).equals(shape2.getCoords(Direction.Axis.Y)) &&
                 shape1.getCoords(Direction.Axis.Z).equals(shape2.getCoords(Direction.Axis.Z));
+    }
+
+    public static boolean areAnyFull(final DiscreteVoxelShape shape) {
+        if (shape.isEmpty()) {
+            return false;
+        }
+
+        final int sizeX = shape.getXSize();
+        final int sizeY = shape.getYSize();
+        final int sizeZ = shape.getZSize();
+
+        for (int x = 0; x < sizeX; ++x) {
+            for (int y = 0; y < sizeY; ++y) {
+                for (int z = 0; z < sizeZ; ++z) {
+                    if (shape.isFull(x, y, z)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public static String shapeMismatch(final DiscreteVoxelShape shape1, final DiscreteVoxelShape shape2) {
+        final CachedShapeData cachedShapeData1 = ((CollisionDiscreteVoxelShape)shape1).moonrise$getOrCreateCachedShapeData();
+        final CachedShapeData cachedShapeData2 = ((CollisionDiscreteVoxelShape)shape2).moonrise$getOrCreateCachedShapeData();
+
+        final boolean isEmpty1 = cachedShapeData1.isEmpty();
+        final boolean isEmpty2 = cachedShapeData2.isEmpty();
+
+        if (isEmpty1 & isEmpty2) {
+            return null;
+        } else if (isEmpty1 ^ isEmpty2) {
+            return null;
+        } // else: isEmpty1 = isEmpty2 = false
+
+        if (cachedShapeData1.sizeX() != cachedShapeData2.sizeX()) {
+            return "size x: " + cachedShapeData1.sizeX() + " != " + cachedShapeData2.sizeX();
+        }
+        if (cachedShapeData1.sizeY() != cachedShapeData2.sizeY()) {
+            return "size y: " + cachedShapeData1.sizeY() + " != " + cachedShapeData2.sizeY();
+        }
+        if (cachedShapeData1.sizeZ() != cachedShapeData2.sizeZ()) {
+            return "size z: " + cachedShapeData1.sizeZ() + " != " + cachedShapeData2.sizeZ();
+        }
+
+        final StringBuilder ret = new StringBuilder();
+
+        final int sizeX = cachedShapeData1.sizeX();;
+        final int sizeY = cachedShapeData1.sizeY();
+        final int sizeZ = cachedShapeData1.sizeZ();
+
+        boolean first = true;
+
+        for (int x = 0; x < sizeX; ++x) {
+            for (int y = 0; y < sizeY; ++y) {
+                for (int z = 0; z < sizeZ; ++z) {
+                    final boolean isFull1 = shape1.isFull(x, y, z);
+                    final boolean isFull2 = shape2.isFull(x, y, z);
+
+                    if (isFull1 == isFull2) {
+                        continue;
+                    }
+
+                    if (first) {
+                        first = false;
+                    } else {
+                        ret.append(", ");
+                    }
+
+                    ret.append("(").append(x).append(",").append(y).append(",").append(z)
+                        .append("): shape1: ").append(isFull1).append(", shape2: ").append(isFull2);
+                }
+            }
+        }
+
+        return ret.isEmpty() ? null : ret.toString();
     }
 
     public static AABB offsetX(final AABB box, final double dx) {
