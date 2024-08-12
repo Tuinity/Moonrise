@@ -331,13 +331,15 @@ public final class CollisionUtil {
 
         final BitSetDiscreteVoxelShape shape = new BitSetDiscreteVoxelShape(local_len_x, local_len_y, local_len_z);
 
-        final int idx_off = shape_sz + shape_sy*size_z + shape_sx*(size_z*size_y);
+        final int bitset_mul_x = size_z*size_y;
+        final int idx_off = shape_sz + shape_sy*size_z + shape_sx*bitset_mul_x;
+        final int shape_mul_x = local_len_y*local_len_z;
         for (int x = 0; x < local_len_x; ++x) {
             boolean setX = false;
             for (int y = 0; y < local_len_y; ++y) {
                 boolean setY = false;
                 for (int z = 0; z < local_len_z; ++z) {
-                    final int unslicedIdx = idx_off + z + y*size_z + x*(size_z*size_y);
+                    final int unslicedIdx = idx_off + z + y*size_z + x*bitset_mul_x;
                     if ((bitset[unslicedIdx >>> 6] & (1L << unslicedIdx)) == 0L) {
                         continue;
                     }
@@ -348,7 +350,7 @@ public final class CollisionUtil {
                     shape.zMax = Math.max(shape.zMax, z + 1);
 
                     shape.storage.set(
-                        z + y*local_len_z + x*(local_len_y*local_len_z)
+                        z + y*local_len_z + x*shape_mul_x
                     );
                 }
 

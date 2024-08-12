@@ -103,8 +103,8 @@ public abstract class PoiManagerMixin extends SectionStorage<Object> implements 
      */
     @Overwrite
     public int sectionsToVillage(final SectionPos pos) {
-        this.villageDistanceTracker.propagateUpdates(); // Paper - replace distance tracking util
-        return convertBetweenLevels(this.villageDistanceTracker.getLevel(CoordinateUtils.getChunkSectionKey(pos))); // Paper - replace distance tracking util
+        this.villageDistanceTracker.propagateUpdates();
+        return convertBetweenLevels(this.villageDistanceTracker.getLevel(CoordinateUtils.getChunkSectionKey(pos)));
     }
 
     /**
