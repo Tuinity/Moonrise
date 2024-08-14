@@ -1119,24 +1119,6 @@ public final class NewChunkHolder {
     private static final long CHUNK_LOADED_MASK_RAD1 = getLoadedMask(1);
     private static final long CHUNK_LOADED_MASK_RAD2 = getLoadedMask(2);
 
-    public static boolean areNeighboursFullLoaded(final long bitset, final int radius) {
-        switch (radius) {
-            case 0: {
-                return (bitset & CHUNK_LOADED_MASK_RAD0) == CHUNK_LOADED_MASK_RAD0;
-            }
-            case 1: {
-                return (bitset & CHUNK_LOADED_MASK_RAD1) == CHUNK_LOADED_MASK_RAD1;
-            }
-            case 2: {
-                return (bitset & CHUNK_LOADED_MASK_RAD2) == CHUNK_LOADED_MASK_RAD2;
-            }
-
-            default: {
-                throw new IllegalArgumentException("Radius not recognized: " + radius);
-            }
-        }
-    }
-
     // only updated while holding scheduling lock
     private FullChunkStatus pendingFullChunkStatus = FullChunkStatus.INACCESSIBLE;
     // updated while holding no locks, but adds a ticket before to prevent pending status from dropping

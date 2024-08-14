@@ -437,7 +437,6 @@ abstract class ExplosionMixin {
         }
 
         final double diameter = (double)this.radius * 2.0;
-        // use null predicate to avoid indirection on test(), but we need to move the spectator check into the loop itself
         final List<Entity> entities = this.level.getEntities(this.source,
                 new AABB(
                         (double)Mth.floor(this.x - (diameter + 1.0)),

@@ -199,7 +199,7 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
 
     @Override
     public LevelChunk moonrise$getFullChunkIfLoaded(final int chunkX, final int chunkZ) {
-        return this.getChunkSource().getChunk(chunkX, chunkZ, false);
+        return (LevelChunk)this.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.FULL, false);
     }
 
     @Override

@@ -106,8 +106,10 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
             return ifPresent;
         }
 
-        if (currentChunk != null) {
-            final ChunkAccess loading = PlatformHooks.get().getCurrentlyLoadingChunk(currentChunk.vanillaChunkHolder);
+        final PlatformHooks platformHooks = PlatformHooks.get();
+
+        if (platformHooks.hasCurrentlyLoadingChunk() && currentChunk != null) {
+            final ChunkAccess loading = platformHooks.getCurrentlyLoadingChunk(currentChunk.vanillaChunkHolder);
             if (loading != null && TickThread.isTickThread()) {
                 return loading;
             }
@@ -149,7 +151,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
             return ret;
         }
 
-        if (ret != null) {
+        if (ret != null || !TickThread.isTickThread()) {
             return ret;
         }
 
