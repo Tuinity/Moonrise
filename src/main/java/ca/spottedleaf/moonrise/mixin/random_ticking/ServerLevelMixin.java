@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.random_ticking;
 
 import ca.spottedleaf.moonrise.common.list.IntList;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
+import ca.spottedleaf.moonrise.common.util.SimpleRandom;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -38,6 +39,24 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
     @Unique
     private static final LevelChunkSection[] EMPTY_SECTION_ARRAY = new LevelChunkSection[0];
 
+    @Unique
+    private final SimpleRandom simpleRandom = new SimpleRandom(0L);
+
+    /**
+     * @reason Use faster random
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "tickChunk",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/util/RandomSource;nextInt(I)I"
+        )
+    )
+    private int nextInt(final RandomSource instance, final int bound) {
+        return this.simpleRandom.nextInt(bound);
+    }
+
     /**
      * @reason Optimise random ticking so that it will not retrieve BlockStates unnecessarily, as well as
      *         optionally avoiding double ticking fluid blocks.
@@ -55,7 +74,7 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
                                                    @Local(ordinal = 0, argsOnly = true) final int tickSpeed) {
         final LevelChunkSection[] sections = chunk.getSections();
         final int minSection = WorldUtil.getMinSection((ServerLevel)(Object)this);
-        final RandomSource random = this.random;
+        final SimpleRandom simpleRandom = this.simpleRandom;
         final boolean tickFluids = !MoonriseCommon.getConfig().bugFixes.fixMC224294;
 
         final ChunkPos cpos = chunk.getPos();
@@ -74,7 +93,7 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
 
             for (int i = 0; i < tickSpeed; ++i) {
                 final int tickingBlocks = tickList.size();
-                final int index = random.nextInt() & ((16 * 16 * 16) - 1);
+                final int index = simpleRandom.nextInt() & ((16 * 16 * 16) - 1);
 
                 if (index >= tickingBlocks) {
                     // most of the time we fall here
@@ -87,11 +106,11 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
                 // do not use a mutable pos, as some random tick implementations store the input without calling immutable()!
                 final BlockPos pos = new BlockPos((location & 15) | offsetX, ((location >>> (4 + 4)) & 15) | offsetY, ((location >>> 4) & 15) | offsetZ);
 
-                state.randomTick((ServerLevel)(Object)this, pos, random);
+                state.randomTick((ServerLevel)(Object)this, pos, simpleRandom);
                 if (tickFluids) {
                     final FluidState fluidState = state.getFluidState();
                     if (fluidState.isRandomlyTicking()) {
-                        fluidState.randomTick((ServerLevel)(Object)this, pos, random);
+                        fluidState.randomTick((ServerLevel)(Object)this, pos, simpleRandom);
                     }
                 }
             }
