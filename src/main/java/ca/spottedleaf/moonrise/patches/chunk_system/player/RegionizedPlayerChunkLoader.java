@@ -105,7 +105,7 @@ public final class RegionizedPlayerChunkLoader {
 
         public void setSendViewDistance(final int distance) {
             this.updateViewDistance((final ViewDistances param) -> {
-                return param.setTickViewDistance(distance);
+                return param.setSendViewDistance(distance);
             });
         }
 
