@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.random_ticking;
 
-import ca.spottedleaf.moonrise.common.list.IBlockDataList;
+import ca.spottedleaf.moonrise.common.list.IntList;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
@@ -70,10 +70,7 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
                 continue;
             }
 
-            final IBlockDataList tickList = ((BlockCountingChunkSection)section).moonrise$getTickingBlockList();
-            if (tickList.size() == 0) {
-                continue;
-            }
+            final IntList tickList = ((BlockCountingChunkSection)section).moonrise$getTickingBlockList();
 
             for (int i = 0; i < tickSpeed; ++i) {
                 final int tickingBlocks = tickList.size();
@@ -84,15 +81,11 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
                     continue;
                 }
 
-                final long raw = tickList.getRaw(index);
-                final int location = IBlockDataList.getLocationFromRaw(raw);
-                final int randomX = (location & 15);
-                final int randomY = ((location >>> (4 + 4)) & 255);
-                final int randomZ = ((location >>> 4) & 15);
-                final BlockState state = states.get(randomX | (randomZ << 4) | (randomY << 8));
+                final int location = tickList.getRaw(index);
+                final BlockState state = states.get(location);
 
                 // do not use a mutable pos, as some random tick implementations store the input without calling immutable()!
-                final BlockPos pos = new BlockPos(randomX | offsetX, randomY | offsetY, randomZ | offsetZ);
+                final BlockPos pos = new BlockPos((location & 15) | offsetX, ((location >>> (4 + 4)) & 15) | offsetY, ((location >>> 4) & 15) | offsetZ);
 
                 state.randomTick((ServerLevel)(Object)this, pos, random);
                 if (tickFluids) {

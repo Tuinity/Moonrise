@@ -13,15 +13,15 @@ import java.util.NoSuchElementException;
  */
 public final class EntityList implements Iterable<Entity> {
 
-    protected final Int2IntOpenHashMap entityToIndex = new Int2IntOpenHashMap(2, 0.8f);
+    private final Int2IntOpenHashMap entityToIndex = new Int2IntOpenHashMap(2, 0.8f);
     {
         this.entityToIndex.defaultReturnValue(Integer.MIN_VALUE);
     }
 
-    protected static final Entity[] EMPTY_LIST = new Entity[0];
+    private static final Entity[] EMPTY_LIST = new Entity[0];
 
-    protected Entity[] entities = EMPTY_LIST;
-    protected int count;
+    private Entity[] entities = EMPTY_LIST;
+    private int count;
 
     public int size() {
         return this.count;
@@ -94,10 +94,9 @@ public final class EntityList implements Iterable<Entity> {
 
     @Override
     public Iterator<Entity> iterator() {
-        return new Iterator<Entity>() {
-
-            Entity lastRet;
-            int current;
+        return new Iterator<>() {
+            private Entity lastRet;
+            private int current;
 
             @Override
             public boolean hasNext() {

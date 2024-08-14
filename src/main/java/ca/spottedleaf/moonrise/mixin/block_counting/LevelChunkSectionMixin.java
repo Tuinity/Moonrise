@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.block_counting;
 
-import ca.spottedleaf.moonrise.common.list.IBlockDataList;
+import ca.spottedleaf.moonrise.common.list.IntList;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingBitStorage;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
@@ -58,7 +58,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     private int specialCollidingBlocks;
 
     @Unique
-    private final IBlockDataList tickingBlocks = new IBlockDataList();
+    private final IntList tickingBlocks = new IntList();
 
     @Override
     public final int moonrise$getSpecialCollidingBlocks() {
@@ -66,7 +66,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     }
 
     @Override
-    public final IBlockDataList moonrise$getTickingBlockList() {
+    public final IntList moonrise$getTickingBlockList() {
         return this.tickingBlocks;
     }
 
@@ -92,11 +92,13 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
             ++this.specialCollidingBlocks;
         }
 
+        final int position = x | (z << 4) | (y << (4+4));
+
         if (oldState.isRandomlyTicking()) {
-            this.tickingBlocks.remove(x, y, z);
+            this.tickingBlocks.remove(position);
         }
         if (newState.isRandomlyTicking()) {
-            this.tickingBlocks.add(x, y, z, newState);
+            this.tickingBlocks.add(position);
         }
     }
 
@@ -149,14 +151,14 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
 
                     Objects.checkFromToIndex(0, paletteCount, raw.length);
                     for (int i = 0; i < paletteCount; ++i) {
-                        this.tickingBlocks.add(raw[i], state);
+                        this.tickingBlocks.add(raw[i]);
                     }
                 }
 
                 final FluidState fluid = state.getFluidState();
 
                 if (!fluid.isEmpty()) {
-                    //this.nonEmptyBlockCount += count; // fix vanilla bug: make non empty block count correct
+                    //this.nonEmptyBlockCount += count; // fix vanilla bug: make non-empty block count correct
                     if (fluid.isRandomlyTicking()) {
                         this.tickingFluidCount += paletteCount;
                     }
