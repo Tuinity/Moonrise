@@ -91,6 +91,7 @@
     "poi_lookup.AcquirePoiMixin",
     "poi_lookup.PoiManagerMixin",
     "poi_lookup.PortalForcerMixin",
+    "random_ticking.BiomeManagerMixin",
     "random_ticking.BiomeMixin",
     "random_ticking.LevelMixin",
     "random_ticking.ServerLevelMixin",
