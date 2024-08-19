@@ -78,7 +78,8 @@ public final class ZeroCollidingReferenceStateTable<O, S> {
 
         this.lookup = (S[])new StateHolder[universe.size()];
 
-        for (final S value : universe.values()) {
+        for (final Map.Entry<Map<Property<?>, Comparable<?>>, S> entry : universe.entrySet()) {
+            final S value = entry.getValue();
             if (value == null) {
                 continue;
             }
