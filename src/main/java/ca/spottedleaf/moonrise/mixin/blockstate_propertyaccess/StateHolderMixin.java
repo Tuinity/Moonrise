@@ -65,6 +65,8 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
             )
     )
     private void loadTable(final Map<Map<Property<?>, Comparable<?>>, S> map, final CallbackInfo ci) {
+        // Uses #entrySet() instead of #values() for ModernFix compat (until when/if they implement #values() on their map) (also in ZCRST#loadInTable)
+
         if (this.optimisedTable.isLoaded()) {
             ci.cancel();
             return;
@@ -72,7 +74,8 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
         this.optimisedTable.loadInTable(map);
 
         // de-duplicate the tables
-        for (final S value : map.values()) {
+        for (final Map.Entry<Map<Property<?>, Comparable<?>>, S> entry : map.entrySet()) {
+            final S value = entry.getValue();
             ((StateHolderMixin<O, S>)(Object)(StateHolder<O, S>)value).optimisedTable = this.optimisedTable;
         }
 

@@ -28,6 +28,28 @@ versionRange = "[1.21,1.21.2)"
 ordering = "NONE"
 side = "BOTH"
 
+[[dependencies.moonrise]]
+modId = "starlight"
+type = "incompatible"
+
+[[dependencies.moonrise]]
+modId = "lithium"
+type = "incompatible"
+
+[[dependencies.moonrise]]
+# unofficial lithium port
+modId = "canary"
+type = "incompatible"
+
+[[dependencies.moonrise]]
+# unofficial lithium port
+modId = "radium"
+type = "incompatible"
+
+[[dependencies.moonrise]]
+modId = "c2me"
+type = "incompatible"
+
 [[mixins]]
 config = "moonrise.mixins.json"
 
