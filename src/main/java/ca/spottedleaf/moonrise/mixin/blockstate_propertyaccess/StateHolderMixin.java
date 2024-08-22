@@ -89,10 +89,10 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
     @Overwrite
     public <T extends Comparable<T>, V extends T> S setValue(final Property<T> property, final V value) {
         final S ret = this.optimisedTable.set(this.tableIndex, property, value);
-        if (ret == null) {
-            throw new IllegalArgumentException("Cannot set property " + property + " to " + value + " on " + this.owner);
+        if (ret != null) {
+            return ret;
         }
-        return ret;
+        throw new IllegalArgumentException("Cannot set property " + property + " to " + value + " on " + this.owner);
     }
 
     /**
@@ -101,11 +101,14 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
      */
     @Overwrite
     public <T extends Comparable<T>, V extends T> S trySetValue(final Property<T> property, final V value) {
-        final S ret = property == null ? (S)(StateHolder<O, S>)(Object)this : this.optimisedTable.trySet(this.tableIndex, property, value, (S)(StateHolder<O, S>)(Object)this);
-        if (ret == null) {
-            throw new IllegalArgumentException("Cannot set property " + property + " to " + value + " on " + this.owner);
+        if (property == null) {
+            return (S)(StateHolder<O, S>)(Object)this;
         }
-        return ret;
+        final S ret = this.optimisedTable.trySet(this.tableIndex, property, value, (S)(StateHolder<O, S>)(Object)this);
+        if (ret != null) {
+            return ret;
+        }
+        throw new IllegalArgumentException("Cannot set property " + property + " to " + value + " on " + this.owner);
     }
 
     /**
@@ -124,11 +127,10 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
     @Overwrite
     public <T extends Comparable<T>> T getValue(final Property<T> property) {
         final T ret = this.optimisedTable.get(this.tableIndex, property);
-        if (ret == null) {
-            throw new IllegalArgumentException("Cannot get property " + property + " as it does not exist in " + this.owner);
-        } else {
+        if (ret != null) {
             return ret;
         }
+        throw new IllegalArgumentException("Cannot get property " + property + " as it does not exist in " + this.owner);
     }
 
     /**

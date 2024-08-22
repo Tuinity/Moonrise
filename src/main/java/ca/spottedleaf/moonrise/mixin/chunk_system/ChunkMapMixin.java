@@ -507,18 +507,20 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
 
     @Override
     public CompletableFuture<Optional<CompoundTag>> read(final ChunkPos pos) {
-        try {
-            return CompletableFuture.completedFuture(
-                    Optional.ofNullable(
-                            MoonriseRegionFileIO.loadData(
-                                    this.level, pos.x, pos.z, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA,
-                                    MoonriseRegionFileIO.getIOBlockingPriorityForCurrentThread()
-                            )
-                    )
-            );
-        } catch (final Throwable thr) {
-            return CompletableFuture.failedFuture(thr);
-        }
+        final CompletableFuture<Optional<CompoundTag>> ret = new CompletableFuture<>();
+
+        MoonriseRegionFileIO.loadDataAsync(
+            this.level, pos.x, pos.z, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA,
+            (final CompoundTag data, final Throwable thr) -> {
+                if (thr != null) {
+                    ret.completeExceptionally(thr);
+                } else {
+                    ret.complete(Optional.ofNullable(data));
+                }
+            }, false
+        );
+
+        return ret;
     }
 
     @Override
