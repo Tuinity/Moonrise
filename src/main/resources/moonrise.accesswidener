@@ -238,6 +238,7 @@ accessible method net/minecraft/server/level/Ticket <init> (Lnet/minecraft/serve
 
 
 # ChunkStorage
+accessible field net/minecraft/world/level/chunk/storage/ChunkStorage worker Lnet/minecraft/world/level/chunk/storage/IOWorker;
 mutable field net/minecraft/world/level/chunk/storage/ChunkStorage worker Lnet/minecraft/world/level/chunk/storage/IOWorker;
 accessible method net/minecraft/world/level/chunk/storage/ChunkStorage storageInfo ()Lnet/minecraft/world/level/chunk/storage/RegionStorageInfo;
 
