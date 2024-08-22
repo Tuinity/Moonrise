@@ -78,13 +78,13 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
             try {
                 platformHooks.setCurrentlyLoading(this.chunkHolder.vanillaChunkHolder, chunk);
                 chunk.runPostLoad();
+                // Unlike Vanilla, we load the entity chunk here, as we load the NBT in empty status (unlike Vanilla)
+                // This brings entity addition back in line with older versions of the game
+                // Since we load the NBT in the empty status, this will never block for I/O
+                ((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().chunkHolderManager.getOrCreateEntityChunk(this.chunkX, this.chunkZ, false);
             } finally {
                 platformHooks.setCurrentlyLoading(this.chunkHolder.vanillaChunkHolder, null);
             }
-            // Unlike Vanilla, we load the entity chunk here, as we load the NBT in empty status (unlike Vanilla)
-            // This brings entity addition back in line with older versions of the game
-            // Since we load the NBT in the empty status, this will never block for I/O
-            ((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().chunkHolderManager.getOrCreateEntityChunk(this.chunkX, this.chunkZ, false);
 
             // we don't need the entitiesInLevel, not sure why it's there
             chunk.setLoaded(true);
