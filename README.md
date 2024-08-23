@@ -4,8 +4,7 @@ Fabric/NeoForge mod for optimising performance of the integrated and dedicated s
 
 
 ## Purpose
-Moonrise aims to optimise the game *without changing Vanilla behavior*, with the
-notable exception of Starlight fixing light suppression bugs.
+Moonrise aims to optimise the game *without changing Vanilla behavior*.
 
 Moonrise ports several important [Paper](https://github.com/PaperMC/Paper/)
 patches. Listed below are notable patches:
