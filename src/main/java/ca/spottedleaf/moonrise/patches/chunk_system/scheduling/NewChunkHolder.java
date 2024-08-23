@@ -1363,6 +1363,11 @@ public final class NewChunkHolder {
         final List<Consumer<ChunkAccess>> consumers;
         consumers = this.statusWaiters.remove(status);
 
+        // Update progress listener for LevelLoadingScreen
+        if (chunk != null) {
+            this.world.getChunkSource().chunkMap.progressListener.onStatusChange(this.vanillaChunkHolder.getPos(), status);
+        }
+
         if (consumers == null) {
             return;
         }
