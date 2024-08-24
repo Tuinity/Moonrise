@@ -1356,17 +1356,20 @@ public final class NewChunkHolder {
         // need to tell future statuses to complete if cancelled
         do {
             this.completeStatusConsumers0(status, chunk);
+
+            // Update progress listener for LevelLoadingScreen
+            if (chunk != null) {
+                final ChunkStatus finalStatus = status;
+                this.scheduler.scheduleChunkTask(this.chunkX, this.chunkZ, () -> {
+                    this.world.getChunkSource().chunkMap.progressListener.onStatusChange(this.vanillaChunkHolder.getPos(), finalStatus);
+                });
+            }
         } while (chunk == null && status != (status = ((ChunkSystemChunkStatus)status).moonrise$getNextStatus()));
     }
 
     private void completeStatusConsumers0(final ChunkStatus status, final ChunkAccess chunk) {
         final List<Consumer<ChunkAccess>> consumers;
         consumers = this.statusWaiters.remove(status);
-
-        // Update progress listener for LevelLoadingScreen
-        if (chunk != null) {
-            this.world.getChunkSource().chunkMap.progressListener.onStatusChange(this.vanillaChunkHolder.getPos(), status);
-        }
 
         if (consumers == null) {
             return;

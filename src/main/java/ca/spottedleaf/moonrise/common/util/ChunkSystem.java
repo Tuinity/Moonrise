@@ -80,7 +80,10 @@ public final class ChunkSystem {
     }
 
     public static void onChunkHolderDelete(final ServerLevel level, final ChunkHolder holder) {
-        level.getChunkSource().chunkMap.progressListener.onStatusChange(holder.getPos(), null);
+        // Update progress listener for LevelLoadingScreen
+        ChunkSystem.scheduleChunkTask(level, holder.getPos().x, holder.getPos().z, () -> {
+            level.getChunkSource().chunkMap.progressListener.onStatusChange(holder.getPos(), null);
+        });
     }
 
     public static void onChunkPreBorder(final LevelChunk chunk, final ChunkHolder holder) {
