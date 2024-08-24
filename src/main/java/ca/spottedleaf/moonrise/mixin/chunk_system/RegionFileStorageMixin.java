@@ -59,10 +59,10 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
     private static final int REGION_SHIFT = 5;
 
     @Unique
-    private static final int MAX_NON_EXISTING_CACHE = 1024 * 64;
+    private static final int MAX_NON_EXISTING_CACHE = 1024 * 4;
 
     @Unique
-    private final LongLinkedOpenHashSet nonExistingRegionFiles = new LongLinkedOpenHashSet(MAX_NON_EXISTING_CACHE+1);
+    private final LongLinkedOpenHashSet nonExistingRegionFiles = new LongLinkedOpenHashSet();
 
     @Unique
     private static String getRegionFileName(final int chunkX, final int chunkZ) {
