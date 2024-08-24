@@ -18,7 +18,6 @@ patches. Listed below are notable patches:
 | Mod         | Status                                                                                                                                                                  |
 |-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | FerriteCore | <details><summary>📝 requires config changes</summary>In `config/ferritecore-mixin.toml`:<br/>Set `replaceNeighborLookup` and `replacePropertyMap` to `false`</details> |
-| Lithium     | ❌ incompatible                                                                                                                                                          |
 | C2ME        | ❌ incompatible                                                                                                                                                          |
 
 ## Contact

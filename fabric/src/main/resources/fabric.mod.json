@@ -16,24 +16,55 @@
   "breaks": {
     "notenoughcrashes": "*",
     "starlight": "*",
-    "lithium": "*",
     "c2me": "*"
   },
   "license": "GPL-3.0-only",
   "icon": "assets/moonrise/icon.png",
   "environment": "*",
   "entrypoints": {
-    "modmenu": ["ca.spottedleaf.moonrise.fabric.MoonriseModMenuHook"],
-    "client": ["ca.spottedleaf.moonrise.fabric.MoonriseFabricClient"]
+    "modmenu": [
+      "ca.spottedleaf.moonrise.fabric.MoonriseModMenuHook"
+    ],
+    "client": [
+      "ca.spottedleaf.moonrise.fabric.MoonriseFabricClient"
+    ]
   },
   "mixins": [
     "moonrise.mixins.json",
     "moonrise-fabric.mixins.json"
   ],
-  "accessWidener" : "moonrise.accesswidener",
+  "accessWidener": "moonrise.accesswidener",
   "depends": {
     "fabricloader": ">=${loader_version}",
     "minecraft": ">=1.21 <=1.21.1",
     "fabric-command-api-v2": "*"
+  },
+  "custom": {
+    "lithium:options": {
+      "mixin.collections.chunk_tickets": false,
+      "mixin.world.temperature_cache": false,
+      "mixin.block.flatten_states": false,
+      "mixin.math.fast_util": false,
+      "mixin.minimal_nonvanilla.collisions.empty_space": false,
+      "mixin.alloc.deep_passengers": false,
+      "mixin.math.fast_blockpos": false,
+      "mixin.shapes.blockstate_cache": false,
+      "mixin.world.block_entity_ticking": false,
+      "mixin.collections.entity_ticking": false,
+      "mixin.world.chunk_access": false,
+      "mixin.ai.poi": false,
+      "mixin.chunk.no_validation": false,
+      "mixin.minimal_nonvanilla.world.expiring_chunk_tickets": false,
+      "mixin.world.tick_scheduler": false,
+      "mixin.alloc.chunk_ticking": false,
+      "mixin.entity.replace_entitytype_predicates": false,
+      "mixin.util.block_tracking": false,
+      "mixin.shapes.specialized_shapes": false,
+      "mixin.shapes.optimized_matching": false,
+      "mixin.entity.collisions.intersection": false,
+      "mixin.entity.collisions.movement": false,
+      "mixin.entity.collisions.unpushable_cramming": false,
+      "mixin.chunk.entity_class_groups": false
+    }
   }
 }

@@ -5,7 +5,7 @@ indent_style = space
 insert_final_newline = true
 max_line_length = off
 
-[{*.kt,*.kts}]
+[{*.kt,*.kts,*.json}]
 indent_size = 2
 
 [*.java]
