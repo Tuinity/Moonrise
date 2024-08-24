@@ -7,12 +7,15 @@ import net.minecraft.world.level.block.state.StateHolder;
 import net.minecraft.world.level.block.state.properties.Property;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
@@ -24,6 +27,7 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
     protected O owner;
 
     @Shadow
+    @Mutable
     @Final
     private Reference2ObjectArrayMap<Property<?>, Comparable<?>> values;
 
@@ -77,6 +81,13 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
         for (final Map.Entry<Map<Property<?>, Comparable<?>>, S> entry : map.entrySet()) {
             final S value = entry.getValue();
             ((StateHolderMixin<O, S>)(Object)(StateHolder<O, S>)value).optimisedTable = this.optimisedTable;
+        }
+
+        // remove values arrays
+        this.values = null;
+        for (final Map.Entry<Map<Property<?>, Comparable<?>>, S> entry : map.entrySet()) {
+            final S value = entry.getValue();
+            ((StateHolderMixin<O, S>)(Object)(StateHolder<O, S>)value).values = null;
         }
 
         ci.cancel();
@@ -140,5 +151,25 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
     @Overwrite
     public <T extends Comparable<T>> boolean hasProperty(final Property<T> property) {
         return property != null && this.optimisedTable.hasProperty(property);
+    }
+
+    /**
+     * @reason Replace with optimisedTable
+     * @author embeddedt
+     */
+    @Overwrite
+    public Collection<Property<?>> getProperties() {
+        return this.optimisedTable.getProperties();
+    }
+
+    /**
+     * @reason Replace with optimisedTable
+     * @author embeddedt
+     */
+    @Overwrite
+    public Map<Property<?>, Comparable<?>> getValues() {
+        var table = this.optimisedTable;
+        // We have to use this.values until the table is loaded
+        return table.isLoaded() ? table.getMapView(this.tableIndex) : this.values;
     }
 }

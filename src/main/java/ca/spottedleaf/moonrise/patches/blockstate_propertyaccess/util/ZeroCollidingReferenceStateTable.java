@@ -4,20 +4,35 @@ import ca.spottedleaf.concurrentutil.util.IntegerUtil;
 import ca.spottedleaf.moonrise.patches.blockstate_propertyaccess.PropertyAccess;
 import ca.spottedleaf.moonrise.patches.blockstate_propertyaccess.PropertyAccessStateHolder;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.AbstractObjectSet;
+import it.unimi.dsi.fastutil.objects.AbstractReference2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.world.level.block.state.StateHolder;
 import net.minecraft.world.level.block.state.properties.Property;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.AbstractMap;
+import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class ZeroCollidingReferenceStateTable<O, S> {
 
     private final Int2ObjectOpenHashMap<Indexer> propertyToIndexer;
     private S[] lookup;
+    private final Collection<Property<?>> properties;
 
     public ZeroCollidingReferenceStateTable(final Collection<Property<?>> properties) {
         this.propertyToIndexer = new Int2ObjectOpenHashMap<>(properties.size());
+        this.properties = new ReferenceOpenHashSet<>(properties);
 
         final List<Property<?>> sortedProperties = new ArrayList<>(properties);
 
@@ -151,7 +166,70 @@ public final class ZeroCollidingReferenceStateTable<O, S> {
         return this.lookup[(int)newIndex];
     }
 
+    public Collection<Property<?>> getProperties() {
+        return this.properties;
+    }
+
+    public Map<Property<?>, Comparable<?>> getMapView(long stateIndex) {
+        return new MapView(stateIndex);
+    }
+
     private static final record Indexer(
         int totalValues, int multiple, long multipleDivMagic, long modMagic
     ) {}
+
+    private class MapView extends AbstractReference2ObjectMap<Property<?>, Comparable<?>> {
+        private final long stateIndex;
+        private EntrySet entrySet;
+
+        MapView(long stateIndex) {
+            this.stateIndex = stateIndex;
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return properties.contains(key);
+        }
+
+        @Override
+        public int size() {
+            return properties.size();
+        }
+
+        @Override
+        public ObjectSet<Entry<Property<?>, Comparable<?>>> reference2ObjectEntrySet() {
+            if (entrySet == null)
+                entrySet = new EntrySet();
+            return entrySet;
+        }
+
+        @Override
+        public Comparable<?> get(Object key) {
+            return key instanceof Property<?> prop ? ZeroCollidingReferenceStateTable.this.get(stateIndex, prop) : null;
+        }
+
+        class EntrySet extends AbstractObjectSet<Entry<Property<?>, Comparable<?>>> {
+            @Override
+            public ObjectIterator<Reference2ObjectMap.Entry<Property<?>, Comparable<?>>> iterator() {
+                var propIterator = properties.iterator();
+                return new ObjectIterator<>() {
+                    @Override
+                    public boolean hasNext() {
+                        return propIterator.hasNext();
+                    }
+
+                    @Override
+                    public Entry<Property<?>, Comparable<?>> next() {
+                        var prop = propIterator.next();
+                        return new AbstractReference2ObjectMap.BasicEntry<>(prop, ZeroCollidingReferenceStateTable.this.get(stateIndex, prop));
+                    }
+                };
+            }
+
+            @Override
+            public int size() {
+                return properties.size();
+            }
+        }
+    }
 }
