@@ -38,6 +38,7 @@ import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -1353,6 +1354,17 @@ public final class NewChunkHolder {
     }
 
     private void completeStatusConsumers(ChunkStatus status, final ChunkAccess chunk) {
+        // Update progress listener for LevelLoadingScreen
+        if (chunk != null) {
+            final ChunkProgressListener progressListener = this.world.getChunkSource().chunkMap.progressListener;
+            if (progressListener != null) {
+                final ChunkStatus finalStatus = status;
+                this.scheduler.scheduleChunkTask(this.chunkX, this.chunkZ, () -> {
+                    progressListener.onStatusChange(this.vanillaChunkHolder.getPos(), finalStatus);
+                });
+            }
+        }
+
         // need to tell future statuses to complete if cancelled
         do {
             this.completeStatusConsumers0(status, chunk);
