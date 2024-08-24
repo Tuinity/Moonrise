@@ -11,6 +11,7 @@ import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -81,9 +82,12 @@ public final class ChunkSystem {
 
     public static void onChunkHolderDelete(final ServerLevel level, final ChunkHolder holder) {
         // Update progress listener for LevelLoadingScreen
-        ChunkSystem.scheduleChunkTask(level, holder.getPos().x, holder.getPos().z, () -> {
-            level.getChunkSource().chunkMap.progressListener.onStatusChange(holder.getPos(), null);
-        });
+        final ChunkProgressListener progressListener = level.getChunkSource().chunkMap.progressListener;
+        if (progressListener != null) {
+            ChunkSystem.scheduleChunkTask(level, holder.getPos().x, holder.getPos().z, () -> {
+                progressListener.onStatusChange(holder.getPos(), null);
+            });
+        }
     }
 
     public static void onChunkPreBorder(final LevelChunk chunk, final ChunkHolder holder) {

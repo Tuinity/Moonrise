@@ -38,6 +38,7 @@ import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -1359,10 +1360,13 @@ public final class NewChunkHolder {
 
             // Update progress listener for LevelLoadingScreen
             if (chunk != null) {
-                final ChunkStatus finalStatus = status;
-                this.scheduler.scheduleChunkTask(this.chunkX, this.chunkZ, () -> {
-                    this.world.getChunkSource().chunkMap.progressListener.onStatusChange(this.vanillaChunkHolder.getPos(), finalStatus);
-                });
+                final ChunkProgressListener progressListener = this.world.getChunkSource().chunkMap.progressListener;
+                if (progressListener != null) {
+                    final ChunkStatus finalStatus = status;
+                    this.scheduler.scheduleChunkTask(this.chunkX, this.chunkZ, () -> {
+                        progressListener.onStatusChange(this.vanillaChunkHolder.getPos(), finalStatus);
+                    });
+                }
             }
         } while (chunk == null && status != (status = ((ChunkSystemChunkStatus)status).moonrise$getNextStatus()));
     }
