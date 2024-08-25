@@ -168,7 +168,7 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
      */
     @Overwrite
     public Map<Property<?>, Comparable<?>> getValues() {
-        var table = this.optimisedTable;
+        ZeroCollidingReferenceStateTable<O, S> table = this.optimisedTable;
         // We have to use this.values until the table is loaded
         return table.isLoaded() ? table.getMapView(this.tableIndex) : this.values;
     }

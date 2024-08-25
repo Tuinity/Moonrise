@@ -170,7 +170,7 @@ public final class ZeroCollidingReferenceStateTable<O, S> {
         return this.properties;
     }
 
-    public Map<Property<?>, Comparable<?>> getMapView(long stateIndex) {
+    public Map<Property<?>, Comparable<?>> getMapView(final long stateIndex) {
         return new MapView(stateIndex);
     }
 
@@ -182,36 +182,36 @@ public final class ZeroCollidingReferenceStateTable<O, S> {
         private final long stateIndex;
         private EntrySet entrySet;
 
-        MapView(long stateIndex) {
+        MapView(final long stateIndex) {
             this.stateIndex = stateIndex;
         }
 
         @Override
-        public boolean containsKey(Object key) {
-            return properties.contains(key);
+        public boolean containsKey(final Object key) {
+            return ZeroCollidingReferenceStateTable.this.properties.contains(key);
         }
 
         @Override
         public int size() {
-            return properties.size();
+            return ZeroCollidingReferenceStateTable.this.properties.size();
         }
 
         @Override
         public ObjectSet<Entry<Property<?>, Comparable<?>>> reference2ObjectEntrySet() {
-            if (entrySet == null)
-                entrySet = new EntrySet();
-            return entrySet;
+            if (this.entrySet == null)
+                this.entrySet = new EntrySet();
+            return this.entrySet;
         }
 
         @Override
-        public Comparable<?> get(Object key) {
-            return key instanceof Property<?> prop ? ZeroCollidingReferenceStateTable.this.get(stateIndex, prop) : null;
+        public Comparable<?> get(final Object key) {
+            return key instanceof Property<?> prop ? ZeroCollidingReferenceStateTable.this.get(this.stateIndex, prop) : null;
         }
 
         class EntrySet extends AbstractObjectSet<Entry<Property<?>, Comparable<?>>> {
             @Override
             public ObjectIterator<Reference2ObjectMap.Entry<Property<?>, Comparable<?>>> iterator() {
-                var propIterator = properties.iterator();
+                Iterator<Property<?>> propIterator = properties.iterator();
                 return new ObjectIterator<>() {
                     @Override
                     public boolean hasNext() {
@@ -220,15 +220,15 @@ public final class ZeroCollidingReferenceStateTable<O, S> {
 
                     @Override
                     public Entry<Property<?>, Comparable<?>> next() {
-                        var prop = propIterator.next();
-                        return new AbstractReference2ObjectMap.BasicEntry<>(prop, ZeroCollidingReferenceStateTable.this.get(stateIndex, prop));
+                        Property<?> prop = propIterator.next();
+                        return new AbstractReference2ObjectMap.BasicEntry<>(prop, ZeroCollidingReferenceStateTable.this.get(MapView.this.stateIndex, prop));
                     }
                 };
             }
 
             @Override
             public int size() {
-                return properties.size();
+                return ZeroCollidingReferenceStateTable.this.properties.size();
             }
         }
     }
