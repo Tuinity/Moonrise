@@ -26,8 +26,26 @@ public class RadiusAwarePrioritisedExecutor {
         this.executor = executor;
 
         for (int i = 0; i < this.queues.length; ++i) {
-            this.queues[i] = new DependencyTree(this, executor, maxToSchedule, i);
+            this.queues[i] = new DependencyTree(this, executor, maxToSchedule);
         }
+    }
+
+    public void setMaxToSchedule(final int maxToSchedule) {
+        final List<PrioritisedExecutor.PrioritisedTask> tasks;
+
+        synchronized (this) {
+            for (final DependencyTree dependencyTree : this.queues) {
+                dependencyTree.maxToSchedule = maxToSchedule;
+            }
+
+            if (this.selectedQueue == NO_TASKS_QUEUED || !this.canQueueTasks) {
+                return;
+            }
+
+            tasks = this.queues[this.selectedQueue].tryPushTasks();
+        }
+
+        scheduleTasks(tasks);
     }
 
     private boolean canQueueTasks() {
@@ -147,13 +165,20 @@ public class RadiusAwarePrioritisedExecutor {
         return ret;
     }
 
+    private static void scheduleTasks(final List<PrioritisedExecutor.PrioritisedTask> toSchedule) {
+        if (toSchedule != null) {
+            for (int i = 0, len = toSchedule.size(); i < len; ++i) {
+                toSchedule.get(i).queue();
+            }
+        }
+    }
+
     // all accesses must be synchronised by the radius aware object
     private static final class DependencyTree {
 
         private final RadiusAwarePrioritisedExecutor scheduler;
         private final PrioritisedExecutor executor;
-        private final int maxToSchedule;
-        private final int treeIndex;
+        private int maxToSchedule;
 
         private int currentlyExecuting;
         private long idGenerator;
@@ -166,11 +191,10 @@ public class RadiusAwarePrioritisedExecutor {
         private final Long2ReferenceOpenHashMap<DependencyNode> nodeByPosition = new Long2ReferenceOpenHashMap<>();
 
         public DependencyTree(final RadiusAwarePrioritisedExecutor scheduler, final PrioritisedExecutor executor,
-                              final int maxToSchedule, final int treeIndex) {
+                              final int maxToSchedule) {
             this.scheduler = scheduler;
             this.executor = executor;
             this.maxToSchedule = maxToSchedule;
-            this.treeIndex = treeIndex;
         }
 
         public boolean hasWaitingTasks() {
@@ -442,14 +466,6 @@ public class RadiusAwarePrioritisedExecutor {
             final Runnable run = this.run;
             this.run = null;
             run.run();
-        }
-
-        private static void scheduleTasks(final List<PrioritisedExecutor.PrioritisedTask> toSchedule) {
-            if (toSchedule != null) {
-                for (int i = 0, len = toSchedule.size(); i < len; ++i) {
-                    toSchedule.get(i).queue();
-                }
-            }
         }
 
         private void returnNode() {

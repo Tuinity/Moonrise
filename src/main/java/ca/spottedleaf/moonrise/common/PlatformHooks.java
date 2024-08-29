@@ -27,6 +27,8 @@ public interface PlatformHooks {
         return Holder.INSTANCE;
     }
 
+    public String getBrand();
+
     public int getLightEmission(final BlockState blockState, final BlockGetter world, final BlockPos pos);
 
     public Predicate<BlockState> maybeHasLightEmission();
@@ -65,6 +67,24 @@ public interface PlatformHooks {
     public void entityMove(final Entity entity, final long oldSection, final long newSection);
 
     public boolean screenEntity(final ServerLevel world, final Entity entity, final boolean fromDisk, final boolean event);
+
+    public boolean configFixMC224294();
+
+    public boolean configAutoConfigSendDistance();
+
+    public double configPlayerMaxLoadRate();
+
+    public double configPlayerMaxGenRate();
+
+    public double configPlayerMaxSendRate();
+
+    public int configPlayerMaxConcurrentLoads();
+
+    public int configPlayerMaxConcurrentGens();
+
+    public long configAutoSaveInterval();
+
+    public int configMaxAutoSavePerTick();
 
     public static final class Holder {
         private Holder() {

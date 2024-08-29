@@ -66,9 +66,7 @@ public final class ChunkTaskScheduler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChunkTaskScheduler.class);
 
-    public static void init(final MoonriseConfig.ChunkSystem config) {
-        final boolean useParallelGen = config.populationGenParallelism;
-
+    public static void init(final boolean useParallelGen) {
         for (final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor executor : MoonriseCommon.RADIUS_AWARE_GROUP.getAllExecutors()) {
             executor.setMaxParallelism(useParallelGen ? -1 : 1);
         }
@@ -283,14 +281,10 @@ public final class ChunkTaskScheduler {
         this.lockShift = Math.max(((ChunkSystemServerLevel)world).moonrise$getRegionChunkShift(), ThreadedTicketLevelPropagator.SECTION_SHIFT);
         this.schedulingLockArea = new ReentrantAreaLock(this.getChunkSystemLockShift());
 
-        final MoonriseConfig config = MoonriseCommon.getConfig();
-
-        final String worldName = WorldUtil.getWorldName(world);
         this.parallelGenExecutor = MoonriseCommon.PARALLEL_GEN_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
-        this.radiusAwareGenExecutor = MoonriseCommon.RADIUS_AWARE_GROUP.createExecutor(config.chunkSystem.populationGenParallelism ? -1 : 1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
+        this.radiusAwareGenExecutor = MoonriseCommon.RADIUS_AWARE_GROUP.createExecutor(1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
         this.loadExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
-        // TODO proper max to schedule
-        this.radiusAwareScheduler = new RadiusAwarePrioritisedExecutor(this.radiusAwareGenExecutor, Math.max(2, 1 + 1));
+        this.radiusAwareScheduler = new RadiusAwarePrioritisedExecutor(this.radiusAwareGenExecutor, 16);
         this.ioExecutor = MoonriseCommon.SERVER_REGION_IO_GROUP.createExecutor(-1, MoonriseCommon.IO_QUEUE_HOLD_TIME, 0);
         // we need a separate executor here so that on shutdown we can continue to process I/O tasks
         this.compressionExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);

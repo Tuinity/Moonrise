@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.fabric;
 
 import ca.spottedleaf.moonrise.common.PlatformHooks;
+import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -23,6 +24,11 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public final class FabricHooks implements PlatformHooks {
+
+    @Override
+    public String getBrand() {
+        return "Moonrise";
+    }
 
     @Override
     public int getLightEmission(final BlockState blockState, final BlockGetter world, final BlockPos pos) {
@@ -116,5 +122,50 @@ public final class FabricHooks implements PlatformHooks {
     @Override
     public boolean screenEntity(final ServerLevel world, final Entity entity, final boolean fromDisk, final boolean event) {
         return true;
+    }
+
+    @Override
+    public boolean configFixMC224294() {
+        return ConfigHolder.getConfig().bugFixes.fixMC224294;
+    }
+
+    @Override
+    public boolean configAutoConfigSendDistance() {
+        return ConfigHolder.getConfig().chunkLoading.advanced.autoConfigSendDistance;
+    }
+
+    @Override
+    public double configPlayerMaxLoadRate() {
+        return ConfigHolder.getConfig().chunkLoading.basic.playerMaxLoadRate;
+    }
+
+    @Override
+    public double configPlayerMaxGenRate() {
+        return ConfigHolder.getConfig().chunkLoading.basic.playerMaxGenRate;
+    }
+
+    @Override
+    public double configPlayerMaxSendRate() {
+        return ConfigHolder.getConfig().chunkLoading.basic.playerMaxSendRate;
+    }
+
+    @Override
+    public int configPlayerMaxConcurrentLoads() {
+        return ConfigHolder.getConfig().chunkLoading.advanced.playerMaxConcurrentChunkLoads;
+    }
+
+    @Override
+    public int configPlayerMaxConcurrentGens() {
+        return ConfigHolder.getConfig().chunkLoading.advanced.playerMaxConcurrentChunkGenerates;
+    }
+
+    @Override
+    public long configAutoSaveInterval() {
+        return ConfigHolder.getConfig().chunkSaving.autoSaveInterval.getTimeTicks();
+    }
+
+    @Override
+    public int configMaxAutoSavePerTick() {
+        return ConfigHolder.getConfig().chunkSaving.maxAutoSaveChunksPerTick;
     }
 }

@@ -232,8 +232,8 @@ public final class ChunkHolderManager {
     public void autoSave() {
         final List<NewChunkHolder> reschedule = new ArrayList<>();
         final long currentTick = this.currentTick;
-        final long maxSaveTime = currentTick - Math.max(1L, MoonriseCommon.getConfig().chunkSaving.autoSaveInterval.getTimeTicks());
-        final int maxToSave = MoonriseCommon.getConfig().chunkSaving.maxAutoSaveChunksPerTick;
+        final long maxSaveTime = currentTick - Math.max(1L, PlatformHooks.get().configAutoSaveInterval());
+        final int maxToSave = PlatformHooks.get().configMaxAutoSavePerTick();
         for (int autoSaved = 0; autoSaved < maxToSave && !this.autoSaveQueue.isEmpty();) {
             final NewChunkHolder holder = this.autoSaveQueue.first();
 

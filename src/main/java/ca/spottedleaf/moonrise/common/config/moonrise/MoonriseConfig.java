@@ -179,7 +179,7 @@ public final class MoonriseConfig {
 
         @Override
         public void initialise() {
-            MoonriseCommon.adjustWorkerThreads(this);
+            MoonriseCommon.adjustWorkerThreads(this.workerThreads, this.ioThreads);
         }
     }
 
@@ -206,7 +206,7 @@ public final class MoonriseConfig {
 
         @Override
         public void initialise() {
-            ChunkTaskScheduler.init(this);
+            ChunkTaskScheduler.init(this.populationGenParallelism);
         }
     }
 
@@ -215,8 +215,6 @@ public final class MoonriseConfig {
 
     @Adaptable
     public static final class BugFixes {
-
-        public static final Boolean FIX_MC224294_DEFAULT = Boolean.TRUE;
 
         @Serializable(
                 serializedKey = "fix-MC-224294",

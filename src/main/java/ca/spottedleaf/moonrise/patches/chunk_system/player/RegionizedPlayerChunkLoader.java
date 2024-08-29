@@ -535,7 +535,7 @@ public final class RegionizedPlayerChunkLoader {
                                                final int playerSendViewDistance, final int worldSendViewDistance) {
             return Math.min(
                 loadViewDistance - 1,
-                playerSendViewDistance < 0 ? (!MoonriseCommon.getConfig().chunkLoading.advanced.autoConfigSendDistance || clientViewDistance < 0 ? (worldSendViewDistance < 0 ? (loadViewDistance - 1) : worldSendViewDistance) : clientViewDistance + 1) : playerSendViewDistance
+                playerSendViewDistance < 0 ? (!PlatformHooks.get().configAutoConfigSendDistance() || clientViewDistance < 0 ? (worldSendViewDistance < 0 ? (loadViewDistance - 1) : worldSendViewDistance) : clientViewDistance + 1) : playerSendViewDistance
             );
         }
 
@@ -560,26 +560,26 @@ public final class RegionizedPlayerChunkLoader {
         }
 
         private double getMaxChunkLoadRate() {
-            final double configRate = MoonriseCommon.getConfig().chunkLoading.basic.playerMaxLoadRate;
+            final double configRate = PlatformHooks.get().configPlayerMaxLoadRate();
 
             return configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
         }
 
         private double getMaxChunkGenRate() {
-            final double configRate = MoonriseCommon.getConfig().chunkLoading.basic.playerMaxGenRate;
+            final double configRate = PlatformHooks.get().configPlayerMaxGenRate();
 
             return configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
         }
 
         private double getMaxChunkSendRate() {
-            final double configRate = MoonriseCommon.getConfig().chunkLoading.basic.playerMaxSendRate;
+            final double configRate = PlatformHooks.get().configPlayerMaxSendRate();
 
             return configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
         }
 
         private long getMaxChunkLoads() {
             final long radiusChunks = (2L * this.lastLoadDistance + 1L) * (2L * this.lastLoadDistance + 1L);
-            long configLimit = MoonriseCommon.getConfig().chunkLoading.advanced.playerMaxConcurrentChunkLoads;
+            long configLimit = (long)PlatformHooks.get().configPlayerMaxConcurrentLoads();
             if (configLimit == 0L) {
                 // by default, only allow 1/5th of the chunks in the view distance to be concurrently active
                 configLimit = Math.max(5L, radiusChunks / 5L);
@@ -593,7 +593,7 @@ public final class RegionizedPlayerChunkLoader {
 
         private long getMaxChunkGenerates() {
             final long radiusChunks = (2L * this.lastLoadDistance + 1L) * (2L * this.lastLoadDistance + 1L);
-            long configLimit = MoonriseCommon.getConfig().chunkLoading.advanced.playerMaxConcurrentChunkGenerates;
+            long configLimit = (long)PlatformHooks.get().configPlayerMaxConcurrentGens();
             if (configLimit == 0L) {
                 // by default, only allow 1/5th of the chunks in the view distance to be concurrently active
                 configLimit = Math.max(5L, radiusChunks / 5L);

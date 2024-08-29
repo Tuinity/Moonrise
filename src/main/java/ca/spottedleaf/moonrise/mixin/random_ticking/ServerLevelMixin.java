@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.random_ticking;
 
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.list.IntList;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.SimpleRandom;
@@ -75,7 +76,7 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
         final LevelChunkSection[] sections = chunk.getSections();
         final int minSection = WorldUtil.getMinSection((ServerLevel)(Object)this);
         final SimpleRandom simpleRandom = this.simpleRandom;
-        final boolean tickFluids = !MoonriseCommon.getConfig().bugFixes.fixMC224294;
+        final boolean doubleTickFluids = !PlatformHooks.get().configFixMC224294();
 
         final ChunkPos cpos = chunk.getPos();
         final int offsetX = cpos.x << 4;
@@ -107,7 +108,7 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
                 final BlockPos pos = new BlockPos((location & 15) | offsetX, ((location >>> (4 + 4)) & 15) | offsetY, ((location >>> 4) & 15) | offsetZ);
 
                 state.randomTick((ServerLevel)(Object)this, pos, simpleRandom);
-                if (tickFluids) {
+                if (doubleTickFluids) {
                     final FluidState fluidState = state.getFluidState();
                     if (fluidState.isRandomlyTicking()) {
                         fluidState.randomTick((ServerLevel)(Object)this, pos, simpleRandom);
