@@ -8,21 +8,16 @@ import it.unimi.dsi.fastutil.objects.AbstractObjectSet;
 import it.unimi.dsi.fastutil.objects.AbstractReference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import net.minecraft.world.level.block.state.StateHolder;
-import net.minecraft.world.level.block.state.properties.Property;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.AbstractMap;
-import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import net.minecraft.world.level.block.state.StateHolder;
+import net.minecraft.world.level.block.state.properties.Property;
 
 public final class ZeroCollidingReferenceStateTable<O, S> {
 
@@ -167,7 +162,7 @@ public final class ZeroCollidingReferenceStateTable<O, S> {
     }
 
     public Collection<Property<?>> getProperties() {
-        return this.properties;
+        return Collections.unmodifiableCollection(this.properties);
     }
 
     public Map<Property<?>, Comparable<?>> getMapView(final long stateIndex) {
@@ -188,7 +183,7 @@ public final class ZeroCollidingReferenceStateTable<O, S> {
 
         @Override
         public boolean containsKey(final Object key) {
-            return ZeroCollidingReferenceStateTable.this.properties.contains(key);
+            return key instanceof Property<?> prop && ZeroCollidingReferenceStateTable.this.hasProperty(prop);
         }
 
         @Override
