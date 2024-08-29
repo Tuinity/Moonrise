@@ -44,3 +44,22 @@ shadowJar {
     relocate 'ca.spottedleaf.concurrentutil', 'ca.spottedleaf.moonrise.libs.ca.spottedleaf.concurrentutil'
     relocate 'org.yaml.snakeyaml', 'ca.spottedleaf.moonrise.libs.org.yaml.snakeyaml'
 }
+
+// Setup a run with lithium for compatibility testing
+sourceSets.create("lithium")
+configurations.create("lithium")
+loom {
+    createRemapConfigurations(sourceSets.lithium)
+    runs {
+        register("lithiumClient") {
+            client()
+            property "mixin.debug", "true"
+        }
+    }
+}
+tasks.named("runLithiumClient", net.fabricmc.loom.task.RunGameTask.class) {
+    getClasspath().from(configurations.modRuntimeClasspathLithiumMapped)
+}
+dependencies {
+    modLithiumRuntimeOnly "maven.modrinth:lithium:${rootProject.lithium_version}"
+}
