@@ -520,6 +520,11 @@ public final class ChunkTaskScheduler {
         if (status == null || status.isOrAfter(ChunkStatus.FULL)) {
             throw new IllegalArgumentException("Status: " + status);
         }
+
+        if (!TickThread.isTickThread()) {
+            return this.world.getChunkSource().getChunk(chunkX, chunkZ, status, true);
+        }
+
         ChunkAccess loaded = ((ChunkSystemServerLevel)this.world).moonrise$getSpecificChunkIfLoaded(chunkX, chunkZ, status);
         if (loaded != null) {
             return loaded;
