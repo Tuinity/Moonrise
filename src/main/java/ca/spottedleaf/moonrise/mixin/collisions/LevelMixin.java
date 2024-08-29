@@ -9,7 +9,6 @@ import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -425,11 +424,11 @@ abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseabl
                     }
 
                     final BlockState state = ((GetBlockChunk)lastChunk).moonrise$getBlock(currX, currY, currZ);
-                    if (((CollisionBlockState)state).moonrise$emptyCollisionShape()) {
+                    if (((CollisionBlockState)state).moonrise$emptyContextCollisionShape()) {
                         continue;
                     }
 
-                    VoxelShape blockCollision = ((CollisionBlockState)state).moonrise$getConstantCollisionShape();
+                    VoxelShape blockCollision = ((CollisionBlockState)state).moonrise$getConstantContextCollisionShape();
 
                     if ((edgeCount != 1 || state.hasLargeCollisionShape()) && (edgeCount != 2 || state.getBlock() == Blocks.MOVING_PISTON)) {
                         if (collisionContext == null) {

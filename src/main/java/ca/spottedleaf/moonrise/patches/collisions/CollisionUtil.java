@@ -2023,11 +2023,11 @@ public final class CollisionUtil {
 
                                 final BlockState blockData = blocks.get(localBlockIndex);
 
-                                if (((CollisionBlockState)blockData).moonrise$emptyCollisionShape()) {
+                                if (((CollisionBlockState)blockData).moonrise$emptyContextCollisionShape()) {
                                     continue;
                                 }
 
-                                VoxelShape blockCollision = ((CollisionBlockState)blockData).moonrise$getConstantCollisionShape();
+                                VoxelShape blockCollision = ((CollisionBlockState)blockData).moonrise$getConstantContextCollisionShape();
 
                                 if (edgeCount == 0 || ((edgeCount != 1 || blockData.hasLargeCollisionShape()) && (edgeCount != 2 || blockData.getBlock() == Blocks.MOVING_PISTON))) {
                                     if (blockCollision == null) {

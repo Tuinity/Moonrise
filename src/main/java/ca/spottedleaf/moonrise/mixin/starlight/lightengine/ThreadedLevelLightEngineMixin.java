@@ -69,8 +69,7 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
 
         final ChunkAccess center = this.starlight$getLightEngine().getAnyChunkNow(chunkX, chunkZ);
         if (center == null || !center.getPersistedStatus().isOrAfter(ChunkStatus.LIGHT)) {
-            // do not accept updates in unlit chunks, unless we might be generating a chunk. thanks to the amazing
-            // chunk scheduling, we could be lighting and generating a chunk at the same time
+            // do not accept updates in unlit chunks, unless we might be generating a chunk
             return;
         }
 
@@ -97,8 +96,8 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
 
     @Override
     public final int starlight$serverRelightChunks(final Collection<ChunkPos> chunks0,
-                                                    final Consumer<ChunkPos> chunkLightCallback,
-                                                    final IntConsumer onComplete) {
+                                                   final Consumer<ChunkPos> chunkLightCallback,
+                                                   final IntConsumer onComplete) {
         final Set<ChunkPos> chunks = new LinkedHashSet<>(chunks0);
         final Map<ChunkPos, Long> ticketIds = new HashMap<>();
         final ServerLevel world = (ServerLevel)this.starlight$getLightEngine().getWorld();

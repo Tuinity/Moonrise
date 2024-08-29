@@ -1,6 +1,5 @@
 package ca.spottedleaf.moonrise.patches.collisions.block;
 
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public interface CollisionBlockState {
@@ -11,6 +10,9 @@ public interface CollisionBlockState {
 
     // whether the cached collision shape exists and is empty
     public boolean moonrise$emptyCollisionShape();
+
+    // whether the context-sensitive shape is constant and is empty
+    public boolean moonrise$emptyContextCollisionShape();
 
     // indicates that occludesFullBlock is cached for the collision shape
     public boolean moonrise$hasCache();
@@ -23,7 +25,5 @@ public interface CollisionBlockState {
     // value is still unique
     public int moonrise$uniqueId2();
 
-    public VoxelShape moonrise$getConstantCollisionShape();
-
-    public AABB moonrise$getConstantCollisionAABB();
+    public VoxelShape moonrise$getConstantContextCollisionShape();
 }

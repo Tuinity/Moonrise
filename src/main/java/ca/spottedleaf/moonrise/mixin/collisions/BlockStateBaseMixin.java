@@ -59,10 +59,10 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
     private boolean emptyCollisionShape;
 
     @Unique
-    private VoxelShape constantCollisionShape;
+    private boolean emptyConstantCollisionShape;
 
     @Unique
-    private AABB constantAABBCollision;
+    private VoxelShape constantCollisionShape;
 
     @Unique
     private static void initCaches(final VoxelShape shape, final boolean neighbours) {
@@ -95,14 +95,13 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
             final VoxelShape collisionShape = this.cache.collisionShape;
             try {
                 this.constantCollisionShape = this.getCollisionShape(null, null, null);
-                this.constantAABBCollision = this.constantCollisionShape == null ? null : ((CollisionVoxelShape)this.constantCollisionShape).moonrise$getSingleAABBRepresentation();
             } catch (final Throwable throwable) {
                 // :(
                 this.constantCollisionShape = null;
-                this.constantAABBCollision = null;
             }
             this.occludesFullBlock = ((CollisionVoxelShape)collisionShape).moonrise$occludesFullBlock();
             this.emptyCollisionShape = collisionShape.isEmpty();
+            this.emptyConstantCollisionShape = this.constantCollisionShape != null && this.constantCollisionShape.isEmpty();
             // init caches
             initCaches(collisionShape, true);
             if (this.constantCollisionShape != null) {
@@ -116,8 +115,8 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
         } else {
             this.occludesFullBlock = false;
             this.emptyCollisionShape = false;
+            this.emptyConstantCollisionShape = false;
             this.constantCollisionShape = null;
-            this.constantAABBCollision = null;
         }
     }
 
@@ -137,6 +136,11 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
     }
 
     @Override
+    public final boolean moonrise$emptyContextCollisionShape() {
+        return this.emptyConstantCollisionShape;
+    }
+
+    @Override
     public final int moonrise$uniqueId1() {
         return this.id1;
     }
@@ -147,12 +151,7 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
     }
 
     @Override
-    public final VoxelShape moonrise$getConstantCollisionShape() {
+    public final VoxelShape moonrise$getConstantContextCollisionShape() {
         return this.constantCollisionShape;
-    }
-
-    @Override
-    public final AABB moonrise$getConstantCollisionAABB() {
-        return this.constantAABBCollision;
     }
 }

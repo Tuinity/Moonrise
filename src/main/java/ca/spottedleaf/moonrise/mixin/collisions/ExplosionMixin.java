@@ -246,10 +246,10 @@ abstract class ExplosionMixin {
             }
 
             final BlockState blockState = cachedBlock.blockState;
-            if (blockState != null && !((CollisionBlockState)blockState).moonrise$emptyCollisionShape()) {
+            if (blockState != null && !((CollisionBlockState)blockState).moonrise$emptyContextCollisionShape()) {
                 VoxelShape collision = cachedBlock.cachedCollisionShape;
                 if (collision == null) {
-                    collision = ((CollisionBlockState)blockState).moonrise$getConstantCollisionShape();
+                    collision = ((CollisionBlockState)blockState).moonrise$getConstantContextCollisionShape();
                     if (collision == null) {
                         collision = blockState.getCollisionShape(this.level, currPos, context);
                         if (!context.isDelegated()) {
