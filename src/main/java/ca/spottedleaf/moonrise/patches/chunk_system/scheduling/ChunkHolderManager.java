@@ -40,6 +40,7 @@ import net.minecraft.server.level.TicketType;
 import net.minecraft.util.SortedArraySet;
 import net.minecraft.util.Unit;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.LevelChunk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
@@ -279,6 +280,16 @@ public final class ChunkHolderManager {
         int savedEntity = 0;
         int savedPoi = 0;
 
+        if (shutdown) {
+            // Normal unload process does not occur during shutdown: fire event manually
+            // for mods that expect ChunkEvent.Unload to fire on shutdown (before LevelEvent.Unload)
+            for (int i = 0, len = holders.size(); i < len; ++i) {
+                final NewChunkHolder holder = holders.get(i);
+                if (holder.getCurrentChunk() instanceof LevelChunk levelChunk) {
+                    PlatformHooks.get().chunkUnloadFromWorld(levelChunk);
+                }
+            }
+        }
         for (int i = 0, len = holders.size(); i < len; ++i) {
             final NewChunkHolder holder = holders.get(i);
             try {
