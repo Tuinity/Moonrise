@@ -206,7 +206,7 @@ public final class ZeroCollidingReferenceStateTable<O, S> {
         class EntrySet extends AbstractObjectSet<Entry<Property<?>, Comparable<?>>> {
             @Override
             public ObjectIterator<Reference2ObjectMap.Entry<Property<?>, Comparable<?>>> iterator() {
-                Iterator<Property<?>> propIterator = properties.iterator();
+                final Iterator<Property<?>> propIterator = ZeroCollidingReferenceStateTable.this.properties.iterator();
                 return new ObjectIterator<>() {
                     @Override
                     public boolean hasNext() {
