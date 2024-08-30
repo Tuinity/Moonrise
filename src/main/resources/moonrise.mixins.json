@@ -108,6 +108,7 @@
         "starlight.world.ChunkSerializerMixin",
         "starlight.world.WorldGenRegionMixin",
         "util_thread_counts.UtilMixin",
+        "util_threading_detector.PalettedContainerMixin",
         "util_threading_detector.ThreadingDetectorMixin",
         "util_time_source.UtilMixin"
     ],
