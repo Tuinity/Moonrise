@@ -231,7 +231,7 @@ public final class MoonriseConfig {
                 fieldKeyName = "option.moonrise.fixMC224294",
                 section = BUG_FIX_SECTION
         )
-        public boolean fixMC224294 = true;
+        public boolean fixMC224294 = false;
 
         @Serializable(
             serializedKey = "fix-MC-159283",
