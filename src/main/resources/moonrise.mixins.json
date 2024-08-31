@@ -76,6 +76,7 @@
         "collisions.VoxelShapeMixin",
         "command.CommandsMixin",
         "config.MinecraftServerMixin",
+        "end_island.DensityFunctions$EndIslandDensityFunctionMixin",
         "entity_tracker.ChunkMapMixin",
         "entity_tracker.EntityMixin",
         "entity_tracker.TrackedEntityMixin",

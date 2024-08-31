@@ -201,4 +201,9 @@ public final class NeoForgeHooks implements PlatformHooks {
     public int configMaxAutoSavePerTick() {
         return ConfigHolder.getConfig().chunkSaving.maxAutoSaveChunksPerTick;
     }
+
+    @Override
+    public boolean configFixMC159283() {
+        return ConfigHolder.getConfig().bugFixes.fixMC159283;
+    }
 }

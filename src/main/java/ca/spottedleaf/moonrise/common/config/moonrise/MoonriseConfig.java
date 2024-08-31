@@ -232,5 +232,23 @@ public final class MoonriseConfig {
                 section = BUG_FIX_SECTION
         )
         public boolean fixMC224294 = true;
+
+        @Serializable(
+            serializedKey = "fix-MC-159283",
+            comment = """
+                        Fixes https://bugs.mojang.com/browse/MC-159283. This fixes a bug resulting in the end islands
+                        not properly generating at far enough distances in the end. Note that toggling this config option
+                        will not affect already generated areas.
+                        This configuration has two options:
+                        true    -> Fixes the end islands generation. This is different from Vanilla behavior.
+                        false   -> Does not fix the end islands generation. This is the same behavior as Vanilla.
+                        """
+        )
+        @ClothConfig(
+            tooltip = "tooltip.moonrise.fixMC159283",
+            fieldKeyName = "option.moonrise.fixMC159283",
+            section = BUG_FIX_SECTION
+        )
+        public boolean fixMC159283 = false;
     }
 }

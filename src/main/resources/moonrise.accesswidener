@@ -289,3 +289,7 @@ accessible method net/minecraft/world/level/chunk/storage/RegionFile write (Lnet
 
 # RegionFile$ChunkBuffer
 accessible class net/minecraft/world/level/chunk/storage/RegionFile$ChunkBuffer
+
+
+# DensityFunctions$EndIslandDensityFunction
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$EndIslandDensityFunction

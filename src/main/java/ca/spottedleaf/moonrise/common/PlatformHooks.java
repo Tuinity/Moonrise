@@ -86,6 +86,8 @@ public interface PlatformHooks {
 
     public int configMaxAutoSavePerTick();
 
+    public boolean configFixMC159283();
+
     public static final class Holder {
         private Holder() {
         }

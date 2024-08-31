@@ -840,10 +840,10 @@ public final class NewChunkHolder {
         // chunk state
         this.currentChunk = null;
         this.currentGenStatus = null;
-        this.lastChunkCompletion = null;
         for (int i = 0; i < this.chunkCompletions.length; ++i) {
-            CHUNK_COMPLETION_ARRAY_HANDLE.setVolatile(this.chunkCompletions, i, (ChunkCompletion)null);
+            CHUNK_COMPLETION_ARRAY_HANDLE.setRelease(this.chunkCompletions, i, (ChunkCompletion)null);
         }
+        this.lastChunkCompletion = null;
         // entity chunk state
         this.entityChunk = null;
         this.pendingEntityChunk = null;
