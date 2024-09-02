@@ -80,7 +80,6 @@ abstract class SimpleBitStorageMixin implements BitStorage {
     @Override
     public int getAndSet(final int index, final int value) {
         // assume index/value in range
-        // note: enforce atomic writes
         final int full = this.magic * index; // 20 bits of magic + 12 bits of index = barely int
         final int divQ = full >>> 20;
         final int divR = (full & 0xFFFFF) * this.mulBits >>> 20;
@@ -105,7 +104,6 @@ abstract class SimpleBitStorageMixin implements BitStorage {
     @Override
     public void set(final int index, final int value) {
         // assume index/value in range
-        // note: enforce atomic writes
         final int full = this.magic * index; // 20 bits of magic + 12 bits of index = barely int
         final int divQ = full >>> 20;
         final int divR = (full & 0xFFFFF) * this.mulBits >>> 20;
@@ -128,7 +126,6 @@ abstract class SimpleBitStorageMixin implements BitStorage {
     @Override
     public int get(final int index) {
         // assume index in range
-        // note: enforce atomic reads
         final int full = this.magic * index; // 20 bits of magic + 12 bits of index = barely int
         final int divQ = full >>> 20;
         final int divR = (full & 0xFFFFF) * this.mulBits >>> 20;

@@ -19,7 +19,6 @@ public final class ServerEntityLookup extends EntityLookup {
 
     private final ServerLevel serverWorld;
     public final ReferenceList<Entity> trackerEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY); // Moonrise - entity tracker
-    public final ReferenceList<Entity> trackerUnloadedEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY); // Moonrise - entity tracker
 
     public ServerEntityLookup(final ServerLevel world, final LevelCallback<Entity> worldCallback) {
         super(world, worldCallback);
@@ -84,14 +83,12 @@ public final class ServerEntityLookup extends EntityLookup {
         if (entity instanceof ServerPlayer player) {
             ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().removePlayer(player);
         }
-        this.trackerUnloadedEntities.remove(entity); // Moonrise - entity tracker
     }
 
     @Override
     protected void entityStartLoaded(final Entity entity) {
         // Moonrise start - entity tracker
         this.trackerEntities.add(entity);
-        this.trackerUnloadedEntities.remove(entity);
         // Moonrise end - entity tracker
     }
 
@@ -99,7 +96,6 @@ public final class ServerEntityLookup extends EntityLookup {
     protected void entityEndLoaded(final Entity entity) {
         // Moonrise start - entity tracker
         this.trackerEntities.remove(entity);
-        this.trackerUnloadedEntities.add(entity);
         // Moonrise end - entity tracker
     }
 

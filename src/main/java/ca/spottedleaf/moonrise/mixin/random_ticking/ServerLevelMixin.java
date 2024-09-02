@@ -2,7 +2,6 @@ package ca.spottedleaf.moonrise.mixin.random_ticking;
 
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.list.IntList;
-import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.SimpleRandom;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;

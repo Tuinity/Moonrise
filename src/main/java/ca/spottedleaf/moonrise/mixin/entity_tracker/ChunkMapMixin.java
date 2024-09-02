@@ -80,19 +80,6 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.PlayerP
             tracker.serverEntity.sendChanges();
         }
 
-        // process unloads
-        final ReferenceList<Entity> unloadedEntities = entityLookup.trackerUnloadedEntities;
-        final Entity[] unloadedEntitiesRaw = Arrays.copyOf(unloadedEntities.getRawDataUnchecked(), unloadedEntities.size());
-        unloadedEntities.clear();
-
-        for (final Entity entity : unloadedEntitiesRaw) {
-            final ChunkMap.TrackedEntity tracker = ((EntityTrackerEntity)entity).moonrise$getTrackedEntity();
-            if (tracker == null) {
-                continue;
-            }
-            ((EntityTrackerTrackedEntity)tracker).moonrise$clearPlayers();
-        }
-
         return false;
     }
 

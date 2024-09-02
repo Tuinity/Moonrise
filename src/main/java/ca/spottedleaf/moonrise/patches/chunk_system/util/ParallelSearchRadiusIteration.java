@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.util;
 
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
@@ -13,7 +14,7 @@ public final class ParallelSearchRadiusIteration {
 
     // expected that this list returns for a given radius, the set of chunks ordered
     // by manhattan distance
-    private static final long[][] SEARCH_RADIUS_ITERATION_LIST = new long[64+2+1][];
+    private static final long[][] SEARCH_RADIUS_ITERATION_LIST = new long[MoonriseConstants.MAX_VIEW_DISTANCE+2+1][];
     static {
         for (int i = 0; i < SEARCH_RADIUS_ITERATION_LIST.length; ++i) {
             // a BFS around -x, -z, +x, +z will give increasing manhatten distance

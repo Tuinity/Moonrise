@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Iterator;
@@ -100,6 +101,21 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
         if (newState.isRandomlyTicking()) {
             this.tickingBlocks.add(position);
         }
+    }
+
+    /**
+     * @reason We should only adjust the fluid ticking count based on whether the fluid is TICKING, not whether it is EMPTY.
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "setBlockState(IIILnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/material/FluidState;isEmpty()Z"
+        )
+    )
+    private boolean fixTickingFluidCount(final FluidState instance) {
+        return !instance.isRandomlyTicking();
     }
 
     /**

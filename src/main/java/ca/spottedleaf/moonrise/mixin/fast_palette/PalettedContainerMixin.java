@@ -101,15 +101,15 @@ abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedCo
     }
 
     @Unique
-    private T readPaletteSlow(final int paletteIdx) {
-        return this.data.palette.valueFor(paletteIdx);
+    private T readPaletteSlow(final PalettedContainer.Data<T> data, final int paletteIdx) {
+        return data.palette.valueFor(paletteIdx);
     }
 
     @Unique
     private T readPalette(final PalettedContainer.Data<T> data, final int paletteIdx) {
         final T[] palette = ((FastPaletteData<T>)(Object)data).moonrise$getPalette();
         if (palette == null) {
-            return this.readPaletteSlow(paletteIdx);
+            return this.readPaletteSlow(data, paletteIdx);
         }
 
         final T ret = palette[paletteIdx];

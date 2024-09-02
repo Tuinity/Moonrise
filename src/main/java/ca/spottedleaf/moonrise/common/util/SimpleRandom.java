@@ -48,6 +48,6 @@ public final class SimpleRandom extends LegacyRandomSource {
 
         // https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
         final long value = this.advanceSeed() >>> (BITS - Integer.SIZE);
-        return (int)((value * bound) >>> Integer.SIZE);
+        return (int)((value * (long)bound) >>> Integer.SIZE);
     }
 }
