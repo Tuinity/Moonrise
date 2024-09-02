@@ -46,3 +46,24 @@ shadowJar {
 }
 
 Aw2At.setup(getProject(), tasks.remapJar)
+
+publishMods {
+    modLoaders = ["neoforge"]
+
+    modrinth {
+        incompatible(
+            "notenoughcrashes",
+            "starlight-forge",
+            "canary",
+            "radium"
+        )
+    }
+    curseforge {
+        incompatible(
+            "not-enough-crashes-forge",
+            "starlight-forge",
+            "canary",
+            "radium-reforged"
+        )
+    }
+}

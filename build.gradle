@@ -1,5 +1,8 @@
+import me.modmuss50.mpp.ReleaseType
+
 plugins {
     id("xyz.jpenilla.quiet-architectury-loom")
+    id("me.modmuss50.mod-publish-plugin") version "0.7.2" apply false
 }
 
 /*
@@ -96,6 +99,30 @@ subprojects {
     loom.runs.all {
         ideConfigGenerated true
         // property "mixin.debug", "true"
+    }
+
+    plugins.apply("me.modmuss50.mod-publish-plugin")
+
+    publishMods {
+        file = remapJar.archiveFile
+        if (project.version.contains("-beta.")) {
+            type = ReleaseType.BETA
+        } else {
+            type = ReleaseType.STABLE
+        }
+        changelog = providers.environmentVariable("RELEASE_NOTES")
+
+        modrinth {
+            projectId = "<MODRINTH_PROJECT_ID>" // TODO
+            accessToken = providers.environmentVariable("MODRINTH_TOKEN")
+            minecraftVersions = [rootProject.minecraft_version]
+        }
+
+        curseforge {
+            projectId = "<CF_PROJECT_ID>" // TODO
+            accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
+            minecraftVersions = [rootProject.minecraft_version]
+        }
     }
 }
 
