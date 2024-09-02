@@ -4,6 +4,7 @@ import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerTrackedEntity;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerPlayerConnection;
@@ -11,6 +12,8 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.Set;
 
 @Mixin(ChunkMap.TrackedEntity.class)
@@ -25,6 +28,20 @@ abstract class TrackedEntityMixin implements EntityTrackerTrackedEntity {
     @Shadow
     public abstract void removePlayer(ServerPlayer serverPlayer);
 
+    /**
+     * @reason ReferenceOpenHashSet is a better choice than a wrapped IdentityHashMap
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "<init>",
+        at = @At(
+            value = "INVOKE",
+            target = "Lcom/google/common/collect/Sets;newIdentityHashSet()Ljava/util/Set;"
+        )
+    )
+    private <E> Set<E> useBetterIdentitySet() {
+        return new ReferenceOpenHashSet<>();
+    }
 
     @Unique
     private long lastChunkUpdate = -1L;
