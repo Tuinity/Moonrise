@@ -10,4 +10,6 @@ public interface EntityTrackerTrackedEntity {
 
     public void moonrise$clearPlayers();
 
+    public boolean moonrise$hasPlayers();
+
 }

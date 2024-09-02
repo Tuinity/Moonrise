@@ -104,4 +104,9 @@ abstract class TrackedEntityMixin implements EntityTrackerTrackedEntity {
             this.removePlayer(player);
         }
     }
+
+    @Override
+    public final boolean moonrise$hasPlayers() {
+        return !this.seenBy.isEmpty();
+    }
 }

@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.entity_tracker;
 
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
+import ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.server.ServerEntityLookup;
 import ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerEntity;
@@ -10,6 +11,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.datafixers.DataFixer;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
+import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.GeneratingChunkMap;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -77,7 +79,10 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.PlayerP
                 continue;
             }
             ((EntityTrackerTrackedEntity)tracker).moonrise$tick(nearbyPlayers.getChunk(entity.chunkPosition()));
-            tracker.serverEntity.sendChanges();
+            if (((EntityTrackerTrackedEntity)tracker).moonrise$hasPlayers()
+                || ((ChunkSystemEntity)entity).moonrise$getChunkStatus().isOrAfter(FullChunkStatus.ENTITY_TICKING)) {
+                tracker.serverEntity.sendChanges();
+            }
         }
 
         return false;
