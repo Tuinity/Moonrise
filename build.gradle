@@ -47,6 +47,12 @@ allprojects {
                 includeModule("ca.spottedleaf", "concurrentutil")
             }
         }
+        maven {
+            url "https://api.modrinth.com/maven"
+            mavenContent {
+                includeGroup("maven.modrinth")
+            }
+        }
         maven { url "https://maven.shedaniel.me/" }
         maven { url "https://maven.terraformersmc.com/releases/" }
     }
@@ -89,6 +95,7 @@ subprojects {
     }
     loom.runs.all {
         ideConfigGenerated true
+        // property "mixin.debug", "true"
     }
 }
 
