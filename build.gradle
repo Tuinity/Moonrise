@@ -113,13 +113,13 @@ subprojects {
         changelog = providers.environmentVariable("RELEASE_NOTES")
 
         modrinth {
-            projectId = "<MODRINTH_PROJECT_ID>" // TODO
+            projectId = "KOHu7RCS"
             accessToken = providers.environmentVariable("MODRINTH_TOKEN")
             minecraftVersions = [rootProject.minecraft_version]
         }
 
         curseforge {
-            projectId = "<CF_PROJECT_ID>" // TODO
+            projectId = "1096335"
             accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
             minecraftVersions = [rootProject.minecraft_version]
         }
