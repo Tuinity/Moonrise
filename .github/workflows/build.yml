@@ -35,7 +35,14 @@ jobs:
         run: ./installConcurrentUtil.sh
       - name: "execute gradle build"
         run: ./gradlew build
-      - name: Publish (Pre-)Release to Modrinth
+      - name: Determine Snapshot Status
+        run: |
+          if [ "$(./gradlew properties | awk '/^version:/ { print $2; }' | grep '\-SNAPSHOT')" ]; then
+            echo "STATUS=snapshot" >> $GITHUB_ENV
+          else
+            echo "STATUS=release" >> $GITHUB_ENV
+          fi
+      - name: Publish (Pre-)Release to Modrinth & CurseForge
         if: "${{ env.STATUS == 'release' && github.event_name == 'release' }}"
         run: ./gradlew :moonrise-fabric:publishMods :moonrise-neoforge:publishMods
         env:
