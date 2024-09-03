@@ -53,7 +53,7 @@ publishMods {
     modrinth {
         incompatible(
             "notenoughcrashes",
-            "starlight-forge",
+            "starlight-neoforge",
             "canary",
             "radium"
         )
@@ -61,7 +61,7 @@ publishMods {
     curseforge {
         incompatible(
             "not-enough-crashes-forge",
-            "starlight-forge",
+            "starlight-neoforge",
             "canary",
             "radium-reforged"
         )
