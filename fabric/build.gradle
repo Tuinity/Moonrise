@@ -45,6 +45,25 @@ shadowJar {
     relocate 'org.yaml.snakeyaml', 'ca.spottedleaf.moonrise.libs.org.yaml.snakeyaml'
 }
 
+publishMods {
+    modLoaders = ["fabric"]
+
+    modrinth {
+        incompatible(
+            "notenoughcrashes",
+            "starlight",
+            "c2me-fabric"
+        )
+    }
+    curseforge {
+        incompatible(
+            "not-enough-crashes",
+            "starlight",
+            "c2me-fabric"
+        )
+    }
+}
+
 // Setup a run with lithium for compatibility testing
 sourceSets.create("lithium")
 configurations.create("lithium")

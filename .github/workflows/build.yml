@@ -4,6 +4,9 @@ on:
     branches: [ "**" ]
     tags-ignore: [ "**" ]
   pull_request:
+  release:
+    types: [ published ]
+
 jobs:
   build:
     # Only run on PRs if the source branch is on someone else's repo
@@ -12,15 +15,13 @@ jobs:
     steps:
       - name: "checkout git repository"
         uses: actions/checkout@v4
-      - name: "validate gradle wrapper"
-        uses: gradle/actions/wrapper-validation@v3
       - name: "setup jdk"
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 21
       - name: "setup gradle"
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
         # gradle-build-action doesn't support caching files in the project dir
       - name: "cache project local caches"
         uses: actions/cache@v4
@@ -34,6 +35,13 @@ jobs:
         run: ./installConcurrentUtil.sh
       - name: "execute gradle build"
         run: ./gradlew build
+      - name: Publish (Pre-)Release to Modrinth
+        if: "${{ env.STATUS == 'release' && github.event_name == 'release' }}"
+        run: ./gradlew :moonrise-fabric:publishMods :moonrise-neoforge:publishMods
+        env:
+          MODRINTH_TOKEN: "${{ secrets.MODRINTH_TOKEN }}"
+          CURSEFORGE_TOKEN: "${{ secrets.CURSEFORGE_TOKEN }}"
+          RELEASE_NOTES: "${{ github.event.release.body }}"
       - name: "upload artifacts"
         uses: actions/upload-artifact@v4
         with:

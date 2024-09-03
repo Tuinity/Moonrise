@@ -29,6 +29,10 @@ ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.moonrise]]
+modId = "notenoughcrashes"
+type = "incompatible"
+
+[[dependencies.moonrise]]
 modId = "starlight"
 type = "incompatible"
 
