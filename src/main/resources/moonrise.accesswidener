@@ -44,6 +44,7 @@ accessible method net/minecraft/server/level/ChunkMap upgradeChunkTag (Lnet/mine
 accessible field net/minecraft/server/level/ChunkMap worldGenContext Lnet/minecraft/world/level/chunk/status/WorldGenContext;
 accessible field net/minecraft/server/level/ChunkMap tickingGenerated Ljava/util/concurrent/atomic/AtomicInteger;
 accessible field net/minecraft/server/level/ChunkMap progressListener Lnet/minecraft/server/level/progress/ChunkProgressListener;
+accessible method net/minecraft/server/level/ChunkMap playerIsCloseEnoughForSpawning (Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/ChunkPos;)Z
 
 # ChunkLevel
 accessible field net/minecraft/server/level/ChunkLevel FULL_CHUNK_LEVEL I

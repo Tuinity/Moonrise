@@ -33,7 +33,7 @@ abstract class ChunkMapMixin {
     public ServerLevel level;
 
     @Shadow
-    protected abstract boolean playerIsCloseEnoughForSpawning(ServerPlayer serverPlayer, ChunkPos chunkPos);
+    public abstract boolean playerIsCloseEnoughForSpawning(ServerPlayer serverPlayer, ChunkPos chunkPos);
 
     /**
      * @reason Hook for updating the spawn tracker in distance manager. We add our own hook instead of using the
@@ -116,14 +116,14 @@ abstract class ChunkMapMixin {
      */
     @Overwrite
     public List<ServerPlayer> getPlayersCloseForSpawning(final ChunkPos pos) {
-        final List<ServerPlayer> ret = new ArrayList<>();
-
         final ReferenceList<ServerPlayer> players = ((ChunkSystemServerLevel)this.level).moonrise$getNearbyPlayers().getPlayers(
                 pos, NearbyPlayers.NearbyMapType.SPAWN_RANGE
         );
         if (players == null) {
-            return ret;
+            return new ArrayList<>();
         }
+
+        List<ServerPlayer> ret = null;
 
         final ServerPlayer[] raw = players.getRawDataUnchecked();
         final int len = players.size();
@@ -132,10 +132,15 @@ abstract class ChunkMapMixin {
         for (int i = 0; i < len; ++i) {
             final ServerPlayer player = raw[i];
             if (this.playerIsCloseEnoughForSpawning(player, pos)) {
-                ret.add(player);
+                if (ret == null) {
+                    ret = new ArrayList<>(len - i);
+                    ret.add(player);
+                } else {
+                    ret.add(player);
+                }
             }
         }
 
-        return ret;
+        return ret == null ? new ArrayList<>() : ret;
     }
 }

@@ -32,7 +32,7 @@ public final class DefaultEntityLookup extends EntityLookup {
     protected ChunkEntitySlices createEntityChunk(final int chunkX, final int chunkZ, final boolean transientChunk) {
         final ChunkEntitySlices ret = new ChunkEntitySlices(
                 this.world, chunkX, chunkZ, FullChunkStatus.FULL,
-                WorldUtil.getMinSection(this.world), WorldUtil.getMaxSection(this.world)
+                null, WorldUtil.getMinSection(this.world), WorldUtil.getMaxSection(this.world)
         );
 
         // note: not handled by superclass

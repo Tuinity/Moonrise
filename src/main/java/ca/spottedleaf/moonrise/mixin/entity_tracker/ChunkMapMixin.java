@@ -67,7 +67,6 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.PlayerP
             )
     )
     private boolean newTrackerTick(final Iterator<?> iterator) {
-        final NearbyPlayers nearbyPlayers = ((ChunkSystemServerLevel)this.level).moonrise$getNearbyPlayers();
         final ServerEntityLookup entityLookup = (ServerEntityLookup)((ChunkSystemServerLevel)this.level).moonrise$getEntityLookup();;
 
         final ReferenceList<Entity> trackerEntities = entityLookup.trackerEntities;
@@ -78,7 +77,7 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.PlayerP
             if (tracker == null) {
                 continue;
             }
-            ((EntityTrackerTrackedEntity)tracker).moonrise$tick(nearbyPlayers.getChunk(entity.chunkPosition()));
+            ((EntityTrackerTrackedEntity)tracker).moonrise$tick(((ChunkSystemEntity)entity).moonrise$getChunkData().nearbyPlayers);
             if (((EntityTrackerTrackedEntity)tracker).moonrise$hasPlayers()
                 || ((ChunkSystemEntity)entity).moonrise$getChunkStatus().isOrAfter(FullChunkStatus.ENTITY_TICKING)) {
                 tracker.serverEntity.sendChanges();

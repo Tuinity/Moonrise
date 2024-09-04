@@ -282,7 +282,8 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
      */
     @Overwrite
     public void getFullChunk(final long pos, final Consumer<LevelChunk> consumer) {
-        final LevelChunk fullChunk = this.getChunkNow(CoordinateUtils.getChunkX(pos), CoordinateUtils.getChunkZ(pos));
+        // note: bypass currentlyLoaded from getChunkNow
+        final LevelChunk fullChunk = this.fullChunks.get(pos);
         if (fullChunk != null) {
             consumer.accept(fullChunk);
         }

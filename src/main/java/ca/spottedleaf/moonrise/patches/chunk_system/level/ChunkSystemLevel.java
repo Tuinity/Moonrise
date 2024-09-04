@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.level;
 
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -18,5 +19,13 @@ public interface ChunkSystemLevel {
     public ChunkAccess moonrise$getSpecificChunkIfLoaded(final int chunkX, final int chunkZ, final ChunkStatus leastStatus);
 
     public void moonrise$midTickTasks();
+
+    public ChunkData moonrise$getChunkData(final long chunkKey);
+
+    public ChunkData moonrise$getChunkData(final int chunkX, final int chunkZ);
+
+    public ChunkData moonrise$requestChunkData(final long chunkKey);
+
+    public ChunkData moonrise$releaseChunkData(final long chunkKey);
 
 }

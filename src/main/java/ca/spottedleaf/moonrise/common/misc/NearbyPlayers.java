@@ -4,6 +4,10 @@ import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.common.util.ChunkSystem;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickConstants;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
@@ -11,6 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
+import java.util.ArrayList;
 
 public final class NearbyPlayers {
 
@@ -76,6 +81,16 @@ public final class NearbyPlayers {
         }
     }
 
+    public void clear() {
+        if (this.players.isEmpty()) {
+            return;
+        }
+
+        for (final ServerPlayer player : new ArrayList<>(this.players.keySet())) {
+            this.removePlayer(player);
+        }
+    }
+
     public void tickPlayer(final ServerPlayer player) {
         final TrackedPlayer[] players = this.players.get(player);
         if (players == null) {
@@ -98,6 +113,10 @@ public final class NearbyPlayers {
 
     public TrackedChunk getChunk(final BlockPos pos) {
         return this.byChunk.get(CoordinateUtils.getChunkKey(pos));
+    }
+
+    public TrackedChunk getChunk(final int chunkX, final int chunkZ) {
+        return this.byChunk.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
     }
 
     public ReferenceList<ServerPlayer> getPlayers(final BlockPos pos, final NearbyMapType type) {
@@ -196,9 +215,17 @@ public final class NearbyPlayers {
         protected void addCallback(final ServerPlayer parameter, final int chunkX, final int chunkZ) {
             final long chunkKey = CoordinateUtils.getChunkKey(chunkX, chunkZ);
 
-            NearbyPlayers.this.byChunk.computeIfAbsent(chunkKey, (final long keyInMap) -> {
-                return new TrackedChunk(keyInMap, NearbyPlayers.this);
-            }).addPlayer(parameter, this.type);
+            final TrackedChunk chunk = NearbyPlayers.this.byChunk.get(chunkKey);
+            final NearbyMapType type = this.type;
+            if (chunk != null) {
+                chunk.addPlayer(parameter, type);
+            } else {
+                final TrackedChunk created = new TrackedChunk(chunkKey, NearbyPlayers.this);
+                NearbyPlayers.this.byChunk.put(chunkKey, created);
+                created.addPlayer(parameter, type);
+
+                ((ChunkSystemLevel)NearbyPlayers.this.world).moonrise$requestChunkData(chunkKey).nearbyPlayers = created;
+            }
         }
 
         @Override
@@ -214,6 +241,10 @@ public final class NearbyPlayers {
 
             if (chunk.isEmpty()) {
                 NearbyPlayers.this.byChunk.remove(chunkKey);
+                final ChunkData chunkData = ((ChunkSystemLevel)NearbyPlayers.this.world).moonrise$releaseChunkData(chunkKey);
+                if (chunkData != null) {
+                    chunkData.nearbyPlayers = null;
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.entity;
 
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Shulker;
@@ -18,6 +19,10 @@ public interface ChunkSystemEntity {
     public FullChunkStatus moonrise$getChunkStatus();
 
     public void moonrise$setChunkStatus(final FullChunkStatus status);
+
+    public ChunkData moonrise$getChunkData();
+
+    public void moonrise$setChunkData(final ChunkData chunkData);
 
     public int moonrise$getSectionX();
 

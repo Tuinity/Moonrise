@@ -4,16 +4,16 @@ import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerTrackedEntity;
+import com.google.common.collect.ImmutableList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerPlayerConnection;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
+import net.minecraft.world.entity.Entity;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import java.util.List;
 import java.util.Set;
 
 @Mixin(ChunkMap.TrackedEntity.class)
@@ -23,25 +23,21 @@ abstract class TrackedEntityMixin implements EntityTrackerTrackedEntity {
     private Set<ServerPlayerConnection> seenBy;
 
     @Shadow
+    @Final
+    private int range;
+
+    @Shadow
     public abstract void updatePlayer(ServerPlayer serverPlayer);
 
     @Shadow
     public abstract void removePlayer(ServerPlayer serverPlayer);
 
-    /**
-     * @reason ReferenceOpenHashSet is a better choice than a wrapped IdentityHashMap
-     * @author Spottedleaf
-     */
-    @Redirect(
-        method = "<init>",
-        at = @At(
-            value = "INVOKE",
-            target = "Lcom/google/common/collect/Sets;newIdentityHashSet()Ljava/util/Set;"
-        )
-    )
-    private <E> Set<E> useBetterIdentitySet() {
-        return new ReferenceOpenHashSet<>();
-    }
+    @Shadow
+    protected abstract int scaledRange(final int i);
+
+    @Shadow
+    @Final
+    Entity entity;
 
     @Unique
     private long lastChunkUpdate = -1L;
@@ -125,5 +121,43 @@ abstract class TrackedEntityMixin implements EntityTrackerTrackedEntity {
     @Override
     public final boolean moonrise$hasPlayers() {
         return !this.seenBy.isEmpty();
+    }
+
+    /**
+     * @reason ReferenceOpenHashSet is a better choice than a wrapped IdentityHashMap
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "<init>",
+        at = @At(
+            value = "INVOKE",
+            target = "Lcom/google/common/collect/Sets;newIdentityHashSet()Ljava/util/Set;"
+        )
+    )
+    private <E> Set<E> useBetterIdentitySet() {
+        return new ReferenceOpenHashSet<>();
+    }
+
+    /**
+     * @reason Optimise impl to not retrieve indirect passengers unless needed
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public int getEffectiveRange() {
+        int range = this.range;
+        final Entity entity = this.entity;
+
+        if (entity.getPassengers() == ImmutableList.<Entity>of()) {
+            return this.scaledRange(range);
+        }
+
+        // note: we change to List
+        final List<Entity> passengers = (List<Entity>)entity.getIndirectPassengers();
+        for (int i = 0, len = passengers.size(); i < len; ++i) {
+            // note: max should be branchless
+            range = Math.max(range, passengers.get(i).getType().clientTrackingRange() << 4);
+        }
+
+        return range;
     }
 }

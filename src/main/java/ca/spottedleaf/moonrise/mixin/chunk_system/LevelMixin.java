@@ -1,6 +1,9 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
+import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
+import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.dfl.DefaultEntityLookup;
@@ -45,6 +48,9 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
 
     @Unique
     private EntityLookup entityLookup;
+
+    @Unique
+    private final ConcurrentLong2ReferenceChainedHashTable<ChunkData> chunkData = new ConcurrentLong2ReferenceChainedHashTable<>();
 
     @Override
     public final EntityLookup moonrise$getEntityLookup() {
@@ -215,6 +221,37 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
     @Override
     public void moonrise$midTickTasks() {
         // no-op on ClientLevel
+    }
+
+    @Override
+    public final ChunkData moonrise$getChunkData(final long chunkKey) {
+        return this.chunkData.get(chunkKey);
+    }
+
+    @Override
+    public final ChunkData moonrise$getChunkData(final int chunkX, final int chunkZ) {
+        return this.chunkData.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
+    }
+
+    @Override
+    public final ChunkData moonrise$requestChunkData(final long chunkKey) {
+        return this.chunkData.compute(chunkKey, (final long keyInMap, final ChunkData valueInMap) -> {
+            if (valueInMap == null) {
+                final ChunkData ret = new ChunkData();
+                ret.increaseRef();
+                return ret;
+            }
+
+            valueInMap.increaseRef();
+            return valueInMap;
+        });
+    }
+
+    @Override
+    public final ChunkData moonrise$releaseChunkData(final long chunkKey) {
+        return this.chunkData.compute(chunkKey, (final long keyInMap, final ChunkData chunkData) -> {
+            return chunkData.decreaseRef() == 0 ? null : chunkData;
+        });
     }
 
     /**

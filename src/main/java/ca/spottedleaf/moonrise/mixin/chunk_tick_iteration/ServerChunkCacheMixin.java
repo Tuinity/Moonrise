@@ -1,11 +1,20 @@
 package ca.spottedleaf.moonrise.mixin.chunk_tick_iteration;
 
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
+import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
+import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.level.chunk.LevelChunk;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -88,6 +97,46 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
             )
     )
     private <E> boolean skipTickAdd(final Iterator<E> instance) {
+        return false;
+    }
+
+    /**
+     * @reason Use the nearby players cache
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "tickChunks",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ChunkMap;anyPlayerCloseEnoughForSpawning(Lnet/minecraft/world/level/ChunkPos;)Z"
+        )
+    )
+    private boolean useNearbyCache(final ChunkMap instance, final ChunkPos chunkPos,
+                                          @Local(ordinal = 0, argsOnly = false) final LevelChunk levelChunk) {
+        final ChunkData chunkData =
+            ((ChunkSystemChunkHolder)((ChunkSystemLevelChunk)levelChunk).moonrise$getChunkAndHolder().holder())
+                .moonrise$getRealChunkHolder().holderData;
+        final NearbyPlayers.TrackedChunk nearbyPlayers = chunkData.nearbyPlayers;
+        if (nearbyPlayers == null) {
+            return false;
+        }
+
+        final ReferenceList<ServerPlayer> players = nearbyPlayers.getPlayers(NearbyPlayers.NearbyMapType.SPAWN_RANGE);
+
+        if (players == null) {
+            return false;
+        }
+
+        final ServerPlayer[] raw = players.getRawDataUnchecked();
+        final int len = players.size();
+
+        Objects.checkFromIndexSize(0, len, raw.length);
+        for (int i = 0; i < len; ++i) {
+            if (instance.playerIsCloseEnoughForSpawning(raw[i], chunkPos)) {
+                return true;
+            }
+        }
+
         return false;
     }
 

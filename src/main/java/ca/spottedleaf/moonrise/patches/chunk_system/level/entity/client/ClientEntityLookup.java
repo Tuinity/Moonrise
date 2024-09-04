@@ -46,7 +46,8 @@ public final class ClientEntityLookup extends EntityLookup {
 
         final ChunkEntitySlices ret = new ChunkEntitySlices(
                 this.world, chunkX, chunkZ,
-                ticking ? FullChunkStatus.ENTITY_TICKING : FullChunkStatus.FULL, WorldUtil.getMinSection(this.world), WorldUtil.getMaxSection(this.world)
+                ticking ? FullChunkStatus.ENTITY_TICKING : FullChunkStatus.FULL, null,
+            WorldUtil.getMinSection(this.world), WorldUtil.getMaxSection(this.world)
         );
 
         // note: not handled by superclass

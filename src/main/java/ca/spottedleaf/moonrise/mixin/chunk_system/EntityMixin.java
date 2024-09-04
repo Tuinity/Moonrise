@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
 import ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import com.google.common.collect.ImmutableList;
@@ -50,6 +51,9 @@ abstract class EntityMixin implements ChunkSystemEntity {
     private FullChunkStatus chunkStatus;
 
     @Unique
+    private ChunkData chunkData;
+
+    @Unique
     private int sectionX = Integer.MIN_VALUE;
 
     @Unique
@@ -74,6 +78,16 @@ abstract class EntityMixin implements ChunkSystemEntity {
     @Override
     public final void moonrise$setChunkStatus(final FullChunkStatus status) {
         this.chunkStatus = status;
+    }
+
+    @Override
+    public final ChunkData moonrise$getChunkData() {
+        return this.chunkData;
+    }
+
+    @Override
+    public final void moonrise$setChunkData(final ChunkData chunkData) {
+        this.chunkData = chunkData;
     }
 
     @Override

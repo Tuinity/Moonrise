@@ -5,7 +5,6 @@ import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTabl
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
-import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.common.util.ChunkSystem;
@@ -1023,11 +1022,10 @@ public final class ChunkHolderManager {
     }
 
     private void removeChunkHolder(final NewChunkHolder holder) {
-        holder.markUnloaded();
+        holder.onUnload();
         this.autoSaveQueue.remove(holder);
         ChunkSystem.onChunkHolderDelete(this.world, holder.vanillaChunkHolder);
         this.chunkHolders.remove(CoordinateUtils.getChunkKey(holder.chunkX, holder.chunkZ));
-
     }
 
     // note: never call while inside the chunk system, this will absolutely break everything
