@@ -2,16 +2,19 @@ package ca.spottedleaf.moonrise.mixin.chunk_tick_iteration;
 
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
+import ca.spottedleaf.moonrise.common.util.SimpleRandom;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
 import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.Util;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -38,6 +41,9 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
 
     @Unique
     private ServerChunkCache.ChunkAndHolder[] iterationCopy;
+
+    @Unique
+    private final SimpleRandom shuffleRandom = new SimpleRandom(0L);
 
     /**
      * @reason Avoid creating the list, which is sized at the chunkholder count. The actual number of ticking
@@ -82,6 +88,23 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
         return ObjectArrayList.wrap(
                 this.iterationCopy, size
         );
+    }
+
+    /**
+     * @reason Use random implementation which does not use CAS and has a faster nextInt(int)
+     *         function
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "tickChunks",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/Util;shuffle(Ljava/util/List;Lnet/minecraft/util/RandomSource;)V"
+        )
+    )
+    private <T> void useBetterRandom(final List<T> list, final RandomSource randomSource) {
+        this.shuffleRandom.setSeed(randomSource.nextLong());
+        Util.shuffle(list, this.shuffleRandom);
     }
 
     /**
