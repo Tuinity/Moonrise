@@ -37,6 +37,12 @@ public final class NearbyPlayers {
     private final ServerLevel world;
     private final Reference2ReferenceOpenHashMap<ServerPlayer, TrackedPlayer[]> players = new Reference2ReferenceOpenHashMap<>();
     private final Long2ReferenceOpenHashMap<TrackedChunk> byChunk = new Long2ReferenceOpenHashMap<>();
+    private final Long2ReferenceOpenHashMap<ReferenceList<ServerPlayer>>[] directByChunk = new Long2ReferenceOpenHashMap[TOTAL_MAP_TYPES];
+    {
+        for (int i = 0; i < this.directByChunk.length; ++i) {
+            this.directByChunk[i] = new Long2ReferenceOpenHashMap<>();
+        }
+    }
 
     public NearbyPlayers(final ServerLevel world) {
         this.world = world;
@@ -95,36 +101,35 @@ public final class NearbyPlayers {
     }
 
     public ReferenceList<ServerPlayer> getPlayers(final BlockPos pos, final NearbyMapType type) {
-        final TrackedChunk chunk = this.byChunk.get(CoordinateUtils.getChunkKey(pos));
-
-        return chunk == null ? null : chunk.players[type.ordinal()];
+        return this.directByChunk[type.ordinal()].get(CoordinateUtils.getChunkKey(pos));
     }
 
     public ReferenceList<ServerPlayer> getPlayers(final ChunkPos pos, final NearbyMapType type) {
-        final TrackedChunk chunk = this.byChunk.get(CoordinateUtils.getChunkKey(pos));
-
-        return chunk == null ? null : chunk.players[type.ordinal()];
+        return this.directByChunk[type.ordinal()].get(CoordinateUtils.getChunkKey(pos));
     }
 
     public ReferenceList<ServerPlayer> getPlayersByChunk(final int chunkX, final int chunkZ, final NearbyMapType type) {
-        final TrackedChunk chunk = this.byChunk.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
-
-        return chunk == null ? null : chunk.players[type.ordinal()];
+        return this.directByChunk[type.ordinal()].get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
     }
 
     public ReferenceList<ServerPlayer> getPlayersByBlock(final int blockX, final int blockZ, final NearbyMapType type) {
-        final TrackedChunk chunk = this.byChunk.get(CoordinateUtils.getChunkKey(blockX >> 4, blockZ >> 4));
-
-        return chunk == null ? null : chunk.players[type.ordinal()];
+        return this.directByChunk[type.ordinal()].get(CoordinateUtils.getChunkKey(blockX >> 4, blockZ >> 4));
     }
 
     public static final class TrackedChunk {
 
         private static final ServerPlayer[] EMPTY_PLAYERS_ARRAY = new ServerPlayer[0];
 
+        private final long chunkKey;
+        private final NearbyPlayers nearbyPlayers;
         private final ReferenceList<ServerPlayer>[] players = new ReferenceList[TOTAL_MAP_TYPES];
         private int nonEmptyLists;
         private long updateCount;
+
+        public TrackedChunk(final long chunkKey, final NearbyPlayers nearbyPlayers) {
+            this.chunkKey = chunkKey;
+            this.nearbyPlayers = nearbyPlayers;
+        }
 
         public boolean isEmpty() {
             return this.nonEmptyLists == 0;
@@ -145,7 +150,10 @@ public final class NearbyPlayers {
             final ReferenceList<ServerPlayer> list = this.players[idx];
             if (list == null) {
                 ++this.nonEmptyLists;
-                (this.players[idx] = new ReferenceList<>(EMPTY_PLAYERS_ARRAY)).add(player);
+                final ReferenceList<ServerPlayer> players = (this.players[idx] = new ReferenceList<>(EMPTY_PLAYERS_ARRAY));
+                this.nearbyPlayers.directByChunk[idx].put(this.chunkKey, players);
+                players.add(player);
+
                 return;
             }
 
@@ -169,6 +177,7 @@ public final class NearbyPlayers {
 
             if (list.size() == 0) {
                 this.players[idx] = null;
+                this.nearbyPlayers.directByChunk[idx].remove(this.chunkKey);
                 --this.nonEmptyLists;
             }
         }
@@ -188,7 +197,7 @@ public final class NearbyPlayers {
             final long chunkKey = CoordinateUtils.getChunkKey(chunkX, chunkZ);
 
             NearbyPlayers.this.byChunk.computeIfAbsent(chunkKey, (final long keyInMap) -> {
-                return new TrackedChunk();
+                return new TrackedChunk(keyInMap, NearbyPlayers.this);
             }).addPlayer(parameter, this.type);
         }
 
