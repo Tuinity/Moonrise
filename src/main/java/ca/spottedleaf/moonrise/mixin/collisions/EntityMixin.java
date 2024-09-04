@@ -48,7 +48,7 @@ abstract class EntityMixin {
     public abstract Vec3 getEyePosition();
 
     @Shadow
-    public abstract boolean onGround();
+    private boolean onGround;
 
     @Unique
     private static float[] calculateStepHeights(final AABB box, final List<VoxelShape> voxels, final List<AABB> aabbs, final float stepHeight,
@@ -144,9 +144,9 @@ abstract class EntityMixin {
 
         final boolean collidedDownwards = collidedY && movement.y < 0.0;
 
-        final double stepHeight = (double)this.maxUpStep();
+        final double stepHeight;
 
-        if (stepHeight <= 0.0 || (!collidedDownwards && !this.onGround()) || (!collidedX && !collidedZ)) {
+        if ((!collidedDownwards && !this.onGround) || (!collidedX && !collidedZ) || (stepHeight = (double)this.maxUpStep()) <= 0.0) {
             return collided;
         }
 

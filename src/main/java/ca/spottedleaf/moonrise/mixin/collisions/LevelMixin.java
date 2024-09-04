@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
-import ca.spottedleaf.moonrise.patches.chunk_getblock.GetBlockChunk;
+import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
@@ -16,6 +16,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.border.WorldBorder;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -27,6 +28,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Mixin;
@@ -369,102 +371,138 @@ abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseabl
      */
     @Override
     public Optional<BlockPos> findSupportingBlock(final Entity entity, final AABB aabb) {
+        final int minSection = this.moonrise$getMinSection();
+
         final int minBlockX = Mth.floor(aabb.minX - CollisionUtil.COLLISION_EPSILON) - 1;
         final int maxBlockX = Mth.floor(aabb.maxX + CollisionUtil.COLLISION_EPSILON) + 1;
 
-        final int minBlockY = Mth.floor(aabb.minY - CollisionUtil.COLLISION_EPSILON) - 1;
-        final int maxBlockY = Mth.floor(aabb.maxY + CollisionUtil.COLLISION_EPSILON) + 1;
+        final int minBlockY = Math.max((minSection << 4) - 1, Mth.floor(aabb.minY - CollisionUtil.COLLISION_EPSILON) - 1);
+        final int maxBlockY = Math.min((this.moonrise$getMaxSection() << 4) + 16, Mth.floor(aabb.maxY + CollisionUtil.COLLISION_EPSILON) + 1);
 
         final int minBlockZ = Mth.floor(aabb.minZ - CollisionUtil.COLLISION_EPSILON) - 1;
         final int maxBlockZ = Mth.floor(aabb.maxZ + CollisionUtil.COLLISION_EPSILON) + 1;
 
-        CollisionUtil.LazyEntityCollisionContext collisionContext = null;
-
-        final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        final CollisionContext collisionShape = new CollisionUtil.LazyEntityCollisionContext(entity);
         BlockPos selected = null;
         double selectedDistance = Double.MAX_VALUE;
-
         final Vec3 entityPos = entity.position();
 
-        LevelChunk lastChunk = null;
-        int lastChunkX = Integer.MIN_VALUE;
-        int lastChunkZ = Integer.MIN_VALUE;
+        // special cases:
+        if (minBlockY > maxBlockY) {
+            // no point in checking
+            return Optional.empty();
+        }
+
+        final int minChunkX = minBlockX >> 4;
+        final int maxChunkX = maxBlockX >> 4;
+
+        final int minChunkY = minBlockY >> 4;
+        final int maxChunkY = maxBlockY >> 4;
+
+        final int minChunkZ = minBlockZ >> 4;
+        final int maxChunkZ = maxBlockZ >> 4;
 
         final ChunkSource chunkSource = this.getChunkSource();
 
-        for (int currZ = minBlockZ; currZ <= maxBlockZ; ++currZ) {
-            pos.setZ(currZ);
-            for (int currX = minBlockX; currX <= maxBlockX; ++currX) {
-                pos.setX(currX);
+        for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
+            for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
+                final ChunkAccess chunk = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, false);
 
-                final int newChunkX = currX >> 4;
-                final int newChunkZ = currZ >> 4;
-
-                if (((newChunkX ^ lastChunkX) | (newChunkZ ^ lastChunkZ)) != 0) {
-                    lastChunkX = newChunkX;
-                    lastChunkZ = newChunkZ;
-                    lastChunk = (LevelChunk)chunkSource.getChunk(newChunkX, newChunkZ, ChunkStatus.FULL, false);
-                }
-
-                if (lastChunk == null) {
+                if (chunk == null) {
                     continue;
                 }
-                for (int currY = minBlockY; currY <= maxBlockY; ++currY) {
-                    int edgeCount = ((currX == minBlockX || currX == maxBlockX) ? 1 : 0) +
-                            ((currY == minBlockY || currY == maxBlockY) ? 1 : 0) +
-                            ((currZ == minBlockZ || currZ == maxBlockZ) ? 1 : 0);
-                    if (edgeCount == 3) {
+
+                final LevelChunkSection[] sections = chunk.getSections();
+
+                // bound y
+                for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
+                    final int sectionIdx = currChunkY - minSection;
+                    if (sectionIdx < 0 || sectionIdx >= sections.length) {
+                        continue;
+                    }
+                    final LevelChunkSection section = sections[sectionIdx];
+                    if (section == null || section.hasOnlyAir()) {
+                        // empty
                         continue;
                     }
 
-                    pos.setY(currY);
+                    final boolean hasSpecial = ((BlockCountingChunkSection)section).moonrise$getSpecialCollidingBlocks() != 0;
+                    final int sectionAdjust = !hasSpecial ? 1 : 0;
 
-                    final double distance = pos.distToCenterSqr(entityPos);
-                    if (distance > selectedDistance || (distance == selectedDistance && selected.compareTo(pos) >= 0)) {
-                        continue;
-                    }
+                    final PalettedContainer<BlockState> blocks = section.states;
 
-                    final BlockState state = ((GetBlockChunk)lastChunk).moonrise$getBlock(currX, currY, currZ);
-                    if (((CollisionBlockState)state).moonrise$emptyContextCollisionShape()) {
-                        continue;
-                    }
+                    final int minXIterate = currChunkX == minChunkX ? (minBlockX & 15) + sectionAdjust : 0;
+                    final int maxXIterate = currChunkX == maxChunkX ? (maxBlockX & 15) - sectionAdjust : 15;
+                    final int minZIterate = currChunkZ == minChunkZ ? (minBlockZ & 15) + sectionAdjust : 0;
+                    final int maxZIterate = currChunkZ == maxChunkZ ? (maxBlockZ & 15) - sectionAdjust : 15;
+                    final int minYIterate = currChunkY == minChunkY ? (minBlockY & 15) + sectionAdjust : 0;
+                    final int maxYIterate = currChunkY == maxChunkY ? (maxBlockY & 15) - sectionAdjust : 15;
 
-                    VoxelShape blockCollision = ((CollisionBlockState)state).moonrise$getConstantContextCollisionShape();
+                    for (int currY = minYIterate; currY <= maxYIterate; ++currY) {
+                        final int blockY = currY | (currChunkY << 4);
+                        mutablePos.setY(blockY);
+                        for (int currZ = minZIterate; currZ <= maxZIterate; ++currZ) {
+                            final int blockZ = currZ | (currChunkZ << 4);
+                            mutablePos.setZ(blockZ);
+                            for (int currX = minXIterate; currX <= maxXIterate; ++currX) {
+                                final int localBlockIndex = (currX) | (currZ << 4) | ((currY) << 8);
+                                final int blockX = currX | (currChunkX << 4);
+                                mutablePos.setX(blockX);
 
-                    if ((edgeCount != 1 || state.hasLargeCollisionShape()) && (edgeCount != 2 || state.getBlock() == Blocks.MOVING_PISTON)) {
-                        if (collisionContext == null) {
-                            collisionContext = new CollisionUtil.LazyEntityCollisionContext(entity);
-                        }
+                                final int edgeCount = hasSpecial ? ((blockX == minBlockX || blockX == maxBlockX) ? 1 : 0) +
+                                    ((blockY == minBlockY || blockY == maxBlockY) ? 1 : 0) +
+                                    ((blockZ == minBlockZ || blockZ == maxBlockZ) ? 1 : 0) : 0;
+                                if (edgeCount == 3) {
+                                    continue;
+                                }
 
-                        if (blockCollision == null) {
-                            blockCollision = state.getCollisionShape((Level)(Object)this, pos, collisionContext);
-                        }
+                                final double distance = mutablePos.distToCenterSqr(entityPos);
+                                if (distance > selectedDistance || (distance == selectedDistance && selected.compareTo(mutablePos) >= 0)) {
+                                    continue;
+                                }
 
-                        if (blockCollision.isEmpty()) {
-                            continue;
-                        }
+                                final BlockState blockData = blocks.get(localBlockIndex);
 
-                        // avoid VoxelShape#move by shifting the entity collision shape instead
-                        final AABB shiftedAABB = aabb.move(-(double)currX, -(double)currY, -(double)currZ);
+                                if (((CollisionBlockState)blockData).moonrise$emptyContextCollisionShape()) {
+                                    continue;
+                                }
 
-                        final AABB singleAABB = ((CollisionVoxelShape)blockCollision).moonrise$getSingleAABBRepresentation();
-                        if (singleAABB != null) {
-                            if (!CollisionUtil.voxelShapeIntersect(singleAABB, shiftedAABB)) {
-                                continue;
+                                VoxelShape blockCollision = ((CollisionBlockState)blockData).moonrise$getConstantContextCollisionShape();
+
+                                if ((edgeCount != 1 || blockData.hasLargeCollisionShape()) && (edgeCount != 2 || blockData.getBlock() == Blocks.MOVING_PISTON)) {
+                                    if (blockCollision == null) {
+                                        blockCollision = blockData.getCollisionShape((Level)(Object)this, mutablePos, collisionShape);
+
+                                        if (blockCollision.isEmpty()) {
+                                            continue;
+                                        }
+                                    }
+
+                                    // avoid VoxelShape#move by shifting the entity collision shape instead
+                                    final AABB shiftedAABB = aabb.move(-(double)blockX, -(double)blockY, -(double)blockZ);
+
+                                    final AABB singleAABB = ((CollisionVoxelShape)blockCollision).moonrise$getSingleAABBRepresentation();
+                                    if (singleAABB != null) {
+                                        if (!CollisionUtil.voxelShapeIntersect(singleAABB, shiftedAABB)) {
+                                            continue;
+                                        }
+
+                                        selected = mutablePos.immutable();
+                                        selectedDistance = distance;
+                                        continue;
+                                    }
+
+                                    if (!CollisionUtil.voxelShapeIntersectNoEmpty(blockCollision, shiftedAABB)) {
+                                        continue;
+                                    }
+
+                                    selected = mutablePos.immutable();
+                                    selectedDistance = distance;
+                                    continue;
+                                }
                             }
-
-                            selected = pos.immutable();
-                            selectedDistance = distance;
-                            continue;
                         }
-
-                        if (!CollisionUtil.voxelShapeIntersectNoEmpty(blockCollision, shiftedAABB)) {
-                            continue;
-                        }
-
-                        selected = pos.immutable();
-                        selectedDistance = distance;
-                        continue;
                     }
                 }
             }
