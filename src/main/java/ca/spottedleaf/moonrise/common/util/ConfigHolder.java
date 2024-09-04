@@ -35,6 +35,7 @@ public final class ConfigHolder {
             program arguments.
             -DMoonrise.ConfigFile=<file> - Override the config file location. Might be useful for multiple game versions.
             -DMoonrise.WorkerThreadCount=<number> - Override the auto configured worker thread counts (worker-threads).
+            -DMoonrise.MaxViewDistance=<number> - Overrides the maximum view distance, should only use for debugging purposes.
             """;
 
     static {
