@@ -63,6 +63,21 @@ abstract class ClientLevelMixin extends Level implements ChunkSystemLevel {
         this.moonrise$setEntityLookup(new ClientEntityLookup(this, ((ClientLevel)(Object)this).new EntityCallbacks()));
     }
 
+    @Override
+    public final boolean moonrise$areChunksLoaded(final int fromX, final int fromZ, final int toX, final int toZ) {
+        final ClientChunkCache chunkSource = this.chunkSource;
+
+        for (int currZ = fromZ; currZ <= toZ; ++currZ) {
+            for (int currX = fromX; currX <= toX; ++currX) {
+                if (!chunkSource.hasChunk(currX, currZ)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     /**
      * @reason Redirect to new entity manager
      * @author Spottedleaf

@@ -28,4 +28,6 @@ public interface ChunkSystemLevel {
 
     public ChunkData moonrise$releaseChunkData(final long chunkKey);
 
+    public boolean moonrise$areChunksLoaded(final int fromX, final int fromZ, final int toX, final int toZ);
+
 }

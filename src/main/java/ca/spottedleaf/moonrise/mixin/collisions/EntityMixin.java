@@ -1,9 +1,12 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
+import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevel;
 import it.unimi.dsi.fastutil.floats.FloatArraySet;
 import it.unimi.dsi.fastutil.floats.FloatArrays;
 import net.minecraft.core.BlockPos;
@@ -13,8 +16,11 @@ import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -49,6 +55,12 @@ abstract class EntityMixin {
 
     @Shadow
     private boolean onGround;
+
+    @Shadow
+    public abstract boolean isAlive();
+
+    @Shadow
+    protected abstract void onInsideBlock(final BlockState blockState);
 
     @Unique
     private static float[] calculateStepHeights(final AABB box, final List<VoxelShape> voxels, final List<AABB> aabbs, final float stepHeight,
@@ -247,5 +259,93 @@ abstract class EntityMixin {
         }
 
         return false;
+    }
+
+    /**
+     * @reason Retrieve blocks more efficiently
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void checkInsideBlocks() {
+        final AABB boundingBox = this.getBoundingBox();
+
+        final int minBlockX = Mth.floor(boundingBox.minX + CollisionUtil.COLLISION_EPSILON);
+        final int minBlockY = Mth.floor(boundingBox.minY + CollisionUtil.COLLISION_EPSILON);
+        final int minBlockZ = Mth.floor(boundingBox.minZ + CollisionUtil.COLLISION_EPSILON);
+
+        final int maxBlockX = Mth.floor(boundingBox.maxX - CollisionUtil.COLLISION_EPSILON);
+        final int maxBlockY = Mth.floor(boundingBox.maxY - CollisionUtil.COLLISION_EPSILON);
+        final int maxBlockZ = Mth.floor(boundingBox.maxZ - CollisionUtil.COLLISION_EPSILON);
+
+        final int minChunkX = minBlockX >> 4;
+        final int minChunkY = minBlockY >> 4;
+        final int minChunkZ = minBlockZ >> 4;
+
+        final int maxChunkX = maxBlockX >> 4;
+        final int maxChunkY = maxBlockY >> 4;
+        final int maxChunkZ = maxBlockZ >> 4;
+
+        final Level world = this.level;
+
+        if (!((ChunkSystemLevel)world).moonrise$areChunksLoaded(minChunkX, minChunkZ, maxChunkX, maxChunkZ)) {
+            return;
+        }
+
+        final int minSection = ((CollisionLevel)world).moonrise$getMinSection();
+        final ChunkSource chunkSource = world.getChunkSource();
+        final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+
+        for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
+            for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
+                final ChunkAccess chunk = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, false);
+
+                final LevelChunkSection[] sections = chunk.getSections();
+
+                for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
+                    final int sectionIdx = currChunkY - minSection;
+                    if (sectionIdx < 0 || sectionIdx >= sections.length) {
+                        continue;
+                    }
+                    final LevelChunkSection section = sections[sectionIdx];
+                    if (section == null || section.hasOnlyAir()) {
+                        // empty
+                        continue;
+                    }
+
+
+                    final PalettedContainer<BlockState> blocks = section.states;
+
+                    final int minXIterate = currChunkX == minChunkX ? (minBlockX & 15) : 0;
+                    final int maxXIterate = currChunkX == maxChunkX ? (maxBlockX & 15) : 15;
+                    final int minZIterate = currChunkZ == minChunkZ ? (minBlockZ & 15) : 0;
+                    final int maxZIterate = currChunkZ == maxChunkZ ? (maxBlockZ & 15) : 15;
+                    final int minYIterate = currChunkY == minChunkY ? (minBlockY & 15) : 0;
+                    final int maxYIterate = currChunkY == maxChunkY ? (maxBlockY & 15) : 15;
+
+                    for (int currY = minYIterate; currY <= maxYIterate; ++currY) {
+                        final int blockY = currY | (currChunkY << 4);
+                        mutablePos.setY(blockY);
+                        for (int currZ = minZIterate; currZ <= maxZIterate; ++currZ) {
+                            final int blockZ = currZ | (currChunkZ << 4);
+                            mutablePos.setZ(blockZ);
+                            for (int currX = minXIterate; currX <= maxXIterate; ++currX) {
+                                final int localBlockIndex = (currX) | (currZ << 4) | ((currY) << 8);
+                                final int blockX = currX | (currChunkX << 4);
+                                mutablePos.setX(blockX);
+
+                                final BlockState blockState = blocks.get(localBlockIndex);
+
+                                if (!this.isAlive()) {
+                                    return;
+                                }
+
+                                blockState.entityInside(world, mutablePos, (Entity)(Object)this);
+                                this.onInsideBlock(blockState);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

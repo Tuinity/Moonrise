@@ -16,6 +16,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.entity.EntityTypeTest;
@@ -252,6 +253,21 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
         return this.chunkData.compute(chunkKey, (final long keyInMap, final ChunkData chunkData) -> {
             return chunkData.decreaseRef() == 0 ? null : chunkData;
         });
+    }
+
+    @Override
+    public boolean moonrise$areChunksLoaded(final int fromX, final int fromZ, final int toX, final int toZ) {
+        final ChunkSource chunkSource = this.getChunkSource();
+
+        for (int currZ = fromZ; currZ <= toZ; ++currZ) {
+            for (int currX = fromX; currX <= toX; ++currX) {
+                if (!chunkSource.hasChunk(currX, currZ)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**

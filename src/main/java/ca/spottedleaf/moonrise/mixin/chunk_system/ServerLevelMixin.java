@@ -345,6 +345,21 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
         return this.entityTickingChunks;
     }
 
+    @Override
+    public final boolean moonrise$areChunksLoaded(final int fromX, final int fromZ, final int toX, final int toZ) {
+        final ServerChunkCache chunkSource = this.chunkSource;
+
+        for (int currZ = fromZ; currZ <= toZ; ++currZ) {
+            for (int currX = fromX; currX <= toX; ++currX) {
+                if (!chunkSource.hasChunk(currX, currZ)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     /**
      * @reason Declare method in this class so that any invocations are virtual, and not interface.
      * @author Spottedleaf
