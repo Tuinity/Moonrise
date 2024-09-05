@@ -202,64 +202,102 @@ abstract class EntityMixin {
             return false;
         }
 
-        final float reducedWith = this.dimensions.width() * 0.8F;
-        final AABB box = AABB.ofSize(this.getEyePosition(), reducedWith, 1.0E-6D, reducedWith);
+        final double reducedWith = (double)(this.dimensions.width() * 0.8F);
+        final AABB boundingBox = AABB.ofSize(this.getEyePosition(), reducedWith, 1.0E-6D, reducedWith);
+        final Level world = this.level;
 
-        if (CollisionUtil.isEmpty(box)) {
+        if (CollisionUtil.isEmpty(boundingBox)) {
             return false;
         }
 
-        final BlockPos.MutableBlockPos tempPos = new BlockPos.MutableBlockPos();
+        final int minBlockX = Mth.floor(boundingBox.minX);
+        final int minBlockY = Mth.floor(boundingBox.minY);
+        final int minBlockZ = Mth.floor(boundingBox.minZ);
 
-        final int minX = Mth.floor(box.minX);
-        final int minY = Mth.floor(box.minY);
-        final int minZ = Mth.floor(box.minZ);
-        final int maxX = Mth.floor(box.maxX);
-        final int maxY = Mth.floor(box.maxY);
-        final int maxZ = Mth.floor(box.maxZ);
+        final int maxBlockX = Mth.floor(boundingBox.maxX);
+        final int maxBlockY = Mth.floor(boundingBox.maxY);
+        final int maxBlockZ = Mth.floor(boundingBox.maxZ);
 
-        final ChunkSource chunkProvider = this.level.getChunkSource();
+        final int minChunkX = minBlockX >> 4;
+        final int minChunkY = minBlockY >> 4;
+        final int minChunkZ = minBlockZ >> 4;
 
-        long lastChunkKey = ChunkPos.INVALID_CHUNK_POS;
-        LevelChunk lastChunk = null;
-        for (int fz = minZ; fz <= maxZ; ++fz) {
-            tempPos.setZ(fz);
-            for (int fx = minX; fx <= maxX; ++fx) {
-                final int newChunkX = fx >> 4;
-                final int newChunkZ = fz >> 4;
-                final LevelChunk chunk = lastChunkKey == (lastChunkKey = CoordinateUtils.getChunkKey(newChunkX, newChunkZ)) ?
-                        lastChunk : (lastChunk = (LevelChunk)chunkProvider.getChunk(newChunkX, newChunkZ, ChunkStatus.FULL, true));
-                tempPos.setX(fx);
-                for (int fy = minY; fy <= maxY; ++fy) {
-                    tempPos.setY(fy);
+        final int maxChunkX = maxBlockX >> 4;
+        final int maxChunkY = maxBlockY >> 4;
+        final int maxChunkZ = maxBlockZ >> 4;
 
-                    final BlockState state = chunk.getBlockState(tempPos);
+        final int minSection = ((CollisionLevel)world).moonrise$getMinSection();
+        final ChunkSource chunkSource = world.getChunkSource();
+        final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
-                    if (((CollisionBlockState)state).moonrise$emptyCollisionShape() || !state.isSuffocating(this.level, tempPos)) {
+        for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
+            for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
+                final ChunkAccess chunk = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, true);
+
+                final LevelChunkSection[] sections = chunk.getSections();
+
+                for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
+                    final int sectionIdx = currChunkY - minSection;
+                    if (sectionIdx < 0 || sectionIdx >= sections.length) {
+                        continue;
+                    }
+                    final LevelChunkSection section = sections[sectionIdx];
+                    if (section.hasOnlyAir()) {
+                        // empty
                         continue;
                     }
 
-                    // Yes, it does not use the Entity context stuff.
-                    final VoxelShape collisionShape = state.getCollisionShape(this.level, tempPos);
+                    final PalettedContainer<BlockState> blocks = section.states;
 
-                    if (collisionShape.isEmpty()) {
-                        continue;
-                    }
+                    final int minXIterate = currChunkX == minChunkX ? (minBlockX & 15) : 0;
+                    final int maxXIterate = currChunkX == maxChunkX ? (maxBlockX & 15) : 15;
+                    final int minZIterate = currChunkZ == minChunkZ ? (minBlockZ & 15) : 0;
+                    final int maxZIterate = currChunkZ == maxChunkZ ? (maxBlockZ & 15) : 15;
+                    final int minYIterate = currChunkY == minChunkY ? (minBlockY & 15) : 0;
+                    final int maxYIterate = currChunkY == maxChunkY ? (maxBlockY & 15) : 15;
 
-                    final AABB toCollide = box.move(-(double)fx, -(double)fy, -(double)fz);
+                    for (int currY = minYIterate; currY <= maxYIterate; ++currY) {
+                        final int blockY = currY | (currChunkY << 4);
+                        mutablePos.setY(blockY);
+                        for (int currZ = minZIterate; currZ <= maxZIterate; ++currZ) {
+                            final int blockZ = currZ | (currChunkZ << 4);
+                            mutablePos.setZ(blockZ);
+                            for (int currX = minXIterate; currX <= maxXIterate; ++currX) {
+                                final int localBlockIndex = (currX) | (currZ << 4) | ((currY) << 8);
+                                final int blockX = currX | (currChunkX << 4);
+                                mutablePos.setX(blockX);
 
-                    final AABB singleAABB = ((CollisionVoxelShape)collisionShape).moonrise$getSingleAABBRepresentation();
-                    if (singleAABB != null) {
-                        if (CollisionUtil.voxelShapeIntersect(singleAABB, toCollide)) {
-                            return true;
+                                final BlockState blockState = blocks.get(localBlockIndex);
+
+                                if (((CollisionBlockState)blockState).moonrise$emptyCollisionShape()
+                                    || !blockState.isSuffocating(world, mutablePos)) {
+                                    continue;
+                                }
+
+                                // Yes, it does not use the Entity context stuff.
+                                final VoxelShape collisionShape = blockState.getCollisionShape(world, mutablePos);
+
+                                if (collisionShape.isEmpty()) {
+                                    continue;
+                                }
+
+                                final AABB toCollide = boundingBox.move(-(double)blockX, -(double)blockY, -(double)blockZ);
+
+                                final AABB singleAABB = ((CollisionVoxelShape)collisionShape).moonrise$getSingleAABBRepresentation();
+                                if (singleAABB != null) {
+                                    if (CollisionUtil.voxelShapeIntersect(singleAABB, toCollide)) {
+                                        return true;
+                                    }
+                                    continue;
+                                }
+
+                                if (CollisionUtil.voxelShapeIntersectNoEmpty(collisionShape, toCollide)) {
+                                    return true;
+                                }
+                                continue;
+                            }
                         }
-                        continue;
                     }
-
-                    if (CollisionUtil.voxelShapeIntersectNoEmpty(collisionShape, toCollide)) {
-                        return true;
-                    }
-                    continue;
                 }
             }
         }
