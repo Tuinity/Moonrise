@@ -22,13 +22,17 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-public final class EmptyStreamForMoveCall<T> implements Stream<T> {
+public final class NoneMatchStream<T> implements Stream<T> {
 
-    public static final EmptyStreamForMoveCall INSTANCE = new EmptyStreamForMoveCall();
+    private final boolean value;
+
+    public NoneMatchStream(final boolean value) {
+        this.value = value;
+    }
 
     @Override
     public boolean noneMatch(Predicate<? super T> predicate) {
-        return false; // important: ret false so the branch is never taken by mojang code
+        return this.value;
     }
 
     @Override

@@ -85,7 +85,7 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
             final int offsetY = (sectionIndex + minSection) << 4;
             final LevelChunkSection section = sections[sectionIndex];
             final PalettedContainer<BlockState> states = section.states;
-            if (section == null || !section.isRandomlyTickingBlocks()) {
+            if (!section.isRandomlyTickingBlocks()) {
                 continue;
             }
 

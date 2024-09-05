@@ -209,7 +209,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
         final LevelChunkSection[] sections = chunk.getSections();
         for (int sectionY = this.minSection; sectionY <= this.maxSection; ++sectionY) {
             final LevelChunkSection section = sections[sectionY - this.minSection];
-            if (section == null || section.hasOnlyAir()) {
+            if (section.hasOnlyAir()) {
                 // no sources in empty sections
                 continue;
             }
@@ -220,16 +220,17 @@ public final class BlockStarLightEngine extends StarLightEngine {
             final PalettedContainer<BlockState> states = section.states;
             final int offY = sectionY << 4;
 
+            final BlockPos.MutableBlockPos mutablePos = this.mutablePos1;
             for (int index = 0; index < (16 * 16 * 16); ++index) {
                 final BlockState state = states.get(index);
-                this.mutablePos1.set(offX | (index & 15), offY | (index >>> 8), offZ | ((index >>> 4) & 15));
+                mutablePos.set(offX | (index & 15), offY | (index >>> 8), offZ | ((index >>> 4) & 15));
 
-                if ((platformHooks.getLightEmission(state, world, this.mutablePos1)) == 0) {
+                if ((platformHooks.getLightEmission(state, world, mutablePos)) == 0) {
                     continue;
                 }
 
                 // index = x | (z << 4) | (y << 8)
-                sources.add(this.mutablePos1.immutable());
+                sources.add(mutablePos.immutable());
             }
         }
 

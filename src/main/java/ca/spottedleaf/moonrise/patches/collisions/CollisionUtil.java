@@ -1989,7 +1989,7 @@ public final class CollisionUtil {
                         continue;
                     }
                     final LevelChunkSection section = sections[sectionIdx];
-                    if (section == null || section.hasOnlyAir()) {
+                    if (section.hasOnlyAir()) {
                         // empty
                         continue;
                     }
