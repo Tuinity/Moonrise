@@ -3,7 +3,7 @@ import net.fabricmc.loom.util.aw2at.Aw2At
 plugins {
     id("xyz.jpenilla.quiet-architectury-loom")
     id 'maven-publish'
-    id 'io.github.goooler.shadow'
+    id 'com.gradleup.shadow'
 }
 
 repositories {

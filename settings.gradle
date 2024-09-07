@@ -24,8 +24,8 @@ pluginManagement {
 
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
-    id("xyz.jpenilla.quiet-architectury-loom") version "1.7.294" apply false
-    id 'io.github.goooler.shadow' version '8.1.8' apply false
+    id("xyz.jpenilla.quiet-architectury-loom") version "1.7.295" apply false
+    id 'com.gradleup.shadow' version '8.3.0' apply false
 }
 
 dependencyResolutionManagement {
@@ -37,7 +37,7 @@ dependencyResolutionManagement {
     }
     versionCatalogs {
         create("fabricApiLibs") {
-            from("net.fabricmc.fabric-api:fabric-api-catalog:0.102.0+1.21.1")
+            from("net.fabricmc.fabric-api:fabric-api-catalog:0.103.0+1.21.1")
         }
     }
 }
