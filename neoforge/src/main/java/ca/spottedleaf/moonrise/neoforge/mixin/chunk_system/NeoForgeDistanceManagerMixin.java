@@ -1,8 +1,8 @@
 package ca.spottedleaf.moonrise.neoforge.mixin.chunk_system;
 
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
+import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemDistanceManager;
-import it.unimi.dsi.fastutil.longs.Long2ObjectFunction;
+import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.DistanceManager;
@@ -15,13 +15,13 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(DistanceManager.class)
 abstract class NeoForgeDistanceManagerMixin implements ChunkSystemDistanceManager {
 
-    @Unique
-    private final ConcurrentLong2ReferenceChainedHashTable<SortedArraySet<Ticket<?>>> mtSafeForcedTickets = new ConcurrentLong2ReferenceChainedHashTable<>();
+    @Shadow
+    @Final
+    private Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> forcedTickets;
 
     /**
      * @reason Route to new chunk system
@@ -34,7 +34,7 @@ abstract class NeoForgeDistanceManagerMixin implements ChunkSystemDistanceManage
         if (forceTicks) {
             final Ticket<T> forceTicket = new Ticket<>(type, level, identifier, forceTicks);
 
-            this.mtSafeForcedTickets.compute(pos.toLong(), (final long keyInMap, final SortedArraySet<Ticket<?>> valueInMap) -> {
+            this.forcedTickets.compute(pos.toLong(), (final Long keyInMap, final SortedArraySet<Ticket<?>> valueInMap) -> {
                 final SortedArraySet<Ticket<?>> ret;
                 if (valueInMap != null) {
                     ret = valueInMap;
@@ -42,7 +42,11 @@ abstract class NeoForgeDistanceManagerMixin implements ChunkSystemDistanceManage
                     ret = SortedArraySet.create(4);
                 }
 
-                ret.add(forceTicket);
+                if (ret.add(forceTicket)) {
+                    ((ChunkTickServerLevel)NeoForgeDistanceManagerMixin.this.moonrise$getChunkMap().level).moonrise$addPlayerTickingRequest(
+                        CoordinateUtils.getChunkX(keyInMap.longValue()), CoordinateUtils.getChunkZ(keyInMap.longValue())
+                    );
+                }
 
                 return ret;
             });
@@ -60,8 +64,12 @@ abstract class NeoForgeDistanceManagerMixin implements ChunkSystemDistanceManage
         if (forceTicks) {
             final Ticket<T> forceTicket = new Ticket<>(type, level, identifier, forceTicks);
 
-            this.mtSafeForcedTickets.computeIfPresent(pos.toLong(), (final long keyInMap, final SortedArraySet<Ticket<?>> valueInMap) -> {
-                valueInMap.remove(forceTicket);
+            this.forcedTickets.computeIfPresent(pos.toLong(), (final Long keyInMap, final SortedArraySet<Ticket<?>> valueInMap) -> {
+                if (valueInMap.remove(forceTicket)) {
+                    ((ChunkTickServerLevel)NeoForgeDistanceManagerMixin.this.moonrise$getChunkMap().level).moonrise$removePlayerTickingRequest(
+                        CoordinateUtils.getChunkX(keyInMap.longValue()), CoordinateUtils.getChunkZ(keyInMap.longValue())
+                    );
+                }
 
                 return valueInMap.isEmpty() ? null : valueInMap;
             });
@@ -69,11 +77,11 @@ abstract class NeoForgeDistanceManagerMixin implements ChunkSystemDistanceManage
     }
 
     /**
-     * @reason Make this API thread-safe
+     * @reason Only use containsKey, as we fix the leak with this impl
      * @author Spottedleaf
      */
     @Overwrite
     public boolean shouldForceTicks(final long chunkPos) {
-        return this.mtSafeForcedTickets.containsKey(chunkPos);
+        return this.forcedTickets.containsKey(chunkPos);
     }
 }

@@ -3,10 +3,10 @@ package ca.spottedleaf.moonrise.mixin.chunk_tick_iteration;
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.common.util.SimpleRandom;
-import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
+import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel;
 import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.Util;
@@ -75,7 +75,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
     )
     private List<ServerChunkCache.ChunkAndHolder> initTickChunks(final List<ServerChunkCache.ChunkAndHolder> shouldBeNull) {
         final ReferenceList<ServerChunkCache.ChunkAndHolder> tickingChunks =
-                ((ChunkSystemServerLevel)this.level).moonrise$getTickingChunks();
+                ((ChunkTickServerLevel)this.level).moonrise$getPlayerTickingChunks();
 
         final ServerChunkCache.ChunkAndHolder[] raw = tickingChunks.getRawDataUnchecked();
         final int size = tickingChunks.size();

@@ -5,10 +5,9 @@ import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.common.util.ChunkSystem;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
-import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
-import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickConstants;
+import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.core.BlockPos;
@@ -25,7 +24,27 @@ public final class NearbyPlayers {
         GENERAL_REALLY_SMALL,
         TICK_VIEW_DISTANCE,
         VIEW_DISTANCE,
-        SPAWN_RANGE, // Moonrise - chunk tick iteration
+        // Moonrise start - chunk tick iteration
+        SPAWN_RANGE {
+            @Override
+            void addTo(final ServerPlayer player, final ServerLevel world, final int chunkX, final int chunkZ) {
+                ((ChunkTickServerLevel)world).moonrise$addPlayerTickingRequest(chunkX, chunkZ);
+            }
+
+            @Override
+            void removeFrom(final ServerPlayer player, final ServerLevel world, final int chunkX, final int chunkZ) {
+                ((ChunkTickServerLevel)world).moonrise$removePlayerTickingRequest(chunkX, chunkZ);
+            }
+        };
+        // Moonrise end - chunk tick iteration
+
+        void addTo(final ServerPlayer player, final ServerLevel world, final int chunkX, final int chunkZ) {
+
+        }
+
+        void removeFrom(final ServerPlayer player, final ServerLevel world, final int chunkX, final int chunkZ) {
+
+        }
     }
 
     private static final NearbyMapType[] MAP_TYPES = NearbyMapType.values();
@@ -219,10 +238,12 @@ public final class NearbyPlayers {
             final NearbyMapType type = this.type;
             if (chunk != null) {
                 chunk.addPlayer(parameter, type);
+                type.addTo(parameter, NearbyPlayers.this.world, chunkX, chunkZ);
             } else {
                 final TrackedChunk created = new TrackedChunk(chunkKey, NearbyPlayers.this);
                 NearbyPlayers.this.byChunk.put(chunkKey, created);
                 created.addPlayer(parameter, type);
+                type.addTo(parameter, NearbyPlayers.this.world, chunkX, chunkZ);
 
                 ((ChunkSystemLevel)NearbyPlayers.this.world).moonrise$requestChunkData(chunkKey).nearbyPlayers = created;
             }
@@ -237,7 +258,9 @@ public final class NearbyPlayers {
                 throw new IllegalStateException("Chunk should exist at " + new ChunkPos(chunkKey));
             }
 
-            chunk.removePlayer(parameter, this.type);
+            final NearbyMapType type = this.type;
+            chunk.removePlayer(parameter, type);
+            type.removeFrom(parameter, NearbyPlayers.this.world, chunkX, chunkZ);
 
             if (chunk.isEmpty()) {
                 NearbyPlayers.this.byChunk.remove(chunkKey);
