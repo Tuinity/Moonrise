@@ -294,3 +294,7 @@ accessible class net/minecraft/world/level/chunk/storage/RegionFile$ChunkBuffer
 
 # DensityFunctions$EndIslandDensityFunction
 accessible class net/minecraft/world/level/levelgen/DensityFunctions$EndIslandDensityFunction
+
+
+# LocalMobCapCalculator$MobCounts
+accessible class net/minecraft/world/level/LocalMobCapCalculator$MobCounts
