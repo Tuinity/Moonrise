@@ -64,7 +64,8 @@
       "mixin.entity.collisions.intersection": false,
       "mixin.entity.collisions.movement": false,
       "mixin.entity.collisions.unpushable_cramming": false,
-      "mixin.chunk.entity_class_groups": false
+      "mixin.chunk.entity_class_groups": false,
+      "mixin.alloc.entity_tracker": false
     }
   }
 }
