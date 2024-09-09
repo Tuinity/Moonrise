@@ -46,11 +46,6 @@ modId = "canary"
 type = "incompatible"
 
 [[dependencies.moonrise]]
-# unofficial lithium port
-modId = "radium"
-type = "incompatible"
-
-[[dependencies.moonrise]]
 modId = "c2me"
 type = "incompatible"
 

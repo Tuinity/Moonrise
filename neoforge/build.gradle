@@ -54,16 +54,14 @@ publishMods {
         incompatible(
             "notenoughcrashes",
             "starlight-neoforge",
-            "canary",
-            "radium"
+            "canary"
         )
     }
     curseforge {
         incompatible(
             "not-enough-crashes-forge",
             "starlight-neoforge",
-            "canary",
-            "radium-reforged"
+            "canary"
         )
     }
 }
