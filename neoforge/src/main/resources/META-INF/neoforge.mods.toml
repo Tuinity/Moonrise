@@ -14,6 +14,35 @@ authors = "Spottedleaf"
 description = "Optimisation mod for the dedicated and integrated server."
 displayTest = "IGNORE_ALL_VERSION"
 
+[modproperties.foxium]
+disable=[
+    "mixin.collections.chunk_tickets",
+    "mixin.world.temperature_cache",
+    "mixin.block.flatten_states",
+    "mixin.math.fast_util",
+    "mixin.minimal_nonvanilla.collisions.empty_space",
+    "mixin.alloc.deep_passengers",
+    "mixin.math.fast_blockpos",
+    "mixin.shapes.blockstate_cache",
+    "mixin.world.block_entity_ticking",
+    "mixin.collections.entity_ticking",
+    "mixin.world.chunk_access",
+    "mixin.ai.poi",
+    "mixin.chunk.no_validation",
+    "mixin.minimal_nonvanilla.world.expiring_chunk_tickets",
+    "mixin.world.tick_scheduler",
+    "mixin.alloc.chunk_ticking",
+    "mixin.entity.replace_entitytype_predicates",
+    "mixin.util.block_tracking",
+    "mixin.shapes.specialized_shapes",
+    "mixin.shapes.optimized_matching",
+    "mixin.entity.collisions.intersection",
+    "mixin.entity.collisions.movement",
+    "mixin.entity.collisions.unpushable_cramming",
+    "mixin.chunk.entity_class_groups",
+    "mixin.alloc.entity_tracker"
+]
+
 [[dependencies.moonrise]]
 modId = "neoforge"
 type = "required"
@@ -34,10 +63,6 @@ type = "incompatible"
 
 [[dependencies.moonrise]]
 modId = "starlight"
-type = "incompatible"
-
-[[dependencies.moonrise]]
-modId = "lithium"
 type = "incompatible"
 
 [[dependencies.moonrise]]
