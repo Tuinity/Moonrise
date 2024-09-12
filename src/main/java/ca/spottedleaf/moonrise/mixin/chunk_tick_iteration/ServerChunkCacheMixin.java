@@ -24,9 +24,12 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -41,6 +44,9 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
 
     @Unique
     private ServerChunkCache.ChunkAndHolder[] iterationCopy;
+
+    @Unique
+    private int iterationCopyLen;
 
     @Unique
     private final SimpleRandom shuffleRandom = new SimpleRandom(0L);
@@ -83,6 +89,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
         if (this.iterationCopy == null || this.iterationCopy.length < size) {
             this.iterationCopy = new ServerChunkCache.ChunkAndHolder[raw.length];
         }
+        this.iterationCopyLen = size;
         System.arraycopy(raw, 0, this.iterationCopy, 0, size);
 
         return ObjectArrayList.wrap(
@@ -135,7 +142,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
         )
     )
     private boolean useNearbyCache(final ChunkMap instance, final ChunkPos chunkPos,
-                                          @Local(ordinal = 0, argsOnly = false) final LevelChunk levelChunk) {
+                                   @Local(ordinal = 0, argsOnly = false) final LevelChunk levelChunk) {
         final ChunkData chunkData =
             ((ChunkSystemChunkHolder)((ChunkSystemLevelChunk)levelChunk).moonrise$getChunkAndHolder().holder())
                 .moonrise$getRealChunkHolder().holderData;
@@ -164,29 +171,19 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
     }
 
     /**
-     * @reason Clear the iteration array, and at the same time broadcast chunk changes.
+     * @reason Clear the iteration array after the list is done being used.
      * @author Spottedleaf
      */
-    @Redirect(
+    @Inject(
             method = "tickChunks",
             at = @At(
                     value = "INVOKE",
                     target = "Ljava/util/List;forEach(Ljava/util/function/Consumer;)V",
-                    ordinal = 0
+                    ordinal = 0,
+                    shift = At.Shift.AFTER
             )
     )
-    private void broadcastChanges(final List<ServerChunkCache.ChunkAndHolder> instance,
-                                  final Consumer<ServerChunkCache.ChunkAndHolder> consumer) {
-        final ObjectArrayList<ServerChunkCache.ChunkAndHolder> chunks = (ObjectArrayList<ServerChunkCache.ChunkAndHolder>)instance;
-        final ServerChunkCache.ChunkAndHolder[] raw = chunks.elements();
-        final int size = chunks.size();
-
-        Objects.checkFromToIndex(0, size, raw.length);
-        for (int i = 0; i < size; ++i) {
-            final ServerChunkCache.ChunkAndHolder holder = raw[i];
-            raw[i] = null;
-
-            holder.holder().broadcastChanges(holder.chunk());
-        }
+    private void broadcastChanges(final CallbackInfo ci) {
+        Arrays.fill(this.iterationCopy, 0, this.iterationCopyLen, null);
     }
 }

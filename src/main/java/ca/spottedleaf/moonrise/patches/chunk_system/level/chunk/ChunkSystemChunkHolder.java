@@ -23,4 +23,8 @@ public interface ChunkSystemChunkHolder {
 
     public LevelChunk moonrise$getFullChunk();
 
+    public boolean moonrise$isMarkedDirtyForPlayers();
+
+    public void moonrise$markDirtyForPlayers(final boolean value);
+
 }

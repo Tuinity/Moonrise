@@ -3,6 +3,7 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
+import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
@@ -33,6 +34,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -356,5 +359,36 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
     )
     private boolean shortShouldTickBlocks(final ServerLevel instance, final long pos) {
         return true;
+    }
+
+    /**
+     * @reason Since chunks in non-simulation range are only brought up to FULL status, not TICKING,
+     * those chunks may not be present in the ticking list and as a result we need to use our own list
+     * to ensure these chunks broadcast changes
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "tickChunks",
+        at = @At(
+            value = "INVOKE",
+            target = "Ljava/util/List;forEach(Ljava/util/function/Consumer;)V"
+        )
+    )
+    private void fixBroadcastChanges(final List<ServerChunkCache.ChunkAndHolder> instance,
+                                     final Consumer<ServerChunkCache.ChunkAndHolder> consumer) {
+        final ReferenceList<ChunkHolder> unsyncedChunks = ((ChunkSystemServerLevel)this.level).moonrise$getUnsyncedChunks();
+        final ChunkHolder[] chunkHolders = unsyncedChunks.getRawDataUnchecked();
+        final int totalUnsyncedChunks = unsyncedChunks.size();
+
+        Objects.checkFromToIndex(0, totalUnsyncedChunks, chunkHolders.length);
+        for (int i = 0; i < totalUnsyncedChunks; ++i) {
+            final ChunkHolder chunkHolder = chunkHolders[i];
+            final LevelChunk chunk = chunkHolder.getChunkToSend();
+            if (chunk != null) {
+                chunkHolder.broadcastChanges(chunk);
+            }
+        }
+
+        ((ChunkSystemServerLevel)this.level).moonrise$clearUnsyncedChunks();
     }
 }

@@ -10,6 +10,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.EntityData
 import ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.PoiDataController;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevelReader;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.server.ServerEntityLookup;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
@@ -26,6 +27,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.ServerChunkCache;
@@ -62,6 +64,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -121,6 +124,9 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     private static final ServerChunkCache.ChunkAndHolder[] EMPTY_CHUNK_AND_HOLDERS = new ServerChunkCache.ChunkAndHolder[0];
 
     @Unique
+    private static final ChunkHolder[] EMPTY_CHUNK_HOLDERS = new ChunkHolder[0];
+
+    @Unique
     private final ReferenceList<ServerChunkCache.ChunkAndHolder> loadedChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
 
     @Unique
@@ -128,6 +134,9 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
 
     @Unique
     private final ReferenceList<ServerChunkCache.ChunkAndHolder> entityTickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
+
+    @Unique
+    private final ReferenceList<ChunkHolder> unsyncedChunks = new ReferenceList<>(EMPTY_CHUNK_HOLDERS);
 
     /**
      * @reason Initialise fields / destroy entity manager state
@@ -343,6 +352,45 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     @Override
     public final ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getEntityTickingChunks() {
         return this.entityTickingChunks;
+    }
+
+    @Override
+    public final ReferenceList<ChunkHolder> moonrise$getUnsyncedChunks() {
+        return this.unsyncedChunks;
+    }
+
+    @Override
+    public final void moonrise$addUnsyncedChunk(final ChunkHolder chunkHolder) {
+        if (((ChunkSystemChunkHolder)chunkHolder).moonrise$isMarkedDirtyForPlayers()) {
+            return;
+        }
+
+        ((ChunkSystemChunkHolder)chunkHolder).moonrise$markDirtyForPlayers(true);
+        this.unsyncedChunks.add(chunkHolder);
+    }
+
+    @Override
+    public final void moonrise$removeUnsyncedChunk(final ChunkHolder chunkHolder) {
+        if (!((ChunkSystemChunkHolder)chunkHolder).moonrise$isMarkedDirtyForPlayers()) {
+            return;
+        }
+
+        ((ChunkSystemChunkHolder)chunkHolder).moonrise$markDirtyForPlayers(false);
+        this.unsyncedChunks.remove(chunkHolder);
+    }
+
+    @Override
+    public final void moonrise$clearUnsyncedChunks() {
+        final ChunkHolder[] chunkHolders = this.unsyncedChunks.getRawDataUnchecked();
+        final int totalUnsyncedChunks = this.unsyncedChunks.size();
+
+        Objects.checkFromToIndex(0, totalUnsyncedChunks, chunkHolders.length);
+        for (int i = 0; i < totalUnsyncedChunks; ++i) {
+            final ChunkHolder chunkHolder = chunkHolders[i];
+
+            ((ChunkSystemChunkHolder)chunkHolder).moonrise$markDirtyForPlayers(false);
+        }
+        this.unsyncedChunks.clear();
     }
 
     @Override

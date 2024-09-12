@@ -67,6 +67,9 @@ abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSy
     private final ReferenceList<ServerPlayer> playersSentChunkTo = new ReferenceList<>(EMPTY_PLAYER_ARRAY);
 
     @Unique
+    private boolean isMarkedDirtyForPlayers;
+
+    @Unique
     private ChunkMap getChunkMap() {
         return (ChunkMap)this.playerProvider;
     }
@@ -118,6 +121,16 @@ abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSy
         }
 
         return ret;
+    }
+
+    @Override
+    public final boolean moonrise$isMarkedDirtyForPlayers() {
+        return this.isMarkedDirtyForPlayers;
+    }
+
+    @Override
+    public final void moonrise$markDirtyForPlayers(final boolean value) {
+        this.isMarkedDirtyForPlayers = value;
     }
 
     @Unique
@@ -287,7 +300,14 @@ abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSy
             // no players to sent to, so don't need to update anything
             return null;
         }
-        return this.getChunkToSend();
+        final LevelChunk ret = this.getChunkToSend();
+
+        if (ret != null) {
+            ((ChunkSystemServerLevel)this.getChunkMap().level).moonrise$addUnsyncedChunk((ChunkHolder)(Object)this);
+            return ret;
+        }
+
+        return ret;
     }
 
     /**
@@ -302,7 +322,18 @@ abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSy
             )
     )
     private LevelChunk redirectLightUpdate(final ChunkHolder instance) {
-        return this.getChunkToSend();
+        if (this.playersSentChunkTo.size() == 0) {
+            // no players to sent to, so don't need to update anything
+            return null;
+        }
+        final LevelChunk ret = this.getChunkToSend();
+
+        if (ret != null) {
+            ((ChunkSystemServerLevel)this.getChunkMap().level).moonrise$addUnsyncedChunk((ChunkHolder)(Object)this);
+            return ret;
+        }
+
+        return ret;
     }
 
     /**

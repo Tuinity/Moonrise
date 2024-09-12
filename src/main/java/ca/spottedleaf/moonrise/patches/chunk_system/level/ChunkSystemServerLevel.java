@@ -7,6 +7,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -60,4 +61,12 @@ public interface ChunkSystemServerLevel extends ChunkSystemLevel {
     public ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getTickingChunks();
 
     public ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getEntityTickingChunks();
+
+    public ReferenceList<ChunkHolder> moonrise$getUnsyncedChunks();
+
+    public void moonrise$addUnsyncedChunk(final ChunkHolder chunkHolder);
+
+    public void moonrise$removeUnsyncedChunk(final ChunkHolder chunkHolder);
+
+    public void moonrise$clearUnsyncedChunks();
 }

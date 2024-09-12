@@ -760,6 +760,7 @@ public final class NewChunkHolder {
 
     void onUnload() {
         this.unloaded = true;
+        ((ChunkSystemServerLevel)this.world).moonrise$removeUnsyncedChunk(this.vanillaChunkHolder);
         ((ChunkSystemLevel)this.world).moonrise$releaseChunkData(CoordinateUtils.getChunkKey(this.chunkX, this.chunkZ));
     }
 
