@@ -81,6 +81,7 @@ abstract class LevelChunkMixin extends ChunkAccess implements GetBlockChunk {
      * @reason Route to optimized getBlock
      * @author Spottedleaf
      */
+    @Override
     @Overwrite
     public BlockState getBlockState(final BlockPos pos) {
         return this.moonrise$getBlock(pos.getX(), pos.getY(), pos.getZ());
@@ -101,7 +102,7 @@ abstract class LevelChunkMixin extends ChunkAccess implements GetBlockChunk {
     }
 
     @Override
-    public BlockState moonrise$getBlock(final int x, final int y, final int z) {
+    public final BlockState moonrise$getBlock(final int x, final int y, final int z) {
         if (this.debug) {
             return this.getBlockDebug(x, y, z);
         }
