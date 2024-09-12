@@ -158,6 +158,6 @@ abstract class TrackedEntityMixin implements EntityTrackerTrackedEntity {
             range = Math.max(range, passengers.get(i).getType().clientTrackingRange() << 4);
         }
 
-        return range;
+        return this.scaledRange(range);
     }
 }
