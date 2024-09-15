@@ -39,7 +39,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Mixin(Level.class)
+// Higher priority to apply after Lithium mixin.world.inline_height.WorldMixin
+@Mixin(value = Level.class, priority = 1100)
 abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseable {
 
     @Shadow
