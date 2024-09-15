@@ -47,6 +47,8 @@
             "mixin.world.block_entity_ticking": false,
             "mixin.world.chunk_access": false,
             "mixin.world.tick_scheduler": false,
+            "mixin.world.explosions.block_raycast": false,
+            "mixin.world.explosions.cache_exposure": false,
             "mixin.block.flatten_states": false,
             "mixin.math.fast_util": false,
             "mixin.math.fast_blockpos": false,
