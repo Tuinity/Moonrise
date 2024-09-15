@@ -112,16 +112,18 @@ subprojects {
         }
         changelog = providers.environmentVariable("RELEASE_NOTES")
 
+        List<String> supportedMcVersions = rootProject.supported_minecraft_versions.split(',')
+
         modrinth {
             projectId = "KOHu7RCS"
             accessToken = providers.environmentVariable("MODRINTH_TOKEN")
-            minecraftVersions = [rootProject.minecraft_version]
+            minecraftVersions = supportedMcVersions
         }
 
         curseforge {
             projectId = "1096335"
             accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
-            minecraftVersions = [rootProject.minecraft_version]
+            minecraftVersions = supportedMcVersions
         }
     }
 }
