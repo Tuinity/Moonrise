@@ -3,6 +3,7 @@ package ca.spottedleaf.moonrise.mixin.block_counting;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingBitStorage;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import net.minecraft.util.BitStorage;
 import net.minecraft.util.SimpleBitStorage;
 import org.spongepowered.asm.mixin.Final;
@@ -33,14 +34,14 @@ abstract class SimpleBitStorageMixin implements BitStorage, BlockCountingBitStor
     private int size;
 
     @Override
-    public final Int2ObjectOpenHashMap<IntArrayList> moonrise$countEntries() {
+    public final Int2ObjectOpenHashMap<ShortArrayList> moonrise$countEntries() {
         final int valuesPerLong = this.valuesPerLong;
         final int bits = this.bits;
         final long mask = this.mask;
         final int size = this.size;
 
         // we may be backed by global palette, so limit bits for init capacity
-        final Int2ObjectOpenHashMap<IntArrayList> ret = new Int2ObjectOpenHashMap<>(
+        final Int2ObjectOpenHashMap<ShortArrayList> ret = new Int2ObjectOpenHashMap<>(
                 1 << Math.min(6, bits)
         );
 
@@ -53,8 +54,8 @@ abstract class SimpleBitStorageMixin implements BitStorage, BlockCountingBitStor
                 value >>= bits;
 
                 ret.computeIfAbsent(paletteIdx, (final int key) -> {
-                    return new IntArrayList();
-                }).add(index);
+                    return new ShortArrayList(64);
+                }).add((short)index);
 
                 ++li;
                 ++index;

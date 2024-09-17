@@ -19,6 +19,13 @@ public final class IntList {
         return this.count;
     }
 
+    public void setMinCapacity(final int len) {
+        final int[] byIndex = this.byIndex;
+        if (byIndex.length < len) {
+            this.byIndex = Arrays.copyOf(byIndex, len);
+        }
+    }
+
     public int getRaw(final int index) {
         return this.byIndex[index];
     }

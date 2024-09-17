@@ -1,13 +1,13 @@
 package ca.spottedleaf.moonrise.mixin.block_counting;
 
-import ca.spottedleaf.moonrise.common.list.IntList;
+import ca.spottedleaf.moonrise.common.list.ShortList;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingBitStorage;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
 import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import net.minecraft.util.BitStorage;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -48,9 +48,9 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     public abstract boolean maybeHas(Predicate<BlockState> predicate);
 
     @Unique
-    private static final IntArrayList FULL_LIST = new IntArrayList(16*16*16);
+    private static final ShortArrayList FULL_LIST = new ShortArrayList(16*16*16);
     static {
-        for (int i = 0; i < (16*16*16); ++i) {
+        for (short i = 0; i < (16*16*16); ++i) {
             FULL_LIST.add(i);
         }
     }
@@ -65,7 +65,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     private short specialCollidingBlocks;
 
     @Unique
-    private final IntList tickingBlocks = new IntList();
+    private final ShortList tickingBlocks = new ShortList();
 
     @Override
     public final boolean moonrise$hasSpecialCollidingBlocks() {
@@ -73,7 +73,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     }
 
     @Override
-    public final IntList moonrise$getTickingBlockList() {
+    public final ShortList moonrise$getTickingBlockList() {
         return this.tickingBlocks;
     }
 
@@ -100,20 +100,27 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
             return;
         }
 
-        if (CollisionUtil.isSpecialCollidingBlock(oldState)) {
-            --this.specialCollidingBlocks;
-        }
-        if (CollisionUtil.isSpecialCollidingBlock(newState)) {
-            ++this.specialCollidingBlocks;
+        final boolean isSpecialOld = CollisionUtil.isSpecialCollidingBlock(oldState);
+        final boolean isSpecialNew = CollisionUtil.isSpecialCollidingBlock(newState);
+        if (isSpecialOld != isSpecialNew) {
+            if (isSpecialOld) {
+                --this.specialCollidingBlocks;
+            } else {
+                ++this.specialCollidingBlocks;
+            }
         }
 
-        final int position = x | (z << 4) | (y << (4+4));
+        final boolean oldTicking = oldState.isRandomlyTicking();
+        final boolean newTicking = newState.isRandomlyTicking();
+        if (oldTicking != newTicking) {
+            final ShortList tickingBlocks = this.tickingBlocks;
+            final short position = (short)(x | (z << 4) | (y << (4+4)));
 
-        if (oldState.isRandomlyTicking()) {
-            this.tickingBlocks.remove(position);
-        }
-        if (newState.isRandomlyTicking()) {
-            this.tickingBlocks.add(position);
+            if (oldTicking) {
+                tickingBlocks.remove(position);
+            } else {
+                tickingBlocks.add(position);
+            }
         }
     }
 
@@ -151,7 +158,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
             final int paletteSize = palette.getSize();
             final BitStorage storage = data.storage;
 
-            final Int2ObjectOpenHashMap<IntArrayList> counts;
+            final Int2ObjectOpenHashMap<ShortArrayList> counts;
             if (paletteSize == 1) {
                 counts = new Int2ObjectOpenHashMap<>(1);
                 counts.put(0, FULL_LIST);
@@ -159,10 +166,10 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                 counts = ((BlockCountingBitStorage)storage).moonrise$countEntries();
             }
 
-            for (final Iterator<Int2ObjectMap.Entry<IntArrayList>> iterator = counts.int2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
-                final Int2ObjectMap.Entry<IntArrayList> entry = iterator.next();
+            for (final Iterator<Int2ObjectMap.Entry<ShortArrayList>> iterator = counts.int2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
+                final Int2ObjectMap.Entry<ShortArrayList> entry = iterator.next();
                 final int paletteIdx = entry.getIntKey();
-                final IntArrayList coordinates = entry.getValue();
+                final ShortArrayList coordinates = entry.getValue();
                 final int paletteCount = coordinates.size();
 
                 final BlockState state = palette.valueFor(paletteIdx);
@@ -172,16 +179,21 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                 }
 
                 if (CollisionUtil.isSpecialCollidingBlock(state)) {
-                    this.specialCollidingBlocks += paletteCount;
+                    this.specialCollidingBlocks += (short)paletteCount;
                 }
-                this.nonEmptyBlockCount += paletteCount;
+                this.nonEmptyBlockCount += (short)paletteCount;
                 if (state.isRandomlyTicking()) {
-                    this.tickingBlockCount += paletteCount;
-                    final int[] raw = coordinates.elements();
+                    this.tickingBlockCount += (short)paletteCount;
+                    final short[] raw = coordinates.elements();
+                    final int rawLen = raw.length;
 
-                    Objects.checkFromToIndex(0, paletteCount, raw.length);
+                    final ShortList tickingBlocks = this.tickingBlocks;
+
+                    tickingBlocks.setMinCapacity(Math.min((rawLen + tickingBlocks.size()) * 3 / 2, 16*16*16));
+
+                    Objects.checkFromToIndex(0, paletteCount, rawLen);
                     for (int i = 0; i < paletteCount; ++i) {
-                        this.tickingBlocks.add(raw[i]);
+                        tickingBlocks.add(raw[i]);
                     }
                 }
 
@@ -190,7 +202,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                 if (!fluid.isEmpty()) {
                     //this.nonEmptyBlockCount += count; // fix vanilla bug: make non-empty block count correct
                     if (fluid.isRandomlyTicking()) {
-                        this.tickingFluidCount += paletteCount;
+                        this.tickingFluidCount += (short)paletteCount;
                     }
                 }
             }
