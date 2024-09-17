@@ -1994,7 +1994,7 @@ public final class CollisionUtil {
                         continue;
                     }
 
-                    final boolean hasSpecial = ((BlockCountingChunkSection)section).moonrise$getSpecialCollidingBlocks() != 0;
+                    final boolean hasSpecial = ((BlockCountingChunkSection)section).moonrise$hasSpecialCollidingBlocks();
                     final int sectionAdjust = !hasSpecial ? 1 : 0;
 
                     final PalettedContainer<BlockState> blocks = section.states;

@@ -56,14 +56,20 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     }
 
     @Unique
-    private int specialCollidingBlocks;
+    private boolean isClient;
+
+    @Unique
+    private static final short CLIENT_FORCED_SPECIAL_COLLIDING_BLOCKS = (short)9999;
+
+    @Unique
+    private short specialCollidingBlocks;
 
     @Unique
     private final IntList tickingBlocks = new IntList();
 
     @Override
-    public final int moonrise$getSpecialCollidingBlocks() {
-        return this.specialCollidingBlocks;
+    public final boolean moonrise$hasSpecialCollidingBlocks() {
+        return this.specialCollidingBlocks != 0;
     }
 
     @Override
@@ -86,6 +92,14 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
         if (oldState == newState) {
             return;
         }
+
+        if (this.isClient) {
+            if (CollisionUtil.isSpecialCollidingBlock(newState)) {
+                this.specialCollidingBlocks = CLIENT_FORCED_SPECIAL_COLLIDING_BLOCKS;
+            }
+            return;
+        }
+
         if (CollisionUtil.isSpecialCollidingBlock(oldState)) {
             --this.specialCollidingBlocks;
         }
@@ -184,7 +198,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     }
 
     /**
-     * @reason Call recalcBlockCounts on the client, as the client does not invoke it when deserializing chunk sections.
+     * @reason Set up special colliding blocks on the client, as it is too expensive to perform a full calculation
      * @author Spottedleaf
      */
     @Inject(
@@ -194,6 +208,8 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
             )
     )
     private void callRecalcBlocksClient(final CallbackInfo ci) {
-        this.recalcBlockCounts();
+        this.isClient = true;
+        // force has special colliding blocks to be true
+        this.specialCollidingBlocks = this.nonEmptyBlockCount != (short)0 && this.maybeHas(CollisionUtil::isSpecialCollidingBlock) ? CLIENT_FORCED_SPECIAL_COLLIDING_BLOCKS : (short)0;
     }
 }

@@ -4,7 +4,7 @@ import ca.spottedleaf.moonrise.common.list.IntList;
 
 public interface BlockCountingChunkSection {
 
-    public int moonrise$getSpecialCollidingBlocks();
+    public boolean moonrise$hasSpecialCollidingBlocks();
 
     public IntList moonrise$getTickingBlockList();
 
