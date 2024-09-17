@@ -27,41 +27,64 @@ abstract class SimpleBitStorageMixin implements BitStorage, BlockCountingBitStor
 
     @Shadow
     @Final
-    private long mask;
-
-    @Shadow
-    @Final
     private int size;
 
     @Override
     public final Int2ObjectOpenHashMap<ShortArrayList> moonrise$countEntries() {
         final int valuesPerLong = this.valuesPerLong;
         final int bits = this.bits;
-        final long mask = this.mask;
+        final long mask = (1L << bits) - 1L;
         final int size = this.size;
 
-        // we may be backed by global palette, so limit bits for init capacity
-        final Int2ObjectOpenHashMap<ShortArrayList> ret = new Int2ObjectOpenHashMap<>(
-                1 << Math.min(6, bits)
-        );
+        if (bits <= 6) {
+            final ShortArrayList[] byId = new ShortArrayList[1 << bits];
+            final Int2ObjectOpenHashMap<ShortArrayList> ret = new Int2ObjectOpenHashMap<>(1 << bits);
 
-        int index = 0;
+            int index = 0;
 
-        for (long value : this.data) {
-            int li = 0;
-            do {
-                final int paletteIdx = (int)(value & mask);
-                value >>= bits;
+            for (long value : this.data) {
+                int li = 0;
+                do {
+                    final int paletteIdx = (int)(value & mask);
+                    value >>= bits;
+                    ++li;
 
-                ret.computeIfAbsent(paletteIdx, (final int key) -> {
-                    return new ShortArrayList(64);
-                }).add((short)index);
+                    final ShortArrayList coords = byId[paletteIdx];
+                    if (coords != null) {
+                        coords.add((short)index++);
+                        continue;
+                    } else {
+                        final ShortArrayList newCoords = new ShortArrayList(64);
+                        byId[paletteIdx] = newCoords;
+                        newCoords.add((short)index++);
+                        ret.put(paletteIdx, newCoords);
+                        continue;
+                    }
+                } while (li < valuesPerLong && index < size);
+            }
 
-                ++li;
-                ++index;
-            } while (li < valuesPerLong && index < size);
+            return ret;
+        } else {
+            final Int2ObjectOpenHashMap<ShortArrayList> ret = new Int2ObjectOpenHashMap<>(
+                1 << 6
+            );
+
+            int index = 0;
+
+            for (long value : this.data) {
+                int li = 0;
+                do {
+                    final int paletteIdx = (int)(value & mask);
+                    value >>= bits;
+                    ++li;
+
+                    ret.computeIfAbsent(paletteIdx, (final int key) -> {
+                        return new ShortArrayList(64);
+                    }).add((short)index++);
+                } while (li < valuesPerLong && index < size);
+            }
+
+            return ret;
         }
-
-        return ret;
     }
 }
