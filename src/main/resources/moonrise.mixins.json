@@ -16,8 +16,9 @@
         "blockstate_propertyaccess.IntegerPropertyMixin",
         "blockstate_propertyaccess.PropertyMixin",
         "blockstate_propertyaccess.StateHolderMixin",
-        "chunk_getblock.ChunkAccessMixin",
-        "chunk_getblock.LevelChunkMixin",
+        "getblock.ChunkAccessMixin",
+        "getblock.LevelChunkMixin",
+        "getblock.LevelMixin",
         "chunk_system.ChunkBufferMixin",
         "chunk_system.ChunkGeneratorMixin",
         "chunk_system.ChunkHolderMixin",
@@ -138,5 +139,5 @@
     },
     "overwrites": {
         "conformVisibility": true
-  }
+    }
 }

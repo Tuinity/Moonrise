@@ -5,7 +5,7 @@ import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
-import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevel;
+import ca.spottedleaf.moonrise.patches.getblock.GetBlockLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -43,45 +43,13 @@ import java.util.Optional;
 
 // Higher priority to apply after Lithium mixin.world.inline_height.WorldMixin
 @Mixin(value = Level.class, priority = 1100)
-abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseable {
+abstract class LevelMixin implements LevelAccessor, AutoCloseable {
 
     @Shadow
     public abstract LevelChunk getChunk(int x, int z);
 
     @Shadow
     public abstract WorldBorder getWorldBorder();
-
-
-    @Unique
-    private int minSection;
-
-    @Unique
-    private int maxSection;
-
-    @Override
-    public final int moonrise$getMinSection() {
-        return this.minSection;
-    }
-
-    @Override
-    public final int moonrise$getMaxSection() {
-        return this.maxSection;
-    }
-
-    /**
-     * @reason Init min/max section
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "<init>",
-            at = @At(
-                    value = "RETURN"
-            )
-    )
-    private void init(final CallbackInfo ci) {
-        this.minSection = WorldUtil.getMinSection(this);
-        this.maxSection = WorldUtil.getMaxSection(this);
-    }
 
     /**
      * Route to faster lookup.
@@ -176,7 +144,7 @@ abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseabl
         int lastChunkY = Integer.MIN_VALUE;
         int lastChunkZ = Integer.MIN_VALUE;
 
-        final int minSection = ((CollisionLevel)level).moonrise$getMinSection();
+        final int minSection = ((GetBlockLevel)level).moonrise$getMinSection();
 
         for (;;) {
             currPos.set(currX, currY, currZ);
@@ -371,13 +339,13 @@ abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseabl
      */
     @Override
     public Optional<BlockPos> findSupportingBlock(final Entity entity, final AABB aabb) {
-        final int minSection = this.moonrise$getMinSection();
+        final int minSection = ((GetBlockLevel)(Level)(Object)this).moonrise$getMinSection();
 
         final int minBlockX = Mth.floor(aabb.minX - CollisionUtil.COLLISION_EPSILON) - 1;
         final int maxBlockX = Mth.floor(aabb.maxX + CollisionUtil.COLLISION_EPSILON) + 1;
 
         final int minBlockY = Math.max((minSection << 4) - 1, Mth.floor(aabb.minY - CollisionUtil.COLLISION_EPSILON) - 1);
-        final int maxBlockY = Math.min((this.moonrise$getMaxSection() << 4) + 16, Mth.floor(aabb.maxY + CollisionUtil.COLLISION_EPSILON) + 1);
+        final int maxBlockY = Math.min((((GetBlockLevel)(Level)(Object)this).moonrise$getMaxSection() << 4) + 16, Mth.floor(aabb.maxY + CollisionUtil.COLLISION_EPSILON) + 1);
 
         final int minBlockZ = Mth.floor(aabb.minZ - CollisionUtil.COLLISION_EPSILON) - 1;
         final int maxBlockZ = Mth.floor(aabb.maxZ + CollisionUtil.COLLISION_EPSILON) + 1;

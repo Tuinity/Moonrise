@@ -2,7 +2,7 @@ package ca.spottedleaf.moonrise.mixin.collisions;
 
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
-import ca.spottedleaf.moonrise.patches.chunk_getblock.GetBlockChunk;
+import ca.spottedleaf.moonrise.patches.getblock.GetBlockChunk;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.ExplosionBlockCache;

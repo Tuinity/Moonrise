@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.patches.chunk_getblock;
+package ca.spottedleaf.moonrise.patches.getblock;
 
 import net.minecraft.world.level.block.state.BlockState;
 

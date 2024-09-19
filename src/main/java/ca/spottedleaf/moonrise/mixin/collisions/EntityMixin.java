@@ -1,13 +1,11 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
-import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
-import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.util.NoneMatchStream;
-import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevel;
+import ca.spottedleaf.moonrise.patches.getblock.GetBlockLevel;
 import it.unimi.dsi.fastutil.floats.FloatArraySet;
 import it.unimi.dsi.fastutil.floats.FloatArrays;
 import net.minecraft.core.BlockPos;
@@ -15,13 +13,11 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
-import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -226,7 +222,7 @@ abstract class EntityMixin {
         final int maxChunkY = maxBlockY >> 4;
         final int maxChunkZ = maxBlockZ >> 4;
 
-        final int minSection = ((CollisionLevel)world).moonrise$getMinSection();
+        final int minSection = ((GetBlockLevel)world).moonrise$getMinSection();
         final ChunkSource chunkSource = world.getChunkSource();
         final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
@@ -338,7 +334,7 @@ abstract class EntityMixin {
             return new NoneMatchStream<>(true);
         }
 
-        final int minSection = ((CollisionLevel)world).moonrise$getMinSection();
+        final int minSection = ((GetBlockLevel)world).moonrise$getMinSection();
         final ChunkSource chunkSource = world.getChunkSource();
         final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
@@ -424,7 +420,7 @@ abstract class EntityMixin {
             return;
         }
 
-        final int minSection = ((CollisionLevel)world).moonrise$getMinSection();
+        final int minSection = ((GetBlockLevel)world).moonrise$getMinSection();
         final ChunkSource chunkSource = world.getChunkSource();
         final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 

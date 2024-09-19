@@ -6,7 +6,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CachedShapeData;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionDiscreteVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
-import ca.spottedleaf.moonrise.patches.collisions.world.CollisionLevel;
+import ca.spottedleaf.moonrise.patches.getblock.GetBlockLevel;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
@@ -1934,13 +1934,13 @@ public final class CollisionUtil {
             }
         }
 
-        final int minSection = ((CollisionLevel)world).moonrise$getMinSection();
+        final int minSection = ((GetBlockLevel)world).moonrise$getMinSection();
 
         final int minBlockX = Mth.floor(aabb.minX - COLLISION_EPSILON) - 1;
         final int maxBlockX = Mth.floor(aabb.maxX + COLLISION_EPSILON) + 1;
 
         final int minBlockY = Math.max((minSection << 4) - 1, Mth.floor(aabb.minY - COLLISION_EPSILON) - 1);
-        final int maxBlockY = Math.min((((CollisionLevel)world).moonrise$getMaxSection() << 4) + 16, Mth.floor(aabb.maxY + COLLISION_EPSILON) + 1);
+        final int maxBlockY = Math.min((((GetBlockLevel)world).moonrise$getMaxSection() << 4) + 16, Mth.floor(aabb.maxY + COLLISION_EPSILON) + 1);
 
         final int minBlockZ = Mth.floor(aabb.minZ - COLLISION_EPSILON) - 1;
         final int maxBlockZ = Mth.floor(aabb.maxZ + COLLISION_EPSILON) + 1;

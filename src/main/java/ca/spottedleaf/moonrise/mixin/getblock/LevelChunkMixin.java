@@ -1,7 +1,7 @@
-package ca.spottedleaf.moonrise.mixin.chunk_getblock;
+package ca.spottedleaf.moonrise.mixin.getblock;
 
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
-import ca.spottedleaf.moonrise.patches.chunk_getblock.GetBlockChunk;
+import ca.spottedleaf.moonrise.patches.getblock.GetBlockChunk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.world.level.ChunkPos;

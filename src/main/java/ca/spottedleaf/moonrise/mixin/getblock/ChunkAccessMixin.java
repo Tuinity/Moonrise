@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.mixin.chunk_getblock;
+package ca.spottedleaf.moonrise.mixin.getblock;
 
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import net.minecraft.core.Holder;
