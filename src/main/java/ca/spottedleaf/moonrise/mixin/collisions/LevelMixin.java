@@ -311,7 +311,7 @@ abstract class LevelMixin implements CollisionLevel, LevelAccessor, AutoCloseabl
      */
     @Override
     public Optional<Vec3> findFreePosition(final Entity entity, final VoxelShape boundsShape, final Vec3 fromPosition,
-                                                 final double rangeX, final double rangeY, final double rangeZ) {
+                                           final double rangeX, final double rangeY, final double rangeZ) {
         if (boundsShape.isEmpty()) {
             return Optional.empty();
         }

@@ -170,13 +170,13 @@ abstract class ShapesMixin {
                     final VoxelShape first = tmp[i];
                     final VoxelShape second = tmp[next];
 
-                    tmp[newSize++] = Shapes.or(first, second);
+                    tmp[newSize++] = Shapes.joinUnoptimized(first, second, BooleanOp.OR);
                 }
             }
             size = newSize;
         }
 
-        return tmp[0];
+        return tmp[0].optimize();
     }
 
     @Unique

@@ -1077,10 +1077,11 @@ public final class CollisionUtil {
                     final int s1z = mergedZ.firstIndices[idxZ];
                     final int s2z = mergedZ.secondIndices[idxZ];
 
-                    int idx;
+                    int idx1;
+                    int idx2;
 
-                    final int isS1Full = (s1x | s1y | s1z) < 0 ? 0 : (int)((s1Voxels[(idx = s1z + s1y*s1Mul1 + s1x*s1Mul2) >>> 6] >>> idx) & 1L);
-                    final int isS2Full = (s2x | s2y | s2z) < 0 ? 0 : (int)((s2Voxels[(idx = s2z + s2y*s2Mul1 + s2x*s2Mul2) >>> 6] >>> idx) & 1L);
+                    final int isS1Full = (s1x | s1y | s1z) < 0 ? 0 : (int)((s1Voxels[(idx1 = s1z + s1y*s1Mul1 + s1x*s1Mul2) >>> 6] >>> idx1) & 1L);
+                    final int isS2Full = (s2x | s2y | s2z) < 0 ? 0 : (int)((s2Voxels[(idx2 = s2z + s2y*s2Mul1 + s2x*s2Mul2) >>> 6] >>> idx2) & 1L);
 
                     // idx ff -> 0
                     // idx ft -> 1
@@ -1143,10 +1144,11 @@ public final class CollisionUtil {
                     final int s1z = mergedZ.firstIndices[idxZ];
                     final int s2z = mergedZ.secondIndices[idxZ];
 
-                    int idx;
+                    int idx1;
+                    int idx2;
 
-                    final int isS1Full = (s1x | s1y | s1z) < 0 ? 0 : (int)((s1Voxels[(idx = s1z + s1y*s1Mul1 + s1x*s1Mul2) >>> 6] >>> idx) & 1L);
-                    final int isS2Full = (s2x | s2y | s2z) < 0 ? 0 : (int)((s2Voxels[(idx = s2z + s2y*s2Mul1 + s2x*s2Mul2) >>> 6] >>> idx) & 1L);
+                    final int isS1Full = (s1x | s1y | s1z) < 0 ? 0 : (int)((s1Voxels[(idx1 = s1z + s1y*s1Mul1 + s1x*s1Mul2) >>> 6] >>> idx1) & 1L);
+                    final int isS2Full = (s2x | s2y | s2z) < 0 ? 0 : (int)((s2Voxels[(idx2 = s2z + s2y*s2Mul1 + s2x*s2Mul2) >>> 6] >>> idx2) & 1L);
 
                     // idx ff -> 0
                     // idx ft -> 1
