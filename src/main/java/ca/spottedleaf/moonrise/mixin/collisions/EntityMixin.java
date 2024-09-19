@@ -476,4 +476,23 @@ abstract class EntityMixin {
             }
         }
     }
+
+    /**
+     * @reason Optimise implementation
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public boolean touchingUnloadedChunk() {
+        final AABB box = this.getBoundingBox();
+
+        final int minBlockX = Mth.floor(box.minX) - 1;
+        final int minBlockZ = Mth.floor(box.minZ) - 1;
+        final int maxBlockX = Mth.ceil(box.maxX) + 1;
+        final int maxBlockZ = Mth.ceil(box.maxZ) + 1;
+
+        return !((ChunkSystemLevel)this.level).moonrise$areChunksLoaded(
+            minBlockX >> 4, minBlockZ >> 4,
+            maxBlockX >> 4, maxBlockZ >> 4
+        );
+    }
 }

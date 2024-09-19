@@ -4,7 +4,8 @@
   "mixins": [
     "chunk_system.NeoForgeDistanceManagerMixin",
     "chunk_system.NeoForgeMinecraftServerMixin",
-    "chunk_system.NeoForgeServerLevelMixin"
+    "chunk_system.NeoForgeServerLevelMixin",
+    "collisions.EntityMixin"
   ],
   "client": [
     "command.ClientCommandSourceStackMixin"
