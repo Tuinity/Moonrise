@@ -89,7 +89,7 @@
         "fast_palette.SingleValuePaletteMixin",
         "fluid.FlowingFluidMixin",
         "fluid.FluidStateMixin",
-        "fluid.StateDefinitionMixin",
+        "fluid.MappedRegistryMixin",
         "keep_alive_client.ServerGamePacketListenerImplMixin",
         "poi_lookup.AcquirePoiMixin",
         "poi_lookup.PoiManagerMixin",
