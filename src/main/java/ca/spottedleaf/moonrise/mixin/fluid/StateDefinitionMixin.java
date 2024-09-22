@@ -22,7 +22,7 @@ abstract class StateDefinitionMixin<S> {
         method = "<init>",
         at = @At("RETURN")
     )
-    void injectInit(final CallbackInfo ci) {
+    private void injectInit(final CallbackInfo ci) {
         for (final S state : this.states) {
             if (!(state instanceof FluidFluidState fluidState)) {
                 return;
