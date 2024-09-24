@@ -171,7 +171,7 @@ abstract class EntityMixin {
             pushVector = pushVector.normalize();
         }
 
-        pushVector.scale(flowScale);
+        pushVector = pushVector.scale(flowScale);
         if (Math.abs(currMovement.x) < 0.003 && Math.abs(currMovement.z) < 0.003 && pushVector.length() < 0.0045000000000000005) {
             pushVector = pushVector.normalize().scale(0.0045000000000000005);
         }

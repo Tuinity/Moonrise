@@ -189,7 +189,7 @@ abstract class EntityMixin implements IEntityExtension {
                 pushVector = pushVector.normalize();
             }
 
-            pushVector.scale(this.getFluidMotionScale(type));
+            pushVector = pushVector.scale(this.getFluidMotionScale(type));
             if (Math.abs(currMovement.x) < 0.003 && Math.abs(currMovement.z) < 0.003 && pushVector.length() < 0.0045000000000000005) {
                 pushVector = pushVector.normalize().scale(0.0045000000000000005);
             }
