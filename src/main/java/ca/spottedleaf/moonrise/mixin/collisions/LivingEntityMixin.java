@@ -41,7 +41,7 @@ abstract class LivingEntityMixin extends Entity implements Attackable {
             int nonPassengers = 0;
             for (int i = 0, len = nearby.size(); i < len; ++i) {
                 final Entity entity = nearby.get(i);
-                nonPassengers += (entity.isPassenger() ? 1 : 0);
+                nonPassengers += (entity.isPassenger() ? 0 : 1);
                 this.doPush(entity);
             }
 
