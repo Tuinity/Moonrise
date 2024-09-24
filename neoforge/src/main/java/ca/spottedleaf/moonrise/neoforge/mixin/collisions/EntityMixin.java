@@ -65,9 +65,10 @@ abstract class EntityMixin implements IEntityExtension {
         final int minBlockY = Math.max((minSection << 4), Mth.floor(boundingBox.minY));
         final int minBlockZ = Mth.floor(boundingBox.minZ);
 
-        final int maxBlockX = Mth.ceil(boundingBox.maxX);
-        final int maxBlockY = Math.min((((GetBlockLevel)world).moonrise$getMaxSection() << 4) | 15, Mth.ceil(boundingBox.maxY));
-        final int maxBlockZ = Mth.ceil(boundingBox.maxZ);
+        // note: bounds are exclusive in Vanilla, so we subtract 1
+        final int maxBlockX = Mth.ceil(boundingBox.maxX) - 1;
+        final int maxBlockY = Math.min((((GetBlockLevel)world).moonrise$getMaxSection() << 4) | 15, Mth.ceil(boundingBox.maxY) - 1);
+        final int maxBlockZ = Mth.ceil(boundingBox.maxZ) - 1;
 
         final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
@@ -86,9 +87,7 @@ abstract class EntityMixin implements IEntityExtension {
 
         for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
             for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
-                final ChunkAccess chunk = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, false);
-
-                final LevelChunkSection[] sections = chunk.getSections();
+                final LevelChunkSection[] sections = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, false).getSections();
 
                 // bound y
                 for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
@@ -112,21 +111,15 @@ abstract class EntityMixin implements IEntityExtension {
                     final int maxYIterate = currChunkY == maxChunkY ? (maxBlockY & 15) : 15;
 
                     for (int currY = minYIterate; currY <= maxYIterate; ++currY) {
-                        final int blockY = currY | (currChunkY << 4);
-                        mutablePos.setY(blockY);
                         for (int currZ = minZIterate; currZ <= maxZIterate; ++currZ) {
-                            final int blockZ = currZ | (currChunkZ << 4);
-                            mutablePos.setZ(blockZ);
                             for (int currX = minXIterate; currX <= maxXIterate; ++currX) {
-                                final int localBlockIndex = (currX) | (currZ << 4) | ((currY) << 8);
-                                final int blockX = currX | (currChunkX << 4);
-                                mutablePos.setX(blockX);
-
-                                final FluidState fluidState = blocks.get(localBlockIndex).getFluidState();
+                                final FluidState fluidState = blocks.get((currX) | (currZ << 4) | ((currY) << 8)).getFluidState();
 
                                 if (fluidState.isEmpty()) {
                                     continue;
                                 }
+
+                                mutablePos.set(currX | (currChunkX << 4), currY | (currChunkY << 4), currZ | (currChunkZ << 4));
 
                                 final FluidType type = fluidState.getFluidType();
 
@@ -136,7 +129,7 @@ abstract class EntityMixin implements IEntityExtension {
                                     return new FluidPushCalculation();
                                 });
 
-                                final double height = (double)((float)blockY + fluidState.getHeight(world, mutablePos));
+                                final double height = (double)((float)mutablePos.getY() + fluidState.getHeight(world, mutablePos));
                                 final double diff = height - boundingBox.minY;
 
                                 if (diff < 0.0) {

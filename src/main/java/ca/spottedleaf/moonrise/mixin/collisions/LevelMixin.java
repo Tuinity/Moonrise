@@ -438,7 +438,7 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
 
                                 VoxelShape blockCollision = ((CollisionBlockState)blockData).moonrise$getConstantContextCollisionShape();
 
-                                if ((edgeCount != 1 || blockData.hasLargeCollisionShape()) && (edgeCount != 2 || blockData.getBlock() == Blocks.MOVING_PISTON)) {
+                                if (edgeCount == 0 || ((edgeCount != 1 || blockData.hasLargeCollisionShape()) && (edgeCount != 2 || blockData.getBlock() == Blocks.MOVING_PISTON))) {
                                     if (blockCollision == null) {
                                         blockCollision = blockData.getCollisionShape((Level)(Object)this, mutablePos, collisionShape);
 

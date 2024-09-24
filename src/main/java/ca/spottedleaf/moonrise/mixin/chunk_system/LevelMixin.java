@@ -279,6 +279,13 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
         return this.getChunkSource().hasChunk(x, z);
     }
 
+    @Override
+    public boolean hasChunksAt(final int minBlockX, final int minBlockZ, final int maxBlockX, final int maxBlockZ) {
+        return this.moonrise$areChunksLoaded(
+            minBlockX >> 4, minBlockZ >> 4, maxBlockX >> 4, maxBlockZ >> 4
+        );
+    }
+
     /**
      * @reason Turn all getChunk(x, z, status) calls into virtual invokes, instead of interface invokes:
      *         1. The interface invoke is expensive

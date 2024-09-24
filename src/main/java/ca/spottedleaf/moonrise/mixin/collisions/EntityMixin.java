@@ -228,9 +228,7 @@ abstract class EntityMixin {
 
         for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
             for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
-                final ChunkAccess chunk = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, true);
-
-                final LevelChunkSection[] sections = chunk.getSections();
+                final LevelChunkSection[] sections = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, true).getSections();
 
                 for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
                     final int sectionIdx = currChunkY - minSection;
@@ -259,11 +257,10 @@ abstract class EntityMixin {
                             final int blockZ = currZ | (currChunkZ << 4);
                             mutablePos.setZ(blockZ);
                             for (int currX = minXIterate; currX <= maxXIterate; ++currX) {
-                                final int localBlockIndex = (currX) | (currZ << 4) | ((currY) << 8);
                                 final int blockX = currX | (currChunkX << 4);
                                 mutablePos.setX(blockX);
 
-                                final BlockState blockState = blocks.get(localBlockIndex);
+                                final BlockState blockState = blocks.get((currX) | (currZ << 4) | ((currY) << 8));
 
                                 if (((CollisionBlockState)blockState).moonrise$emptyCollisionShape()
                                     || !blockState.isSuffocating(world, mutablePos)) {
@@ -336,13 +333,10 @@ abstract class EntityMixin {
 
         final int minSection = ((GetBlockLevel)world).moonrise$getMinSection();
         final ChunkSource chunkSource = world.getChunkSource();
-        final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
         for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
             for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
-                final ChunkAccess chunk = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, false);
-
-                final LevelChunkSection[] sections = chunk.getSections();
+                final LevelChunkSection[] sections = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, false).getSections();
 
                 for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
                     final int sectionIdx = currChunkY - minSection;
@@ -365,17 +359,9 @@ abstract class EntityMixin {
                     final int maxYIterate = currChunkY == maxChunkY ? (maxBlockY & 15) : 15;
 
                     for (int currY = minYIterate; currY <= maxYIterate; ++currY) {
-                        final int blockY = currY | (currChunkY << 4);
-                        mutablePos.setY(blockY);
                         for (int currZ = minZIterate; currZ <= maxZIterate; ++currZ) {
-                            final int blockZ = currZ | (currChunkZ << 4);
-                            mutablePos.setZ(blockZ);
                             for (int currX = minXIterate; currX <= maxXIterate; ++currX) {
-                                final int localBlockIndex = (currX) | (currZ << 4) | ((currY) << 8);
-                                final int blockX = currX | (currChunkX << 4);
-                                mutablePos.setX(blockX);
-
-                                final BlockState blockState = blocks.get(localBlockIndex);
+                                final BlockState blockState = blocks.get((currX) | (currZ << 4) | ((currY) << 8));
 
                                 if (blockState.is(Blocks.LAVA) || blockState.is(BlockTags.FIRE)) {
                                     return new NoneMatchStream<>(false);
@@ -426,9 +412,7 @@ abstract class EntityMixin {
 
         for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
             for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
-                final ChunkAccess chunk = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, false);
-
-                final LevelChunkSection[] sections = chunk.getSections();
+                final LevelChunkSection[] sections = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, false).getSections();
 
                 for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
                     final int sectionIdx = currChunkY - minSection;
@@ -451,17 +435,13 @@ abstract class EntityMixin {
                     final int maxYIterate = currChunkY == maxChunkY ? (maxBlockY & 15) : 15;
 
                     for (int currY = minYIterate; currY <= maxYIterate; ++currY) {
-                        final int blockY = currY | (currChunkY << 4);
-                        mutablePos.setY(blockY);
+                        mutablePos.setY(currY | (currChunkY << 4));
                         for (int currZ = minZIterate; currZ <= maxZIterate; ++currZ) {
-                            final int blockZ = currZ | (currChunkZ << 4);
-                            mutablePos.setZ(blockZ);
+                            mutablePos.setZ(currZ | (currChunkZ << 4));
                             for (int currX = minXIterate; currX <= maxXIterate; ++currX) {
-                                final int localBlockIndex = (currX) | (currZ << 4) | ((currY) << 8);
-                                final int blockX = currX | (currChunkX << 4);
-                                mutablePos.setX(blockX);
+                                mutablePos.setX(currX | (currChunkX << 4));
 
-                                final BlockState blockState = blocks.get(localBlockIndex);
+                                final BlockState blockState = blocks.get((currX) | (currZ << 4) | ((currY) << 8));
 
                                 if (!this.isAlive()) {
                                     return;
@@ -475,24 +455,5 @@ abstract class EntityMixin {
                 }
             }
         }
-    }
-
-    /**
-     * @reason Optimise implementation
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public boolean touchingUnloadedChunk() {
-        final AABB box = this.getBoundingBox();
-
-        final int minBlockX = Mth.floor(box.minX) - 1;
-        final int minBlockZ = Mth.floor(box.minZ) - 1;
-        final int maxBlockX = Mth.ceil(box.maxX) + 1;
-        final int maxBlockZ = Mth.ceil(box.maxZ) + 1;
-
-        return !((ChunkSystemLevel)this.level).moonrise$areChunksLoaded(
-            minBlockX >> 4, minBlockZ >> 4,
-            maxBlockX >> 4, maxBlockZ >> 4
-        );
     }
 }
