@@ -22,9 +22,11 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.Arrays;
 import java.util.function.Supplier;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Shapes.class)
 abstract class ShapesMixin {
@@ -219,11 +221,24 @@ abstract class ShapesMixin {
     }
 
     /**
+     * Use an inject instead of overwrite to avoid mixin conflicts - obviously this will still disregard any changes made by other
+     * mixins, but at least it won't conflict immediately. This is useful because some library mods mixin here when only the content
+     * mod actually needs the change.
+     *
      * @reason Route to faster logic
      * @author Spottedleaf
      */
-    @Overwrite
-    public static VoxelShape joinUnoptimized(final VoxelShape first, final VoxelShape second, final BooleanOp mergeFunction) {
+    @Inject(
+        method = "joinUnoptimized",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private static void injectJoinUnoptimized(final VoxelShape first, final VoxelShape second, final BooleanOp mergeFunction, final CallbackInfoReturnable<VoxelShape> cir) {
+        cir.setReturnValue(joinUnoptimized(first, second, mergeFunction));
+    }
+
+    @Unique
+    private static VoxelShape joinUnoptimized(final VoxelShape first, final VoxelShape second, final BooleanOp mergeFunction) {
         final VoxelShape ret = CollisionUtil.joinUnoptimized(first, second, mergeFunction);
         if (DEBUG_SHAPE_MERGING) {
             final VoxelShape vanilla = joinUnoptimizedVanilla(first, second, mergeFunction);
@@ -239,9 +254,19 @@ abstract class ShapesMixin {
     /**
      * @reason Route to faster logic
      * @author Spottedleaf
+     * @see #injectJoinUnoptimized(VoxelShape, VoxelShape, BooleanOp, CallbackInfoReturnable)
      */
-    @Overwrite
-    public static boolean joinIsNotEmpty(final VoxelShape first, final VoxelShape second, final BooleanOp mergeFunction) {
+    @Inject(
+        method = "joinIsNotEmpty(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/BooleanOp;)Z",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private static void injectJoinIsNotEmpty(final VoxelShape first, final VoxelShape second, final BooleanOp mergeFunction, final CallbackInfoReturnable<Boolean> cir) {
+        cir.setReturnValue(joinIsNotEmpty(first, second, mergeFunction));
+    }
+
+    @Unique
+    private static boolean joinIsNotEmpty(final VoxelShape first, final VoxelShape second, final BooleanOp mergeFunction) {
         final boolean ret = CollisionUtil.isJoinNonEmpty(first, second, mergeFunction);
         if (DEBUG_SHAPE_MERGING) {
             if (ret != !joinUnoptimizedVanilla(first, second, mergeFunction).isEmpty()) {
