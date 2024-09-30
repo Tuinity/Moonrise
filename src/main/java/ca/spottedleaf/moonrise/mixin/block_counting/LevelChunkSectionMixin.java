@@ -60,6 +60,9 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     private int specialCollidingBlocks;
 
     @Unique
+    private boolean client = false;
+
+    @Unique
     private final IntList tickingBlocks = new IntList();
 
     @Override
@@ -87,11 +90,17 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
         if (oldState == newState) {
             return;
         }
-        if (CollisionUtil.isSpecialCollidingBlock(oldState)) {
-            --this.specialCollidingBlocks;
-        }
-        if (CollisionUtil.isSpecialCollidingBlock(newState)) {
-            ++this.specialCollidingBlocks;
+        if (!this.client) {
+            if (CollisionUtil.isSpecialCollidingBlock(oldState)) {
+                --this.specialCollidingBlocks;
+            }
+            if (CollisionUtil.isSpecialCollidingBlock(newState)) {
+                ++this.specialCollidingBlocks;
+            }
+        } else {
+            if (CollisionUtil.isSpecialCollidingBlock(newState)) {
+                this.specialCollidingBlocks = 1;
+            }
         }
 
         final int position = x | (z << 4) | (y << (4+4));
@@ -196,5 +205,6 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     )
     private void checkForSpecialCollidingBlocksClient(final CallbackInfo ci) {
         this.specialCollidingBlocks = this.maybeHas(CollisionUtil::isSpecialCollidingBlock) ? 1 : 0;
+        this.client = true;
     }
 }
