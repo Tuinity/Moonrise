@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.fluid;
 
+import ca.spottedleaf.moonrise.patches.fluid.FluidFluidState;
 import com.mojang.serialization.MapCodec;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.world.level.block.state.BlockState;
@@ -11,12 +12,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(FluidState.class)
-abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> {
+abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> implements FluidFluidState {
 
     @Shadow
     public abstract Fluid getType();
@@ -43,23 +41,9 @@ abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> {
     @Unique
     private BlockState legacyBlock;
 
-    /**
-     * @reason Initialise caches
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "<init>",
-            at = @At(
-                    value = "RETURN"
-            )
-    )
-    private void init(final CallbackInfo ci) {
-        try {
-            this.amount = this.getType().getAmount((FluidState)(Object)this);
-        } catch (final Exception ex) {
-            // https://github.com/JDKDigital/productivetrees/issues/16
-            new RuntimeException("Failed to retrieve fluid amount for " + this, ex).printStackTrace();
-        }
+    @Override
+    public void moonrise$initCaches() {
+        this.amount = this.getType().getAmount((FluidState)(Object)this);
         this.isEmpty = this.getType().isEmpty();
         this.isSource = this.getType().isSource((FluidState)(Object)this);
         this.ownHeight = this.getType().getOwnHeight((FluidState)(Object)this);
