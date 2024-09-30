@@ -99,8 +99,18 @@ abstract class EntityTickListMixin {
      * @reason Route to new entity list
      * @author Spottedleaf
      */
-    @Overwrite
-    public void forEach(final Consumer<Entity> action) {
+    @Inject(
+        method = "forEach",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void injectForEach(final Consumer<Entity> consumer, final CallbackInfo ci) {
+        this.forEach(consumer);
+        ci.cancel();
+    }
+
+    @Unique
+    private void forEach(final Consumer<Entity> action) {
         // To ensure nothing weird happens with dimension travelling, do not iterate over new entries...
         // (by dfl iterator() is configured to not iterate over new entries)
         final IteratorSafeOrderedReferenceSet.Iterator<Entity> iterator = this.entities.iterator();
