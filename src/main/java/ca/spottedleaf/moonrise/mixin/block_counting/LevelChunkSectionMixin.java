@@ -55,6 +55,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
         }
     }
 
+    // Client-side: this will only be 0 or 1 (0 meaning no special colliders, 1 meaning any non-0 amount), see checkForSpecialCollidingBlocksClient and uses of moonrise$getSpecialCollidingBlocks
     @Unique
     private int specialCollidingBlocks;
 
@@ -184,7 +185,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     }
 
     /**
-     * @reason Call recalcBlockCounts on the client, as the client does not invoke it when deserializing chunk sections.
+     * @reason We need to know if there are any special colliding blocks in the section
      * @author Spottedleaf
      */
     @Inject(
@@ -193,7 +194,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                     value = "RETURN"
             )
     )
-    private void callRecalcBlocksClient(final CallbackInfo ci) {
-        this.recalcBlockCounts();
+    private void checkForSpecialCollidingBlocksClient(final CallbackInfo ci) {
+        this.specialCollidingBlocks = this.maybeHas(CollisionUtil::isSpecialCollidingBlock) ? 1 : 0;
     }
 }
