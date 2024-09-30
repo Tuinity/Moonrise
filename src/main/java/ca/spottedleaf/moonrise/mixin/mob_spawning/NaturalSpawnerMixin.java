@@ -27,7 +27,7 @@ abstract class NaturalSpawnerMixin {
      * @author Spottedleaf
      */
     @Redirect(
-        method = "method_27819",
+        method = {"method_27819", "lambda$createState$2"}, // Fabric, NeoForge
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/NaturalSpawner;getRoughBiome(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/chunk/ChunkAccess;)Lnet/minecraft/world/level/biome/Biome;"
@@ -42,7 +42,7 @@ abstract class NaturalSpawnerMixin {
      * @author Spottedleaf
      */
     @Redirect(
-        method = "method_27819",
+        method = {"method_27819", "lambda$createState$2"}, // Fabric, NeoForge
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/biome/Biome;getMobSettings()Lnet/minecraft/world/level/biome/MobSpawnSettings;"
@@ -57,7 +57,7 @@ abstract class NaturalSpawnerMixin {
      * @author Spottedleaf
      */
     @Redirect(
-        method = "method_27819",
+        method = {"method_27819", "lambda$createState$2"}, // Fabric, NeoForge
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/biome/MobSpawnSettings;getMobSpawnCost(Lnet/minecraft/world/entity/EntityType;)Lnet/minecraft/world/level/biome/MobSpawnSettings$MobSpawnCost;"
