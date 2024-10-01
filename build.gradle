@@ -1,7 +1,8 @@
 import me.modmuss50.mpp.ReleaseType
 
 plugins {
-    id("xyz.jpenilla.quiet-architectury-loom")
+    id("java-library")
+    id("net.neoforged.moddev")
     id("me.modmuss50.mod-publish-plugin") version "0.7.2" apply false
 }
 
@@ -18,24 +19,39 @@ def getGitCommit = { ->
     return stdout.toString().trim()
 }
 
+Aw2AtTask.configureDefault(
+    getProject(),
+    layout.projectDirectory.file("src/main/resources/moonrise.accesswidener").getAsFile(),
+    sourceSets.main
+)
+
+neoForge {
+    neoFormVersion = "1.21.3-20241023.131943"
+    validateAccessTransformers = true
+}
+
+tasks.named("createMinecraftArtifacts") {
+    dependsOn("copyAt")
+}
 
 dependencies {
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    // todo: check versions
+    compileOnly "net.fabricmc:sponge-mixin:0.13.4+mixin.0.8.5"
+    compileOnly "io.github.llamalad7:mixinextras-common:0.4.1"
 
     api("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     api("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}")
     api("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
 
-    modImplementation "me.shedaniel.cloth:cloth-config:${rootProject.cloth_version}"
+    // todo: does cloth publish a platform-agnostic jar in mojang mappings?
+    compileOnly "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_version}"
 }
-
-File awFile = file("src/main/resources/moonrise.accesswidener")
 
 allprojects {
     group = rootProject.maven_group
     version = rootProject.mod_version + "+" + getGitCommit()
 
-    plugins.apply("xyz.jpenilla.quiet-architectury-loom")
+    plugins.apply("java-library")
 
     java {
         withSourcesJar()
@@ -62,11 +78,6 @@ allprojects {
         maven { url "https://maven.terraformersmc.com/releases/" }
     }
 
-    dependencies {
-        minecraft "com.mojang:minecraft:${project.minecraft_version}"
-        mappings loom.officialMojangMappings()
-    }
-
     // make build reproducible
     tasks.withType(AbstractArchiveTask).configureEach {
         preserveFileTimestamps = false
@@ -82,32 +93,12 @@ allprojects {
             rename { "${it}_${rootProject.base.archivesName.get()}"}
         }
     }
-
-    loom {
-        accessWidenerPath = awFile
-        mixin {
-            useLegacyMixinAp = false
-        }
-    }
 }
 
 subprojects {
-    loom.mods {
-        main {
-            sourceSet("main")
-            sourceSet("main", project.rootProject)
-        }
-    }
-    loom.runs.all {
-        ideConfigGenerated true
-        property "mixin.debug", "true"
-        property "Moonrise.MaxViewDistance", "128"
-    }
-
     plugins.apply("me.modmuss50.mod-publish-plugin")
 
     publishMods {
-        file = remapJar.archiveFile
         if (project.version.contains("-beta.")) {
             type = ReleaseType.BETA
         } else {
@@ -129,33 +120,4 @@ subprojects {
             minecraftVersions = supportedMcVersions
         }
     }
-
-    // Setup a run with lithium for compatibility testing
-    sourceSets.create("lithium")
-    configurations.create("lithium")
-    loom {
-        createRemapConfigurations(sourceSets.lithium)
-        runs {
-            register("lithiumClient") {
-                client()
-                property "mixin.debug", "true"
-            }
-        }
-    }
-    tasks.named("runLithiumClient", net.fabricmc.loom.task.RunGameTask.class) {
-        getClasspath().from(configurations.modRuntimeClasspathLithiumMapped)
-    }
-    dependencies {
-        String coordinates =  "maven.modrinth:lithium:"
-        if (getProject().name == "Moonrise-NeoForge") {
-            coordinates += rootProject.neo_lithium_version
-        } else {
-            coordinates += rootProject.fabric_lithium_version
-        }
-        modLithiumRuntimeOnly coordinates
-    }
-}
-
-loom.runs.all {
-    ideConfigGenerated false
 }

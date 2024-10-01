@@ -1,5 +1,5 @@
 plugins {
-    id("xyz.jpenilla.quiet-architectury-loom")
+    id("quiet-fabric-loom")
     id 'maven-publish'
     id 'com.gradleup.shadow'
 }
@@ -13,9 +13,14 @@ configurations.implementation {
 }
 
 dependencies {
-    add('shadow', project([path: ":", configuration: "namedElements"]))
-    runtimeOnly(project(":").sourceSets.main.output)
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    // todo: runs are broken (cannot find aw file)
+    //add('shadow', project([path: ":", configuration: "namedElements"]))
+    //runtimeOnly(project(":").sourceSets.main.output)
+    libs(project(":"))
 
     libs("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     libs("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}")
@@ -49,6 +54,7 @@ shadowJar {
 }
 
 publishMods {
+    file = remapJar.archiveFile
     modLoaders = ["fabric"]
 
     modrinth {
@@ -65,4 +71,47 @@ publishMods {
             "c2me"
         )
     }
+}
+
+loom {
+    accessWidenerPath.set(getRootProject().file("src/main/resources/moonrise.accesswidener"))
+    mixin {
+        useLegacyMixinAp = false
+    }
+    runs.all {
+        ideConfigGenerated true
+        property "mixin.debug", "true"
+        property "Moonrise.MaxViewDistance", "128"
+    }
+    mods {
+        main {
+            sourceSet("main")
+            sourceSet("main", project.rootProject)
+        }
+    }
+}
+
+// Setup a run with lithium for compatibility testing
+sourceSets.create("lithium")
+configurations.create("lithium")
+loom {
+    createRemapConfigurations(sourceSets.lithium)
+    runs {
+        register("lithiumClient") {
+            client()
+            property "mixin.debug", "true"
+        }
+    }
+}
+tasks.named("runLithiumClient", net.fabricmc.loom.task.RunGameTask.class) {
+    getClasspath().from(configurations.modRuntimeClasspathLithiumMapped)
+}
+dependencies {
+    String coordinates =  "maven.modrinth:lithium:"
+    if (getProject().name == "Moonrise-NeoForge") {
+        coordinates += rootProject.neo_lithium_version
+    } else {
+        coordinates += rootProject.fabric_lithium_version
+    }
+    modLithiumRuntimeOnly coordinates
 }

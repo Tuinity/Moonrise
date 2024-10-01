@@ -22,6 +22,8 @@ accessible field net/minecraft/world/level/chunk/PalettedContainer data Lnet/min
 
 # PalettedContainer.Data
 accessible class net/minecraft/world/level/chunk/PalettedContainer$Data
+# MDG requires we AT the constructor if we AT the class
+accessible method net/minecraft/world/level/chunk/PalettedContainer$Data <init> (Lnet/minecraft/world/level/chunk/PalettedContainer$Configuration;Lnet/minecraft/util/BitStorage;Lnet/minecraft/world/level/chunk/Palette;)V
 
 
 # PaletteResize
@@ -150,6 +152,11 @@ accessible method net/minecraft/world/level/material/Fluid isEmpty ()Z
 accessible method net/minecraft/world/level/material/Fluid createLegacyBlock (Lnet/minecraft/world/level/material/FluidState;)Lnet/minecraft/world/level/block/state/BlockState;
 accessible method net/minecraft/world/level/material/Fluid isRandomlyTicking ()Z
 
+# We need to manually copy these down for MDG
+accessible method net/minecraft/world/level/material/EmptyFluid isEmpty ()Z
+accessible method net/minecraft/world/level/material/EmptyFluid createLegacyBlock (Lnet/minecraft/world/level/material/FluidState;)Lnet/minecraft/world/level/block/state/BlockState;
+accessible method net/minecraft/world/level/material/LavaFluid createLegacyBlock (Lnet/minecraft/world/level/material/FluidState;)Lnet/minecraft/world/level/block/state/BlockState;
+accessible method net/minecraft/world/level/material/LavaFluid isRandomlyTicking ()Z
 
 # VisibilitySet
 accessible field net/minecraft/client/renderer/chunk/VisibilitySet FACINGS I
