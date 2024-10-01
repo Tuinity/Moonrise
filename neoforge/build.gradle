@@ -1,7 +1,8 @@
-import net.fabricmc.loom.util.aw2at.Aw2At
+import net.neoforged.moddevgradle.internal.RunGameTask
+import java.nio.file.Files
 
 plugins {
-    id("xyz.jpenilla.quiet-architectury-loom")
+    id("net.neoforged.moddev")
     id 'maven-publish'
     id 'com.gradleup.shadow'
 }
@@ -13,20 +14,54 @@ repositories {
     }
 }
 
+Aw2AtTask.configureDefault(
+    getProject(),
+    rootProject.layout.projectDirectory.file("src/main/resources/moonrise.accesswidener").getAsFile(),
+    sourceSets.main
+)
+
+neoForge {
+    version = rootProject.neoforge_version
+    validateAccessTransformers = true
+    runs {
+        client {
+            client()
+            mods.set([]) // Work around classpath issues by using the production jar for dev runs
+        }
+        server {
+            server()
+            mods.set([]) // Work around classpath issues by using the production jar for dev runs
+        }
+    }
+}
+
+tasks.named("createMinecraftArtifacts") {
+    dependsOn("copyAt")
+}
+
 configurations.implementation {
     extendsFrom(configurations.shadow)
 }
 
 dependencies {
-    add('shadow', project([path: ":", configuration: "namedElements"]))
-    neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
+    add('shadow', project(":"))
 
     shadow("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     shadow("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
-    forgeExtra("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
 
-    modImplementation "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_version}"
-    include "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_version}"
+    implementation "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_version}"
+    jarJar "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_version}"
+}
+
+// Work around classpath issues by using the production jar for dev runs
+tasks.withType(RunGameTask).configureEach {
+    dependsOn(tasks.shadowJar)
+    doFirst {
+        def jar = file("run/mods/main.jar")
+        jar.parentFile.mkdirs()
+        jar.delete()
+        Files.copy(tasks.shadowJar.archiveFile.get().asFile.toPath(), jar.toPath())
+    }
 }
 
 processResources {
@@ -37,17 +72,20 @@ processResources {
     }
 }
 
+jar {
+    archiveClassifier = ""
+}
+
 shadowJar {
-    archiveClassifier = "dev-all"
+    archiveClassifier = ""
     destinationDirectory = layout.buildDirectory.dir("libs")
     configurations = [project.configurations.shadow]
     relocate 'ca.spottedleaf.concurrentutil', 'ca.spottedleaf.moonrise.libs.ca.spottedleaf.concurrentutil'
     relocate 'org.yaml.snakeyaml', 'ca.spottedleaf.moonrise.libs.org.yaml.snakeyaml'
 }
 
-Aw2At.setup(getProject(), tasks.remapJar)
-
 publishMods {
+    file = shadowJar.archiveFile
     modLoaders = ["neoforge"]
 
     modrinth {

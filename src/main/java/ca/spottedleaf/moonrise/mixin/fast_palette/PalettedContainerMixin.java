@@ -24,7 +24,7 @@ abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedCo
     private void updateData(final PalettedContainer.Data<T> data) {
         if (data != null) {
             ((FastPaletteData<T>)(Object)data).moonrise$setPalette(
-                    ((FastPalette<T>)data.palette).moonrise$getRawPalette((FastPaletteData<T>)(Object)data)
+                    ((FastPalette<T>)data.palette()).moonrise$getRawPalette((FastPaletteData<T>)(Object)data)
             );
         }
     }
@@ -102,7 +102,7 @@ abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedCo
 
     @Unique
     private T readPaletteSlow(final PalettedContainer.Data<T> data, final int paletteIdx) {
-        return data.palette.valueFor(paletteIdx);
+        return data.palette().valueFor(paletteIdx);
     }
 
     @Unique
@@ -125,9 +125,9 @@ abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedCo
      */
     @Overwrite
     public T getAndSet(final int index, final T value) {
-        final int paletteIdx = this.data.palette.idFor(value);
+        final int paletteIdx = this.data.palette().idFor(value);
         final PalettedContainer.Data<T> data = this.data;
-        final int prev = data.storage.getAndSet(index, paletteIdx);
+        final int prev = data.storage().getAndSet(index, paletteIdx);
         return this.readPalette(data, prev);
     }
 
@@ -138,6 +138,6 @@ abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedCo
     @Overwrite
     public T get(final int index) {
         final PalettedContainer.Data<T> data = this.data;
-        return this.readPalette(data, data.storage.get(index));
+        return this.readPalette(data, data.storage().get(index));
     }
 }
