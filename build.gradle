@@ -19,7 +19,7 @@ def getGitCommit = { ->
     return stdout.toString().trim()
 }
 
-Aw2AtTask.configureDefault(
+def aw2at = Aw2AtTask.configureDefault(
     getProject(),
     layout.projectDirectory.file("src/main/resources/moonrise.accesswidener").getAsFile(),
     sourceSets.main
@@ -28,10 +28,7 @@ Aw2AtTask.configureDefault(
 neoForge {
     neoFormVersion = "1.21.1-20240808.144430"
     validateAccessTransformers = true
-}
-
-tasks.named("createMinecraftArtifacts") {
-    dependsOn("copyAt")
+    accessTransformers.files.setFrom(aw2at.flatMap { t -> t.getOutputFile() })
 }
 
 dependencies {
