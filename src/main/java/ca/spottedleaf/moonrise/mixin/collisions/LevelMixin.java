@@ -1,6 +1,5 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
-import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
@@ -34,15 +33,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// Higher priority to apply after Lithium mixin.world.inline_height.WorldMixin
-@Mixin(value = Level.class, priority = 1100)
+@Mixin(Level.class)
 abstract class LevelMixin implements LevelAccessor, AutoCloseable {
 
     @Shadow

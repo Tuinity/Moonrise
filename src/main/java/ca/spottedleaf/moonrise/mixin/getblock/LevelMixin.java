@@ -11,7 +11,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(Level.class)
+// Higher priority to apply after Lithium mixin.world.inline_height.WorldMixin
+@Mixin(value = Level.class, priority = 1100)
 abstract class LevelMixin implements GetBlockLevel, LevelAccessor, AutoCloseable {
 
     @Unique
