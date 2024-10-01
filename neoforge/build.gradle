@@ -14,7 +14,7 @@ repositories {
     }
 }
 
-Aw2AtTask.configureDefault(
+def aw2at = Aw2AtTask.configureDefault(
     getProject(),
     rootProject.layout.projectDirectory.file("src/main/resources/moonrise.accesswidener").getAsFile(),
     sourceSets.main
@@ -23,6 +23,7 @@ Aw2AtTask.configureDefault(
 neoForge {
     version = rootProject.neoforge_version
     validateAccessTransformers = true
+    accessTransformers.files.setFrom(aw2at.flatMap { t -> t.getOutputFile() })
     runs {
         client {
             client()
@@ -33,10 +34,6 @@ neoForge {
             mods.set([]) // Work around classpath issues by using the production jar for dev runs
         }
     }
-}
-
-tasks.named("createMinecraftArtifacts") {
-    dependsOn("copyAt")
 }
 
 configurations.implementation {
