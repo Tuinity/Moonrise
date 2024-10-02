@@ -21,7 +21,8 @@ abstract class PalettedContainerMixin {
         at = @At(
             value = "NEW",
             target = "Lnet/minecraft/util/ThreadingDetector;"
-        )
+        ),
+        require = 3 // Require matching all 3 constructors
     )
     private static ThreadingDetector threadingDetector(final String name) {
         return THREADING_DETECTOR;

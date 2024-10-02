@@ -35,40 +35,13 @@ abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedCo
      * @author Spottedleaf
      */
     @Inject(
-            method = "<init>(Lnet/minecraft/core/IdMap;Ljava/lang/Object;Lnet/minecraft/world/level/chunk/PalettedContainer$Strategy;)V",
+            method = "<init>*",
             at = @At(
                     value = "RETURN"
-            )
+            ),
+            require = 3 // Require matching all 3 constructors
     )
-    private void constructorHook1(final CallbackInfo ci) {
-        this.updateData(this.data);
-    }
-
-    /**
-     * @reason Hook to update raw palette data on object construction
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "<init>(Lnet/minecraft/core/IdMap;Lnet/minecraft/world/level/chunk/PalettedContainer$Strategy;Lnet/minecraft/world/level/chunk/PalettedContainer$Configuration;Lnet/minecraft/util/BitStorage;Ljava/util/List;)V",
-            at = @At(
-                    value = "RETURN"
-            )
-    )
-    private void constructorHook2(final CallbackInfo ci) {
-        this.updateData(this.data);
-    }
-
-    /**
-     * @reason Hook to update raw palette data on object construction
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "<init>(Lnet/minecraft/core/IdMap;Lnet/minecraft/world/level/chunk/PalettedContainer$Strategy;Lnet/minecraft/world/level/chunk/PalettedContainer$Data;)V",
-            at = @At(
-                    value = "RETURN"
-            )
-    )
-    private void constructorHook3(final CallbackInfo ci) {
+    private void constructorHook(final CallbackInfo ci) {
         this.updateData(this.data);
     }
 
