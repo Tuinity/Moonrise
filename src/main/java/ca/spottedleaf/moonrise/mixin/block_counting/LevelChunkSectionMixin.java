@@ -154,9 +154,9 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
 
         if (this.maybeHas((final BlockState state) -> !state.isAir())) {
             final PalettedContainer.Data<BlockState> data = this.states.data;
-            final Palette<BlockState> palette = data.palette;
+            final Palette<BlockState> palette = data.palette();
             final int paletteSize = palette.getSize();
-            final BitStorage storage = data.storage;
+            final BitStorage storage = data.storage();
 
             final Int2ObjectOpenHashMap<ShortArrayList> counts;
             if (paletteSize == 1) {
