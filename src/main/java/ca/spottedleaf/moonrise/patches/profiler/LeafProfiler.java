@@ -2,6 +2,8 @@ package ca.spottedleaf.moonrise.patches.profiler;
 
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.slf4j.Logger;
@@ -169,6 +171,7 @@ public final class LeafProfiler {
         public final List<ProfileNode> children = new ArrayList<>();
         public long childrenTimingCount;
         public int depth = -1;
+        public boolean lastChild;
 
         private ProfileNode(final ProfileNode parent, final int nodeId, final LProfilerRegistry.ProfilerEntry profiler,
                             final long totalTime, final long totalCount) {
@@ -188,11 +191,6 @@ public final class LeafProfiler {
             long[] timers,
             long[] counters
     ) {
-        private static final char[][] INDENT_PATTERNS = new char[][] {
-                "|---".toCharArray(),
-                "|+++".toCharArray(),
-        };
-
         public List<String> dumpToString() {
             final List<LProfileGraph.GraphNode> graphDFS = this.graph.getDFS();
             final Reference2ReferenceOpenHashMap<LProfileGraph.GraphNode, ProfileNode> nodeMap = new Reference2ReferenceOpenHashMap<>();
@@ -232,14 +230,10 @@ public final class LeafProfiler {
                 totalTime += node.totalTime;
             }
 
-            ProfileNode profileNode;
-            final StringBuilder builder = new StringBuilder();
-            while ((profileNode = orderedNodes.pollFirst()) != null) {
-                if (profileNode.nodeId != LProfileGraph.ROOT_NODE && profileNode.totalCount == 0L) {
-                    // skip nodes not recorded
-                    continue;
-                }
+            final ArrayDeque<ProfileNode> flatOrderedNodes = new ArrayDeque<>();
 
+            ProfileNode profileNode;
+            while ((profileNode = orderedNodes.pollFirst()) != null) {
                 final int depth = profileNode.depth;
                 profileNode.children.sort((final ProfileNode p1, final ProfileNode p2) -> {
                     final int typeCompare = p1.profiler.type().compareTo(p2.profiler.type());
@@ -257,12 +251,32 @@ public final class LeafProfiler {
                     }
                 });
 
+                boolean first = true;
                 for (int i = profileNode.children.size() - 1; i >= 0; --i) {
                     final ProfileNode child = profileNode.children.get(i);
+                    if (child.totalCount == 0L) {
+                        // skip nodes not recorded
+                        continue;
+                    }
+                    if (first) {
+                        child.lastChild = true;
+                        first = false;
+                    }
                     child.depth = depth + 1;
                     orderedNodes.addFirst(child);
                 }
 
+                flatOrderedNodes.addLast(profileNode);
+            }
+
+            final StringBuilder builder = new StringBuilder();
+            final IntList closed = new IntArrayList();
+            while ((profileNode = flatOrderedNodes.pollFirst()) != null) {
+                final int depth = profileNode.depth;
+                closed.removeIf((int d) -> d >= depth);
+                if (profileNode.lastChild) {
+                    closed.add(depth);
+                }
                 if (profileNode.nodeId == LProfileGraph.ROOT_NODE) {
                     // don't display root
                     continue;
@@ -280,9 +294,18 @@ public final class LeafProfiler {
                 // <indent>#<name> avg X sum Y
                 builder.setLength(0);
                 // prepare indent
-                final char[] indent = INDENT_PATTERNS[ret.size() % INDENT_PATTERNS.length];
                 for (int i = 0; i < depth; ++i) {
-                    builder.append(indent);
+                    if (i == depth - 1) {
+                        if (flatOrderedNodes.peekFirst() == null || profileNode.lastChild) {
+                            builder.append("  └─");
+                        } else {
+                            builder.append("  ├─");
+                        }
+                    } else if (!closed.contains(i + 1)) {
+                        builder.append("  │ ");
+                    } else {
+                        builder.append("    ");
+                    }
                 }
 
                 switch (profilerEntry.type()) {
