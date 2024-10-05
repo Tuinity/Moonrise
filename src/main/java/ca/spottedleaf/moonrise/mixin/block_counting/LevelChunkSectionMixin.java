@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import net.minecraft.util.BitStorage;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.Palette;
@@ -65,6 +66,15 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     private short specialCollidingBlocks;
 
     @Unique
+    private short fluids;
+
+    @Unique
+    private short lavaFluids;
+
+    @Unique
+    private short waterFluids;
+
+    @Unique
     private final ShortList tickingBlocks = new ShortList();
 
     @Override
@@ -75,6 +85,21 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     @Override
     public final ShortList moonrise$getTickingBlockList() {
         return this.tickingBlocks;
+    }
+
+    @Override
+    public final boolean moonrise$hasFluids() {
+        return this.fluids != 0;
+    }
+
+    @Override
+    public final boolean moonrise$hasLavaFluids() {
+        return this.lavaFluids != 0;
+    }
+
+    @Override
+    public final boolean moonrise$hasWaterFluids() {
+        return this.waterFluids != 0;
     }
 
     /**
@@ -122,6 +147,45 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                 tickingBlocks.add(position);
             }
         }
+
+        final FluidState oldFluid = oldState.getFluidState();
+        final FluidState newFluid = newState.getFluidState();
+        final boolean hasOldFluid = !oldFluid.isEmpty();
+        final boolean hasNewFluid = !newFluid.isEmpty();
+        if (hasOldFluid != hasNewFluid) {
+            if (hasOldFluid) {
+                --this.fluids;
+            } else {
+                ++this.fluids;
+            }
+        }
+        if (hasOldFluid || hasNewFluid) {
+            boolean fluidChecked = false;
+            final boolean isOldWater = oldFluid.is(FluidTags.WATER);
+            final boolean isNewWater = newFluid.is(FluidTags.WATER);
+
+            if (isOldWater != isNewWater) {
+                if (isOldWater) {
+                    --this.waterFluids;
+                } else {
+                    ++this.waterFluids;
+                }
+                fluidChecked = true;
+            }
+
+            if (!fluidChecked) {
+                final boolean isOldLava = oldFluid.is(FluidTags.LAVA);
+                final boolean isNewLava = newFluid.is(FluidTags.LAVA);
+
+                if (isOldLava != isNewLava) {
+                    if (isOldLava) {
+                        --this.lavaFluids;
+                    } else {
+                        ++this.lavaFluids;
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -150,6 +214,9 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
         this.tickingBlockCount = (short)0;
         this.tickingFluidCount = (short)0;
         this.specialCollidingBlocks = (short)0;
+        this.fluids = (short)0;
+        this.lavaFluids = (short)0;
+        this.waterFluids = (short)0;
         this.tickingBlocks.clear();
 
         if (this.maybeHas((final BlockState state) -> !state.isAir())) {
@@ -203,6 +270,13 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                     //this.nonEmptyBlockCount += count; // fix vanilla bug: make non-empty block count correct
                     if (fluid.isRandomlyTicking()) {
                         this.tickingFluidCount += (short)paletteCount;
+                    }
+                    this.fluids += (short)paletteCount;
+
+                    if (fluid.is(FluidTags.WATER)) {
+                        this.waterFluids += (short)paletteCount;
+                    } else if (fluid.is(FluidTags.LAVA)) {
+                        this.lavaFluids += (short)paletteCount;
                     }
                 }
             }

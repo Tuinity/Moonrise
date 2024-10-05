@@ -8,4 +8,10 @@ public interface BlockCountingChunkSection {
 
     public ShortList moonrise$getTickingBlockList();
 
+    public boolean moonrise$hasFluids();
+
+    public boolean moonrise$hasLavaFluids();
+
+    public boolean moonrise$hasWaterFluids();
+
 }

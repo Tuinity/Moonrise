@@ -1,8 +1,10 @@
 package ca.spottedleaf.moonrise.fabric.mixin.collisions;
 
+import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
 import ca.spottedleaf.moonrise.patches.getblock.GetBlockLevel;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -104,6 +106,21 @@ abstract class EntityMixin {
                     final LevelChunkSection section = sections[sectionIdx];
                     if (section.hasOnlyAir()) {
                         // empty
+                        continue;
+                    }
+
+                    final BlockCountingChunkSection blockCountingSection = (BlockCountingChunkSection)section;
+                    final boolean hasFluids;
+                    if (fluid == FluidTags.WATER) {
+                        hasFluids = blockCountingSection.moonrise$hasWaterFluids();
+                    } else if (fluid == FluidTags.LAVA) {
+                        hasFluids = blockCountingSection.moonrise$hasLavaFluids();
+                    } else {
+                        hasFluids = blockCountingSection.moonrise$hasFluids();
+                    }
+
+                    if (!hasFluids) {
+                        // also empty
                         continue;
                     }
 

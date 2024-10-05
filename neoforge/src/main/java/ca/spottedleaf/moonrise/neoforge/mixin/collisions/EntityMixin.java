@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.neoforge.mixin.collisions;
 
 import ca.spottedleaf.moonrise.neoforge.patches.collisions.FluidPushCalculation;
+import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
 import ca.spottedleaf.moonrise.patches.getblock.GetBlockLevel;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceArrayMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
@@ -98,6 +99,11 @@ abstract class EntityMixin implements IEntityExtension {
                     final LevelChunkSection section = sections[sectionIdx];
                     if (section.hasOnlyAir()) {
                         // empty
+                        continue;
+                    }
+
+                    if (!((BlockCountingChunkSection)section).moonrise$hasFluids()) {
+                        // also empty
                         continue;
                     }
 
