@@ -35,7 +35,12 @@ abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedCo
      * @author Spottedleaf
      */
     @Inject(
-            method = "<init>*",
+            // cannot use `<init>*` due to https://github.com/FabricMC/tiny-remapper/issues/137
+            method = {
+                "<init>(Lnet/minecraft/core/IdMap;Lnet/minecraft/world/level/chunk/PalettedContainer$Strategy;Lnet/minecraft/world/level/chunk/PalettedContainer$Configuration;Lnet/minecraft/util/BitStorage;Ljava/util/List;)V",
+                "<init>(Lnet/minecraft/core/IdMap;Lnet/minecraft/world/level/chunk/PalettedContainer$Strategy;Lnet/minecraft/world/level/chunk/PalettedContainer$Data;)V",
+                "<init>(Lnet/minecraft/core/IdMap;Ljava/lang/Object;Lnet/minecraft/world/level/chunk/PalettedContainer$Strategy;)V"
+            },
             at = @At(
                     value = "RETURN"
             ),
