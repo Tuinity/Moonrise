@@ -3,6 +3,9 @@ package ca.spottedleaf.moonrise.fabric;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
+import net.fabricmc.fabric.api.event.Event;
+import net.fabricmc.fabric.api.event.EventFactory;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.GenerationChunkHolder;
@@ -25,6 +28,19 @@ import java.util.function.Predicate;
 
 public final class FabricHooks implements PlatformHooks {
 
+    public interface OnExplosionDetonate {
+        void onExplosion(final Level world, final Explosion explosion, final List<Entity> possiblyAffecting, final double diameter);
+    }
+
+    public static final Event<OnExplosionDetonate> ON_EXPLOSION_DETONATE = EventFactory.createArrayBacked(
+        OnExplosionDetonate.class,
+        listeners -> (final Level world, final Explosion explosion, final List<Entity> possiblyAffecting, final double diameter) -> {
+            for (int i = 0; i < listeners.length; i++) {
+                listeners[i].onExplosion(world, explosion, possiblyAffecting, diameter);
+            }
+        }
+    );
+
     @Override
     public String getBrand() {
         return "Moonrise";
@@ -44,7 +60,7 @@ public final class FabricHooks implements PlatformHooks {
 
     @Override
     public void onExplosion(final Level world, final Explosion explosion, final List<Entity> possiblyAffecting, final double diameter) {
-
+        ON_EXPLOSION_DETONATE.invoker().onExplosion(world, explosion, possiblyAffecting, diameter);
     }
 
     @Override
@@ -69,7 +85,7 @@ public final class FabricHooks implements PlatformHooks {
 
     @Override
     public void chunkFullStatusComplete(final LevelChunk newChunk, final ProtoChunk original) {
-
+        ServerChunkEvents.CHUNK_LOAD.invoker().onChunkLoad((ServerLevel) newChunk.getLevel(), newChunk);
     }
 
     @Override
@@ -84,7 +100,7 @@ public final class FabricHooks implements PlatformHooks {
 
     @Override
     public void chunkUnloadFromWorld(final LevelChunk chunk) {
-
+        ServerChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload((ServerLevel) chunk.getLevel(), chunk);
     }
 
     @Override
