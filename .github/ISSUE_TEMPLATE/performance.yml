@@ -1,0 +1,65 @@
+name: Performance Problem
+description: Report a performance problem that doesn't fall under the bug category.
+title: '[Performance: <NeoForge/Fabric/NeoForge & Fabric>]: Short description'
+labels:
+    - performance
+    - needs-triage
+body:
+    - type: input
+      id: mc_ver
+      attributes:
+          label: Minecraft Version
+          placeholder: e.g. 1.21.1, 1.21.2
+      validations:
+          required: true
+    - type: input
+      id: moonrise_ver
+      attributes:
+          label: Moonrise Version
+          placeholder: e.g. 0.1.0-beta.6 or Git commit hash
+      validations:
+          required: true
+    - type: dropdown
+      id: mod_loader
+      attributes:
+          label: Mod Loader
+          description: >-
+              The mod loader(s) this bug happens with. When selecting 'Both' it is
+              expected you have tested both as well. Be sure to update the issue
+              title.
+          options:
+              - NeoForge
+              - Fabric
+              - Both (NeoForge and Fabric)
+      validations:
+          required: true
+    - type: textarea
+      id: logs_crashes
+      attributes:
+          label: Logs and Crash Reports
+          description: >-
+              Include links to all relevant logs and crash reports (prefer using
+              https://gist.github.com/ or https://mclo.gs/). In case this is not
+              applicable fill in 'N/A' (it is expected you will provide context
+              below).
+      validations:
+          required: true
+    - type: textarea
+      id: profiler
+      attributes:
+          label: Profiler Data
+          description: >-
+              Provide profiler data showing the problem, from Spark or other tools. In
+              case this is not applicable fill in 'N/A' (it is expected you will
+              provide context below).
+      validations:
+          required: true
+    - type: textarea
+      id: context
+      attributes:
+          label: Additional Context
+          description: >-
+              Provide any relevant context, including reproduction steps, world data,
+              videos, etc.
+      validations:
+          required: true
