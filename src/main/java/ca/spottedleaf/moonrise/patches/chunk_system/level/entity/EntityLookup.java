@@ -14,6 +14,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.entity.EntityInLevelCallback;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.entity.LevelCallback;
@@ -55,9 +56,13 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
     protected final EntityList accessibleEntities = new EntityList();
 
     public EntityLookup(final Level world, final LevelCallback<Entity> worldCallback) {
+        this(world, world.dimensionType(), worldCallback);
+    }
+
+    public EntityLookup(final Level world, final DimensionType dimensionType, final LevelCallback<Entity> worldCallback) {
         this.world = world;
-        this.minSection = WorldUtil.getMinSection(world);
-        this.maxSection = WorldUtil.getMaxSection(world);
+        this.minSection = WorldUtil.getMinSection(dimensionType);
+        this.maxSection = WorldUtil.getMaxSection(dimensionType);
         this.worldCallback = worldCallback;
     }
 
