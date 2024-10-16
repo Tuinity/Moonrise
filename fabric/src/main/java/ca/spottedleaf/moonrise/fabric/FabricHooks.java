@@ -3,43 +3,29 @@ package ca.spottedleaf.moonrise.fabric;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
+import com.mojang.datafixers.DataFixer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import java.util.List;
 import java.util.function.Predicate;
 
 public final class FabricHooks implements PlatformHooks {
-
-    public interface OnExplosionDetonate {
-        void onExplosion(final Level world, final Explosion explosion, final List<Entity> possiblyAffecting, final double diameter);
-    }
-
-    public static final Event<OnExplosionDetonate> ON_EXPLOSION_DETONATE = EventFactory.createArrayBacked(
-        OnExplosionDetonate.class,
-        listeners -> (final Level world, final Explosion explosion, final List<Entity> possiblyAffecting, final double diameter) -> {
-            for (int i = 0; i < listeners.length; i++) {
-                listeners[i].onExplosion(world, explosion, possiblyAffecting, diameter);
-            }
-        }
-    );
 
     @Override
     public String getBrand() {
@@ -56,16 +42,6 @@ public final class FabricHooks implements PlatformHooks {
         return (final BlockState state) -> {
             return state.getLightEmission() != 0;
         };
-    }
-
-    @Override
-    public void onExplosion(final Level world, final Explosion explosion, final List<Entity> possiblyAffecting, final double diameter) {
-        ON_EXPLOSION_DETONATE.invoker().onExplosion(world, explosion, possiblyAffecting, diameter);
-    }
-
-    @Override
-    public Vec3 modifyExplosionKnockback(final Level world, final Explosion explosion, final Entity entity, final Vec3 original) {
-        return original;
     }
 
     @Override
@@ -104,7 +80,7 @@ public final class FabricHooks implements PlatformHooks {
     }
 
     @Override
-    public void chunkSyncSave(final ServerLevel world, final ChunkAccess chunk, final CompoundTag data) {
+    public void chunkSyncSave(final ServerLevel world, final ChunkAccess chunk, final SerializableChunkData data) {
 
     }
 
@@ -188,5 +164,26 @@ public final class FabricHooks implements PlatformHooks {
     @Override
     public boolean configFixMC159283() {
         return ConfigHolder.getConfig().bugFixes.fixMC159283;
+    }
+
+    @Override
+    public boolean forceNoSave(final ChunkAccess chunk) {
+        return false;
+    }
+
+    @Override
+    public CompoundTag convertNBT(final DataFixTypes type, final DataFixer dataFixer, final CompoundTag nbt,
+                                  final int fromVersion, final int toVersion) {
+        return type.update(dataFixer, nbt, fromVersion, toVersion);
+    }
+
+    @Override
+    public boolean hasMainChunkLoadHook() {
+        return false;
+    }
+
+    @Override
+    public void mainChunkLoad(final ChunkAccess chunk, final SerializableChunkData chunkData) {
+
     }
 }

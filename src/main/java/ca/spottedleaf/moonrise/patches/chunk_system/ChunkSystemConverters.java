@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.patches.chunk_system;
 
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import net.minecraft.SharedConstants;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -25,13 +26,13 @@ public final class ChunkSystemConverters {
     public static CompoundTag convertPoiCompoundTag(final CompoundTag data, final ServerLevel world) {
         final int dataVersion = getDataVersion(data, DEFAULT_POI_DATA_VERSION);
 
-        return DataFixTypes.POI_CHUNK.update(world.getServer().getFixerUpper(), data, dataVersion, getCurrentVersion());
+        return PlatformHooks.get().convertNBT(DataFixTypes.POI_CHUNK, world.getServer().getFixerUpper(), data, dataVersion, getCurrentVersion());
     }
 
     public static CompoundTag convertEntityChunkCompoundTag(final CompoundTag data, final ServerLevel world) {
         final int dataVersion = getDataVersion(data, DEFAULT_ENTITY_CHUNK_DATA_VERSION);
 
-        return DataFixTypes.ENTITY_CHUNK.update(world.getServer().getFixerUpper(), data, dataVersion, getCurrentVersion());
+        return PlatformHooks.get().convertNBT(DataFixTypes.ENTITY_CHUNK, world.getServer().getFixerUpper(), data, dataVersion, getCurrentVersion());
     }
 
     private ChunkSystemConverters() {}

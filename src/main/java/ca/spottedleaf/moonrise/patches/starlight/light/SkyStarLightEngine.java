@@ -290,9 +290,6 @@ public final class SkyStarLightEngine extends StarLightEngine {
         );
     }
 
-    protected final BlockPos.MutableBlockPos recalcCenterPos = new BlockPos.MutableBlockPos();
-    protected final BlockPos.MutableBlockPos recalcNeighbourPos = new BlockPos.MutableBlockPos();
-
     @Override
     protected int calculateLightValue(final LightChunkGetter lightAccess, final int worldX, final int worldY, final int worldZ,
                                       final int expect) {
@@ -304,8 +301,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
         final BlockState centerState = this.getBlockState(worldX, worldY, worldZ);
 
         final BlockState conditionallyOpaqueState;
-        this.recalcCenterPos.set(worldX, worldY, worldZ);
-        final int opacity = Math.max(1, centerState.getLightBlock(lightAccess.getLevel(), this.recalcCenterPos));
+        final int opacity = Math.max(1, centerState.getLightBlock());
         if (((StarlightAbstractBlockState)centerState).starlight$isConditionallyFullOpaque()) {
             conditionallyOpaqueState = centerState;
         } else {
@@ -334,9 +330,8 @@ public final class SkyStarLightEngine extends StarLightEngine {
                 // here the block can be conditionally opaque (i.e light cannot propagate from it), so we need to test that
                 // we don't read the blockstate because most of the time this is false, so using the faster
                 // known transparency lookup results in a net win
-                this.recalcNeighbourPos.set(offX, offY, offZ);
-                final VoxelShape neighbourFace = neighbourState.getFaceOcclusionShape(lightAccess.getLevel(), this.recalcNeighbourPos, direction.opposite.nms);
-                final VoxelShape thisFace = conditionallyOpaqueState == null ? Shapes.empty() : conditionallyOpaqueState.getFaceOcclusionShape(lightAccess.getLevel(), this.recalcCenterPos, direction.nms);
+                final VoxelShape neighbourFace = neighbourState.getFaceOcclusionShape(direction.opposite.nms);
+                final VoxelShape thisFace = conditionallyOpaqueState == null ? Shapes.empty() : conditionallyOpaqueState.getFaceOcclusionShape(direction.nms);
                 if (Shapes.faceShapeOccludes(thisFace, neighbourFace)) {
                     // not allowed to propagate
                     continue;
@@ -604,7 +599,6 @@ public final class SkyStarLightEngine extends StarLightEngine {
     // clobbering the light values will result in broken propagation)
     protected final int tryPropagateSkylight(final BlockGetter world, final int worldX, int startY, final int worldZ,
                                              final boolean extrudeInitialised, final boolean delayLightSet) {
-        final BlockPos.MutableBlockPos mutablePos = this.mutablePos3;
         final int encodeOffset = this.coordinateOffset;
         final long propagateDirection = AxisDirection.POSITIVE_Y.everythingButThisDirection; // just don't check upwards.
 
@@ -626,8 +620,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
 
             final VoxelShape fromShape;
             if (((StarlightAbstractBlockState)above).starlight$isConditionallyFullOpaque()) {
-                this.mutablePos2.set(worldX, startY + 1, worldZ);
-                fromShape = above.getFaceOcclusionShape(world, this.mutablePos2, AxisDirection.NEGATIVE_Y.nms);
+                fromShape = above.getFaceOcclusionShape(AxisDirection.NEGATIVE_Y.nms);
                 if (Shapes.faceShapeOccludes(Shapes.empty(), fromShape)) {
                     // above wont let us propagate
                     break;
@@ -637,10 +630,9 @@ public final class SkyStarLightEngine extends StarLightEngine {
             }
 
             // does light propagate from the top down?
-            mutablePos.set(worldX, startY, worldZ);
             long flags = 0L;
             if (((StarlightAbstractBlockState)current).starlight$isConditionallyFullOpaque()) {
-                final VoxelShape cullingFace = current.getFaceOcclusionShape(world, mutablePos, AxisDirection.POSITIVE_Y.nms);
+                final VoxelShape cullingFace = current.getFaceOcclusionShape(AxisDirection.POSITIVE_Y.nms);
 
                 if (Shapes.faceShapeOccludes(fromShape, cullingFace)) {
                     // can't propagate here, we're done on this column.
@@ -649,7 +641,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
                 flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
             }
 
-            final int opacity = current.getLightBlock(world, mutablePos);
+            final int opacity = current.getLightBlock();
             if (opacity > 0) {
                 // let the queued value (if any) handle it from here.
                 break;

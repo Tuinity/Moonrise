@@ -40,7 +40,8 @@ abstract class ClientPacketListenerMixin implements ClientGamePacketListener {
      */
 
     @Shadow
-    protected abstract void applyLightData(final int chunkX, final int chunkZ, final ClientboundLightUpdatePacketData clientboundLightUpdatePacketData);
+    protected abstract void applyLightData(final int chunkX, final int chunkZ, final ClientboundLightUpdatePacketData clientboundLightUpdatePacketData,
+                                           final boolean markDirty);
 
     @Shadow
     protected abstract void enableChunkLight(final LevelChunk levelChunk, final int chunkX, final int chunkZ);
@@ -127,7 +128,7 @@ abstract class ClientPacketListenerMixin implements ClientGamePacketListener {
             return;
         }
         // load in light data from packet immediately
-        this.applyLightData(chunkX, chunkZ, clientboundLevelChunkWithLightPacket.getLightData());
+        this.applyLightData(chunkX, chunkZ, clientboundLevelChunkWithLightPacket.getLightData(), false);
         ((StarLightLightingProvider)this.level.getChunkSource().getLightEngine()).starlight$clientChunkLoad(new ChunkPos(chunkX, chunkZ), chunk);
 
         // we need this for the update chunk status call, so that it can tell starlight what sections are empty and such

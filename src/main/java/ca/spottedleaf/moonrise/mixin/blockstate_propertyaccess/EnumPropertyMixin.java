@@ -18,9 +18,6 @@ import java.util.Collection;
 @Mixin(EnumProperty.class)
 abstract class EnumPropertyMixin<T extends Enum<T> & StringRepresentable> extends Property<T> implements PropertyAccess<T> {
 
-    @Shadow
-    public abstract Collection<T> getPossibleValues();
-
     @Unique
     private int[] idLookupTable;
 

@@ -5,8 +5,8 @@ import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.concurrentutil.util.Priority;
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.patches.chunk_system.ChunkSystemConverters;
-import ca.spottedleaf.moonrise.patches.chunk_system.ChunkSystemFeatures;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.poi.PoiChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
@@ -19,7 +19,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.UpgradeData;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.minecraft.world.level.chunk.storage.ChunkSerializer;
+import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.level.levelgen.blending.BlendingData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -273,9 +273,12 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
         }
     }
 
-    private static final class ChunkDataLoadTask extends CallbackDataLoadTask<CompoundTag, ChunkAccess> {
+
+    private static record ReadChunk(ProtoChunk protoChunk, SerializableChunkData chunkData) {}
+
+    private static final class ChunkDataLoadTask extends CallbackDataLoadTask<ReadChunk, ChunkAccess> {
         private ChunkDataLoadTask(final ChunkTaskScheduler scheduler, final ServerLevel world, final int chunkX,
-                                    final int chunkZ, final Priority priority) {
+                                  final int chunkZ, final Priority priority) {
             super(scheduler, world, chunkX, chunkZ, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, priority);
         }
 
@@ -300,30 +303,32 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
         }
 
         @Override
-        protected TaskResult<ChunkAccess, Throwable> completeOnMainOffMain(final CompoundTag data, final Throwable throwable) {
+        protected TaskResult<ChunkAccess, Throwable> completeOnMainOffMain(final ReadChunk data, final Throwable throwable) {
             if (throwable != null) {
                 return new TaskResult<>(null, throwable);
             }
-            if (data == null) {
+
+            if (data == null || data.protoChunk() == null) {
                 return new TaskResult<>(this.getEmptyChunk(), null);
             }
 
-            if (ChunkSystemFeatures.supportsAsyncChunkDeserialization()) {
-                return this.deserialize(data);
+            if (!PlatformHooks.get().hasMainChunkLoadHook()) {
+                return new TaskResult<>(data.protoChunk(), null);
             }
-            // need to deserialize on main thread
+
+            // need to invoke the callback for loading on the main thread
             return null;
         }
 
         private ProtoChunk getEmptyChunk() {
             return new ProtoChunk(
                 new ChunkPos(this.chunkX, this.chunkZ), UpgradeData.EMPTY, this.world,
-                this.world.registryAccess().registryOrThrow(Registries.BIOME), (BlendingData)null
+                this.world.registryAccess().lookupOrThrow(Registries.BIOME), (BlendingData)null
             );
         }
 
         @Override
-        protected TaskResult<CompoundTag, Throwable> runOffMain(final CompoundTag data, final Throwable throwable) {
+        protected TaskResult<ReadChunk, Throwable> runOffMain(final CompoundTag data, final Throwable throwable) {
             if (throwable != null) {
                 LOGGER.error("Failed to load chunk data for task: " + this.toString() + ", chunk data will be lost", throwable);
                 return new TaskResult<>(null, null);
@@ -337,32 +342,33 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
                 // run converters
                 final CompoundTag converted = this.world.getChunkSource().chunkMap.upgradeChunkTag(data);
 
-                return new TaskResult<>(converted, null);
+                // unpack the data
+                final SerializableChunkData chunkData = SerializableChunkData.parse(
+                    this.world, this.world.registryAccess(), converted
+                );
+
+                if (chunkData == null) {
+                    LOGGER.error("Deserialized chunk for task: " + this.toString() + " produced null, chunk data will be lost?");
+                }
+
+                // read into ProtoChunk
+                final ProtoChunk chunk = chunkData == null ? null : chunkData.read(
+                    this.world, this.world.getPoiManager(), this.world.getChunkSource().chunkMap.storageInfo(),
+                    new ChunkPos(this.chunkX, this.chunkZ)
+                );
+
+                return new TaskResult<>(new ReadChunk(chunk, chunkData), null);
             } catch (final Throwable thr2) {
                 LOGGER.error("Failed to parse chunk data for task: " + this.toString() + ", chunk data will be lost", thr2);
                 return new TaskResult<>(null, null);
             }
         }
 
-        private TaskResult<ChunkAccess, Throwable> deserialize(final CompoundTag data) {
-            try {
-                final ChunkAccess deserialized = ChunkSerializer.read(
-                        this.world, this.world.getPoiManager(), this.world.getChunkSource().chunkMap.storageInfo(), new ChunkPos(this.chunkX, this.chunkZ), data
-                );
-                return new TaskResult<>(deserialized, null);
-            } catch (final Throwable thr2) {
-                LOGGER.error("Failed to parse chunk data for task: " + this.toString() + ", chunk data will be lost", thr2);
-                return new TaskResult<>(this.getEmptyChunk(), null);
-            }
-        }
-
         @Override
-        protected TaskResult<ChunkAccess, Throwable> runOnMain(final CompoundTag data, final Throwable throwable) {
-            // data != null && throwable == null
-            if (ChunkSystemFeatures.supportsAsyncChunkDeserialization()) {
-                throw new UnsupportedOperationException();
-            }
-            return this.deserialize(data);
+        protected TaskResult<ChunkAccess, Throwable> runOnMain(final ReadChunk data, final Throwable throwable) {
+            PlatformHooks.get().mainChunkLoad(data.protoChunk(), data.chunkData());
+
+            return new TaskResult<>(data.protoChunk(), null);
         }
     }
 

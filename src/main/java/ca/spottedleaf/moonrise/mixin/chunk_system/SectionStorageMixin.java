@@ -2,8 +2,6 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.patches.chunk_system.level.storage.ChunkSystemSectionStorage;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.resources.RegistryOps;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
 import net.minecraft.world.level.chunk.storage.SectionStorage;
@@ -23,14 +21,14 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Mixin(SectionStorage.class)
-abstract class SectionStorageMixin implements ChunkSystemSectionStorage, AutoCloseable {
+abstract class SectionStorageMixin<R, P> implements ChunkSystemSectionStorage, AutoCloseable {
 
     @Shadow
     private SimpleRegionStorage simpleRegionStorage;
 
     @Shadow
     @Final
-    private static Logger LOGGER;
+    static Logger LOGGER;
 
 
     @Unique
@@ -74,7 +72,7 @@ abstract class SectionStorageMixin implements ChunkSystemSectionStorage, AutoClo
      * @author Spottedleaf
      */
     @Overwrite
-    public void readColumn(final ChunkPos pos, final RegistryOps<Tag> ops, final CompoundTag data) {
+    public void unpackChunk(final ChunkPos chunkPos, final SectionStorage.PackedChunk<P> packedChunk) {
         throw new IllegalStateException("Only chunk system can load in state, offending class:" + this.getClass().getName());
     }
 
@@ -83,7 +81,7 @@ abstract class SectionStorageMixin implements ChunkSystemSectionStorage, AutoClo
      * @author Spottedleaf
      */
     @Redirect(
-            method = "writeColumn(Lnet/minecraft/world/level/ChunkPos;)V",
+            method = "writeChunk(Lnet/minecraft/world/level/ChunkPos;)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/chunk/storage/SimpleRegionStorage;write(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/nbt/CompoundTag;)Ljava/util/concurrent/CompletableFuture;"

@@ -83,7 +83,7 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
         final Vec3 to = clipContext.getTo();
         final Vec3 from = clipContext.getFrom();
 
-        return BlockHitResult.miss(to, Direction.getNearest(from.x - to.x, from.y - to.y, from.z - to.z), BlockPos.containing(to.x, to.y, to.z));
+        return BlockHitResult.miss(to, Direction.getApproximateNearest(from.x - to.x, from.y - to.y, from.z - to.z), BlockPos.containing(to.x, to.y, to.z));
     }
 
     @Unique

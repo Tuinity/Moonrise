@@ -14,19 +14,20 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.slf4j.Logger;
 
+// note: keep in-sync with SerializableChunkDataMixin
 public final class SaveUtil {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private static final int STARLIGHT_LIGHT_VERSION = 9;
+    public static final int STARLIGHT_LIGHT_VERSION = 9;
 
     public static int getLightVersion() {
         return STARLIGHT_LIGHT_VERSION;
     }
 
-    private static final String BLOCKLIGHT_STATE_TAG = "starlight.blocklight_state";
-    private static final String SKYLIGHT_STATE_TAG = "starlight.skylight_state";
-    private static final String STARLIGHT_VERSION_TAG = "starlight.light_version";
+    public static final String BLOCKLIGHT_STATE_TAG = "starlight.blocklight_state";
+    public static final String SKYLIGHT_STATE_TAG = "starlight.skylight_state";
+    public static final String STARLIGHT_VERSION_TAG = "starlight.light_version";
 
     public static void saveLightHook(final Level world, final ChunkAccess chunk, final CompoundTag nbt) {
         try {

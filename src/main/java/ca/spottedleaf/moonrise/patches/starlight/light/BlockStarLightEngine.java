@@ -93,7 +93,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
 
         final int currentLevel = this.getLightLevel(worldX, worldY, worldZ);
         final BlockState blockState = this.getBlockState(worldX, worldY, worldZ);
-        final int emittedLevel = (PlatformHooks.get().getLightEmission(blockState, lightAccess.getLevel(), this.mutablePos1.set(worldX, worldY, worldZ))) & emittedMask;
+        final int emittedLevel = (PlatformHooks.get().getLightEmission(blockState, lightAccess.getLevel(), this.lightEmissionPos.set(worldX, worldY, worldZ))) & emittedMask;
 
         this.setLightLevel(worldX, worldY, worldZ, emittedLevel);
         // this accounts for change in emitted light that would cause an increase
@@ -121,7 +121,6 @@ public final class BlockStarLightEngine extends StarLightEngine {
     }
 
     protected final BlockPos.MutableBlockPos recalcCenterPos = new BlockPos.MutableBlockPos();
-    protected final BlockPos.MutableBlockPos recalcNeighbourPos = new BlockPos.MutableBlockPos();
 
     @Override
     protected int calculateLightValue(final LightChunkGetter lightAccess, final int worldX, final int worldY, final int worldZ,
@@ -136,7 +135,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
             return level;
         }
 
-        final int opacity = Math.max(1, centerState.getLightBlock(world, this.recalcCenterPos));
+        final int opacity = Math.max(1, centerState.getLightBlock());
         if (opacity >= 15) {
             return level;
         }
@@ -167,9 +166,8 @@ public final class BlockStarLightEngine extends StarLightEngine {
                 // here the block can be conditionally opaque (i.e light cannot propagate from it), so we need to test that
                 // we don't read the blockstate because most of the time this is false, so using the faster
                 // known transparency lookup results in a net win
-                this.recalcNeighbourPos.set(offX, offY, offZ);
-                final VoxelShape neighbourFace = neighbourState.getFaceOcclusionShape(lightAccess.getLevel(), this.recalcNeighbourPos, direction.opposite.nms);
-                final VoxelShape thisFace = conditionallyOpaqueState == null ? Shapes.empty() : conditionallyOpaqueState.getFaceOcclusionShape(lightAccess.getLevel(), this.recalcCenterPos, direction.nms);
+                final VoxelShape neighbourFace = neighbourState.getFaceOcclusionShape(direction.opposite.nms);
+                final VoxelShape thisFace = conditionallyOpaqueState == null ? Shapes.empty() : conditionallyOpaqueState.getFaceOcclusionShape(direction.nms);
                 if (Shapes.faceShapeOccludes(thisFace, neighbourFace)) {
                     // not allowed to propagate
                     continue;
@@ -220,7 +218,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
             final PalettedContainer<BlockState> states = section.states;
             final int offY = sectionY << 4;
 
-            final BlockPos.MutableBlockPos mutablePos = this.mutablePos1;
+            final BlockPos.MutableBlockPos mutablePos = this.lightEmissionPos;
             for (int index = 0; index < (16 * 16 * 16); ++index) {
                 final BlockState state = states.get(index);
                 mutablePos.set(offX | (index & 15), offY | (index >>> 8), offZ | ((index >>> 4) & 15));

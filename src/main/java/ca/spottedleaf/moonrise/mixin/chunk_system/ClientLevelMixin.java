@@ -41,8 +41,8 @@ abstract class ClientLevelMixin extends Level implements ChunkSystemLevel {
     @Final
     private ClientChunkCache chunkSource;
 
-    protected ClientLevelMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l, int i) {
-        super(writableLevelData, resourceKey, registryAccess, holder, supplier, bl, bl2, l, i);
+    protected ClientLevelMixin(final WritableLevelData writableLevelData, final ResourceKey<Level> resourceKey, final RegistryAccess registryAccess, final Holder<DimensionType> holder, final boolean bl, final boolean bl2, final long l, final int i) {
+        super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, l, i);
     }
 
     /**
@@ -55,9 +55,8 @@ abstract class ClientLevelMixin extends Level implements ChunkSystemLevel {
                     value = "RETURN"
             )
     )
-    private void init(ClientPacketListener clientPacketListener, ClientLevel.ClientLevelData clientLevelData,
-                      ResourceKey<Level> resourceKey, Holder<DimensionType> holder, int i, int j, Supplier<ProfilerFiller> supplier,
-                      LevelRenderer levelRenderer, boolean bl, long l, CallbackInfo ci) {
+    private void init(ClientPacketListener clientPacketListener, ClientLevel.ClientLevelData clientLevelData, ResourceKey<Level> resourceKey,
+                      Holder<DimensionType> holder, int i, int j, LevelRenderer levelRenderer, boolean bl, long l, int k, CallbackInfo ci) {
         this.entityStorage = null;
 
         this.moonrise$setEntityLookup(new ClientEntityLookup(this, ((ClientLevel)(Object)this).new EntityCallbacks()));

@@ -278,15 +278,6 @@ abstract class ShapesMixin {
         return ret;
     }
 
-    /**
-     * @reason Route to use cache
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public static VoxelShape getFaceShape(final VoxelShape shape, final Direction direction) {
-        return ((CollisionVoxelShape)shape).moonrise$getFaceShapeClamped(direction);
-    }
-
     @Unique
     private static boolean mergedMayOccludeBlock(final VoxelShape shape1, final VoxelShape shape2) {
         // if the combined bounds of the two shapes cannot occlude, then neither can the merged

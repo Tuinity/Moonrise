@@ -2,11 +2,16 @@ package ca.spottedleaf.moonrise.mixin.starlight.chunk;
 
 import ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk;
 import ca.spottedleaf.moonrise.patches.starlight.light.SWMRNibbleArray;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.UpgradeData;
+import net.minecraft.world.level.levelgen.blending.BlendingData;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,8 +23,8 @@ abstract class ImposterProtoChunkMixin extends ProtoChunk implements StarlightCh
     @Shadow
     private LevelChunk wrapped;
 
-    public ImposterProtoChunkMixin(final LevelChunk levelChunk, final boolean bl) {
-        super(levelChunk.getPos(), UpgradeData.EMPTY, levelChunk, levelChunk.getLevel().registryAccess().registryOrThrow(Registries.BIOME), levelChunk.getBlendingData());
+    public ImposterProtoChunkMixin(final ChunkPos chunkPos, final UpgradeData upgradeData, final LevelHeightAccessor levelHeightAccessor, final Registry<Biome> registry, @Nullable final BlendingData blendingData) {
+        super(chunkPos, upgradeData, levelHeightAccessor, registry, blendingData);
     }
 
     @Override

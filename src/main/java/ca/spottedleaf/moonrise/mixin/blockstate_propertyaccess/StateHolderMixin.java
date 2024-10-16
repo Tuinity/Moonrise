@@ -83,7 +83,6 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
         }
 
         // remove values arrays
-        this.values = null;
         for (final Map.Entry<Map<Property<?>, Comparable<?>>, S> entry : map.entrySet()) {
             final S value = entry.getValue();
             ((StateHolderMixin<O, S>)(Object)(StateHolder<O, S>)value).values = null;
@@ -126,8 +125,8 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
      * @author Spottedleaf
      */
     @Overwrite
-    public <T extends Comparable<T>> Optional<T> getOptionalValue(final Property<T> property) {
-        return property == null ? Optional.empty() : Optional.ofNullable(this.optimisedTable.get(this.tableIndex, property));
+    public <T extends Comparable<T>> T getNullableValue(Property<T> property) {
+        return property == null ? null : this.optimisedTable.get(this.tableIndex, property);
     }
 
     /**

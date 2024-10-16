@@ -35,21 +35,4 @@ abstract class BooleanPropertyMixin extends Property<Boolean> implements Propert
     private void init(final CallbackInfo ci) {
         this.moonrise$setById(new Boolean[]{ Boolean.FALSE, Boolean.TRUE });
     }
-
-    /**
-     * This skips all ops after the identity comparison in the original code.
-     *
-     * @reason Properties are identity comparable
-     * @author Spottedleaf
-     */
-    @WrapOperation(
-        method = "equals",
-        constant = @Constant(
-            classValue = BooleanProperty.class,
-            ordinal = 0
-        )
-    )
-    private boolean skipFurtherComparison(final Object obj, final Operation<Boolean> orig) {
-        return false;
-    }
 }

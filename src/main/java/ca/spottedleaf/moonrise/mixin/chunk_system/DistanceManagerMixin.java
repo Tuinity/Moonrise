@@ -8,13 +8,12 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
-import net.minecraft.server.level.ChunkTaskPriorityQueueSorter;
 import net.minecraft.server.level.DistanceManager;
+import net.minecraft.server.level.ThrottlingChunkTaskDispatcher;
 import net.minecraft.server.level.Ticket;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.server.level.TickingTracker;
 import net.minecraft.util.SortedArraySet;
-import net.minecraft.util.thread.ProcessorHandle;
 import net.minecraft.world.level.ChunkPos;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -45,13 +44,7 @@ abstract class DistanceManagerMixin implements ChunkSystemDistanceManager {
     Set<ChunkHolder> chunksToUpdateFutures;
 
     @Shadow
-    ChunkTaskPriorityQueueSorter ticketThrottler;
-
-    @Shadow
-    ProcessorHandle<ChunkTaskPriorityQueueSorter.Message<Runnable>> ticketThrottlerInput;
-
-    @Shadow
-    ProcessorHandle<ChunkTaskPriorityQueueSorter.Release> ticketThrottlerReleaser;
+    ThrottlingChunkTaskDispatcher ticketDispatcher;
 
     @Shadow
     LongSet ticketsToRelease;
@@ -60,10 +53,8 @@ abstract class DistanceManagerMixin implements ChunkSystemDistanceManager {
     Executor mainThreadExecutor;
 
     @Shadow
-    private DistanceManager.FixedPlayerDistanceChunkTracker naturalSpawnChunkCounter;
-
-    @Shadow
     private int simulationDistance;
+
 
     @Override
     public ChunkMap moonrise$getChunkMap() {
@@ -86,16 +77,14 @@ abstract class DistanceManagerMixin implements ChunkSystemDistanceManager {
         this.tickingTicketsTracker = null;
         this.playerTicketManager = null;
         this.chunksToUpdateFutures = null;
-        this.ticketThrottler = null;
-        this.ticketThrottlerInput = null;
-        this.ticketThrottlerReleaser = null;
+        this.ticketDispatcher = null;
         this.ticketsToRelease = null;
         this.mainThreadExecutor = null;
         this.simulationDistance = -1;
     }
 
     @Override
-    public ChunkHolderManager moonrise$getChunkHolderManager() {
+    public final ChunkHolderManager moonrise$getChunkHolderManager() {
         return ((ChunkSystemServerLevel)this.moonrise$getChunkMap().level).moonrise$getChunkTaskScheduler().chunkHolderManager;
     }
 

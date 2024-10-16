@@ -22,12 +22,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 @Mixin(ChunkStorage.class)
 abstract class ChunkStorageMixin implements ChunkSystemChunkStorage, AutoCloseable {
 
     @Shadow
-    private IOWorker worker;
+    public IOWorker worker;
 
     @Unique
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -118,13 +119,13 @@ abstract class ChunkStorageMixin implements ChunkSystemChunkStorage, AutoCloseab
             method = "write",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/chunk/storage/IOWorker;store(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/nbt/CompoundTag;)Ljava/util/concurrent/CompletableFuture;"
+                    target = "Lnet/minecraft/world/level/chunk/storage/IOWorker;store(Lnet/minecraft/world/level/ChunkPos;Ljava/util/function/Supplier;)Ljava/util/concurrent/CompletableFuture;"
             )
     )
     private CompletableFuture<Void> redirectWrite(final IOWorker instance, final ChunkPos chunkPos,
-                                                  final CompoundTag compoundTag) {
+                                                  final Supplier<CompoundTag> compoundTag) {
         try {
-            this.storage.write(chunkPos, compoundTag);
+            this.storage.write(chunkPos, compoundTag.get());
             return CompletableFuture.completedFuture(null);
         } catch (final Throwable throwable) {
             return CompletableFuture.failedFuture(throwable);

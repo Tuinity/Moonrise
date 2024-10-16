@@ -39,7 +39,6 @@ public final class SimpleRandom extends LegacyRandomSource {
         return (int)(seed >>> (BITS - Integer.SIZE));
     }
 
-
     @Override
     public int nextInt(final int bound) {
         if (bound <= 0) {

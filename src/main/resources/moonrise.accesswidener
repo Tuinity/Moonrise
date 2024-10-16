@@ -1,10 +1,15 @@
 accessWidener v1 named
 
+# BlockStateBase
+accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase lightBlock I
+accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase occlusionShape Lnet/minecraft/world/phys/shapes/VoxelShape;
+accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase occlusionShapesByFace [Lnet/minecraft/world/phys/shapes/VoxelShape;
+
+
 # BlockStateBase.ShapeCache
 accessible class net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache
-accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache lightBlock I
 accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache collisionShape Lnet/minecraft/world/phys/shapes/VoxelShape;
-accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache occlusionShapes [Lnet/minecraft/world/phys/shapes/VoxelShape;
+
 
 # LevelChunkSection
 accessible field net/minecraft/world/level/chunk/LevelChunkSection states Lnet/minecraft/world/level/chunk/PalettedContainer;
@@ -17,8 +22,6 @@ accessible field net/minecraft/world/level/chunk/PalettedContainer data Lnet/min
 
 # PalettedContainer.Data
 accessible class net/minecraft/world/level/chunk/PalettedContainer$Data
-accessible field net/minecraft/world/level/chunk/PalettedContainer$Data storage Lnet/minecraft/util/BitStorage;
-accessible field net/minecraft/world/level/chunk/PalettedContainer$Data palette Lnet/minecraft/world/level/chunk/Palette;
 
 
 # PaletteResize
@@ -36,15 +39,15 @@ mutable field net/minecraft/server/level/ChunkMap updatingChunkMap Lit/unimi/dsi
 mutable field net/minecraft/server/level/ChunkMap pendingUnloads Lit/unimi/dsi/fastutil/longs/Long2ObjectLinkedOpenHashMap;
 mutable field net/minecraft/server/level/ChunkMap pendingGenerationTasks Ljava/util/List;
 mutable field net/minecraft/server/level/ChunkMap unloadQueue Ljava/util/Queue;
-mutable field net/minecraft/server/level/ChunkMap queueSorter Lnet/minecraft/server/level/ChunkTaskPriorityQueueSorter;
-mutable field net/minecraft/server/level/ChunkMap worldgenMailbox Lnet/minecraft/util/thread/ProcessorHandle;
-mutable field net/minecraft/server/level/ChunkMap mainThreadMailbox Lnet/minecraft/util/thread/ProcessorHandle;
+mutable field net/minecraft/server/level/ChunkMap worldgenTaskDispatcher Lnet/minecraft/server/level/ChunkTaskDispatcher;
+mutable field net/minecraft/server/level/ChunkMap lightTaskDispatcher Lnet/minecraft/server/level/ChunkTaskDispatcher;
 accessible method net/minecraft/server/level/ChunkMap setServerViewDistance (I)V
 accessible method net/minecraft/server/level/ChunkMap upgradeChunkTag (Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/nbt/CompoundTag;
 accessible field net/minecraft/server/level/ChunkMap worldGenContext Lnet/minecraft/world/level/chunk/status/WorldGenContext;
 accessible field net/minecraft/server/level/ChunkMap tickingGenerated Ljava/util/concurrent/atomic/AtomicInteger;
 accessible field net/minecraft/server/level/ChunkMap progressListener Lnet/minecraft/server/level/progress/ChunkProgressListener;
 accessible method net/minecraft/server/level/ChunkMap playerIsCloseEnoughForSpawning (Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/ChunkPos;)Z
+
 
 # ChunkLevel
 accessible field net/minecraft/server/level/ChunkLevel FULL_CHUNK_LEVEL I
@@ -59,8 +62,8 @@ mutable field net/minecraft/world/level/lighting/LevelLightEngine skyEngine Lnet
 
 # ThreadedLevelLightEngine
 accessible class net/minecraft/server/level/ThreadedLevelLightEngine$TaskType
-mutable field net/minecraft/server/level/ThreadedLevelLightEngine sorterMailbox Lnet/minecraft/util/thread/ProcessorHandle;
-mutable field net/minecraft/server/level/ThreadedLevelLightEngine taskMailbox Lnet/minecraft/util/thread/ProcessorMailbox;
+mutable field net/minecraft/server/level/ThreadedLevelLightEngine consecutiveExecutor Lnet/minecraft/util/thread/ConsecutiveExecutor;
+mutable field net/minecraft/server/level/ThreadedLevelLightEngine taskDispatcher Lnet/minecraft/server/level/ChunkTaskDispatcher;
 
 # SectionStorage
 accessible field net/minecraft/world/level/chunk/storage/SectionStorage levelHeightAccessor Lnet/minecraft/world/level/LevelHeightAccessor;
@@ -187,9 +190,7 @@ mutable field net/minecraft/server/level/DistanceManager ticketTracker Lnet/mine
 mutable field net/minecraft/server/level/DistanceManager tickingTicketsTracker Lnet/minecraft/server/level/TickingTracker;
 mutable field net/minecraft/server/level/DistanceManager playerTicketManager Lnet/minecraft/server/level/DistanceManager$PlayerTicketTracker;
 mutable field net/minecraft/server/level/DistanceManager chunksToUpdateFutures Ljava/util/Set;
-mutable field net/minecraft/server/level/DistanceManager ticketThrottler Lnet/minecraft/server/level/ChunkTaskPriorityQueueSorter;
-mutable field net/minecraft/server/level/DistanceManager ticketThrottlerInput Lnet/minecraft/util/thread/ProcessorHandle;
-mutable field net/minecraft/server/level/DistanceManager ticketThrottlerReleaser Lnet/minecraft/util/thread/ProcessorHandle;
+mutable field net/minecraft/server/level/DistanceManager ticketDispatcher Lnet/minecraft/server/level/ThrottlingChunkTaskDispatcher;
 mutable field net/minecraft/server/level/DistanceManager ticketsToRelease Lit/unimi/dsi/fastutil/longs/LongSet;
 mutable field net/minecraft/server/level/DistanceManager mainThreadExecutor Ljava/util/concurrent/Executor;
 mutable field net/minecraft/server/level/DistanceManager naturalSpawnChunkCounter Lnet/minecraft/server/level/DistanceManager$FixedPlayerDistanceChunkTracker;
@@ -298,3 +299,7 @@ accessible class net/minecraft/world/level/levelgen/DensityFunctions$EndIslandDe
 
 # LocalMobCapCalculator$MobCounts
 accessible class net/minecraft/world/level/LocalMobCapCalculator$MobCounts
+
+
+# SectionStorage$PackedChunk
+accessible class net/minecraft/world/level/chunk/storage/SectionStorage$PackedChunk
