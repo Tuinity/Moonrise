@@ -314,7 +314,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
      * @author Spottedleaf
      */
     @Inject(
-            method = "tickChunks",
+            method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;JLjava/util/List;)V",
             at = @At(
                     value = "INVOKE",
                     shift = At.Shift.AFTER,
@@ -335,60 +335,13 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
      * @author Spottedleaf
      */
     @Redirect(
-            method = "tickChunks",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/server/level/ServerLevel;isNaturalSpawningAllowed(Lnet/minecraft/world/level/ChunkPos;)Z"
-            )
-    )
-    private boolean shortNaturalSpawning(final ServerLevel instance, final ChunkPos chunkPos) {
-        return true;
-    }
-
-    /**
-     * @reason In the chunk system, ticking chunks always have loaded entities. Of course, they are also always
-     *         marked to be as ticking as well.
-     * @author Spottedleaf
-     */
-    @Redirect(
-            method = "tickChunks",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/server/level/ServerLevel;shouldTickBlocksAt(J)Z"
-            )
+        method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;JLjava/util/List;)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerLevel;shouldTickBlocksAt(J)Z"
+        )
     )
     private boolean shortShouldTickBlocks(final ServerLevel instance, final long pos) {
         return true;
-    }
-
-    /**
-     * @reason Since chunks in non-simulation range are only brought up to FULL status, not TICKING,
-     * those chunks may not be present in the ticking list and as a result we need to use our own list
-     * to ensure these chunks broadcast changes
-     * @author Spottedleaf
-     */
-    @Redirect(
-        method = "tickChunks",
-        at = @At(
-            value = "INVOKE",
-            target = "Ljava/util/List;forEach(Ljava/util/function/Consumer;)V"
-        )
-    )
-    private void fixBroadcastChanges(final List<ServerChunkCache.ChunkAndHolder> instance,
-                                     final Consumer<ServerChunkCache.ChunkAndHolder> consumer) {
-        final ReferenceList<ChunkHolder> unsyncedChunks = ((ChunkSystemServerLevel)this.level).moonrise$getUnsyncedChunks();
-        final ChunkHolder[] chunkHolders = unsyncedChunks.getRawDataUnchecked();
-        final int totalUnsyncedChunks = unsyncedChunks.size();
-
-        Objects.checkFromToIndex(0, totalUnsyncedChunks, chunkHolders.length);
-        for (int i = 0; i < totalUnsyncedChunks; ++i) {
-            final ChunkHolder chunkHolder = chunkHolders[i];
-            final LevelChunk chunk = chunkHolder.getChunkToSend();
-            if (chunk != null) {
-                chunkHolder.broadcastChanges(chunk);
-            }
-        }
-
-        ((ChunkSystemServerLevel)this.level).moonrise$clearUnsyncedChunks();
     }
 }

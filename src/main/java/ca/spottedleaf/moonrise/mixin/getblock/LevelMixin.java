@@ -17,19 +17,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class LevelMixin implements LevelAccessor, AutoCloseable {
 
     @Unique
+    private int minY;
+
+    @Unique
     private int height;
 
     @Unique
-    private int minBuildHeight;
+    private int maxY;
 
     @Unique
-    private int maxBuildHeight;
+    private int minSectionY;
 
     @Unique
-    private int minSection;
-
-    @Unique
-    private int maxSection;
+    private int maxSectionY;
 
     @Unique
     private int sectionsCount;
@@ -47,12 +47,17 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
     private void init(final CallbackInfo ci,
                       @Local(ordinal = 0, argsOnly = true) final Holder<DimensionType> dimensionTypeHolder) {
         final DimensionType dimType = dimensionTypeHolder.value();
+        this.minY = dimType.minY();
         this.height = dimType.height();
-        this.minBuildHeight = dimType.minY();
-        this.maxBuildHeight = this.minBuildHeight + this.height;
-        this.minSection = this.minBuildHeight >> 4;
-        this.maxSection = ((this.maxBuildHeight - 1) >> 4) + 1;
-        this.sectionsCount = this.maxSection - this.minSection;
+        this.maxY = this.minY + this.height - 1;
+        this.minSectionY = this.minY >> 4;
+        this.maxSectionY = this.maxY >> 4;
+        this.sectionsCount = this.maxSectionY - this.minSectionY + 1;
+    }
+
+    @Override
+    public int getMinY() {
+        return this.minY;
     }
 
     @Override
@@ -61,52 +66,52 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
     }
 
     @Override
-    public int getMinBuildHeight() {
-        return this.minBuildHeight;
-    }
-
-    @Override
-    public int getMaxBuildHeight() {
-        return this.maxBuildHeight;
-    }
-
-    @Override
-    public int getMinSection() {
-        return this.minSection;
-    }
-
-    @Override
-    public int getMaxSection() {
-        return this.maxSection;
-    }
-
-    @Override
-    public boolean isOutsideBuildHeight(final int y) {
-        return y < this.minBuildHeight || y >= this.maxBuildHeight;
-    }
-
-    @Override
-    public boolean isOutsideBuildHeight(final BlockPos blockPos) {
-        return this.isOutsideBuildHeight(blockPos.getY());
-    }
-
-    @Override
-    public int getSectionIndex(final int blockY) {
-        return (blockY >> 4) - this.minSection;
-    }
-
-    @Override
-    public int getSectionIndexFromSectionY(final int sectionY) {
-        return sectionY - this.minSection;
-    }
-
-    @Override
-    public int getSectionYFromSectionIndex(final int sectionIdx) {
-        return sectionIdx + this.minSection;
+    public int getMaxY() {
+        return this.maxY;
     }
 
     @Override
     public int getSectionsCount() {
         return this.sectionsCount;
+    }
+
+    @Override
+    public int getMinSectionY() {
+        return this.minSectionY;
+    }
+
+    @Override
+    public int getMaxSectionY() {
+        return this.maxSectionY;
+    }
+
+    @Override
+    public boolean isInsideBuildHeight(final int blockY) {
+        return blockY >= this.minY && blockY <= this.maxY;
+    }
+
+    @Override
+    public boolean isOutsideBuildHeight(final BlockPos pos) {
+        return this.isOutsideBuildHeight(pos.getY());
+    }
+
+    @Override
+    public boolean isOutsideBuildHeight(final int blockY) {
+        return blockY < this.minY || blockY > this.maxY;
+    }
+
+    @Override
+    public int getSectionIndex(final int blockY) {
+        return (blockY >> 4) - this.minSectionY;
+    }
+
+    @Override
+    public int getSectionIndexFromSectionY(final int sectionY) {
+        return sectionY - this.minSectionY;
+    }
+
+    @Override
+    public int getSectionYFromSectionIndex(final int sectionIdx) {
+        return sectionIdx + this.minSectionY;
     }
 }

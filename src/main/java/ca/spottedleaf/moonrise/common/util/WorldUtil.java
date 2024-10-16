@@ -8,19 +8,19 @@ public final class WorldUtil {
     // min, max are inclusive
 
     public static int getMaxSection(final LevelHeightAccessor world) {
-        return world.getMaxSection() - 1; // getMaxSection() is exclusive
+        return world.getMaxSectionY();
     }
 
     public static int getMaxSection(final Level world) {
-        return world.getMaxSection() - 1; // getMaxSection() is exclusive
+        return world.getMaxSectionY();
     }
 
     public static int getMinSection(final LevelHeightAccessor world) {
-        return world.getMinSection();
+        return world.getMinSectionY();
     }
 
     public static int getMinSection(final Level world) {
-        return world.getMinSection();
+        return world.getMinSectionY();
     }
 
     public static int getMaxLightSection(final LevelHeightAccessor world) {

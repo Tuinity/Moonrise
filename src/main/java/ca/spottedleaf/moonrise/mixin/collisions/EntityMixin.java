@@ -1,20 +1,16 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
-import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
-import ca.spottedleaf.moonrise.patches.collisions.util.NoneMatchStream;
 import it.unimi.dsi.fastutil.floats.FloatArraySet;
 import it.unimi.dsi.fastutil.floats.FloatArrays;
 import net.minecraft.core.BlockPos;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -27,11 +23,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Mixin(Entity.class)
 abstract class EntityMixin {
@@ -56,12 +49,6 @@ abstract class EntityMixin {
 
     @Shadow
     private boolean onGround;
-
-    @Shadow
-    public abstract boolean isAlive();
-
-    @Shadow
-    protected abstract void onInsideBlock(final BlockState blockState);
 
     @Unique
     private static float[] calculateStepHeights(final AABB box, final List<VoxelShape> voxels, final List<AABB> aabbs, final float stepHeight,
@@ -295,164 +282,5 @@ abstract class EntityMixin {
         }
 
         return false;
-    }
-
-    /**
-     * @reason Avoid streams for retrieving blocks
-     * @author Spottedleaf
-     */
-    @Redirect(
-        method = "move",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/level/Level;getBlockStatesIfLoaded(Lnet/minecraft/world/phys/AABB;)Ljava/util/stream/Stream;",
-            ordinal = 0
-        )
-    )
-    private <T> Stream<T> avoidStreams(final Level world, final AABB boundingBox) {
-        final int minBlockX = Mth.floor(boundingBox.minX);
-        final int minBlockY = Mth.floor(boundingBox.minY);
-        final int minBlockZ = Mth.floor(boundingBox.minZ);
-
-        final int maxBlockX = Mth.floor(boundingBox.maxX);
-        final int maxBlockY = Mth.floor(boundingBox.maxY);
-        final int maxBlockZ = Mth.floor(boundingBox.maxZ);
-
-        final int minChunkX = minBlockX >> 4;
-        final int minChunkY = minBlockY >> 4;
-        final int minChunkZ = minBlockZ >> 4;
-
-        final int maxChunkX = maxBlockX >> 4;
-        final int maxChunkY = maxBlockY >> 4;
-        final int maxChunkZ = maxBlockZ >> 4;
-
-        if (!((ChunkSystemLevel)world).moonrise$areChunksLoaded(minChunkX, minChunkZ, maxChunkX, maxChunkZ)) {
-            return new NoneMatchStream<>(true);
-        }
-
-        final int minSection = WorldUtil.getMinSection(world);
-        final ChunkSource chunkSource = world.getChunkSource();
-
-        for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
-            for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
-                final LevelChunkSection[] sections = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, false).getSections();
-
-                for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
-                    final int sectionIdx = currChunkY - minSection;
-                    if (sectionIdx < 0 || sectionIdx >= sections.length) {
-                        continue;
-                    }
-                    final LevelChunkSection section = sections[sectionIdx];
-                    if (section.hasOnlyAir()) {
-                        // empty
-                        continue;
-                    }
-
-                    final PalettedContainer<BlockState> blocks = section.states;
-
-                    final int minXIterate = currChunkX == minChunkX ? (minBlockX & 15) : 0;
-                    final int maxXIterate = currChunkX == maxChunkX ? (maxBlockX & 15) : 15;
-                    final int minZIterate = currChunkZ == minChunkZ ? (minBlockZ & 15) : 0;
-                    final int maxZIterate = currChunkZ == maxChunkZ ? (maxBlockZ & 15) : 15;
-                    final int minYIterate = currChunkY == minChunkY ? (minBlockY & 15) : 0;
-                    final int maxYIterate = currChunkY == maxChunkY ? (maxBlockY & 15) : 15;
-
-                    for (int currY = minYIterate; currY <= maxYIterate; ++currY) {
-                        for (int currZ = minZIterate; currZ <= maxZIterate; ++currZ) {
-                            for (int currX = minXIterate; currX <= maxXIterate; ++currX) {
-                                final BlockState blockState = blocks.get((currX) | (currZ << 4) | ((currY) << 8));
-
-                                if (blockState.is(Blocks.LAVA) || blockState.is(BlockTags.FIRE)) {
-                                    return new NoneMatchStream<>(false);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return new NoneMatchStream<>(true);
-    }
-
-    /**
-     * @reason Retrieve blocks more efficiently
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public void checkInsideBlocks() {
-        final AABB boundingBox = this.getBoundingBox();
-
-        final int minBlockX = Mth.floor(boundingBox.minX + CollisionUtil.COLLISION_EPSILON);
-        final int minBlockY = Mth.floor(boundingBox.minY + CollisionUtil.COLLISION_EPSILON);
-        final int minBlockZ = Mth.floor(boundingBox.minZ + CollisionUtil.COLLISION_EPSILON);
-
-        final int maxBlockX = Mth.floor(boundingBox.maxX - CollisionUtil.COLLISION_EPSILON);
-        final int maxBlockY = Mth.floor(boundingBox.maxY - CollisionUtil.COLLISION_EPSILON);
-        final int maxBlockZ = Mth.floor(boundingBox.maxZ - CollisionUtil.COLLISION_EPSILON);
-
-        final int minChunkX = minBlockX >> 4;
-        final int minChunkY = minBlockY >> 4;
-        final int minChunkZ = minBlockZ >> 4;
-
-        final int maxChunkX = maxBlockX >> 4;
-        final int maxChunkY = maxBlockY >> 4;
-        final int maxChunkZ = maxBlockZ >> 4;
-
-        final Level world = this.level;
-
-        if (!((ChunkSystemLevel)world).moonrise$areChunksLoaded(minChunkX, minChunkZ, maxChunkX, maxChunkZ)) {
-            return;
-        }
-
-        final int minSection = WorldUtil.getMinSection(world);
-        final ChunkSource chunkSource = world.getChunkSource();
-        final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-
-        for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
-            for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
-                final LevelChunkSection[] sections = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, false).getSections();
-
-                for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
-                    final int sectionIdx = currChunkY - minSection;
-                    if (sectionIdx < 0 || sectionIdx >= sections.length) {
-                        continue;
-                    }
-                    final LevelChunkSection section = sections[sectionIdx];
-                    if (section.hasOnlyAir()) {
-                        // empty
-                        continue;
-                    }
-
-                    final PalettedContainer<BlockState> blocks = section.states;
-
-                    final int minXIterate = currChunkX == minChunkX ? (minBlockX & 15) : 0;
-                    final int maxXIterate = currChunkX == maxChunkX ? (maxBlockX & 15) : 15;
-                    final int minZIterate = currChunkZ == minChunkZ ? (minBlockZ & 15) : 0;
-                    final int maxZIterate = currChunkZ == maxChunkZ ? (maxBlockZ & 15) : 15;
-                    final int minYIterate = currChunkY == minChunkY ? (minBlockY & 15) : 0;
-                    final int maxYIterate = currChunkY == maxChunkY ? (maxBlockY & 15) : 15;
-
-                    for (int currY = minYIterate; currY <= maxYIterate; ++currY) {
-                        mutablePos.setY(currY | (currChunkY << 4));
-                        for (int currZ = minZIterate; currZ <= maxZIterate; ++currZ) {
-                            mutablePos.setZ(currZ | (currChunkZ << 4));
-                            for (int currX = minXIterate; currX <= maxXIterate; ++currX) {
-                                mutablePos.setX(currX | (currChunkX << 4));
-
-                                final BlockState blockState = blocks.get((currX) | (currZ << 4) | ((currY) << 8));
-
-                                if (!this.isAlive()) {
-                                    return;
-                                }
-
-                                blockState.entityInside(world, mutablePos, (Entity)(Object)this);
-                                this.onInsideBlock(blockState);
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 }

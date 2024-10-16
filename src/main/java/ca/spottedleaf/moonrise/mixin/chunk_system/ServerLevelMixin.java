@@ -86,8 +86,8 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     @Final
     private ServerChunkCache chunkSource;
 
-    protected ServerLevelMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l, int i) {
-        super(writableLevelData, resourceKey, registryAccess, holder, supplier, bl, bl2, l, i);
+    protected ServerLevelMixin(final WritableLevelData writableLevelData, final ResourceKey<Level> resourceKey, final RegistryAccess registryAccess, final Holder<DimensionType> holder, final boolean bl, final boolean bl2, final long l, final int i) {
+        super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, l, i);
     }
 
     @Unique
@@ -124,9 +124,6 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     private static final ServerChunkCache.ChunkAndHolder[] EMPTY_CHUNK_AND_HOLDERS = new ServerChunkCache.ChunkAndHolder[0];
 
     @Unique
-    private static final ChunkHolder[] EMPTY_CHUNK_HOLDERS = new ChunkHolder[0];
-
-    @Unique
     private final ReferenceList<ServerChunkCache.ChunkAndHolder> loadedChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
 
     @Unique
@@ -134,9 +131,6 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
 
     @Unique
     private final ReferenceList<ServerChunkCache.ChunkAndHolder> entityTickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
-
-    @Unique
-    private final ReferenceList<ChunkHolder> unsyncedChunks = new ReferenceList<>(EMPTY_CHUNK_HOLDERS);
 
     /**
      * @reason Initialise fields / destroy entity manager state
@@ -352,45 +346,6 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     @Override
     public final ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getEntityTickingChunks() {
         return this.entityTickingChunks;
-    }
-
-    @Override
-    public final ReferenceList<ChunkHolder> moonrise$getUnsyncedChunks() {
-        return this.unsyncedChunks;
-    }
-
-    @Override
-    public final void moonrise$addUnsyncedChunk(final ChunkHolder chunkHolder) {
-        if (((ChunkSystemChunkHolder)chunkHolder).moonrise$isMarkedDirtyForPlayers()) {
-            return;
-        }
-
-        ((ChunkSystemChunkHolder)chunkHolder).moonrise$markDirtyForPlayers(true);
-        this.unsyncedChunks.add(chunkHolder);
-    }
-
-    @Override
-    public final void moonrise$removeUnsyncedChunk(final ChunkHolder chunkHolder) {
-        if (!((ChunkSystemChunkHolder)chunkHolder).moonrise$isMarkedDirtyForPlayers()) {
-            return;
-        }
-
-        ((ChunkSystemChunkHolder)chunkHolder).moonrise$markDirtyForPlayers(false);
-        this.unsyncedChunks.remove(chunkHolder);
-    }
-
-    @Override
-    public final void moonrise$clearUnsyncedChunks() {
-        final ChunkHolder[] chunkHolders = this.unsyncedChunks.getRawDataUnchecked();
-        final int totalUnsyncedChunks = this.unsyncedChunks.size();
-
-        Objects.checkFromToIndex(0, totalUnsyncedChunks, chunkHolders.length);
-        for (int i = 0; i < totalUnsyncedChunks; ++i) {
-            final ChunkHolder chunkHolder = chunkHolders[i];
-
-            ((ChunkSystemChunkHolder)chunkHolder).moonrise$markDirtyForPlayers(false);
-        }
-        this.unsyncedChunks.clear();
     }
 
     @Override

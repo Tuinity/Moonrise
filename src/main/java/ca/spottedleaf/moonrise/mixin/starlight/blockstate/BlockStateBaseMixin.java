@@ -19,6 +19,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(BlockBehaviour.BlockStateBase.class)
 abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implements StarlightAbstractBlockState {
 
+    protected BlockStateBaseMixin(Block object, Reference2ObjectArrayMap<Property<?>, Comparable<?>> reference2ObjectArrayMap, MapCodec<BlockState> mapCodec) {
+        super(object, reference2ObjectArrayMap, mapCodec);
+    }
+
     @Shadow
     @Final
     private boolean useShapeForLightOcclusion;
@@ -27,29 +31,26 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
     @Final
     private boolean canOcclude;
 
-    @Shadow
-    protected BlockBehaviour.BlockStateBase.Cache cache;
 
     @Unique
     private boolean isConditionallyFullOpaque;
 
-    protected BlockStateBaseMixin(Block object, Reference2ObjectArrayMap<Property<?>, Comparable<?>> reference2ObjectArrayMap, MapCodec<BlockState> mapCodec) {
-        super(object, reference2ObjectArrayMap, mapCodec);
-    }
-
-    /**
-     * Initialises our light state for this block.
-     */
-    @Inject(
-            method = "initCache",
-            at = @At("RETURN")
-    )
-    public void initLightAccessState(final CallbackInfo ci) {
-        this.isConditionallyFullOpaque = this.canOcclude & this.useShapeForLightOcclusion;
-    }
-
     @Override
     public final boolean starlight$isConditionallyFullOpaque() {
         return this.isConditionallyFullOpaque;
+    }
+
+    /**
+     * @reason Initialises our light state for this block.
+     * @author Spottedleaf
+     */
+    @Inject(
+            method = "initCache",
+            at = @At(
+                value = "RETURN"
+            )
+    )
+    public void initLightAccessState(final CallbackInfo ci) {
+        this.isConditionallyFullOpaque = this.canOcclude & this.useShapeForLightOcclusion;
     }
 }

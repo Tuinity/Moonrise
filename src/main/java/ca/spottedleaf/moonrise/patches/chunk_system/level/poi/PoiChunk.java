@@ -3,7 +3,6 @@ package ca.spottedleaf.moonrise.patches.chunk_system.level.poi;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.minecraft.SharedConstants;
 import net.minecraft.nbt.CompoundTag;
@@ -123,7 +122,6 @@ public final class PoiChunk {
         ret.putInt("DataVersion", SharedConstants.getCurrentVersion().getDataVersion().getVersion());
 
         final ServerLevel world = this.world;
-        final PoiManager poiManager = world.getPoiManager();
         final int chunkX = this.chunkX;
         final int chunkZ = this.chunkZ;
 
@@ -133,13 +131,8 @@ public final class PoiChunk {
                 continue;
             }
 
-            final long key = CoordinateUtils.getChunkSectionKey(chunkX, sectionY, chunkZ);
-            // codecs are honestly such a fucking disaster. What the fuck is this trash?
-            final Codec<PoiSection> codec = PoiSection.codec(() -> {
-                poiManager.setDirty(key);
-            });
-
-            final DataResult<Tag> serializedResult = codec.encodeStart(registryOps, section);
+            // I do not believe asynchronously converting to CompoundTag is worth the scheduling.
+            final DataResult<Tag> serializedResult = PoiSection.Packed.CODEC.encodeStart(registryOps, section.pack());
             final int finalSectionY = sectionY;
             final Tag serialized = serializedResult.resultOrPartial((final String description) -> {
                 LOGGER.error("Failed to serialize poi chunk for world: " + WorldUtil.getWorldName(world) + ", chunk: (" + chunkX + "," + finalSectionY + "," + chunkZ + "); description: " + description);
@@ -183,18 +176,17 @@ public final class PoiChunk {
                 continue;
             }
 
-            final long coordinateKey = CoordinateUtils.getChunkSectionKey(chunkX, sectionY, chunkZ);
-            // codecs are honestly such a fucking disaster. What the fuck is this trash?
-            final Codec<PoiSection> codec = PoiSection.codec(() -> {
-                poiManager.setDirty(coordinateKey);
-            });
-
             final CompoundTag section = sections.getCompound(key);
-            final DataResult<PoiSection> deserializeResult = codec.parse(registryOps, section);
+            final DataResult<PoiSection.Packed> deserializeResult = PoiSection.Packed.CODEC.parse(registryOps, section);
             final int finalSectionY = sectionY;
-            final PoiSection deserialized = deserializeResult.resultOrPartial((final String description) -> {
+            final PoiSection.Packed packed = deserializeResult.resultOrPartial((final String description) -> {
                 LOGGER.error("Failed to deserialize poi chunk for world: " + WorldUtil.getWorldName(world) + ", chunk: (" + chunkX + "," + finalSectionY + "," + chunkZ + "); description: " + description);
             }).orElse(null);
+
+            final long coordinateKey = CoordinateUtils.getChunkSectionKey(chunkX, sectionY, chunkZ);
+            final PoiSection deserialized = packed == null ? null : packed.unpack(() -> {
+                poiManager.setDirty(coordinateKey);
+            });
 
             if (deserialized == null || ((ChunkSystemPoiSection)deserialized).moonrise$isEmpty()) {
                 // completely empty, no point in storing this

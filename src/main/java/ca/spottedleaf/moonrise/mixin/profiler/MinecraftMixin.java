@@ -49,7 +49,7 @@ abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnable> impl
             return;
         }
 
-        cir.setReturnValue(ret == null || ret == InactiveProfiler.INSTANCE ? this.leafProfiler : ProfilerFiller.tee(this.leafProfiler, ret));
+        cir.setReturnValue(ret == null || ret == InactiveProfiler.INSTANCE ? this.leafProfiler : ProfilerFiller.combine(this.leafProfiler, ret));
     }
 
     /**

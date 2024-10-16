@@ -61,12 +61,4 @@ public interface ChunkSystemServerLevel extends ChunkSystemLevel {
     public ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getTickingChunks();
 
     public ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getEntityTickingChunks();
-
-    public ReferenceList<ChunkHolder> moonrise$getUnsyncedChunks();
-
-    public void moonrise$addUnsyncedChunk(final ChunkHolder chunkHolder);
-
-    public void moonrise$removeUnsyncedChunk(final ChunkHolder chunkHolder);
-
-    public void moonrise$clearUnsyncedChunks();
 }

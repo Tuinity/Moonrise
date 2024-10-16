@@ -300,14 +300,7 @@ abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSy
             // no players to sent to, so don't need to update anything
             return null;
         }
-        final LevelChunk ret = this.getChunkToSend();
-
-        if (ret != null) {
-            ((ChunkSystemServerLevel)this.getChunkMap().level).moonrise$addUnsyncedChunk((ChunkHolder)(Object)this);
-            return ret;
-        }
-
-        return ret;
+        return this.getChunkToSend();
     }
 
     /**
@@ -326,14 +319,7 @@ abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSy
             // no players to sent to, so don't need to update anything
             return null;
         }
-        final LevelChunk ret = this.getChunkToSend();
-
-        if (ret != null) {
-            ((ChunkSystemServerLevel)this.getChunkMap().level).moonrise$addUnsyncedChunk((ChunkHolder)(Object)this);
-            return ret;
-        }
-
-        return ret;
+        return this.getChunkToSend();
     }
 
     /**

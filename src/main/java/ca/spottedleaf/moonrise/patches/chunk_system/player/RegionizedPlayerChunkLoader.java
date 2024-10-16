@@ -831,7 +831,7 @@ public final class RegionizedPlayerChunkLoader {
                 }
                 if (!((ChunkSystemLevelChunk)chunk).moonrise$isPostProcessingDone()) {
                     // not yet post-processed, need to do this so that tile entities can properly be sent to clients
-                    chunk.postProcessGeneration();
+                    chunk.postProcessGeneration(this.world);
                     // check if there was any recursive action
                     if (this.removed || this.sendQueue.isEmpty() || this.sendQueue.firstLong() != pendingSend) {
                         return;

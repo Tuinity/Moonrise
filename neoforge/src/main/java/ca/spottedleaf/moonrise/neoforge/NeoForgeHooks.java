@@ -4,25 +4,26 @@ import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
+import com.mojang.datafixers.DataFixer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.EmptyBlockGetter;
-import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.entity.PartEntity;
@@ -50,16 +51,6 @@ public final class NeoForgeHooks implements PlatformHooks {
         return (final BlockState state) -> {
             return state.hasDynamicLightEmission() || state.getLightEmission(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) != 0;
         };
-    }
-
-    @Override
-    public void onExplosion(final Level world, final Explosion explosion, final List<Entity> possiblyAffecting, final double diameter) {
-        EventHooks.onExplosionDetonate(world, explosion, possiblyAffecting, diameter);
-    }
-
-    @Override
-    public Vec3 modifyExplosionKnockback(final Level world, final Explosion explosion, final Entity entity, final Vec3 original) {
-        return EventHooks.getExplosionKnockback(world, explosion, entity, original);
     }
 
     @Override
@@ -101,7 +92,7 @@ public final class NeoForgeHooks implements PlatformHooks {
     }
 
     @Override
-    public void chunkSyncSave(final ServerLevel world, final ChunkAccess chunk, final CompoundTag data) {
+    public void chunkSyncSave(final ServerLevel world, final ChunkAccess chunk, final SerializableChunkData data) {
         NeoForge.EVENT_BUS.post(new ChunkDataEvent.Save(chunk, world, data));
     }
 
@@ -205,5 +196,26 @@ public final class NeoForgeHooks implements PlatformHooks {
     @Override
     public boolean configFixMC159283() {
         return ConfigHolder.getConfig().bugFixes.fixMC159283;
+    }
+
+    @Override
+    public boolean forceNoSave(final ChunkAccess chunk) {
+        return false;
+    }
+
+    @Override
+    public CompoundTag convertNBT(final DataFixTypes type, final DataFixer dataFixer, final CompoundTag nbt,
+                                  final int fromVersion, final int toVersion) {
+        return type.update(dataFixer, nbt, fromVersion, toVersion);
+    }
+
+    @Override
+    public boolean hasMainChunkLoadHook() {
+        return true;
+    }
+
+    @Override
+    public void mainChunkLoad(final ChunkAccess chunk, final SerializableChunkData chunkData) {
+        NeoForge.EVENT_BUS.post(new ChunkDataEvent.Load(chunk, chunkData));
     }
 }

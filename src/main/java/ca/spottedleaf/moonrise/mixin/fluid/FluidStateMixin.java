@@ -42,7 +42,7 @@ abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> implements
     private BlockState legacyBlock;
 
     @Override
-    public void moonrise$initCaches() {
+    public final void moonrise$initCaches() {
         this.amount = this.getType().getAmount((FluidState)(Object)this);
         this.isEmpty = this.getType().isEmpty();
         this.isSource = this.getType().isSource((FluidState)(Object)this);

@@ -687,13 +687,13 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
         final AABB singleAABB = this.singleAABBRepresentation;
         if (singleAABB != null) {
             if (singleAABB.contains(fromBehindOffsetX, fromBehindOffsetY, fromBehindOffsetZ)) {
-                return new BlockHitResult(fromBehind, Direction.getNearest(directionOpposite.x, directionOpposite.y, directionOpposite.z).getOpposite(), offset, true);
+                return new BlockHitResult(fromBehind, Direction.getApproximateNearest(directionOpposite.x, directionOpposite.y, directionOpposite.z).getOpposite(), offset, true);
             }
             return clip(singleAABB, from, to, offset);
         }
 
         if (CollisionUtil.strictlyContains((VoxelShape)(Object)this, fromBehindOffsetX, fromBehindOffsetY, fromBehindOffsetZ)) {
-            return new BlockHitResult(fromBehind, Direction.getNearest(directionOpposite.x, directionOpposite.y, directionOpposite.z).getOpposite(), offset, true);
+            return new BlockHitResult(fromBehind, Direction.getApproximateNearest(directionOpposite.x, directionOpposite.y, directionOpposite.z).getOpposite(), offset, true);
         }
 
         return AABB.clip(((VoxelShape)(Object)this).toAabbs(), from, to, offset);

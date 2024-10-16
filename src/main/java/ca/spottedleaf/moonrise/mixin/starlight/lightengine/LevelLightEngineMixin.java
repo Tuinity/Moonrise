@@ -54,7 +54,24 @@ abstract class LevelLightEngineMixin implements LightEventListener, StarLightLig
      * TODO since this is a constructor inject, check on update for new constructors
      */
     @Inject(
-            method = "<init>", at = @At("TAIL")
+        method = "<init>()V",
+        at = @At(
+            value = "TAIL"
+        )
+    )
+    public void constructEmpty(final CallbackInfo ci) {
+        this.lightEngine = new StarLightInterface(null, false, false, (LevelLightEngine)(Object)this);
+    }
+
+    /**
+     *
+     * TODO since this is a constructor inject, check on update for new constructors
+     */
+    @Inject(
+            method = "<init>(Lnet/minecraft/world/level/chunk/LightChunkGetter;ZZ)V",
+            at = @At(
+                value = "TAIL"
+            )
     )
     public void construct(final LightChunkGetter chunkProvider, final boolean hasBlockLight, final boolean hasSkyLight,
                           final CallbackInfo ci) {
@@ -179,8 +196,10 @@ abstract class LevelLightEngineMixin implements LightEventListener, StarLightLig
      * @author Spottedleaf
      */
     @Overwrite
-    public boolean lightOnInSection(final SectionPos pos) {
-        final long key = CoordinateUtils.getChunkKey(pos.getX(), pos.getZ());
+    public boolean lightOnInColumn(final long pos) {
+        final long key = CoordinateUtils.getChunkKey(
+            CoordinateUtils.getChunkSectionX(pos), CoordinateUtils.getChunkSectionZ(pos)
+        );
         return (!this.lightEngine.hasBlockLight() || this.blockLightMap.get(key) != null) && (!this.lightEngine.hasSkyLight() || this.skyLightMap.get(key) != null);
     }
 

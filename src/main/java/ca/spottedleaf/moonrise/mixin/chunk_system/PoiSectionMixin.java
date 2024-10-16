@@ -30,7 +30,7 @@ abstract class PoiSectionMixin implements ChunkSystemPoiSection {
 
 
     @Unique
-    private final Optional<PoiSection> noAllocOptional = Optional.of((PoiSection)(Object)this);;
+    private final Optional<PoiSection> noAllocOptional = Optional.of((PoiSection)(Object)this);
 
     @Override
     public final boolean moonrise$isEmpty() {

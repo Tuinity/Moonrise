@@ -1,6 +1,5 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
-import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.getblock.GetBlockChunk;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
@@ -11,19 +10,14 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.item.PrimedTnt;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerExplosion;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -33,33 +27,20 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-@Mixin(Explosion.class)
-abstract class ExplosionMixin {
+@Mixin(ServerExplosion.class)
+abstract class ServerExplosionMixin {
 
     @Shadow
     @Final
     private Level level;
-
-    @Shadow
-    @Final
-    private Entity source;
-
-    @Shadow
-    @Final
-    private double x;
-
-    @Shadow
-    @Final
-    private double y;
-
-    @Shadow
-    @Final
-    private double z;
 
     @Shadow
     @Final
@@ -71,19 +52,11 @@ abstract class ExplosionMixin {
 
     @Shadow
     @Final
-    private ObjectArrayList<BlockPos> toBlow;
-
-    @Shadow
-    @Final
-    private Map<Player, Vec3> hitPlayers;
-
-    @Shadow
-    @Final
     private boolean fire;
 
     @Shadow
     @Final
-    private DamageSource damageSource;
+    private Vec3 center;
 
 
     @Unique
@@ -141,6 +114,12 @@ abstract class ExplosionMixin {
 
     @Unique
     private LevelChunk[] chunkCache = null;
+
+    @Unique
+    private ExplosionBlockCache[] directMappedBlockCache;
+
+    @Unique
+    private BlockPos.MutableBlockPos mutablePos;
 
     @Unique
     private ExplosionBlockCache getOrCacheExplosionBlock(final int x, final int y, final int z,
@@ -343,29 +322,45 @@ abstract class ExplosionMixin {
         return (float)missedRays / (float)totalRays;
     }
 
+
     /**
-     * @reason Rewrite ray casting and seen fraction calculation for performance
+     * @reason Init cache fields
+     * @author Spottedleaf
+     */
+    @Inject(
+        method = "explode",
+        at = @At(
+            value = "HEAD"
+        )
+    )
+    private void initCacheFields(final CallbackInfo ci) {
+        this.blockCache = new Long2ObjectOpenHashMap<>();
+        this.chunkPosCache = new long[CHUNK_CACHE_WIDTH * CHUNK_CACHE_WIDTH];
+        Arrays.fill(this.chunkPosCache, ChunkPos.INVALID_CHUNK_POS);
+        this.chunkCache = new LevelChunk[CHUNK_CACHE_WIDTH * CHUNK_CACHE_WIDTH];
+        this.directMappedBlockCache = new ExplosionBlockCache[BLOCK_EXPLOSION_CACHE_WIDTH * BLOCK_EXPLOSION_CACHE_WIDTH * BLOCK_EXPLOSION_CACHE_WIDTH];
+        this.mutablePos = new BlockPos.MutableBlockPos();
+    }
+
+
+    /**
+     * @reason Rewrite ray casting for performance
      * @author Spottedleaf
      */
     @Overwrite
-    public void explode() {
-        this.level.gameEvent(this.source, GameEvent.EXPLODE, new Vec3(this.x, this.y, this.z));
+    public List<BlockPos> calculateExplodedPositions() {
+        final ObjectArrayList<BlockPos> ret = new ObjectArrayList<>();
 
-        this.blockCache = new Long2ObjectOpenHashMap<>();
+        final Vec3 center = this.center;
 
-        this.chunkPosCache = new long[CHUNK_CACHE_WIDTH * CHUNK_CACHE_WIDTH];
-        Arrays.fill(this.chunkPosCache, ChunkPos.INVALID_CHUNK_POS);
-
-        this.chunkCache = new LevelChunk[CHUNK_CACHE_WIDTH * CHUNK_CACHE_WIDTH];
-
-        final ExplosionBlockCache[] blockCache = new ExplosionBlockCache[BLOCK_EXPLOSION_CACHE_WIDTH * BLOCK_EXPLOSION_CACHE_WIDTH * BLOCK_EXPLOSION_CACHE_WIDTH];
+        final ExplosionBlockCache[] blockCache = this.directMappedBlockCache;
 
         // use initial cache value that is most likely to be used: the source position
         final ExplosionBlockCache initialCache;
         {
-            final int blockX = Mth.floor(this.x);
-            final int blockY = Mth.floor(this.y);
-            final int blockZ = Mth.floor(this.z);
+            final int blockX = Mth.floor(center.x);
+            final int blockY = Mth.floor(center.y);
+            final int blockZ = Mth.floor(center.z);
 
             final long key = BlockPos.asLong(blockX, blockY, blockZ);
 
@@ -381,9 +376,9 @@ abstract class ExplosionMixin {
         for (int ray = 0, len = CACHED_RAYS.length; ray < len;) {
             ExplosionBlockCache cachedBlock = initialCache;
 
-            double currX = this.x;
-            double currY = this.y;
-            double currZ = this.z;
+            double currX = center.x;
+            double currY = center.y;
+            double currZ = center.z;
 
             final double incX = CACHED_RAYS[ray];
             final double incY = CACHED_RAYS[ray + 1];
@@ -402,7 +397,7 @@ abstract class ExplosionMixin {
 
                 if (cachedBlock.key != key) {
                     final int cacheKey =
-                            (blockX & BLOCK_EXPLOSION_CACHE_MASK) |
+                        (blockX & BLOCK_EXPLOSION_CACHE_MASK) |
                             (blockY & BLOCK_EXPLOSION_CACHE_MASK) << (BLOCK_EXPLOSION_CACHE_SHIFT) |
                             (blockZ & BLOCK_EXPLOSION_CACHE_MASK) << (BLOCK_EXPLOSION_CACHE_SHIFT + BLOCK_EXPLOSION_CACHE_SHIFT);
                     cachedBlock = blockCache[cacheKey];
@@ -424,7 +419,7 @@ abstract class ExplosionMixin {
                     cachedBlock.shouldExplode = shouldExplode ? Boolean.TRUE : Boolean.FALSE;
                     if (shouldExplode) {
                         if (this.fire || !cachedBlock.blockState.isAir()) {
-                            this.toBlow.add(cachedBlock.immutablePos);
+                            ret.add(cachedBlock.immutablePos);
                         }
                     }
                 }
@@ -436,83 +431,39 @@ abstract class ExplosionMixin {
             } while (power > 0.0f);
         }
 
-        final double diameter = (double)this.radius * 2.0;
-        final List<Entity> entities = this.level.getEntities(this.source,
-                new AABB(
-                        (double)Mth.floor(this.x - (diameter + 1.0)),
-                        (double)Mth.floor(this.y - (diameter + 1.0)),
-                        (double)Mth.floor(this.z - (diameter + 1.0)),
+        return ret;
+    }
 
-                        (double)Mth.floor(this.x + (diameter + 1.0)),
-                        (double)Mth.floor(this.y + (diameter + 1.0)),
-                        (double)Mth.floor(this.z + (diameter + 1.0))
-                )
-        );
-        final Vec3 center = new Vec3(this.x, this.y, this.z);
+    /**
+     * @reason Use optimised getSeenPercent implementation
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "hurtEntities",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/ServerExplosion;getSeenPercent(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;)F"
+        )
+    )
+    private float useBetterSeenPercent(final Vec3 center, final Entity target) {
+        return this.getSeenFraction(center, target, this.directMappedBlockCache, this.mutablePos);
+    }
 
-        final BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
-
-        final PlatformHooks platformHooks = PlatformHooks.get();
-
-        platformHooks.onExplosion(this.level, (Explosion)(Object)this, entities, diameter);
-        for (int i = 0, len = entities.size(); i < len; ++i) {
-            final Entity entity = entities.get(i);
-            if (entity.ignoreExplosion((Explosion)(Object)this)) {
-                continue;
-            }
-
-            final double normalizedDistanceToCenter = Math.sqrt(entity.distanceToSqr(center)) / diameter;
-            if (normalizedDistanceToCenter > 1.0) {
-                continue;
-            }
-
-            double distX = entity.getX() - this.x;
-            double distY = (entity instanceof PrimedTnt ? entity.getY() : entity.getEyeY()) - this.y;
-            double distZ = entity.getZ() - this.z;
-            final double distMag = Math.sqrt(distX * distX + distY * distY + distZ * distZ);
-
-            if (distMag == 0.0) {
-                continue;
-            }
-
-            distX /= distMag;
-            distY /= distMag;
-            distZ /= distMag;
-
-            // route to new visible fraction calculation, using the existing block cache
-            final double seenFraction = (double)this.getSeenFraction(center, entity, blockCache, blockPos);
-            if (this.damageCalculator.shouldDamageEntity((Explosion)(Object)this, entity)) {
-                // inline getEntityDamageAmount so that we can avoid double calling getSeenPercent, which is the MOST
-                // expensive part of this loop!!!!
-                final double factor = (1.0 - normalizedDistanceToCenter) * seenFraction;
-                entity.hurt(this.damageSource, (float)((factor * factor + factor) / 2.0 * 7.0 * diameter + 1.0));
-            }
-
-            final double intensityFraction = (1.0 - normalizedDistanceToCenter) * seenFraction * (double)this.damageCalculator.getKnockbackMultiplier(entity);
-
-
-            final double knockbackFraction;
-            if (entity instanceof LivingEntity livingEntity) {
-                knockbackFraction = intensityFraction * (1.0 - livingEntity.getAttributeValue(Attributes.EXPLOSION_KNOCKBACK_RESISTANCE));
-            } else {
-                knockbackFraction = intensityFraction;
-            }
-
-            Vec3 knockback = new Vec3(distX * knockbackFraction, distY * knockbackFraction, distZ * knockbackFraction);
-            knockback = platformHooks.modifyExplosionKnockback(this.level, (Explosion)(Object)this, entity, knockback);
-            entity.setDeltaMovement(entity.getDeltaMovement().add(knockback));
-
-            if (entity instanceof Player player) {
-                if (!player.isSpectator() && (!player.isCreative() || !player.getAbilities().flying)) {
-                    this.hitPlayers.put(player, knockback);
-                }
-            }
-
-            entity.onExplosionHit(this.source);
-        }
-
+    /**
+     * @reason Destroy cache fields
+     * @author Spottedleaf
+     */
+    @Inject(
+        method = "explode",
+        at = @At(
+            value = "RETURN"
+        )
+    )
+    private void destroyCacheFields(final CallbackInfo ci) {
         this.blockCache = null;
         this.chunkPosCache = null;
         this.chunkCache = null;
+        this.directMappedBlockCache = null;
+        this.mutablePos = null;
     }
 }

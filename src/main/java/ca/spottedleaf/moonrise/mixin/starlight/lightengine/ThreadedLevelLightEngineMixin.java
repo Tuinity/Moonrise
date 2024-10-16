@@ -10,13 +10,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundLightUpdatePacket;
-import net.minecraft.server.level.ChunkTaskPriorityQueueSorter;
+import net.minecraft.server.level.ChunkTaskDispatcher;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ThreadedLevelLightEngine;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.minecraft.util.thread.ProcessorHandle;
-import net.minecraft.util.thread.ProcessorMailbox;
+import net.minecraft.util.thread.ConsecutiveExecutor;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -50,10 +49,10 @@ import java.util.function.Supplier;
 abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements StarLightLightingProvider {
 
     @Shadow
-    private ProcessorMailbox<Runnable> taskMailbox;
+    private ConsecutiveExecutor consecutiveExecutor;
 
     @Shadow
-    private ProcessorHandle<ChunkTaskPriorityQueueSorter.Message<Runnable>> sorterMailbox;
+    private ChunkTaskDispatcher taskDispatcher;
 
     public ThreadedLevelLightEngineMixin(final LightChunkGetter chunkProvider, final boolean hasBlockLight, final boolean hasSkyLight) {
         super(chunkProvider, hasBlockLight, hasSkyLight);
@@ -184,8 +183,8 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
             )
     )
     private void initHook(final CallbackInfo ci) {
-        this.taskMailbox = null;
-        this.sorterMailbox = null;
+        this.consecutiveExecutor = null;
+        this.taskDispatcher = null;
     }
 
     /**
@@ -194,7 +193,7 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
      */
     @Overwrite
     public void addTask(final int x, final int z, final ThreadedLevelLightEngine.TaskType type,
-                         final Runnable task) {
+                        final Runnable task) {
         throw new UnsupportedOperationException();
     }
 

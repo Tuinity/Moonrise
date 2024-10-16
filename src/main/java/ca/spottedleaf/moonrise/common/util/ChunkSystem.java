@@ -118,7 +118,7 @@ public final class ChunkSystem {
                 ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
         );
         if (!((ChunkSystemLevelChunk)chunk).moonrise$isPostProcessingDone()) {
-            chunk.postProcessGeneration();
+            chunk.postProcessGeneration((ServerLevel)chunk.getLevel());
         }
         ((ServerLevel)chunk.getLevel()).startTickingChunk(chunk);
         ((ServerLevel)chunk.getLevel()).getChunkSource().chunkMap.tickingGenerated.incrementAndGet();

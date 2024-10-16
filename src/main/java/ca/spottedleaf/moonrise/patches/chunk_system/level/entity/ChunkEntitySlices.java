@@ -14,6 +14,7 @@ import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.boss.EnderDragonPart;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
@@ -74,7 +75,7 @@ public final class ChunkEntitySlices {
 
     public static List<Entity> readEntities(final ServerLevel world, final CompoundTag compoundTag) {
         // TODO check this and below on update for format changes
-        return EntityType.loadEntitiesRecursive(compoundTag.getList("Entities", 10), world).collect(ImmutableList.toImmutableList());
+        return EntityType.loadEntitiesRecursive(compoundTag.getList("Entities", 10), world, EntitySpawnReason.LOAD).collect(ImmutableList.toImmutableList());
     }
 
     // Paper start - rewrite chunk system

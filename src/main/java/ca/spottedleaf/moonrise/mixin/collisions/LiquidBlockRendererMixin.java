@@ -4,9 +4,7 @@ import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.ArrayVoxelShape;
 import net.minecraft.world.phys.shapes.BooleanOp;
@@ -23,12 +21,7 @@ abstract class LiquidBlockRendererMixin {
      * @author Spottedleaf
      */
     @Overwrite
-    private static boolean isFaceOccludedByState(final BlockGetter world, final Direction direction, final float height,
-                                                 final BlockPos pos, final BlockState state) {
-        if (!state.canOcclude()) {
-            return false;
-        }
-
+    private static boolean isFaceOccludedByState(final Direction direction, final float height, final BlockState state) {
         // check for created shape is empty
         if (height < (float)CollisionUtil.COLLISION_EPSILON) {
             return false;
@@ -50,25 +43,26 @@ abstract class LiquidBlockRendererMixin {
         } else {
             // the extrusion includes the height
             heightShape = new ArrayVoxelShape(
-                    Shapes.block().shape,
-                    CollisionUtil.ZERO_ONE,
-                    DoubleArrayList.wrap(new double[] { 0.0, heightDouble }),
-                    CollisionUtil.ZERO_ONE
+                Shapes.block().shape,
+                CollisionUtil.ZERO_ONE,
+                DoubleArrayList.wrap(new double[] { 0.0, heightDouble }),
+                CollisionUtil.ZERO_ONE
             );
         }
 
-        final VoxelShape stateShape = ((CollisionVoxelShape)state.getOcclusionShape(world, pos)).moonrise$getFaceShapeClamped(direction.getOpposite());
+        final VoxelShape occlusionShape = ((CollisionVoxelShape)state.getFaceOcclusionShape(direction.getOpposite()))
+            .moonrise$getFaceShapeClamped(direction.getOpposite());
 
-        if (stateShape.isEmpty()) {
+        if (occlusionShape.isEmpty()) {
             // cannot occlude
             return false;
         }
 
         // fast check for box
-        if (heightShape == stateShape) {
+        if (heightShape == occlusionShape) {
             return true;
         }
 
-        return !Shapes.joinIsNotEmpty(heightShape, stateShape, BooleanOp.ONLY_FIRST);
+        return !Shapes.joinIsNotEmpty(heightShape, occlusionShape, BooleanOp.ONLY_FIRST);
     }
 }

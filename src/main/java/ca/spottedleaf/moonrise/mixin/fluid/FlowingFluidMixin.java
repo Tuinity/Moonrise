@@ -121,9 +121,9 @@ abstract class FlowingFluidMixin extends Fluid {
      * @author Spottedleaf
      */
     @Overwrite
-    private boolean canPassThroughWall(final Direction direction, final BlockGetter level,
-                                       final BlockPos fromPos, final BlockState fromState,
-                                       final BlockPos toPos, final BlockState toState) {
+    public static boolean canPassThroughWall(final Direction direction, final BlockGetter level,
+                                             final BlockPos fromPos, final BlockState fromState,
+                                             final BlockPos toPos, final BlockState toState) {
         if (((CollisionBlockState)fromState).moonrise$emptyCollisionShape() & ((CollisionBlockState)toState).moonrise$emptyCollisionShape()) {
             // don't even try to cache simple cases
             return true;

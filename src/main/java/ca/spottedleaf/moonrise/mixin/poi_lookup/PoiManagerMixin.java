@@ -20,16 +20,17 @@ import org.spongepowered.asm.mixin.Overwrite;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 @Mixin(PoiManager.class)
-abstract class PoiManagerMixin extends SectionStorage<PoiSection> {
+abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSection.Packed> {
 
-    public PoiManagerMixin(SimpleRegionStorage simpleRegionStorage, Function<Runnable, Codec<PoiSection>> function, Function<Runnable, PoiSection> function2, RegistryAccess registryAccess, ChunkIOErrorReporter chunkIOErrorReporter, LevelHeightAccessor levelHeightAccessor) {
-        super(simpleRegionStorage, function, function2, registryAccess, chunkIOErrorReporter, levelHeightAccessor);
+    public PoiManagerMixin(final SimpleRegionStorage simpleRegionStorage, final Codec<PoiSection.Packed> codec, final Function<PoiSection, PoiSection.Packed> function, final BiFunction<PoiSection.Packed, Runnable, PoiSection> biFunction, final Function<Runnable, PoiSection> function2, final RegistryAccess registryAccess, final ChunkIOErrorReporter chunkIOErrorReporter, final LevelHeightAccessor levelHeightAccessor) {
+        super(simpleRegionStorage, codec, function, biFunction, function2, registryAccess, chunkIOErrorReporter, levelHeightAccessor);
     }
 
     /**

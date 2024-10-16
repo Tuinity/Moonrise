@@ -79,8 +79,7 @@ abstract class ParticleMixin {
         final List<VoxelShape> voxels = new ArrayList<>();
         final boolean collided = CollisionUtil.getCollisionsForBlocksOrWorldBorder(
                 world, entity, collisionBox, voxels, boxes,
-                0,
-                null
+                0, null
         );
 
         if (!collided) {

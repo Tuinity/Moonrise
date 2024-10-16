@@ -196,15 +196,6 @@ abstract class GenerationChunkHolderMixin {
     }
 
     /**
-     * @reason Chunk system is not built on futures anymore
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public int getGenerationRefCount() {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
      * @reason Route to new chunk holder
      * @author Spottedleaf
      */

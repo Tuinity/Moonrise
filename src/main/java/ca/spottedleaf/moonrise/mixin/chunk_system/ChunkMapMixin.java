@@ -11,6 +11,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import com.mojang.datafixers.DataFixer;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import java.util.concurrent.Executor;
+import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StreamTagVisitor;
@@ -18,7 +19,7 @@ import net.minecraft.server.level.ChunkGenerationTask;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ChunkResult;
-import net.minecraft.server.level.ChunkTaskPriorityQueueSorter;
+import net.minecraft.server.level.ChunkTaskDispatcher;
 import net.minecraft.server.level.ChunkTrackingView;
 import net.minecraft.server.level.GeneratingChunkMap;
 import net.minecraft.server.level.GenerationChunkHolder;
@@ -28,7 +29,6 @@ import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StaticCache2D;
 import net.minecraft.util.thread.BlockableEventLoop;
-import net.minecraft.util.thread.ProcessorHandle;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -78,13 +78,10 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     private volatile Long2ObjectLinkedOpenHashMap<ChunkHolder> visibleChunkMap;
 
     @Shadow
-    private ChunkTaskPriorityQueueSorter queueSorter;
+    private ChunkTaskDispatcher worldgenTaskDispatcher;
 
     @Shadow
-    private ProcessorHandle<ChunkTaskPriorityQueueSorter.Message<Runnable>> worldgenMailbox;
-
-    @Shadow
-    private ProcessorHandle<ChunkTaskPriorityQueueSorter.Message<Runnable>> mainThreadMailbox;
+    private ChunkTaskDispatcher lightTaskDispatcher;
 
     @Shadow
     private int serverViewDistance;
@@ -128,9 +125,8 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
         this.updatingChunkMap = null;
         this.visibleChunkMap = null;
         this.pendingUnloads = null;
-        this.queueSorter = null;
-        this.worldgenMailbox = null;
-        this.mainThreadMailbox = null;
+        this.worldgenTaskDispatcher = null;
+        this.lightTaskDispatcher = null;
         this.pendingGenerationTasks = null;
         this.unloadQueue = null;
 
@@ -152,7 +148,7 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
             @Override
             public CompletableFuture<Optional<CompoundTag>> loadAsync(final ChunkPos chunkPos) {
                 final CompletableFuture<Optional<CompoundTag>> future = new CompletableFuture<>();
-                MoonriseRegionFileIO.loadDataAsync(ChunkMapMixin.this.level, chunkPos.x, chunkPos.z, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, (tag, throwable) -> {
+                MoonriseRegionFileIO.loadDataAsync(ChunkMapMixin.this.level, chunkPos.x, chunkPos.z, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, (final CompoundTag tag, final Throwable throwable) -> {
                     if (throwable != null) {
                         future.completeExceptionally(throwable);
                     } else {
@@ -258,6 +254,15 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     @Overwrite
     public ChunkHolder updateChunkScheduling(final long pos, final int level, final ChunkHolder holder,
                                              final int newLevel) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Destroy old chunk system hooks
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void onLevelChange(final ChunkPos chunkPos, final IntSupplier intSupplier, final int i, final IntConsumer intConsumer) {
         throw new UnsupportedOperationException();
     }
 
@@ -422,7 +427,7 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
      * @see NewChunkHolder#save(boolean)
      */
     @Overwrite
-    public boolean saveChunkIfNeeded(final ChunkHolder chunkHolder) {
+    public boolean saveChunkIfNeeded(final ChunkHolder chunkHolder, final long time) {
         throw new UnsupportedOperationException();
     }
 
@@ -524,10 +529,11 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     }
 
     @Override
-    public CompletableFuture<Void> write(final ChunkPos pos, final CompoundTag tag) {
+    public CompletableFuture<Void> write(final ChunkPos pos, final Supplier<CompoundTag> tag) {
         MoonriseRegionFileIO.scheduleSave(
-                this.level, pos.x, pos.z, tag,
-                MoonriseRegionFileIO.RegionFileType.CHUNK_DATA);
+                this.level, pos.x, pos.z, tag.get(),
+                MoonriseRegionFileIO.RegionFileType.CHUNK_DATA
+        );
         return null;
     }
 

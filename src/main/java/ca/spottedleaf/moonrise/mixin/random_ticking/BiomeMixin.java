@@ -10,14 +10,14 @@ import org.spongepowered.asm.mixin.Shadow;
 abstract class BiomeMixin {
 
     @Shadow
-    protected abstract float getHeightAdjustedTemperature(BlockPos blockPos);
+    protected abstract float getHeightAdjustedTemperature(BlockPos blockPos, int seaLevel);
 
     /**
      * @reason Cache appears ineffective
      * @author Spottedleaf
      */
     @Overwrite
-    public float getTemperature(final BlockPos pos) {
-        return this.getHeightAdjustedTemperature(pos);
+    public float getTemperature(final BlockPos pos, final int seaLevel) {
+        return this.getHeightAdjustedTemperature(pos, seaLevel);
     }
 }
