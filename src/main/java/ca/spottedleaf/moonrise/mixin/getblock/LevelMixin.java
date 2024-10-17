@@ -1,6 +1,8 @@
 package ca.spottedleaf.moonrise.mixin.getblock;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.dimension.DimensionType;
@@ -29,11 +31,12 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
     @Inject(
         method = "<init>",
         at = @At(
-            value = "RETURN"
+            value = "CTOR_HEAD"
         )
     )
-    private void init(final CallbackInfo ci) {
-        this.dimensionType = this.dimensionType();
+    private void init(final CallbackInfo ci,
+                      @Local(ordinal = 0, argsOnly = true) final Holder<DimensionType> dimensionTypeHolder) {
+        this.dimensionType = dimensionTypeHolder.value();
     }
 
     @Override
