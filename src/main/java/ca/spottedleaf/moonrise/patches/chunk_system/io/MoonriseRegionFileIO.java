@@ -1,6 +1,8 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.io;
 
 import ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue;
+import ca.spottedleaf.concurrentutil.completable.CallbackCompletable;
+import ca.spottedleaf.concurrentutil.completable.Completable;
 import ca.spottedleaf.concurrentutil.executor.Cancellable;
 import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.executor.queue.PrioritisedTaskQueue;
@@ -12,6 +14,7 @@ import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -23,14 +26,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public final class MoonriseRegionFileIO {
 
@@ -213,30 +214,6 @@ public final class MoonriseRegionFileIO {
             return Priority.BLOCKING;
         }
         return Priority.HIGHEST;
-    }
-
-    /**
-     * Returns the current {@code CompoundTag} pending for write for the specified chunk & regionfile type.
-     * Note that this does not copy the result, so do not modify the result returned.
-     *
-     * @param world Specified world.
-     * @param chunkX Specified chunk x.
-     * @param chunkZ Specified chunk z.
-     * @param type Specified regionfile type.
-     *
-     * @return The compound tag associated for the specified chunk. {@code null} if no write was pending, or if {@code null} is the write pending.
-     */
-    public static CompoundTag getPendingWrite(final ServerLevel world, final int chunkX, final int chunkZ, final RegionFileType type) {
-        final RegionDataController taskController = getControllerFor(world, type);
-        final ChunkIOTask task = taskController.chunkTasks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
-
-        if (task == null) {
-            return null;
-        }
-
-        final CompoundTag ret = task.inProgressWrite;
-
-        return ret == ChunkIOTask.NOTHING_TO_WRITE ? null : ret;
     }
 
     /**
@@ -444,27 +421,106 @@ public final class MoonriseRegionFileIO {
      */
     public static void scheduleSave(final ServerLevel world, final int chunkX, final int chunkZ, final CompoundTag data,
                                     final RegionFileType type, final Priority priority) {
+        scheduleSave(
+            world, chunkX, chunkZ,
+            (final BiConsumer<CompoundTag, Throwable> consumer) -> {
+                consumer.accept(data, null);
+            }, null, type, priority
+        );
+    }
+
+    /**
+     * Schedules the chunk data to be written asynchronously.
+     * <p>
+     *     Impl notes:
+     * </p>
+     * <li>
+     *     This function presumes a chunk load for the coordinates is not called during this function (anytime after is OK). This means
+     *     saves must be scheduled before a chunk is unloaded.
+     * </li>
+     * <li>
+     *     Writes may be called concurrently, although only the "later" write will go through.
+     * </li>
+     * <li>
+     *     The specified write task, if not null, will have its priority controlled by the scheduler.
+     * </li>
+     *
+     * @param world Chunk's world
+     * @param chunkX Chunk's x coordinate
+     * @param chunkZ Chunk's z coordinate
+     * @param completable Chunk's pending data
+     * @param writeTask The task responsible for completing the pending chunk data
+     * @param type The regionfile type to write to.
+     * @param priority The minimum priority to schedule at.
+     *
+     * @throws IllegalStateException If the file io thread has shutdown.
+     */
+    public static void scheduleSave(final ServerLevel world, final int chunkX, final int chunkZ, final CallbackCompletable<CompoundTag> completable,
+                                    final PrioritisedExecutor.PrioritisedTask writeTask, final RegionFileType type, final Priority priority) {
+        scheduleSave(world, chunkX, chunkZ, completable::addWaiter, writeTask, type, priority);
+    }
+
+    /**
+     * Schedules the chunk data to be written asynchronously.
+     * <p>
+     *     Impl notes:
+     * </p>
+     * <li>
+     *     This function presumes a chunk load for the coordinates is not called during this function (anytime after is OK). This means
+     *     saves must be scheduled before a chunk is unloaded.
+     * </li>
+     * <li>
+     *     Writes may be called concurrently, although only the "later" write will go through.
+     * </li>
+     * <li>
+     *     The specified write task, if not null, will have its priority controlled by the scheduler.
+     * </li>
+     *
+     * @param world Chunk's world
+     * @param chunkX Chunk's x coordinate
+     * @param chunkZ Chunk's z coordinate
+     * @param completable Chunk's pending data
+     * @param writeTask The task responsible for completing the pending chunk data
+     * @param type The regionfile type to write to.
+     * @param priority The minimum priority to schedule at.
+     *
+     * @throws IllegalStateException If the file io thread has shutdown.
+     */
+    public static void scheduleSave(final ServerLevel world, final int chunkX, final int chunkZ, final Completable<CompoundTag> completable,
+                                    final PrioritisedExecutor.PrioritisedTask writeTask, final RegionFileType type, final Priority priority) {
+        scheduleSave(world, chunkX, chunkZ, completable::whenComplete, writeTask, type, priority);
+    }
+
+    private static void scheduleSave(final ServerLevel world, final int chunkX, final int chunkZ, final Consumer<BiConsumer<CompoundTag, Throwable>> scheduler,
+                                     final PrioritisedExecutor.PrioritisedTask writeTask, final RegionFileType type, final Priority priority) {
         final RegionDataController taskController = getControllerFor(world, type);
 
         final boolean[] created = new boolean[1];
-        final long key = CoordinateUtils.getChunkKey(chunkX, chunkZ);
-        final ChunkIOTask task = taskController.chunkTasks.compute(key, (final long keyInMap, final ChunkIOTask taskRunning) -> {
-            if (taskRunning == null || taskRunning.failedWrite) {
-                // no task is scheduled or the previous write failed - meaning we need to overwrite it
+        final ChunkIOTask.InProgressWrite write = new ChunkIOTask.InProgressWrite(writeTask);
+        final ChunkIOTask task = taskController.chunkTasks.compute(CoordinateUtils.getChunkKey(chunkX, chunkZ),
+            (final long keyInMap, final ChunkIOTask taskRunning) -> {
+                if (taskRunning == null || taskRunning.failedWrite) {
+                    // no task is scheduled or the previous write failed - meaning we need to overwrite it
 
-                // create task
-                final ChunkIOTask newTask = new ChunkIOTask(
-                        world, taskController, chunkX, chunkZ, priority, new ChunkIOTask.InProgressRead(), data
-                );
-                created[0] = true;
+                    // create task
+                    final ChunkIOTask newTask = new ChunkIOTask(
+                        world, taskController, chunkX, chunkZ, priority, new ChunkIOTask.InProgressRead()
+                    );
 
-                return newTask;
+                    newTask.pushPendingWrite(write);
+
+                    created[0] = true;
+
+                    return newTask;
+                }
+
+                taskRunning.pushPendingWrite(write);
+
+                return taskRunning;
             }
+        );
 
-            taskRunning.inProgressWrite = data;
-
-            return taskRunning;
-        });
+        write.schedule(task, scheduler);
 
         if (created[0]) {
             taskController.startTask(task);
@@ -711,7 +767,7 @@ public final class MoonriseRegionFileIO {
 
                 // set up task
                 final ChunkIOTask newTask = new ChunkIOTask(
-                    world, taskController, chunkX, chunkZ, priority, new ChunkIOTask.InProgressRead(), ChunkIOTask.NOTHING_TO_WRITE
+                    world, taskController, chunkX, chunkZ, priority, new ChunkIOTask.InProgressRead()
                 );
                 newTask.inProgressRead.addToAsyncWaiters(onComplete);
 
@@ -719,22 +775,33 @@ public final class MoonriseRegionFileIO {
                 return newTask;
             }
 
-            final CompoundTag pendingWrite = running.inProgressWrite;
+            final ChunkIOTask.InProgressWrite pendingWrite = running.inProgressWrite;
 
-            if (pendingWrite == ChunkIOTask.NOTHING_TO_WRITE) {
+            if (pendingWrite == null) {
                 // need to add to waiters here, because the regionfile thread will use compute() to lock and check for cancellations
                 if (!running.inProgressRead.addToAsyncWaiters(onComplete)) {
                     callbackInfo.data = running.inProgressRead.value;
                     callbackInfo.throwable = running.inProgressRead.throwable;
                     callbackInfo.completeNow = true;
                 }
+
+                callbackInfo.read = running.inProgressRead;
+
                 return running;
             }
 
             // at this stage we have to use the in progress write's data to avoid an order issue
-            callbackInfo.data = pendingWrite;
-            callbackInfo.throwable = null;
-            callbackInfo.completeNow = true;
+
+            if (!pendingWrite.addToAsyncWaiters(onComplete)) {
+                // data is ready now
+                callbackInfo.data = pendingWrite.value;
+                callbackInfo.throwable = pendingWrite.throwable;
+                callbackInfo.completeNow = true;
+                return running;
+            }
+
+            callbackInfo.write = pendingWrite;
+
             return running;
         };
 
@@ -755,7 +822,7 @@ public final class MoonriseRegionFileIO {
             ret.raisePriority(priority);
         }
 
-        return new CancellableRead(onComplete, ret);
+        return new CancellableRead(onComplete, callbackInfo.read, callbackInfo.write);
     }
 
     private static final class ImmediateCallbackCompletion {
@@ -764,6 +831,8 @@ public final class MoonriseRegionFileIO {
         private Throwable throwable;
         private boolean completeNow;
         private boolean tasksNeedReadScheduling;
+        private ChunkIOTask.InProgressRead read;
+        private ChunkIOTask.InProgressWrite write;
 
     }
 
@@ -802,26 +871,40 @@ public final class MoonriseRegionFileIO {
     private static final class CancellableRead implements Cancellable {
 
         private BiConsumer<CompoundTag, Throwable> callback;
-        private ChunkIOTask task;
+        private ChunkIOTask.InProgressRead read;
+        private ChunkIOTask.InProgressWrite write;
 
-        private CancellableRead(final BiConsumer<CompoundTag, Throwable> callback, final ChunkIOTask task) {
+        private CancellableRead(final BiConsumer<CompoundTag, Throwable> callback,
+                                final ChunkIOTask.InProgressRead read,
+                                final ChunkIOTask.InProgressWrite write) {
             this.callback = callback;
-            this.task = task;
+            this.read = read;
+            this.write = write;
         }
 
         @Override
         public boolean cancel() {
             final BiConsumer<CompoundTag, Throwable> callback = this.callback;
-            final ChunkIOTask task = this.task;
+            final ChunkIOTask.InProgressRead read = this.read;
+            final ChunkIOTask.InProgressWrite write = this.write;
 
-            if (callback == null || task == null) {
+            if (callback == null || (read == null && write == null)) {
                 return false;
             }
 
             this.callback = null;
-            this.task = null;
-            
-            return task.inProgressRead.cancel(callback);
+            this.read = null;
+            this.write = null;
+
+            if (read != null) {
+                return read.cancel(callback);
+            }
+            if (write != null) {
+                return write.cancel(callback);
+            }
+
+            // unreachable
+            throw new InternalError();
         }
     }
 
@@ -854,8 +937,6 @@ public final class MoonriseRegionFileIO {
 
     private static final class ChunkIOTask {
 
-        private static final CompoundTag NOTHING_TO_WRITE = new CompoundTag();
-
         private final ServerLevel world;
         private final RegionDataController regionDataController;
         private final int chunkX;
@@ -864,27 +945,39 @@ public final class MoonriseRegionFileIO {
         private PrioritisedExecutor.PrioritisedTask currentTask;
 
         private final InProgressRead inProgressRead;
-        private volatile CompoundTag inProgressWrite;
+        private volatile InProgressWrite inProgressWrite;
+        private final ReferenceOpenHashSet<InProgressWrite> allPendingWrites = new ReferenceOpenHashSet<>();
 
         private RegionDataController.ReadData readData;
         private RegionDataController.WriteData writeData;
         private boolean failedWrite;
 
         public ChunkIOTask(final ServerLevel world, final RegionDataController regionDataController,
-                           final int chunkX, final int chunkZ, final Priority priority, final InProgressRead inProgressRead,
-                           final CompoundTag inProgressWrite) {
+                           final int chunkX, final int chunkZ, final Priority priority, final InProgressRead inProgressRead) {
             this.world = world;
             this.regionDataController = regionDataController;
             this.chunkX = chunkX;
             this.chunkZ = chunkZ;
             this.priority = priority;
             this.inProgressRead = inProgressRead;
-            this.inProgressWrite = inProgressWrite;
         }
 
         public Priority getPriority() {
             synchronized (this) {
                 return this.priority;
+            }
+        }
+
+        // must hold lock on this object
+        private void updatePriority(final Priority priority) {
+            this.priority = priority;
+            if (this.currentTask != null) {
+                this.currentTask.setPriority(priority);
+            }
+            for (final InProgressWrite write : this.allPendingWrites) {
+                if (write.writeTask != null) {
+                    write.writeTask.setPriority(priority);
+                }
             }
         }
 
@@ -894,10 +987,7 @@ public final class MoonriseRegionFileIO {
                     return false;
                 }
 
-                this.priority = priority;
-                if (this.currentTask != null) {
-                    this.currentTask.setPriority(priority);
-                }
+                this.updatePriority(priority);
 
                 return true;
             }
@@ -909,10 +999,7 @@ public final class MoonriseRegionFileIO {
                     return false;
                 }
 
-                this.priority = priority;
-                if (this.currentTask != null) {
-                    this.currentTask.setPriority(priority);
-                }
+                this.updatePriority(priority);
 
                 return true;
             }
@@ -924,12 +1011,25 @@ public final class MoonriseRegionFileIO {
                     return false;
                 }
 
-                this.priority = priority;
-                if (this.currentTask != null) {
-                    this.currentTask.setPriority(priority);
-                }
+                this.updatePriority(priority);
 
                 return true;
+            }
+        }
+
+        private void pushPendingWrite(final InProgressWrite write) {
+            this.inProgressWrite = write;
+            synchronized (this) {
+                this.allPendingWrites.add(write);
+                if (write.writeTask != null) {
+                    write.writeTask.setPriority(this.priority);
+                }
+            }
+        }
+
+        private void pendingWriteComplete(final InProgressWrite write) {
+            synchronized (this) {
+                this.allPendingWrites.remove(write);
             }
         }
 
@@ -964,7 +1064,7 @@ public final class MoonriseRegionFileIO {
                         canRead[0] = false;
                     }
 
-                    if (valueInMap.inProgressWrite != NOTHING_TO_WRITE) {
+                    if (valueInMap.inProgressWrite != null) {
                         return valueInMap;
                     }
 
@@ -1050,8 +1150,7 @@ public final class MoonriseRegionFileIO {
 
             this.finishRead(compoundTag, throwable);
             if (!this.tryAbortWrite()) {
-                // we are already on the compression executor, don't bother scheduling
-                this.performWriteCompress();
+                this.scheduleWriteCompress();
             }
         }
 
@@ -1060,17 +1159,24 @@ public final class MoonriseRegionFileIO {
         }
 
         public void scheduleWriteCompress() {
+            final InProgressWrite inProgressWrite = this.inProgressWrite;
+
             final PrioritisedExecutor.PrioritisedTask task;
             synchronized (this) {
-                task = this.regionDataController.compressionExecutor.createTask(this::performWriteCompress, this.priority);
+                task = this.regionDataController.compressionExecutor.createTask(() -> {
+                    ChunkIOTask.this.performWriteCompress(inProgressWrite);
+                }, this.priority);
                 this.currentTask = task;
             }
-            task.queue();
+
+            inProgressWrite.addToWaiters(this, (final CompoundTag data, final Throwable throwable) -> {
+                task.queue();
+            });
         }
 
         private boolean tryAbortWrite() {
             final long chunkKey = CoordinateUtils.getChunkKey(this.chunkX, this.chunkZ);
-            if (this.inProgressWrite == NOTHING_TO_WRITE) {
+            if (this.inProgressWrite == null) {
                 final ChunkIOTask inMap = this.regionDataController.chunkTasks.compute(chunkKey, (final long keyInMap, final ChunkIOTask valueInMap) -> {
                     if (valueInMap == null) {
                         throw new IllegalStateException("Write completed concurrently, expected this task: " + ChunkIOTask.this.toString() + ", report this!");
@@ -1079,7 +1185,7 @@ public final class MoonriseRegionFileIO {
                         throw new IllegalStateException("Chunk task mismatch, expected this task: " + ChunkIOTask.this.toString() + ", got: " + valueInMap.toString() + ", report this!");
                     }
 
-                    if (valueInMap.inProgressWrite != NOTHING_TO_WRITE) {
+                    if (valueInMap.inProgressWrite != null) {
                         return valueInMap;
                     }
 
@@ -1095,61 +1201,62 @@ public final class MoonriseRegionFileIO {
             return false;
         }
 
-        private void performWriteCompress() {
-            for (;;) {
-                final CompoundTag write = this.inProgressWrite;
-                if (write == NOTHING_TO_WRITE) {
-                    throw new IllegalStateException("Should be writable");
-                }
+        private void performWriteCompress(final InProgressWrite inProgressWrite) {
+            final CompoundTag write = inProgressWrite.value;
+            if (!inProgressWrite.isComplete()) {
+                throw new IllegalStateException("Should be writable");
+            }
 
-                RegionDataController.WriteData writeData = null;
-                boolean failedWrite = false;
+            RegionDataController.WriteData writeData = null;
+            boolean failedWrite = false;
 
-                try {
-                    writeData = this.regionDataController.startWrite(this.chunkX, this.chunkZ, write);
-                } catch (final Throwable thr) {
-                    // TODO implement this?
+            try {
+                writeData = this.regionDataController.startWrite(this.chunkX, this.chunkZ, write);
+            } catch (final Throwable thr) {
+                // TODO implement this?
                     /*if (thr instanceof RegionFileStorage.RegionFileSizeException) {
                         final int maxSize = RegionFile.MAX_CHUNK_SIZE / (1024 * 1024);
                         LOGGER.error("Chunk at (" + this.chunkX + "," + this.chunkZ + ") in '" + WorldUtil.getWorldName(this.world) + "' exceeds max size of " + maxSize + "MiB, it has been deleted from disk.");
                     } else */
-                    {
-                        failedWrite = thr instanceof IOException;
-                        LOGGER.error("Failed to write chunk data for task: " + this.toString(), thr);
-                    }
+                {
+                    failedWrite = thr instanceof IOException;
+                    LOGGER.error("Failed to write chunk data for task: " + this.toString(), thr);
                 }
+            }
 
-                if (writeData == null) {
-                    // null if a throwable was encountered
+            if (writeData == null) {
+                // null if a throwable was encountered
 
-                    // we cannot continue to the I/O stage here, so try to complete
+                // we cannot continue to the I/O stage here, so try to complete
 
-                    if (this.tryCompleteWrite(write, failedWrite)) {
-                        return;
-                    } else {
-                        // fetch new data and try again
-                        continue;
-                    }
+                if (this.tryCompleteWrite(inProgressWrite, failedWrite)) {
+                    return;
                 } else {
-                    // writeData != null && !failedWrite
-                    // we can continue to I/O stage
-                    this.writeData = writeData;
-                    this.scheduleWriteIO();
+                    // fetch new data and try again
+                    this.scheduleWriteCompress();
                     return;
                 }
+            } else {
+                // writeData != null && !failedWrite
+                // we can continue to I/O stage
+                this.writeData = writeData;
+                this.scheduleWriteIO(inProgressWrite);
+                return;
             }
         }
 
-        private void scheduleWriteIO() {
+        private void scheduleWriteIO(final InProgressWrite inProgressWrite) {
             final PrioritisedExecutor.PrioritisedTask task;
             synchronized (this) {
-                task = this.regionDataController.ioScheduler.createTask(this.chunkX, this.chunkZ, this::runWriteIO, this.priority);
+                task = this.regionDataController.ioScheduler.createTask(this.chunkX, this.chunkZ, () -> {
+                    ChunkIOTask.this.runWriteIO(inProgressWrite);
+                }, this.priority);
                 this.currentTask = task;
             }
             task.queue();
         }
 
-        private void runWriteIO() {
+        private void runWriteIO(final InProgressWrite inProgressWrite) {
             RegionDataController.WriteData writeData = this.writeData;
             this.writeData = null;
 
@@ -1162,14 +1269,14 @@ public final class MoonriseRegionFileIO {
                 LOGGER.error("Failed to write chunk data for task: " + this.toString(), thr);
             }
 
-            if (!this.tryCompleteWrite(writeData.input(), failedWrite)) {
+            if (!this.tryCompleteWrite(inProgressWrite, failedWrite)) {
                 // fetch new data and try again
                 this.scheduleWriteCompress();
             }
             return;
         }
 
-        private boolean tryCompleteWrite(final CompoundTag written, final boolean failedWrite) {
+        private boolean tryCompleteWrite(final InProgressWrite written, final boolean failedWrite) {
             final long chunkKey = CoordinateUtils.getChunkKey(this.chunkX, this.chunkZ);
 
             final boolean[] done = new boolean[] { false };
@@ -1216,14 +1323,6 @@ public final class MoonriseRegionFileIO {
                 return this.callbacks.isEmpty();
             }
 
-            public CompoundTag getValue() {
-                return this.value;
-            }
-
-            public Throwable getThrowable() {
-                return this.throwable;
-            }
-
             public boolean addToAsyncWaiters(final BiConsumer<CompoundTag, Throwable> callback) {
                 return this.callbacks.add(callback);
             }
@@ -1241,9 +1340,70 @@ public final class MoonriseRegionFileIO {
                     try {
                         consumer.accept(value == null ? null : value.copy(), throwable);
                     } catch (final Throwable thr) {
-                        LOGGER.error("Callback " + ConcurrentUtil.genericToString(consumer) + " failed to handle chunk data for task " + task.toString(), thr);
+                        LOGGER.error("Callback " + ConcurrentUtil.genericToString(consumer) + " failed to handle chunk data (read) for task " + task.toString(), thr);
                     }
                 }
+            }
+        }
+
+        private static final class InProgressWrite {
+
+            private static final Logger LOGGER = LoggerFactory.getLogger(InProgressWrite.class);
+
+            private CompoundTag value;
+            private Throwable throwable;
+            private volatile boolean complete;
+            private final MultiThreadedQueue<BiConsumer<CompoundTag, Throwable>> callbacks = new MultiThreadedQueue<>();
+
+            private final PrioritisedExecutor.PrioritisedTask writeTask;
+
+            public InProgressWrite(final PrioritisedExecutor.PrioritisedTask writeTask) {
+                this.writeTask = writeTask;
+            }
+
+            public boolean isComplete() {
+                return this.complete;
+            }
+
+            public void schedule(final ChunkIOTask task, final Consumer<BiConsumer<CompoundTag, Throwable>> scheduler) {
+                scheduler.accept((final CompoundTag data, final Throwable throwable) -> {
+                    InProgressWrite.this.complete(task, data, throwable);
+                });
+            }
+
+            public boolean addToAsyncWaiters(final BiConsumer<CompoundTag, Throwable> callback) {
+                return this.callbacks.add(callback);
+            }
+
+            public void addToWaiters(final ChunkIOTask task, final BiConsumer<CompoundTag, Throwable> consumer) {
+                if (!this.callbacks.add(consumer)) {
+                    this.syncAccept(task, consumer, this.value, this.throwable);
+                }
+            }
+
+            private void syncAccept(final ChunkIOTask task, final BiConsumer<CompoundTag, Throwable> consumer, final CompoundTag value, final Throwable throwable) {
+                try {
+                    consumer.accept(value == null ? null : value.copy(), throwable);
+                } catch (final Throwable thr) {
+                    LOGGER.error("Callback " + ConcurrentUtil.genericToString(consumer) + " failed to handle chunk data (write) for task " + task.toString(), thr);
+                }
+            }
+
+            public void complete(final ChunkIOTask task, final CompoundTag value, final Throwable throwable) {
+                this.value = value;
+                this.throwable = throwable;
+                this.complete = true;
+
+                task.pendingWriteComplete(this);
+
+                BiConsumer<CompoundTag, Throwable> consumer;
+                while ((consumer = this.callbacks.pollOrBlockAdds()) != null) {
+                    this.syncAccept(task, consumer, value, throwable);
+                }
+            }
+
+            public boolean cancel(final BiConsumer<CompoundTag, Throwable> callback) {
+                return this.callbacks.remove(callback);
             }
         }
     }
