@@ -1,17 +1,17 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.level.entity.dfl;
 
+import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.ChunkEntitySlices;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.entity.LevelCallback;
 
 public final class DefaultEntityLookup extends EntityLookup {
-    public DefaultEntityLookup(final Level world, final DimensionType dimensionType) {
-        super(world, dimensionType, new DefaultLevelCallback());
+    public DefaultEntityLookup(final Level world) {
+        super(world, new DefaultLevelCallback());
     }
 
     @Override

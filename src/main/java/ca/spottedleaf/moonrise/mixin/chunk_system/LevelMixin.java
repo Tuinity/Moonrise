@@ -8,9 +8,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.dfl.DefaultEntityLookup;
 import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemEntityGetter;
-import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
@@ -21,7 +19,6 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
@@ -79,8 +76,8 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
                     value = "RETURN"
             )
     )
-    private void initHook(final CallbackInfo ci, @Local(argsOnly = true) final Holder<DimensionType> dimensionType) {
-        this.entityLookup = new DefaultEntityLookup((Level)(Object)this, dimensionType.value());
+    private void initHook(final CallbackInfo ci) {
+        this.entityLookup = new DefaultEntityLookup((Level)(Object)this);
     }
 
     /**

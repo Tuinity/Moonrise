@@ -1,9 +1,7 @@
 package ca.spottedleaf.moonrise.common.util;
 
-import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
-import net.minecraft.world.level.dimension.DimensionType;
 
 public final class WorldUtil {
 
@@ -15,14 +13,6 @@ public final class WorldUtil {
 
     public static int getMinSection(final LevelHeightAccessor world) {
         return world.getMinSection();
-    }
-
-    public static int getMinSection(final DimensionType dimensionType) {
-        return SectionPos.blockToSectionCoord(dimensionType.minY());
-    }
-
-    public static int getMaxSection(final DimensionType dimensionType) {
-        return SectionPos.blockToSectionCoord(dimensionType.minY() + dimensionType.height() - 1);
     }
 
     public static int getMaxLightSection(final LevelHeightAccessor world) {
