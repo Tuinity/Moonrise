@@ -121,6 +121,7 @@ public final class ChunkTaskScheduler {
     public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor loadExecutor;
     public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor ioExecutor;
     public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor compressionExecutor;
+    public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor saveExecutor;
 
     private final PrioritisedTaskQueue mainThreadExecutor = new PrioritisedTaskQueue();
 
@@ -288,6 +289,7 @@ public final class ChunkTaskScheduler {
         this.ioExecutor = MoonriseCommon.SERVER_REGION_IO_GROUP.createExecutor(-1, MoonriseCommon.IO_QUEUE_HOLD_TIME, 0);
         // we need a separate executor here so that on shutdown we can continue to process I/O tasks
         this.compressionExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
+        this.saveExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
         this.chunkHolderManager = new ChunkHolderManager(world, this);
     }
 
@@ -855,12 +857,14 @@ public final class ChunkTaskScheduler {
 
     public boolean haltIO(final boolean sync, final long maxWaitNS) {
         this.ioExecutor.halt();
+        this.saveExecutor.halt();
         this.compressionExecutor.halt();
         if (sync) {
             final long time = System.nanoTime();
             for (long failures = 9L;; failures = ConcurrentUtil.linearLongBackoff(failures, 500_000L, 50_000_000L)) {
                 if (
                         !this.ioExecutor.isActive() &&
+                        !this.saveExecutor.isActive() &&
                         !this.compressionExecutor.isActive()
                 ) {
                     return true;

@@ -860,7 +860,7 @@ public final class NewChunkHolder {
 
         if (chunk != null) {
             final LazyRunnable toRun = new LazyRunnable();
-            this.chunkDataUnload = new UnloadTask(new CallbackCompletable<>(), this.scheduler.loadExecutor.createTask(toRun), toRun);
+            this.chunkDataUnload = new UnloadTask(new CallbackCompletable<>(), this.scheduler.saveExecutor.createTask(toRun), toRun);
         }
         if (poiChunk != null) {
             this.poiDataUnload = new UnloadTask(new CallbackCompletable<>(), null, null);
@@ -1747,25 +1747,39 @@ public final class NewChunkHolder {
             }
             return false;
         }
-        boolean completing = false;
         try {
             final SerializableChunkData chunkData = SerializableChunkData.copyOf(this.world, chunk);
             PlatformHooks.get().chunkSyncSave(this.world, chunk, chunkData);
-            // TODO implement proper async save
-            final CompoundTag save = chunkData.write();
 
-            if (unloading) {
-                completing = true;
-                this.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, save);
-            } else {
-                MoonriseRegionFileIO.scheduleSave(this.world, this.chunkX, this.chunkZ, save, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA);
-            }
             chunk.setUnsaved(false);
+
+            final CallbackCompletable<CompoundTag> completable = new CallbackCompletable<>();
+
+            final Runnable run = () -> {
+                final CompoundTag data = chunkData.write();
+
+                completable.complete(data);
+
+                if (unloading) {
+                    NewChunkHolder.this.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, data);
+                }
+            };
+
+            final PrioritisedExecutor.PrioritisedTask task;
+            if (unloading) {
+                this.chunkDataUnload.toRun().setRunnable(run);
+                task = this.chunkDataUnload.task();
+            } else {
+                task = this.scheduler.saveExecutor.createTask(run);
+            }
+
+            task.queue();
+
+            MoonriseRegionFileIO.scheduleSave(
+                this.world, this.chunkX, this.chunkZ, completable, task, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, Priority.NORMAL
+            );
         } catch (final Throwable thr) {
             LOGGER.error("Failed to save chunk data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'", thr);
-            if (unloading && !completing) {
-                this.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, null);
-            }
         }
 
         return true;

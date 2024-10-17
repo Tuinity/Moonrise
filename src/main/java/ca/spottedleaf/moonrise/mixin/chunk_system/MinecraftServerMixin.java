@@ -240,6 +240,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
     private void closeIOThreads(final CallbackInfo ci) {
         LOGGER.info("Waiting for I/O tasks to complete...");
         MoonriseRegionFileIO.flush((MinecraftServer)(Object)this);
+        LOGGER.info("All I/O tasks to complete");
         if ((Object)this instanceof DedicatedServer) {
             MoonriseCommon.haltExecutors();
         }
