@@ -2,7 +2,9 @@ package ca.spottedleaf.moonrise.mixin.getblock;
 
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.getblock.GetBlockLevel;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import org.spongepowered.asm.mixin.Mixin;
@@ -29,28 +31,29 @@ abstract class LevelMixin implements GetBlockLevel, LevelAccessor, AutoCloseable
 
     @Override
     public final int moonrise$getMinSection() {
-        return this.minSection;
+        return this.minSection == Integer.MAX_VALUE ? WorldUtil.getMinSection(this) : this.minSection;
     }
 
     @Override
     public final int moonrise$getMaxSection() {
-        return this.maxSection;
+        return this.maxSection == Integer.MAX_VALUE ? WorldUtil.getMaxSection(this) : this.maxSection;
     }
 
     @Override
     public final int moonrise$getMinBuildHeight() {
-        return this.minBuildHeight;
+        return this.minBuildHeight == Integer.MAX_VALUE ? this.getMinBuildHeight() : this.minBuildHeight;
     }
 
     @Override
     public final int moonrise$getMaxBuildHeight() {
-        return this.maxBuildHeight;
+        return this.maxBuildHeight == Integer.MAX_VALUE ? this.getMaxBuildHeight() : this.maxBuildHeight;
     }
 
     /**
      * @reason Init min/max section
      * @author Spottedleaf
      */
+    @SuppressWarnings({"ConstantValue", "rawtypes"})
     @Inject(
         method = "<init>",
         at = @At(
@@ -58,15 +61,23 @@ abstract class LevelMixin implements GetBlockLevel, LevelAccessor, AutoCloseable
         )
     )
     private void init(final CallbackInfo ci) {
-        this.minSection = WorldUtil.getMinSection(this);
-        this.maxSection = WorldUtil.getMaxSection(this);
-        this.minBuildHeight = this.getMinBuildHeight();
-        this.maxBuildHeight = this.getMaxBuildHeight();
+        if ((Class) this.getClass() == ServerLevel.class || (Class) this.getClass() == ClientLevel.class) {
+            this.minSection = WorldUtil.getMinSection(this);
+            this.maxSection = WorldUtil.getMaxSection(this);
+            this.minBuildHeight = this.getMinBuildHeight();
+            this.maxBuildHeight = this.getMaxBuildHeight();
+        } else {
+            // Can't always cache for mods extending Level
+            this.minSection = Integer.MAX_VALUE;
+            this.maxSection = Integer.MAX_VALUE;
+            this.minBuildHeight = Integer.MAX_VALUE;
+            this.maxBuildHeight = Integer.MAX_VALUE;
+        }
     }
 
     @Override
     public boolean isOutsideBuildHeight(final int y) {
-        return y < this.minBuildHeight || y >= this.maxBuildHeight;
+        return y < this.moonrise$getMinBuildHeight() || y >= this.moonrise$getMaxBuildHeight();
     }
 
     @Override
