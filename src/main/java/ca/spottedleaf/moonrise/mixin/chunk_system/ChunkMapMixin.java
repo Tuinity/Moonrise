@@ -11,8 +11,10 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import com.mojang.datafixers.DataFixer;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StreamTagVisitor;
 import net.minecraft.server.level.ChunkGenerationTask;
@@ -95,6 +97,12 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     @Shadow
     private Queue<Runnable> unloadQueue;
 
+    @Shadow
+    private LongSet chunksToEagerlySave;
+
+    @Shadow
+    private AtomicInteger activeChunkWrites;
+
     public ChunkMapMixin(RegionStorageInfo regionStorageInfo, Path path, DataFixer dataFixer, boolean bl) {
         super(regionStorageInfo, path, dataFixer, bl);
     }
@@ -129,6 +137,8 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
         this.lightTaskDispatcher = null;
         this.pendingGenerationTasks = null;
         this.unloadQueue = null;
+        this.chunksToEagerlySave = null;
+        this.activeChunkWrites = null;
 
         // Dummy impl for mods that try to loadAsync directly
         this.worker = new IOWorker(
@@ -178,6 +188,15 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
                 throw new UnsupportedOperationException();
             }
         };
+    }
+
+    /**
+     * @reason This map is not needed, we maintain our own ordered set of chunks to autosave.
+     * @author Spottedleaf
+     */
+    @Overwrite
+    private void setChunkUnsaved(final ChunkPos pos) {
+
     }
 
     /**
@@ -312,6 +331,15 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     public void processUnloads(final BooleanSupplier shouldKeepTicking) {
         ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.processUnloads();
         ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.autoSave();
+    }
+
+    /**
+     * @reason Destroy old chunk system hooks
+     * @author Spottedleaf
+     */
+    @Overwrite
+    private void saveChunksEagerly(final BooleanSupplier hasTime) {
+        throw new UnsupportedOperationException();
     }
 
     /**

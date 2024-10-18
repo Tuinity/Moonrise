@@ -85,6 +85,7 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
                 chunk.setLoaded(true);
                 chunk.registerAllBlockEntitiesAfterLevelLoad();
                 chunk.registerTickContainerInLevel(this.world);
+                chunk.setUnsavedListener(this.world.getChunkSource().chunkMap.worldGenContext.unsavedListener());
                 platformHooks.chunkFullStatusComplete(chunk, (ProtoChunk)this.fromChunk);
             } finally {
                 platformHooks.setCurrentlyLoading(this.chunkHolder.vanillaChunkHolder, null);
