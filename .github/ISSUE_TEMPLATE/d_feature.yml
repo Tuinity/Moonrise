@@ -1,0 +1,34 @@
+name: Feature Request
+description: Request a new feature.
+title: '[Feature Request: <NeoForge/Fabric/NeoForge & Fabric>]: Short description'
+labels:
+    - enhancement
+    - needs-triage
+body:
+    - type: input
+      id: mc_ver
+      attributes:
+          label: Minecraft Version
+          placeholder: e.g. 1.21.1, 1.21.2
+      validations:
+          required: true
+    - type: dropdown
+      id: mod_loader
+      attributes:
+          label: Mod Loader
+          description: The mod loader(s) this feature request is relevant for.
+          options:
+              - NeoForge
+              - Fabric
+              - Both (NeoForge and Fabric)
+      validations:
+          required: true
+    - type: textarea
+      id: context
+      attributes:
+          label: Description
+          description: >-
+              Describe the feature request in detail, including alternatives
+              considered.
+      validations:
+          required: true
