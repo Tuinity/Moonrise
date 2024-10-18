@@ -34,6 +34,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.server.network.PlayerChunkSender;
+import net.minecraft.util.Unit;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -52,6 +53,7 @@ public final class RegionizedPlayerChunkLoader {
 
     public static final TicketType<Long> PLAYER_TICKET         = TicketType.create("chunk_system:player_ticket", Long::compareTo);
     public static final TicketType<Long> PLAYER_TICKET_DELAYED = TicketType.create("chunk_system:player_ticket_delayed", Long::compareTo, 5 * 20);
+    public static final TicketType<Unit> PLAYER_JOIN           = TicketType.create("chunk_system:player_join", (a, b) -> 0, 5 * 20);
 
     public static final int MIN_VIEW_DISTANCE = 2;
     public static final int MAX_VIEW_DISTANCE = 32;
