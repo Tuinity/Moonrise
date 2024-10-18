@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.fabric.mixin.collisions;
 
-import ca.spottedleaf.moonrise.patches.getblock.GetBlockLevel;
+import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.TagKey;
@@ -9,7 +9,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -61,7 +60,7 @@ abstract class EntityMixin {
         final AABB boundingBox = this.getBoundingBox().deflate(1.0E-3);
 
         final Level world = this.level;
-        final int minSection = ((GetBlockLevel)world).moonrise$getMinSection();
+        final int minSection = WorldUtil.getMinSection(world);
 
         final int minBlockX = Mth.floor(boundingBox.minX);
         final int minBlockY = Math.max((minSection << 4), Mth.floor(boundingBox.minY));
@@ -69,7 +68,7 @@ abstract class EntityMixin {
 
         // note: bounds are exclusive in Vanilla, so we subtract 1 - our loop expects bounds to be inclusive
         final int maxBlockX = Mth.ceil(boundingBox.maxX) - 1;
-        final int maxBlockY = Math.min((((GetBlockLevel)world).moonrise$getMaxSection() << 4) | 15, Mth.ceil(boundingBox.maxY) - 1);
+        final int maxBlockY = Math.min((WorldUtil.getMaxSection(world) << 4) | 15, Mth.ceil(boundingBox.maxY) - 1);
         final int maxBlockZ = Mth.ceil(boundingBox.maxZ) - 1;
 
         final boolean isPushable = this.isPushedByFluid();

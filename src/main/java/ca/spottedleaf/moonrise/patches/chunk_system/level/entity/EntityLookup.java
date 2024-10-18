@@ -46,8 +46,6 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
 
     protected final SWMRLong2ObjectHashTable<ChunkSlicesRegion> regions = new SWMRLong2ObjectHashTable<>(128, 0.5f);
 
-    protected final int minSection; // inclusive
-    protected final int maxSection; // inclusive
     protected final LevelCallback<Entity> worldCallback;
 
     protected final ConcurrentLong2ReferenceChainedHashTable<Entity> entityById = new ConcurrentLong2ReferenceChainedHashTable<>();
@@ -56,8 +54,6 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
 
     public EntityLookup(final Level world, final LevelCallback<Entity> worldCallback) {
         this.world = world;
-        this.minSection = WorldUtil.getMinSection(world);
-        this.maxSection = WorldUtil.getMaxSection(world);
         this.worldCallback = worldCallback;
     }
 
@@ -404,7 +400,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
     protected boolean addEntity(final Entity entity, final boolean fromDisk, final boolean event) {
         final BlockPos pos = entity.blockPosition();
         final int sectionX = pos.getX() >> 4;
-        final int sectionY = Mth.clamp(pos.getY() >> 4, this.minSection, this.maxSection);
+        final int sectionY = Mth.clamp(pos.getY() >> 4, WorldUtil.getMinSection(this.world), WorldUtil.getMaxSection(this.world));
         final int sectionZ = pos.getZ() >> 4;
         this.checkThread(sectionX, sectionZ, "Cannot add entity off-main thread");
 
@@ -523,7 +519,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
         final int sectionZ = ((ChunkSystemEntity)entity).moonrise$getSectionZ();
         final BlockPos newPos = entity.blockPosition();
         final int newSectionX = newPos.getX() >> 4;
-        final int newSectionY = Mth.clamp(newPos.getY() >> 4, this.minSection, this.maxSection);
+        final int newSectionY = Mth.clamp(newPos.getY() >> 4, WorldUtil.getMinSection(this.world), WorldUtil.getMaxSection(this.world));
         final int newSectionZ = newPos.getZ() >> 4;
 
         if (newSectionX == sectionX && newSectionY == sectionY && newSectionZ == sectionZ) {

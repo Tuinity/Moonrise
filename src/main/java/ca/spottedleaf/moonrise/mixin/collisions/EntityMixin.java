@@ -1,11 +1,11 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
+import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.util.NoneMatchStream;
-import ca.spottedleaf.moonrise.patches.getblock.GetBlockLevel;
 import it.unimi.dsi.fastutil.floats.FloatArraySet;
 import it.unimi.dsi.fastutil.floats.FloatArrays;
 import net.minecraft.core.BlockPos;
@@ -16,7 +16,6 @@ import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -222,7 +221,7 @@ abstract class EntityMixin {
         final int maxChunkY = maxBlockY >> 4;
         final int maxChunkZ = maxBlockZ >> 4;
 
-        final int minSection = ((GetBlockLevel)world).moonrise$getMinSection();
+        final int minSection = WorldUtil.getMinSection(world);
         final ChunkSource chunkSource = world.getChunkSource();
         final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
@@ -331,7 +330,7 @@ abstract class EntityMixin {
             return new NoneMatchStream<>(true);
         }
 
-        final int minSection = ((GetBlockLevel)world).moonrise$getMinSection();
+        final int minSection = WorldUtil.getMinSection(world);
         final ChunkSource chunkSource = world.getChunkSource();
 
         for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
@@ -406,7 +405,7 @@ abstract class EntityMixin {
             return;
         }
 
-        final int minSection = ((GetBlockLevel)world).moonrise$getMinSection();
+        final int minSection = WorldUtil.getMinSection(world);
         final ChunkSource chunkSource = world.getChunkSource();
         final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 

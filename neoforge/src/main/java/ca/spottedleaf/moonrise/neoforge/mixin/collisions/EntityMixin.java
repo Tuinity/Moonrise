@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.neoforge.mixin.collisions;
 
+import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.neoforge.patches.collisions.FluidPushCalculation;
-import ca.spottedleaf.moonrise.patches.getblock.GetBlockLevel;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceArrayMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import net.minecraft.core.BlockPos;
@@ -10,7 +10,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -59,7 +58,7 @@ abstract class EntityMixin implements IEntityExtension {
         final AABB boundingBox = this.getBoundingBox().deflate(1.0E-3);
 
         final Level world = this.level;
-        final int minSection = ((GetBlockLevel)world).moonrise$getMinSection();
+        final int minSection = WorldUtil.getMinSection(world);
 
         final int minBlockX = Mth.floor(boundingBox.minX);
         final int minBlockY = Math.max((minSection << 4), Mth.floor(boundingBox.minY));
@@ -67,7 +66,7 @@ abstract class EntityMixin implements IEntityExtension {
 
         // note: bounds are exclusive in Vanilla, so we subtract 1
         final int maxBlockX = Mth.ceil(boundingBox.maxX) - 1;
-        final int maxBlockY = Math.min((((GetBlockLevel)world).moonrise$getMaxSection() << 4) | 15, Mth.ceil(boundingBox.maxY) - 1);
+        final int maxBlockY = Math.min((WorldUtil.getMaxSection(world) << 4) | 15, Mth.ceil(boundingBox.maxY) - 1);
         final int maxBlockZ = Mth.ceil(boundingBox.maxZ) - 1;
 
         final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
