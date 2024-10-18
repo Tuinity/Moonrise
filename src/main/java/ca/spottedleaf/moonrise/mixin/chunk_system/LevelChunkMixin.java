@@ -93,11 +93,15 @@ abstract class LevelChunkMixin extends ChunkAccess implements ChunkSystemLevelCh
     }
 
     @Override
-    public void setUnsaved(final boolean needsSaving) {
-        if (!needsSaving) {
-            ((ChunkSystemLevelChunkTicks)this.blockTicks).moonrise$clearDirty();
-            ((ChunkSystemLevelChunkTicks)this.fluidTicks).moonrise$clearDirty();
+    public boolean tryMarkSaved() {
+        if (!this.isUnsaved()) {
+            return false;
         }
-        super.setUnsaved(needsSaving);
+        ((ChunkSystemLevelChunkTicks)this.blockTicks).moonrise$clearDirty();
+        ((ChunkSystemLevelChunkTicks)this.fluidTicks).moonrise$clearDirty();
+
+        super.tryMarkSaved();
+
+        return true;
     }
 }

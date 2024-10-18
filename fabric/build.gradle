@@ -22,7 +22,7 @@ dependencies {
 
     modImplementation "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
     include "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
-    modImplementation "com.terraformersmc:modmenu:11.0.1"
+    modImplementation "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
 
     modImplementation fabricApiLibs.fabric.api
     include fabricApiLibs.command.api.v2

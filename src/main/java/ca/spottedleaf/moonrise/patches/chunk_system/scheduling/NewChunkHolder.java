@@ -1751,7 +1751,7 @@ public final class NewChunkHolder {
             final SerializableChunkData chunkData = SerializableChunkData.copyOf(this.world, chunk);
             PlatformHooks.get().chunkSyncSave(this.world, chunk, chunkData);
 
-            chunk.setUnsaved(false);
+            chunk.tryMarkSaved();
 
             final CallbackCompletable<CompoundTag> completable = new CallbackCompletable<>();
 
