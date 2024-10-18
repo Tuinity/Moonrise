@@ -7,7 +7,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.dimension.DimensionType;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,12 +16,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = Level.class, priority = 1100)
 abstract class LevelMixin implements LevelAccessor, AutoCloseable {
 
-    @Shadow
-    public abstract DimensionType dimensionType();
-
+    @Unique
+    private int height;
 
     @Unique
-    private DimensionType dimensionType;
+    private int minBuildHeight;
+
+    @Unique
+    private int maxBuildHeight;
+
+    @Unique
+    private int minSection;
+
+    @Unique
+    private int maxSection;
+
+    @Unique
+    private int sectionsCount;
 
     /**
      * @reason Init min/max section
@@ -36,46 +46,43 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
     )
     private void init(final CallbackInfo ci,
                       @Local(ordinal = 0, argsOnly = true) final Holder<DimensionType> dimensionTypeHolder) {
-        this.dimensionType = dimensionTypeHolder.value();
+        final DimensionType dimType = dimensionTypeHolder.value();
+        this.height = dimType.height();
+        this.minBuildHeight = dimType.minY();
+        this.maxBuildHeight = this.minBuildHeight + this.height;
+        this.minSection = this.minBuildHeight >> 4;
+        this.maxSection = ((this.maxBuildHeight - 1) >> 4) + 1;
+        this.sectionsCount = this.maxSection - this.minSection;
     }
 
     @Override
     public int getHeight() {
-        return this.dimensionType.height();
+        return this.height;
     }
 
     @Override
     public int getMinBuildHeight() {
-        return this.dimensionType.minY();
+        return this.minBuildHeight;
     }
 
     @Override
     public int getMaxBuildHeight() {
-        final DimensionType dimensionType = this.dimensionType;
-
-        return dimensionType.minY() + dimensionType.height();
+        return this.maxBuildHeight;
     }
 
     @Override
     public int getMinSection() {
-        return this.dimensionType.minY() >> 4;
+        return this.minSection;
     }
 
     @Override
     public int getMaxSection() {
-        final DimensionType dimensionType = this.dimensionType;
-
-        return (((dimensionType.minY() + dimensionType.height()) - 1) >> 4) + 1;
+        return this.maxSection;
     }
 
     @Override
     public boolean isOutsideBuildHeight(final int y) {
-        final DimensionType dimensionType = this.dimensionType;
-
-        final int minBuildHeight = dimensionType.minY();
-        final int maxBuildHeight = minBuildHeight + dimensionType.height();
-
-        return y < minBuildHeight || y >= maxBuildHeight;
+        return y < this.minBuildHeight || y >= this.maxBuildHeight;
     }
 
     @Override
@@ -85,16 +92,21 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
 
     @Override
     public int getSectionIndex(final int blockY) {
-        return (blockY >> 4) - (this.dimensionType.minY() >> 4);
+        return (blockY >> 4) - this.minSection;
     }
 
     @Override
     public int getSectionIndexFromSectionY(final int sectionY) {
-        return sectionY - (this.dimensionType.minY() >> 4);
+        return sectionY - this.minSection;
     }
 
     @Override
     public int getSectionYFromSectionIndex(final int sectionIdx) {
-        return sectionIdx + (this.dimensionType.minY() >> 4);
+        return sectionIdx + this.minSection;
+    }
+
+    @Override
+    public int getSectionsCount() {
+        return this.sectionsCount;
     }
 }
