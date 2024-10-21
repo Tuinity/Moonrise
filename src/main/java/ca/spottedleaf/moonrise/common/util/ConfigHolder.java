@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.common.util;
 
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.config.adapter.TypeAdapterRegistry;
 import ca.spottedleaf.moonrise.common.config.config.YamlConfig;
 import ca.spottedleaf.moonrise.common.config.moonrise.MoonriseConfig;
@@ -13,7 +14,7 @@ public final class ConfigHolder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigHolder.class);
 
-    private static final File CONFIG_FILE = new File(System.getProperty("Moonrise.ConfigFile", "config/moonrise.yml"));
+    private static final File CONFIG_FILE = new File(System.getProperty(PlatformHooks.get().getBrand() + ".ConfigFile", "config/moonrise.yml"));
     private static final TypeAdapterRegistry CONFIG_ADAPTERS = new TypeAdapterRegistry();
     private static final YamlConfig<MoonriseConfig> CONFIG;
     static {
@@ -25,7 +26,7 @@ public final class ConfigHolder {
             throw new RuntimeException(ex);
         }
     }
-    private static final String CONFIG_HEADER = """
+    private static final String CONFIG_HEADER = String.format("""
             This is the configuration file for Moonrise.
             
             Each configuration option is prefixed with a comment to explain what it does. Additional changes to this file
@@ -33,10 +34,10 @@ public final class ConfigHolder {
             
             Below are the Moonrise startup flags. Note that startup flags must be placed in the JVM arguments, not
             program arguments.
-            -DMoonrise.ConfigFile=<file> - Override the config file location. Might be useful for multiple game versions.
-            -DMoonrise.WorkerThreadCount=<number> - Override the auto configured worker thread counts (worker-threads).
-            -DMoonrise.MaxViewDistance=<number> - Overrides the maximum view distance, should only use for debugging purposes.
-            """;
+            -D%1$s.ConfigFile=<file> - Override the config file location. Might be useful for multiple game versions.
+            -D%1$s.WorkerThreadCount=<number> - Override the auto configured worker thread counts (worker-threads).
+            -D%1$s.MaxViewDistance=<number> - Overrides the maximum view distance, should only use for debugging purposes.
+            """, PlatformHooks.get().getBrand());
 
     static {
         reloadConfig();

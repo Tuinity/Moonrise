@@ -19,7 +19,7 @@ public final class MoonriseCommon {
                 @Override
                 public void accept(Thread thread) {
                     thread.setDaemon(true);
-                    thread.setName("Moonrise Common Worker #" + this.idGenerator.getAndIncrement());
+                    thread.setName(PlatformHooks.get().getBrand() + " Common Worker #" + this.idGenerator.getAndIncrement());
                     thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                         @Override
                         public void uncaughtException(final Thread thread, final Throwable throwable) {
@@ -44,7 +44,7 @@ public final class MoonriseCommon {
         } else {
             defaultWorkerThreads = defaultWorkerThreads / 2;
         }
-        defaultWorkerThreads = Integer.getInteger("Moonrise.WorkerThreadCount", Integer.valueOf(defaultWorkerThreads));
+        defaultWorkerThreads = Integer.getInteger(PlatformHooks.get().getBrand() + ".WorkerThreadCount", Integer.valueOf(defaultWorkerThreads));
 
         int workerThreads = configWorkerThreads;
 

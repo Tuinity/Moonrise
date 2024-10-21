@@ -6,6 +6,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,6 +17,9 @@ abstract class BooleanPropertyMixin extends Property<Boolean> implements Propert
     protected BooleanPropertyMixin(String string, Class<Boolean> class_) {
         super(string, class_);
     }
+
+    @Unique
+    private static final Boolean[] BY_ID = new Boolean[]{ Boolean.FALSE, Boolean.TRUE };
 
     @Override
     public final int moonrise$getIdFor(final Boolean value) {
@@ -33,6 +37,6 @@ abstract class BooleanPropertyMixin extends Property<Boolean> implements Propert
         )
     )
     private void init(final CallbackInfo ci) {
-        this.moonrise$setById(new Boolean[]{ Boolean.FALSE, Boolean.TRUE });
+        this.moonrise$setById(BY_ID);
     }
 }

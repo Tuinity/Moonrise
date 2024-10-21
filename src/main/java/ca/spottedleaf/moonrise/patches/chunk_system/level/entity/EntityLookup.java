@@ -1057,7 +1057,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
         @Override
         public void onRemove(final Entity.RemovalReason reason) {
             final Entity entity = this.entity;
-            EntityLookup.this.checkThread(entity, "Cannot remove entity off-main"); // Paper - rewrite chunk system
+            EntityLookup.this.checkThread(entity, "Cannot remove entity off-main");
             final Visibility tickingState = EntityLookup.getEntityStatus(entity);
 
             EntityLookup.this.removeEntity(entity);

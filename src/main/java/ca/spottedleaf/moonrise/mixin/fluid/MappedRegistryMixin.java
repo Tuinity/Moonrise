@@ -29,9 +29,9 @@ abstract class MappedRegistryMixin<T> {
         final RegistrationInfo registrationInfo,
         final CallbackInfoReturnable<Holder.Reference<T>> cir
     ) {
-        if (resourceKey.registryKey() == (Object) Registries.FLUID) {
-            for (final FluidState possibleState : ((Fluid) object).getStateDefinition().getPossibleStates()) {
-                ((FluidFluidState) (Object) possibleState).moonrise$initCaches();
+        if (resourceKey.registryKey() == (Object)Registries.FLUID) {
+            for (final FluidState possibleState : ((Fluid)object).getStateDefinition().getPossibleStates()) {
+                ((FluidFluidState)(Object)possibleState).moonrise$initCaches();
             }
         }
     }

@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.entity_tracker;
 
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.common.util.TickThread;
@@ -144,8 +145,8 @@ abstract class TrackedEntityMixin implements EntityTrackerTrackedEntity {
      */
     @Overwrite
     public int getEffectiveRange() {
-        int range = this.range;
         final Entity entity = this.entity;
+        int range = PlatformHooks.get().modifyEntityTrackingRange(entity, this.range);
 
         if (entity.getPassengers() == ImmutableList.<Entity>of()) {
             return this.scaledRange(range);
@@ -154,8 +155,9 @@ abstract class TrackedEntityMixin implements EntityTrackerTrackedEntity {
         // note: we change to List
         final List<Entity> passengers = (List<Entity>)entity.getIndirectPassengers();
         for (int i = 0, len = passengers.size(); i < len; ++i) {
+            final Entity passenger = passengers.get(i);
             // note: max should be branchless
-            range = Math.max(range, passengers.get(i).getType().clientTrackingRange() << 4);
+            range = Math.max(range, PlatformHooks.get().modifyEntityTrackingRange(passenger, passenger.getType().clientTrackingRange() << 4));
         }
 
         return this.scaledRange(range);

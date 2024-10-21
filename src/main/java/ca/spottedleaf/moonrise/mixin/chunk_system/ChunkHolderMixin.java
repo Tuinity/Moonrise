@@ -67,9 +67,6 @@ abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSy
     private final ReferenceList<ServerPlayer> playersSentChunkTo = new ReferenceList<>(EMPTY_PLAYER_ARRAY);
 
     @Unique
-    private boolean isMarkedDirtyForPlayers;
-
-    @Unique
     private ChunkMap getChunkMap() {
         return (ChunkMap)this.playerProvider;
     }
@@ -121,16 +118,6 @@ abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSy
         }
 
         return ret;
-    }
-
-    @Override
-    public final boolean moonrise$isMarkedDirtyForPlayers() {
-        return this.isMarkedDirtyForPlayers;
-    }
-
-    @Override
-    public final void moonrise$markDirtyForPlayers(final boolean value) {
-        this.isMarkedDirtyForPlayers = value;
     }
 
     @Unique

@@ -427,11 +427,11 @@ public final class RegionizedPlayerChunkLoader {
             if (!this.sentChunks.remove(CoordinateUtils.getChunkKey(chunkX, chunkZ))) {
                 return;
             }
-            PlatformHooks.get().onChunkUnWatch(this.world, new ChunkPos(chunkX, chunkZ), this.player);
             this.sendUnloadChunkRaw(chunkX, chunkZ);
         }
 
         private void sendUnloadChunkRaw(final int chunkX, final int chunkZ) {
+            PlatformHooks.get().onChunkUnWatch(this.world, new ChunkPos(chunkX, chunkZ), this.player);
             // Note: Check PlayerChunkSender#dropChunk for other logic
             // Note: drop isAlive() check so that chunks properly unload client-side when the player dies
             ((ChunkSystemChunkHolder)((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().chunkHolderManager
@@ -1076,6 +1076,10 @@ public final class RegionizedPlayerChunkLoader {
             this.flushDelayedTicketOps();
 
             // now all tickets should be removed, which is all of our external state
+        }
+
+        public LongOpenHashSet getSentChunksRaw() {
+            return this.sentChunks;
         }
     }
 }

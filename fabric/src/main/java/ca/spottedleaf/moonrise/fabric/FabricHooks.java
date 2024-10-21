@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatusTasks;
 import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
@@ -185,5 +186,25 @@ public final class FabricHooks implements PlatformHooks {
     @Override
     public void mainChunkLoad(final ChunkAccess chunk, final SerializableChunkData chunkData) {
 
+    }
+
+    @Override
+    public List<Entity> modifySavedEntities(final ServerLevel world, final int chunkX, final int chunkZ, final List<Entity> entities) {
+        return entities;
+    }
+
+    @Override
+    public void unloadEntity(final Entity entity) {
+        entity.setRemoved(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+    }
+
+    @Override
+    public void postLoadProtoChunk(final ServerLevel world, final ProtoChunk chunk) {
+        ChunkStatusTasks.postLoadProtoChunk(world, chunk.getEntities());
+    }
+
+    @Override
+    public int modifyEntityTrackingRange(final Entity entity, final int currentRange) {
+        return currentRange;
     }
 }

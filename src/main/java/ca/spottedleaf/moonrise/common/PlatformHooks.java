@@ -95,6 +95,14 @@ public interface PlatformHooks {
 
     public void mainChunkLoad(final ChunkAccess chunk, final SerializableChunkData chunkData);
 
+    public List<Entity> modifySavedEntities(final ServerLevel world, final int chunkX, final int chunkZ, final List<Entity> entities);
+
+    public void unloadEntity(final Entity entity);
+
+    public void postLoadProtoChunk(final ServerLevel world, final ProtoChunk chunk);
+
+    public int modifyEntityTrackingRange(final Entity entity, final int currentRange);
+
     public static final class Holder {
         private Holder() {
         }
