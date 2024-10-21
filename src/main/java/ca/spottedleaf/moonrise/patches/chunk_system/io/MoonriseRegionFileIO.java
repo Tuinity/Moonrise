@@ -783,6 +783,7 @@ public final class MoonriseRegionFileIO {
                     callbackInfo.data = running.inProgressRead.value;
                     callbackInfo.throwable = running.inProgressRead.throwable;
                     callbackInfo.completeNow = true;
+                    return running;
                 }
 
                 callbackInfo.read = running.inProgressRead;

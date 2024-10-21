@@ -114,7 +114,7 @@ abstract class FlowingFluidMixin extends Fluid {
     private static final int COLLISION_OCCLUSION_CACHE_SIZE = 2048;
 
     @Unique
-    private static final FluidOcclusionCacheKey[] COLLISION_OCCLUSION_CACHE = new FluidOcclusionCacheKey[COLLISION_OCCLUSION_CACHE_SIZE];
+    private static final ThreadLocal<FluidOcclusionCacheKey[]> COLLISION_OCCLUSION_CACHE = ThreadLocal.withInitial(() -> new FluidOcclusionCacheKey[COLLISION_OCCLUSION_CACHE_SIZE]);
 
     /**
      * @reason Try to avoid going to the cache for simple cases; additionally use better caching strategy
@@ -135,7 +135,7 @@ abstract class FlowingFluidMixin extends Fluid {
         }
 
         final FluidOcclusionCacheKey[] cache = ((CollisionBlockState)fromState).moonrise$hasCache() & ((CollisionBlockState)toState).moonrise$hasCache() ?
-                COLLISION_OCCLUSION_CACHE : null;
+                COLLISION_OCCLUSION_CACHE.get() : null;
 
         final int keyIndex
                 = (((CollisionBlockState)fromState).moonrise$uniqueId1() ^ ((CollisionBlockState)toState).moonrise$uniqueId2() ^ ((CollisionDirection)(Object)direction).moonrise$uniqueId())

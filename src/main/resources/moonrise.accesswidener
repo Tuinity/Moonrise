@@ -50,6 +50,7 @@ accessible method net/minecraft/server/level/ChunkMap playerIsCloseEnoughForSpaw
 mutable field net/minecraft/server/level/ChunkMap chunksToEagerlySave Lit/unimi/dsi/fastutil/longs/LongSet;
 mutable field net/minecraft/server/level/ChunkMap activeChunkWrites Ljava/util/concurrent/atomic/AtomicInteger;
 
+
 # ChunkLevel
 accessible field net/minecraft/server/level/ChunkLevel FULL_CHUNK_LEVEL I
 accessible field net/minecraft/server/level/ChunkLevel BLOCK_TICKING_LEVEL I

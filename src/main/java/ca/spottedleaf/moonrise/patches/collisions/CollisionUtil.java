@@ -1231,7 +1231,7 @@ public final class CollisionUtil {
                 ((CollisionVoxelShape)second).moonrise$rootCoordinatesX(), ((CollisionVoxelShape)second).moonrise$offsetX(),
                 ft, tf
         );
-        if (mergedX == MergedVoxelCoordinateList.EMPTY) {
+        if (mergedX == null) {
             return Shapes.empty();
         }
         final MergedVoxelCoordinateList mergedY = MergedVoxelCoordinateList.merge(
@@ -1239,7 +1239,7 @@ public final class CollisionUtil {
                 ((CollisionVoxelShape)second).moonrise$rootCoordinatesY(), ((CollisionVoxelShape)second).moonrise$offsetY(),
                 ft, tf
         );
-        if (mergedY == MergedVoxelCoordinateList.EMPTY) {
+        if (mergedY == null) {
             return Shapes.empty();
         }
         final MergedVoxelCoordinateList mergedZ = MergedVoxelCoordinateList.merge(
@@ -1247,7 +1247,7 @@ public final class CollisionUtil {
                 ((CollisionVoxelShape)second).moonrise$rootCoordinatesZ(), ((CollisionVoxelShape)second).moonrise$offsetZ(),
                 ft, tf
         );
-        if (mergedZ == MergedVoxelCoordinateList.EMPTY) {
+        if (mergedZ == null) {
             return Shapes.empty();
         }
 
@@ -1329,7 +1329,7 @@ public final class CollisionUtil {
                 ((CollisionVoxelShape)second).moonrise$rootCoordinatesX(), ((CollisionVoxelShape)second).moonrise$offsetX(),
                 ft, tf
         );
-        if (mergedX == MergedVoxelCoordinateList.EMPTY) {
+        if (mergedX == null) {
             return false;
         }
         final MergedVoxelCoordinateList mergedY = MergedVoxelCoordinateList.merge(
@@ -1337,7 +1337,7 @@ public final class CollisionUtil {
                 ((CollisionVoxelShape)second).moonrise$rootCoordinatesY(), ((CollisionVoxelShape)second).moonrise$offsetY(),
                 ft, tf
         );
-        if (mergedY == MergedVoxelCoordinateList.EMPTY) {
+        if (mergedY == null) {
             return false;
         }
         final MergedVoxelCoordinateList mergedZ = MergedVoxelCoordinateList.merge(
@@ -1345,7 +1345,7 @@ public final class CollisionUtil {
                 ((CollisionVoxelShape)second).moonrise$rootCoordinatesZ(), ((CollisionVoxelShape)second).moonrise$offsetZ(),
                 ft, tf
         );
-        if (mergedZ == MergedVoxelCoordinateList.EMPTY) {
+        if (mergedZ == null) {
             return false;
         }
 
@@ -1367,10 +1367,6 @@ public final class CollisionUtil {
                 SIMPLE_INDICES_CACHE[i] = getIndices(i);
             }
         }
-
-        private static final MergedVoxelCoordinateList EMPTY = new MergedVoxelCoordinateList(
-                new double[] { 0.0 }, 0.0, new int[0], new int[0], 0
-        );
 
         private static int[] getIndices(final int length) {
             final int[] ret = new int[length];
@@ -1506,7 +1502,7 @@ public final class CollisionUtil {
                 }
             }
 
-            return resultSize <= 1 ? EMPTY : new MergedVoxelCoordinateList(coordinates, 0.0, firstIndices, secondIndices, resultSize - 1);
+            return resultSize <= 1 ? null : new MergedVoxelCoordinateList(coordinates, 0.0, firstIndices, secondIndices, resultSize - 1);
         }
     }
 

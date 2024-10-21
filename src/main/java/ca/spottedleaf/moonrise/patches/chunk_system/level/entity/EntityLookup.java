@@ -959,7 +959,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
 
     public ChunkEntitySlices getOrCreateChunk(final int chunkX, final int chunkZ) {
         final ChunkSlicesRegion region = this.getRegion(chunkX >> REGION_SHIFT, chunkZ >> REGION_SHIFT);
-        ChunkEntitySlices ret;
+        final ChunkEntitySlices ret;
         if (region == null || (ret = region.get((chunkX & REGION_MASK) | ((chunkZ & REGION_MASK) << REGION_SHIFT))) == null) {
             return this.createEntityChunk(chunkX, chunkZ, true);
         }

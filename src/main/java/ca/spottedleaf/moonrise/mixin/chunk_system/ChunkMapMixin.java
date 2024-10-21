@@ -195,7 +195,7 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
      * @author Spottedleaf
      */
     @Overwrite
-    private void setChunkUnsaved(final ChunkPos pos) {
+    public void setChunkUnsaved(final ChunkPos pos) {
 
     }
 
@@ -338,7 +338,7 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
      * @author Spottedleaf
      */
     @Overwrite
-    private void saveChunksEagerly(final BooleanSupplier hasTime) {
+    public void saveChunksEagerly(final BooleanSupplier hasTime) {
         throw new UnsupportedOperationException();
     }
 
