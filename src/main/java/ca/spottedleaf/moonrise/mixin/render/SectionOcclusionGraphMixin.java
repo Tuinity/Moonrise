@@ -1,9 +1,11 @@
 package ca.spottedleaf.moonrise.mixin.render;
 
+import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.executor.thread.PrioritisedThreadPool;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import net.minecraft.client.renderer.SectionOcclusionGraph;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,11 +35,22 @@ abstract class SectionOcclusionGraphMixin {
         )
     )
     private CompletableFuture<Void> changeExecutor(final Runnable runnable, final Executor executor) {
-        return CompletableFuture.runAsync(
-            runnable,
-            (final Runnable task) -> {
-                SECTION_OCCLUSION_EXECUTOR.queueTask(task, Priority.NORMAL);
+        final PrioritisedExecutor.PrioritisedTask[] prioritisedTask = new PrioritisedExecutor.PrioritisedTask[1];
+        final CompletableFuture<Void> future = new CompletableFuture<>() {
+            @Override
+            public Void get() throws InterruptedException, ExecutionException {
+                prioritisedTask[0].execute();
+                return super.get();
             }
-        );
+        };
+        prioritisedTask[0] = SECTION_OCCLUSION_EXECUTOR.queueTask(() -> {
+            try {
+                runnable.run();
+                future.complete(null);
+            } catch (final Throwable throwable) {
+                future.completeExceptionally(throwable);
+            }
+        }, Priority.NORMAL);
+        return future;
     }
 }
