@@ -48,7 +48,6 @@ allprojects {
         mavenLocal {
             mavenContent {
                 includeModule("ca.spottedleaf", "concurrentutil")
-                includeModule("net.neoforged", "neoforge")
             }
         }
         maven {
@@ -99,7 +98,8 @@ subprojects {
     }
     loom.runs.all {
         ideConfigGenerated true
-        // property "mixin.debug", "true"
+        property "mixin.debug", "true"
+        property "Moonrise.MaxViewDistance", "128"
     }
 
     plugins.apply("me.modmuss50.mod-publish-plugin")

@@ -62,7 +62,7 @@ public final class FabricHooks implements PlatformHooks {
 
     @Override
     public void chunkFullStatusComplete(final LevelChunk newChunk, final ProtoChunk original) {
-        ServerChunkEvents.CHUNK_LOAD.invoker().onChunkLoad((ServerLevel) newChunk.getLevel(), newChunk);
+        ServerChunkEvents.CHUNK_LOAD.invoker().onChunkLoad((ServerLevel)newChunk.getLevel(), newChunk);
     }
 
     @Override
@@ -77,7 +77,7 @@ public final class FabricHooks implements PlatformHooks {
 
     @Override
     public void chunkUnloadFromWorld(final LevelChunk chunk) {
-        ServerChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload((ServerLevel) chunk.getLevel(), chunk);
+        ServerChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload((ServerLevel)chunk.getLevel(), chunk);
     }
 
     @Override

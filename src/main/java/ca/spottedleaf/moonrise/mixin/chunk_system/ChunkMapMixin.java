@@ -436,7 +436,7 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
      * @author Spottedleaf
      */
     @Overwrite
-    public void onChunkReadyToSend(final LevelChunk chunk) {
+    public void onChunkReadyToSend(final ChunkHolder holder, final LevelChunk chunk) {
         throw new UnsupportedOperationException();
     }
 
