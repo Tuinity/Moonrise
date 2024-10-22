@@ -1,5 +1,5 @@
 plugins {
-    id("xyz.jpenilla.quiet-architectury-loom")
+    id("quiet-fabric-loom")
     id 'maven-publish'
     id 'com.gradleup.shadow'
 }
@@ -13,9 +13,14 @@ configurations.implementation {
 }
 
 dependencies {
-    add('shadow', project([path: ":", configuration: "namedElements"]))
-    runtimeOnly(project(":").sourceSets.main.output)
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    // todo: runs are broken (cannot find aw file)
+    //add('shadow', project([path: ":", configuration: "namedElements"]))
+    //runtimeOnly(project(":").sourceSets.main.output)
+    libs(project(":"))
 
     libs("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     libs("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
@@ -46,6 +51,7 @@ shadowJar {
 }
 
 publishMods {
+    file = remapJar.archiveFile
     modLoaders = ["fabric"]
 
     modrinth {
@@ -61,6 +67,23 @@ publishMods {
             "starlight",
             "c2me-fabric"
         )
+    }
+}
+
+loom {
+    accessWidenerPath.set(getRootProject().file("src/main/resources/moonrise.accesswidener"))
+    mixin {
+        useLegacyMixinAp = false
+    }
+    runs.all {
+        ideConfigGenerated true
+        // property "mixin.debug", "true"
+    }
+    mods {
+        main {
+            sourceSet("main")
+            sourceSet("main", project.rootProject)
+        }
     }
 }
 
