@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
@@ -40,7 +41,7 @@ abstract class ServerExplosionMixin {
 
     @Shadow
     @Final
-    private Level level;
+    private ServerLevel level;
 
     @Shadow
     @Final
