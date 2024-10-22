@@ -126,6 +126,31 @@ subprojects {
             minecraftVersions = supportedMcVersions
         }
     }
+
+    // Setup a run with lithium for compatibility testing
+    sourceSets.create("lithium")
+    configurations.create("lithium")
+    loom {
+        createRemapConfigurations(sourceSets.lithium)
+        runs {
+            register("lithiumClient") {
+                client()
+                property "mixin.debug", "true"
+            }
+        }
+    }
+    tasks.named("runLithiumClient", net.fabricmc.loom.task.RunGameTask.class) {
+        getClasspath().from(configurations.modRuntimeClasspathLithiumMapped)
+    }
+    dependencies {
+        String coordinates =  "maven.modrinth:lithium:"
+        if (getProject().name == "Moonrise-NeoForge") {
+            coordinates += rootProject.neo_lithium_version
+        } else {
+            coordinates += rootProject.fabric_lithium_version
+        }
+        modLithiumRuntimeOnly coordinates
+    }
 }
 
 loom.runs.all {
