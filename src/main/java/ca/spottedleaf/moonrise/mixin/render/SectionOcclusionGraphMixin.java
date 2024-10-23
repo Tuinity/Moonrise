@@ -50,7 +50,7 @@ abstract class SectionOcclusionGraphMixin {
             } catch (final Throwable throwable) {
                 future.completeExceptionally(throwable);
             }
-        }, Priority.NORMAL);
+        }, Priority.HIGH); // Higher than SectionRenderDispatcherMixin#changeExecutor
         return future;
     }
 }
