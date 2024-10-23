@@ -2,11 +2,11 @@ package ca.spottedleaf.moonrise.mixin.starlight.lightengine;
 
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
-import ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk;
-import ca.spottedleaf.moonrise.patches.starlight.light.SWMRNibbleArray;
-import ca.spottedleaf.moonrise.patches.starlight.light.StarLightEngine;
-import ca.spottedleaf.moonrise.patches.starlight.light.StarLightInterface;
-import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
+import ca.spottedleaf.starlight.common.chunk.StarlightChunk;
+import ca.spottedleaf.starlight.common.light.SWMRNibbleArray;
+import ca.spottedleaf.starlight.common.light.StarLightEngine;
+import ca.spottedleaf.starlight.common.light.StarLightInterface;
+import ca.spottedleaf.starlight.common.light.StarLightLightingProvider;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -45,7 +45,7 @@ abstract class LevelLightEngineMixin implements LightEventListener, StarLightLig
     protected StarLightInterface lightEngine;
 
     @Override
-    public final StarLightInterface starlight$getLightEngine() {
+    public final StarLightInterface getLightEngine() {
         return this.lightEngine;
     }
 
@@ -191,13 +191,13 @@ abstract class LevelLightEngineMixin implements LightEventListener, StarLightLig
     protected final Long2ObjectOpenHashMap<SWMRNibbleArray[]> skyLightMap = new Long2ObjectOpenHashMap<>();
 
     @Override
-    public void starlight$clientUpdateLight(final LightLayer lightType, final SectionPos pos,
-                                            final DataLayer nibble, final boolean trustEdges) {
+    public void clientUpdateLight(final LightLayer lightType, final SectionPos pos,
+                                  final DataLayer nibble, final boolean trustEdges) {
         if (((Object)this).getClass() != LevelLightEngine.class) {
             throw new IllegalStateException("This hook is for the CLIENT ONLY");
         }
         // data storage changed with new light impl
-        final ChunkAccess chunk = this.starlight$getLightEngine().getAnyChunkNow(pos.getX(), pos.getZ());
+        final ChunkAccess chunk = this.getLightEngine().getAnyChunkNow(pos.getX(), pos.getZ());
         switch (lightType) {
             case BLOCK: {
                 final SWMRNibbleArray[] blockNibbles = this.blockLightMap.computeIfAbsent(CoordinateUtils.getChunkKey(pos), (final long keyInMap) -> {
@@ -232,7 +232,7 @@ abstract class LevelLightEngineMixin implements LightEventListener, StarLightLig
     }
 
     @Override
-    public void starlight$clientRemoveLightData(final ChunkPos chunkPos) {
+    public void clientRemoveLightData(final ChunkPos chunkPos) {
         if (((Object)this).getClass() != LevelLightEngine.class) {
             throw new IllegalStateException("This hook is for the CLIENT ONLY");
         }
@@ -241,7 +241,7 @@ abstract class LevelLightEngineMixin implements LightEventListener, StarLightLig
     }
 
     @Override
-    public void starlight$clientChunkLoad(final ChunkPos pos, final LevelChunk chunk) {
+    public void clientChunkLoad(final ChunkPos pos, final LevelChunk chunk) {
         if (((Object)this).getClass() != LevelLightEngine.class) {
             throw new IllegalStateException("This hook is for the CLIENT ONLY");
         }

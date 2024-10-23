@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.starlight.chunk;
 
-import ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk;
-import ca.spottedleaf.moonrise.patches.starlight.light.SWMRNibbleArray;
+import ca.spottedleaf.starlight.common.chunk.StarlightChunk;
+import ca.spottedleaf.starlight.common.light.SWMRNibbleArray;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;

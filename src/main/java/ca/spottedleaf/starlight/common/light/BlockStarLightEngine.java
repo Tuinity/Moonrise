@@ -1,8 +1,8 @@
-package ca.spottedleaf.moonrise.patches.starlight.light;
+package ca.spottedleaf.starlight.common.light;
 
 import ca.spottedleaf.moonrise.common.PlatformHooks;
-import ca.spottedleaf.moonrise.patches.starlight.blockstate.StarlightAbstractBlockState;
-import ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk;
+import ca.spottedleaf.starlight.common.blockstate.StarlightAbstractBlockState;
+import ca.spottedleaf.starlight.common.chunk.StarlightChunk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;

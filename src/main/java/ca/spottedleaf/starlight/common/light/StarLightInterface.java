@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.patches.starlight.light;
+package ca.spottedleaf.starlight.common.light;
 
 import ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue;
 import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
@@ -9,7 +9,7 @@ import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkStatus;
-import ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk;
+import ca.spottedleaf.starlight.common.chunk.StarlightChunk;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.ShortCollection;
 import it.unimi.dsi.fastutil.shorts.ShortOpenHashSet;

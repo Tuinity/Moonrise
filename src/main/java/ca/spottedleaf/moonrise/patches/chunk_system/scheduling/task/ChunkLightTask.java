@@ -4,9 +4,9 @@ import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.PriorityHolder;
-import ca.spottedleaf.moonrise.patches.starlight.light.StarLightEngine;
-import ca.spottedleaf.moonrise.patches.starlight.light.StarLightInterface;
-import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
+import ca.spottedleaf.starlight.common.light.StarLightEngine;
+import ca.spottedleaf.starlight.common.light.StarLightInterface;
+import ca.spottedleaf.starlight.common.light.StarLightLightingProvider;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -92,13 +92,13 @@ public final class ChunkLightTask extends ChunkProgressionTask {
         @Override
         protected Priority getScheduledPriority() {
             final ChunkLightTask task = this.task;
-            return ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).starlight$getLightEngine().getServerLightQueue().getPriority(task.chunkX, task.chunkZ);
+            return ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).getLightEngine().getServerLightQueue().getPriority(task.chunkX, task.chunkZ);
         }
 
         @Override
         protected void scheduleTask(final Priority priority) {
             final ChunkLightTask task = this.task;
-            final StarLightInterface starLightInterface = ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).starlight$getLightEngine();
+            final StarLightInterface starLightInterface = ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).getLightEngine();
             final StarLightInterface.ServerLightQueue lightQueue = starLightInterface.getServerLightQueue();
             lightQueue.queueChunkLightTask(new ChunkPos(task.chunkX, task.chunkZ), new LightTask(starLightInterface, task), priority);
             lightQueue.setPriority(task.chunkX, task.chunkZ, priority);
@@ -107,7 +107,7 @@ public final class ChunkLightTask extends ChunkProgressionTask {
         @Override
         protected void lowerPriorityScheduled(final Priority priority) {
             final ChunkLightTask task = this.task;
-            final StarLightInterface starLightInterface = ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).starlight$getLightEngine();
+            final StarLightInterface starLightInterface = ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).getLightEngine();
             final StarLightInterface.ServerLightQueue lightQueue = starLightInterface.getServerLightQueue();
             lightQueue.lowerPriority(task.chunkX, task.chunkZ, priority);
         }
@@ -115,7 +115,7 @@ public final class ChunkLightTask extends ChunkProgressionTask {
         @Override
         protected void setPriorityScheduled(final Priority priority) {
             final ChunkLightTask task = this.task;
-            final StarLightInterface starLightInterface = ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).starlight$getLightEngine();
+            final StarLightInterface starLightInterface = ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).getLightEngine();
             final StarLightInterface.ServerLightQueue lightQueue = starLightInterface.getServerLightQueue();
             lightQueue.setPriority(task.chunkX, task.chunkZ, priority);
         }
@@ -123,7 +123,7 @@ public final class ChunkLightTask extends ChunkProgressionTask {
         @Override
         protected void raisePriorityScheduled(final Priority priority) {
             final ChunkLightTask task = this.task;
-            final StarLightInterface starLightInterface = ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).starlight$getLightEngine();
+            final StarLightInterface starLightInterface = ((StarLightLightingProvider)task.world.getChunkSource().getLightEngine()).getLightEngine();
             final StarLightInterface.ServerLightQueue lightQueue = starLightInterface.getServerLightQueue();
             lightQueue.raisePriority(task.chunkX, task.chunkZ, priority);
         }

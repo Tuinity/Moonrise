@@ -1,9 +1,9 @@
-package ca.spottedleaf.moonrise.patches.starlight.util;
+package ca.spottedleaf.starlight.common.util;
 
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
-import ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk;
-import ca.spottedleaf.moonrise.patches.starlight.light.SWMRNibbleArray;
-import ca.spottedleaf.moonrise.patches.starlight.light.StarLightEngine;
+import ca.spottedleaf.starlight.common.chunk.StarlightChunk;
+import ca.spottedleaf.starlight.common.light.SWMRNibbleArray;
+import ca.spottedleaf.starlight.common.light.StarLightEngine;
 import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;

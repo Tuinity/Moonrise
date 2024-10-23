@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.starlight.chunk;
 
-import ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk;
+import ca.spottedleaf.starlight.common.chunk.StarlightChunk;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.lighting.ChunkSkyLightSources;

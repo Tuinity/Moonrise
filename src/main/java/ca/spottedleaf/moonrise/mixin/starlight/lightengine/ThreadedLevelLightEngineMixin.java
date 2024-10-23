@@ -4,8 +4,8 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
-import ca.spottedleaf.moonrise.patches.starlight.light.StarLightInterface;
-import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
+import ca.spottedleaf.starlight.common.light.StarLightInterface;
+import ca.spottedleaf.starlight.common.light.StarLightLightingProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.protocol.Packet;
@@ -65,9 +65,9 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
     @Unique
     private void queueTaskForSection(final int chunkX, final int chunkY, final int chunkZ,
                                      final Supplier<StarLightInterface.LightQueue.ChunkTasks> supplier) {
-        final ServerLevel world = (ServerLevel)this.starlight$getLightEngine().getWorld();
+        final ServerLevel world = (ServerLevel)this.getLightEngine().getWorld();
 
-        final ChunkAccess center = this.starlight$getLightEngine().getAnyChunkNow(chunkX, chunkZ);
+        final ChunkAccess center = this.getLightEngine().getAnyChunkNow(chunkX, chunkZ);
         if (center == null || !center.getPersistedStatus().isOrAfter(ChunkStatus.LIGHT)) {
             // do not accept updates in unlit chunks, unless we might be generating a chunk
             return;
@@ -95,12 +95,12 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
     }
 
     @Override
-    public final int starlight$serverRelightChunks(final Collection<ChunkPos> chunks0,
-                                                   final Consumer<ChunkPos> chunkLightCallback,
-                                                   final IntConsumer onComplete) {
+    public final int serverRelightChunks(final Collection<ChunkPos> chunks0,
+                                         final Consumer<ChunkPos> chunkLightCallback,
+                                         final IntConsumer onComplete) {
         final Set<ChunkPos> chunks = new LinkedHashSet<>(chunks0);
         final Map<ChunkPos, Long> ticketIds = new HashMap<>();
-        final ServerLevel world = (ServerLevel)this.starlight$getLightEngine().getWorld();
+        final ServerLevel world = (ServerLevel)this.getLightEngine().getWorld();
 
         for (final Iterator<ChunkPos> iterator = chunks.iterator(); iterator.hasNext();) {
             final ChunkPos pos = iterator.next();
@@ -120,7 +120,7 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
         }
 
         ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().radiusAwareScheduler.queueInfiniteRadiusTask(() -> {
-            ThreadedLevelLightEngineMixin.this.starlight$getLightEngine().relightChunks(
+            ThreadedLevelLightEngineMixin.this.getLightEngine().relightChunks(
                     chunks,
                     (final ChunkPos pos) -> {
                         if (chunkLightCallback != null) {
@@ -233,7 +233,7 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
     public void checkBlock(final BlockPos pos) {
         final BlockPos posCopy = pos.immutable();
         this.queueTaskForSection(posCopy.getX() >> 4, posCopy.getY() >> 4, posCopy.getZ() >> 4, () -> {
-            return ThreadedLevelLightEngineMixin.this.starlight$getLightEngine().blockChange(posCopy);
+            return ThreadedLevelLightEngineMixin.this.getLightEngine().blockChange(posCopy);
         });
     }
 
@@ -253,7 +253,7 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
     @Overwrite
     public void updateSectionStatus(final SectionPos pos, final boolean notReady) {
         this.queueTaskForSection(pos.getX(), pos.getY(), pos.getZ(), () -> {
-            return ThreadedLevelLightEngineMixin.this.starlight$getLightEngine().sectionChange(pos, notReady);
+            return ThreadedLevelLightEngineMixin.this.getLightEngine().sectionChange(pos, notReady);
         });
     }
 

@@ -1,8 +1,8 @@
-package ca.spottedleaf.moonrise.patches.starlight.light;
+package ca.spottedleaf.starlight.common.light;
 
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
-import ca.spottedleaf.moonrise.patches.starlight.blockstate.StarlightAbstractBlockState;
-import ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk;
+import ca.spottedleaf.starlight.common.blockstate.StarlightAbstractBlockState;
+import ca.spottedleaf.starlight.common.chunk.StarlightChunk;
 import it.unimi.dsi.fastutil.shorts.ShortCollection;
 import it.unimi.dsi.fastutil.shorts.ShortIterator;
 import net.minecraft.core.BlockPos;
