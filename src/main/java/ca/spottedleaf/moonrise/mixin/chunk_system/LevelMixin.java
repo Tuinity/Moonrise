@@ -9,7 +9,6 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.dfl.DefaultEntityLookup;
 import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemEntityGetter;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -28,7 +27,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.List;
@@ -301,27 +299,6 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
     @Override
     public BlockPos getHeightmapPos(Heightmap.Types types, BlockPos blockPos) {
         return new BlockPos(blockPos.getX(), this.getHeight(types, blockPos.getX(), blockPos.getZ()), blockPos.getZ());
-    }
-
-    /**
-     * @reason Allow block updates in non-ticking chunks, as new chunk system sends non-ticking chunks to clients
-     * @author Spottedleaf
-     */
-    @Redirect(
-            method = {
-                    "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z",
-                    // NeoForge splits logic from the original method into this one
-                    "markAndNotifyBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;II)V"
-            },
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/server/level/FullChunkStatus;isOrAfter(Lnet/minecraft/server/level/FullChunkStatus;)Z"
-            )
-    )
-    private boolean sendUpdatesForFullChunks(final FullChunkStatus instance,
-                                             final FullChunkStatus fullChunkStatus) {
-
-        return instance.isOrAfter(FullChunkStatus.FULL);
     }
 
     // TODO: Thread.currentThread() != this.thread to TickThread?

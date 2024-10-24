@@ -32,7 +32,7 @@ public final class FabricHooks implements PlatformHooks {
     private static final boolean HAS_FABRIC_LIFECYCLE_EVENTS = FabricLoader.getInstance().isModLoaded("fabric-lifecycle-events-v1");
 
     public interface OnExplosionDetonate {
-        void onExplosion(final Level world, final Explosion explosion, final List<Entity> possiblyAffecting, final double diameter);
+        public void onExplosion(final Level world, final Explosion explosion, final List<Entity> possiblyAffecting, final double diameter);
     }
 
     public static final Event<OnExplosionDetonate> ON_EXPLOSION_DETONATE = EventFactory.createArrayBacked(
@@ -40,6 +40,32 @@ public final class FabricHooks implements PlatformHooks {
         listeners -> (final Level world, final Explosion explosion, final List<Entity> possiblyAffecting, final double diameter) -> {
             for (int i = 0; i < listeners.length; i++) {
                 listeners[i].onExplosion(world, explosion, possiblyAffecting, diameter);
+            }
+        }
+    );
+
+    public interface OnChunkWatch {
+        public void onChunkWatch(final ServerLevel world, final LevelChunk chunk, final ServerPlayer player);
+    }
+
+    public static final Event<OnChunkWatch> ON_CHUNK_WATCH = EventFactory.createArrayBacked(
+        OnChunkWatch.class,
+        listeners -> (final ServerLevel world, final LevelChunk chunk, final ServerPlayer player) -> {
+            for (int i = 0; i < listeners.length; i++) {
+                listeners[i].onChunkWatch(world, chunk, player);
+            }
+        }
+    );
+
+    public interface OnChunkUnwatch {
+        public void onChunkUnwatch(final ServerLevel world, final ChunkPos chunk, final ServerPlayer player);
+    }
+
+    public static final Event<OnChunkUnwatch> ON_CHUNK_UNWATCH = EventFactory.createArrayBacked(
+        OnChunkUnwatch.class,
+        listeners -> (final ServerLevel world, final ChunkPos chunk, final ServerPlayer player) -> {
+            for (int i = 0; i < listeners.length; i++) {
+                listeners[i].onChunkUnwatch(world, chunk, player);
             }
         }
     );
@@ -117,12 +143,12 @@ public final class FabricHooks implements PlatformHooks {
 
     @Override
     public void onChunkWatch(final ServerLevel world, final LevelChunk chunk, final ServerPlayer player) {
-
+        ON_CHUNK_WATCH.invoker().onChunkWatch(world, chunk, player);
     }
 
     @Override
     public void onChunkUnWatch(final ServerLevel world, final ChunkPos chunk, final ServerPlayer player) {
-
+        ON_CHUNK_UNWATCH.invoker().onChunkUnwatch(world, chunk, player);
     }
 
     @Override
