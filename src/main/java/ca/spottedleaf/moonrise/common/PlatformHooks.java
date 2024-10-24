@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.common;
 
+import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -88,7 +89,7 @@ public interface PlatformHooks {
     // support for CB chunk mustNotSave
     public boolean forceNoSave(final ChunkAccess chunk);
 
-    public CompoundTag convertNBT(final DataFixTypes type, final DataFixer dataFixer, final CompoundTag nbt,
+    public CompoundTag convertNBT(final DSL.TypeReference type, final DataFixer dataFixer, final CompoundTag nbt,
                                   final int fromVersion, final int toVersion);
 
     public boolean hasMainChunkLoadHook();
