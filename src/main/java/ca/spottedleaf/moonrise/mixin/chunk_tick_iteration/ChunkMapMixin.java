@@ -85,11 +85,20 @@ abstract class ChunkMapMixin {
     }
 
     /**
-     * @reason Use nearby players to avoid iterating over all online players
+     * @reason Avoid checking first if there are nearby players, as we make internal perform this implicitly.
      * @author Spottedleaf
      */
     @Overwrite
     public boolean anyPlayerCloseEnoughForSpawning(final ChunkPos pos) {
+        return this.anyPlayerCloseEnoughForSpawningInternal(pos);
+    }
+
+    /**
+     * @reason Use nearby players to avoid iterating over all online players
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public boolean anyPlayerCloseEnoughForSpawningInternal(final ChunkPos pos) {
         final ReferenceList<ServerPlayer> players = ((ChunkSystemServerLevel)this.level).moonrise$getNearbyPlayers().getPlayers(
                 pos, NearbyPlayers.NearbyMapType.SPAWN_RANGE
         );
