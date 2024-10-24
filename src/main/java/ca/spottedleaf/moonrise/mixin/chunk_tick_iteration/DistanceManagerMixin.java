@@ -4,6 +4,7 @@ import ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickConstants;
 import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickDistanceManager;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.ServerPlayer;
@@ -105,5 +106,14 @@ abstract class DistanceManagerMixin implements ChunkTickDistanceManager {
     @Overwrite
     public boolean hasPlayersNearby(final long pos) {
         return this.spawnChunkTracker.hasObjectsNear(CoordinateUtils.getChunkX(pos), CoordinateUtils.getChunkZ(pos));
+    }
+
+    /**
+     * @reason Use spawnChunkTracker instead
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public LongIterator getSpawnCandidateChunks() {
+        return this.spawnChunkTracker.getPositions().iterator();
     }
 }

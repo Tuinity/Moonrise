@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.common.misc;
 
 import ca.spottedleaf.concurrentutil.util.IntPairUtil;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 
@@ -12,6 +13,10 @@ public final class PositionCountingAreaMap<T> {
 
     public ReferenceSet<T> getObjects() {
         return this.counters.keySet();
+    }
+
+    public LongSet getPositions() {
+        return this.positions.keySet();
     }
 
     public int getTotalPositions() {
