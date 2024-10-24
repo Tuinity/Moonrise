@@ -1078,7 +1078,7 @@ public final class NewChunkHolder {
         }
 
         // Don't really have a choice but to place this hook here
-        PlatformHooks.get().onChunkHolderTicketChange(this.world, this, oldLevel, newLevel);
+        PlatformHooks.get().onChunkHolderTicketChange(this.world, this.vanillaChunkHolder, oldLevel, newLevel);
     }
 
     static final int NEIGHBOUR_RADIUS = 2;

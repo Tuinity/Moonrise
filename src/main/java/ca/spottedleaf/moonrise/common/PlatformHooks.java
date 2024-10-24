@@ -1,9 +1,9 @@
 package ca.spottedleaf.moonrise.common;
 
-import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import com.mojang.datafixers.DataFixer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,7 +44,7 @@ public interface PlatformHooks {
 
     public boolean allowAsyncTicketUpdates();
 
-    public void onChunkHolderTicketChange(final ServerLevel world, final NewChunkHolder holder, final int oldLevel, final int newLevel);
+    public void onChunkHolderTicketChange(final ServerLevel world, final ChunkHolder holder, final int oldLevel, final int newLevel);
 
     public void chunkUnloadFromWorld(final LevelChunk chunk);
 
