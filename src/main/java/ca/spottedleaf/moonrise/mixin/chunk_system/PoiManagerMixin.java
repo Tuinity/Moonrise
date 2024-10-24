@@ -266,20 +266,4 @@ public abstract class PoiManagerMixin extends SectionStorage<Object, Object> imp
     private <T> Stream<T> skipLoadedSet(final Stream<T> instance, final Predicate<? super T> predicate) {
         return instance;
     }
-
-    @Override
-    public final void moonrise$close() throws IOException {}
-
-    @Override
-    public final CompoundTag moonrise$read(final int chunkX, final int chunkZ) throws IOException {
-        return MoonriseRegionFileIO.loadData(
-                this.world, chunkX, chunkZ, MoonriseRegionFileIO.RegionFileType.POI_DATA,
-                MoonriseRegionFileIO.getIOBlockingPriorityForCurrentThread()
-        );
-    }
-
-    @Override
-    public final void moonrise$write(final int chunkX, final int chunkZ, final CompoundTag data) throws IOException {
-        MoonriseRegionFileIO.scheduleSave(this.world, chunkX, chunkZ, data, MoonriseRegionFileIO.RegionFileType.POI_DATA);
-    }
 }

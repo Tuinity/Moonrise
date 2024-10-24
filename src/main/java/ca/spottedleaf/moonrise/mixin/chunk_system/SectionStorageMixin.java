@@ -35,6 +35,9 @@ abstract class SectionStorageMixin<R, P> implements ChunkSystemSectionStorage, A
         return this.storage;
     }
 
+    @Override
+    public void moonrise$close() throws IOException {}
+
     /**
      * @reason Retrieve storage from IOWorker, and then nuke it
      * @author Spottedleaf
