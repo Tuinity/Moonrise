@@ -6,6 +6,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.GenerationChunkHolder;
@@ -27,6 +28,8 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public final class FabricHooks implements PlatformHooks {
+
+    private static final boolean HAS_FABRIC_LIFECYCLE_EVENTS = FabricLoader.getInstance().isModLoaded("fabric-lifecycle-events-v1");
 
     public interface OnExplosionDetonate {
         void onExplosion(final Level world, final Explosion explosion, final List<Entity> possiblyAffecting, final double diameter);
@@ -85,7 +88,9 @@ public final class FabricHooks implements PlatformHooks {
 
     @Override
     public void chunkFullStatusComplete(final LevelChunk newChunk, final ProtoChunk original) {
-        ServerChunkEvents.CHUNK_LOAD.invoker().onChunkLoad((ServerLevel) newChunk.getLevel(), newChunk);
+        if (HAS_FABRIC_LIFECYCLE_EVENTS) {
+            ServerChunkEvents.CHUNK_LOAD.invoker().onChunkLoad((ServerLevel) newChunk.getLevel(), newChunk);
+        }
     }
 
     @Override
@@ -100,7 +105,9 @@ public final class FabricHooks implements PlatformHooks {
 
     @Override
     public void chunkUnloadFromWorld(final LevelChunk chunk) {
-        ServerChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload((ServerLevel) chunk.getLevel(), chunk);
+        if (HAS_FABRIC_LIFECYCLE_EVENTS) {
+            ServerChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload((ServerLevel) chunk.getLevel(), chunk);
+        }
     }
 
     @Override
