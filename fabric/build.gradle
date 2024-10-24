@@ -24,7 +24,8 @@ dependencies {
     include "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
     modImplementation "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
 
-    modImplementation fabricApiLibs.fabric.api
+    modImplementation fabricApiLibs.command.api.v2
+    modImplementation fabricApiLibs.lifecycle.events.v1
     include fabricApiLibs.command.api.v2
     include fabricApiLibs.base
 }
