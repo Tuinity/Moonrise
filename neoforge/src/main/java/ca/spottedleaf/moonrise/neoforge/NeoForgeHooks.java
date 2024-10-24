@@ -3,10 +3,10 @@ package ca.spottedleaf.moonrise.neoforge;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
-import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import com.mojang.datafixers.DataFixer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -80,10 +80,12 @@ public final class NeoForgeHooks implements PlatformHooks {
     }
 
     @Override
-    public void onChunkHolderTicketChange(final ServerLevel world, final NewChunkHolder holder, final int oldLevel, final int newLevel) {
+    public void onChunkHolderTicketChange(final ServerLevel world, final ChunkHolder holder, final int oldLevel, final int newLevel) {
+        final ChunkPos pos = holder.getPos();
+
         EventHooks.fireChunkTicketLevelUpdated(
-            world, CoordinateUtils.getChunkKey(holder.chunkX, holder.chunkZ),
-            oldLevel, newLevel, holder.vanillaChunkHolder
+            world, CoordinateUtils.getChunkKey(pos.x, pos.z),
+            oldLevel, newLevel, holder
         );
     }
 
