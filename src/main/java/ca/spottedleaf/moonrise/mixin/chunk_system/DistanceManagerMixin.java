@@ -316,6 +316,15 @@ abstract class DistanceManagerMixin implements ChunkSystemDistanceManager {
     }
 
     /**
+     * @reason Remove old chunk system hooks
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public LongSet getTickingChunks() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * @reason This hack is not required anymore, see {@link MinecraftServerMixin}
      * @author Spottedleaf
      */
