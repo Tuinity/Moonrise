@@ -26,10 +26,6 @@ abstract class SectionStorageMixin<R, P> implements ChunkSystemSectionStorage, A
     @Shadow
     private SimpleRegionStorage simpleRegionStorage;
 
-    @Shadow
-    @Final
-    static Logger LOGGER;
-
 
     @Unique
     private RegionFileStorage storage;
@@ -59,12 +55,8 @@ abstract class SectionStorageMixin<R, P> implements ChunkSystemSectionStorage, A
      * @author Spottedleaf
      */
     @Overwrite
-    public final CompletableFuture<Optional<CompoundTag>> tryRead(final ChunkPos pos) {
-        try {
-            return CompletableFuture.completedFuture(Optional.ofNullable(this.moonrise$read(pos.x, pos.z)));
-        } catch (final Throwable thr) {
-            return CompletableFuture.failedFuture(thr);
-        }
+    public final CompletableFuture<Optional<SectionStorage.PackedChunk<P>>> tryRead(final ChunkPos pos) {
+        throw new IllegalStateException("Only chunk system can write state, offending class:" + this.getClass().getName());
     }
 
     /**
@@ -77,24 +69,12 @@ abstract class SectionStorageMixin<R, P> implements ChunkSystemSectionStorage, A
     }
 
     /**
-     * @reason Route to new chunk system hook
+     * @reason Destroy old chunk system hook
      * @author Spottedleaf
      */
-    @Redirect(
-            method = "writeChunk(Lnet/minecraft/world/level/ChunkPos;)V",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/chunk/storage/SimpleRegionStorage;write(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/nbt/CompoundTag;)Ljava/util/concurrent/CompletableFuture;"
-            )
-    )
-    private CompletableFuture<Void> redirectWrite(final SimpleRegionStorage instance, final ChunkPos pos,
-                                                  final CompoundTag tag) {
-        try {
-            this.moonrise$write(pos.x, pos.z, tag);
-        } catch (final IOException ex) {
-            LOGGER.error("Error writing poi chunk data to disk for chunk " + pos, ex);
-        }
-        return null;
+    @Overwrite
+    private void writeChunk(final ChunkPos chunkPos) {
+        throw new IllegalStateException("Only chunk system can write state, offending class:" + this.getClass().getName());
     }
 
     /**
