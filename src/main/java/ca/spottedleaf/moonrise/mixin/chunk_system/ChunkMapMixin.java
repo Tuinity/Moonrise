@@ -538,6 +538,21 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * @reason Route to new chunk system
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "forEachSpawnCandidateChunk",
+        at = @At(
+            value = "INVOKE",
+            target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectLinkedOpenHashMap;get(J)Ljava/lang/Object;"
+        )
+    )
+    private <V> V redirectChunkHolderGet(final Long2ObjectLinkedOpenHashMap<V> instance, final long key) {
+        return (V)this.getVisibleChunkIfPresent(key);
+    }
+
     @Override
     public CompletableFuture<Optional<CompoundTag>> read(final ChunkPos pos) {
         final CompletableFuture<Optional<CompoundTag>> ret = new CompletableFuture<>();
