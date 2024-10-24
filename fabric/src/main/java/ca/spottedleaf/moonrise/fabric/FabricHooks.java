@@ -162,12 +162,12 @@ public final class FabricHooks implements PlatformHooks {
     }
 
     @Override
-    public long configAutoSaveInterval() {
+    public long configAutoSaveInterval(final ServerLevel world) {
         return ConfigHolder.getConfig().chunkSaving.autoSaveInterval.getTimeTicks();
     }
 
     @Override
-    public int configMaxAutoSavePerTick() {
+    public int configMaxAutoSavePerTick(final ServerLevel world) {
         return ConfigHolder.getConfig().chunkSaving.maxAutoSaveChunksPerTick;
     }
 

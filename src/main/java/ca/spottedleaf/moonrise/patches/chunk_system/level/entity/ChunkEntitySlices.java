@@ -165,7 +165,7 @@ public final class ChunkEntitySlices {
         return this.entities.size() != 0;
     }
 
-    private List<Entity> getAllEntities() {
+    public List<Entity> getAllEntities() {
         final int len = this.entities.size();
         if (len == 0) {
             return new ArrayList<>();

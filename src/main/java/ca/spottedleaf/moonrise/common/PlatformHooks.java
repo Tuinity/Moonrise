@@ -80,9 +80,9 @@ public interface PlatformHooks {
 
     public int configPlayerMaxConcurrentGens();
 
-    public long configAutoSaveInterval();
+    public long configAutoSaveInterval(final ServerLevel world);
 
-    public int configMaxAutoSavePerTick();
+    public int configMaxAutoSavePerTick(final ServerLevel world);
 
     public boolean configFixMC159283();
 
