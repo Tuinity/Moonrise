@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.patches.starlight.blockstate;
+package ca.spottedleaf.starlight.common.blockstate;
 
 public interface StarlightAbstractBlockState {
 

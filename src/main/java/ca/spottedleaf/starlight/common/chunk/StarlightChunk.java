@@ -1,6 +1,6 @@
-package ca.spottedleaf.moonrise.patches.starlight.chunk;
+package ca.spottedleaf.starlight.common.chunk;
 
-import ca.spottedleaf.moonrise.patches.starlight.light.SWMRNibbleArray;
+import ca.spottedleaf.starlight.common.light.SWMRNibbleArray;
 
 public interface StarlightChunk {
 

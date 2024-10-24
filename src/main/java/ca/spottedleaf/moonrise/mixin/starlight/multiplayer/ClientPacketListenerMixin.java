@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.starlight.multiplayer;
 
-import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
+import ca.spottedleaf.starlight.common.light.StarLightLightingProvider;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.core.SectionPos;
@@ -74,7 +74,7 @@ abstract class ClientPacketListenerMixin implements ClientGamePacketListener {
     )
     private void loadLightDataHook(final LevelLightEngine lightEngine, final LightLayer lightType, final SectionPos pos,
                                    final @Nullable DataLayer nibble) {
-        ((StarLightLightingProvider)this.level.getChunkSource().getLightEngine()).starlight$clientUpdateLight(lightType, pos, nibble, true);
+        ((StarLightLightingProvider)this.level.getChunkSource().getLightEngine()).clientUpdateLight(lightType, pos, nibble, true);
     }
 
 
@@ -90,7 +90,7 @@ abstract class ClientPacketListenerMixin implements ClientGamePacketListener {
             )
     )
     private void unloadLightDataHook(final ClientPacketListener instance, final ClientboundForgetLevelChunkPacket clientboundForgetLevelChunkPacket) {
-        ((StarLightLightingProvider)this.level.getChunkSource().getLightEngine()).starlight$clientRemoveLightData(new ChunkPos(clientboundForgetLevelChunkPacket.pos().x, clientboundForgetLevelChunkPacket.pos().z));
+        ((StarLightLightingProvider)this.level.getChunkSource().getLightEngine()).clientRemoveLightData(new ChunkPos(clientboundForgetLevelChunkPacket.pos().x, clientboundForgetLevelChunkPacket.pos().z));
     }
 
     /**
@@ -128,7 +128,7 @@ abstract class ClientPacketListenerMixin implements ClientGamePacketListener {
         }
         // load in light data from packet immediately
         this.applyLightData(chunkX, chunkZ, clientboundLevelChunkWithLightPacket.getLightData());
-        ((StarLightLightingProvider)this.level.getChunkSource().getLightEngine()).starlight$clientChunkLoad(new ChunkPos(chunkX, chunkZ), chunk);
+        ((StarLightLightingProvider)this.level.getChunkSource().getLightEngine()).clientChunkLoad(new ChunkPos(chunkX, chunkZ), chunk);
 
         // we need this for the update chunk status call, so that it can tell starlight what sections are empty and such
         this.enableChunkLight(chunk, chunkX, chunkZ);

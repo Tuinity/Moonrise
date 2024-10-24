@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.patches.starlight.light;
+package ca.spottedleaf.starlight.common.light;
 
 import net.minecraft.world.level.chunk.DataLayer;
 import java.util.ArrayDeque;

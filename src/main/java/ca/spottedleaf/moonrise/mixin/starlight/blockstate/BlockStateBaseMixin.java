@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.starlight.blockstate;
 
-import ca.spottedleaf.moonrise.patches.starlight.blockstate.StarlightAbstractBlockState;
+import ca.spottedleaf.starlight.common.blockstate.StarlightAbstractBlockState;
 import com.mojang.serialization.MapCodec;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.world.level.block.Block;

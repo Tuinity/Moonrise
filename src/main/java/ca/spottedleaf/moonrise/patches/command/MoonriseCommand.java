@@ -8,7 +8,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import ca.spottedleaf.moonrise.patches.profiler.client.ProfilerMinecraft;
-import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
+import ca.spottedleaf.starlight.common.light.StarLightLightingProvider;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -290,7 +290,7 @@ public final class MoonriseCommand {
         }
 
 
-        final int ret = ((StarLightLightingProvider)ctx.getSource().getLevel().getLightEngine()).starlight$serverRelightChunks(
+        final int ret = ((StarLightLightingProvider)ctx.getSource().getLevel().getLightEngine()).serverRelightChunks(
                 chunks,
                 null,
                 null

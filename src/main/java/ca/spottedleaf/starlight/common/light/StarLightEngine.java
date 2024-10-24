@@ -1,10 +1,10 @@
-package ca.spottedleaf.moonrise.patches.starlight.light;
+package ca.spottedleaf.starlight.common.light;
 
 import ca.spottedleaf.concurrentutil.util.IntegerUtil;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
-import ca.spottedleaf.moonrise.patches.starlight.blockstate.StarlightAbstractBlockState;
+import ca.spottedleaf.starlight.common.blockstate.StarlightAbstractBlockState;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.ShortCollection;
 import it.unimi.dsi.fastutil.shorts.ShortIterator;
