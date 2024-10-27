@@ -12,13 +12,13 @@ Fabric/NeoForge mod for optimising performance of the integrated (singleplayer/L
 Moonrise aims to optimise the game *without changing Vanilla behavior*. If you find that there are changes to Vanilla behavior,
 please open an issue.
 
-Moonrise ports several important [Paper](https://github.com/PaperMC/Paper/)
+Moonrise is an official port of several important [Paper](https://github.com/PaperMC/Paper/)
 patches. Listed below are notable patches:
+ - [Starlight](https://github.com/PaperMC/Starlight/)
  - Chunk system rewrite
  - Collision optimisations
  - Entity tracker optimisations
  - Random ticking optimisations
- - [Starlight](https://github.com/PaperMC/Starlight/)
 
 ## Known Compatibility Issues
 | Mod         | Status                                                                                                                                                                                                                                                                                                   |
