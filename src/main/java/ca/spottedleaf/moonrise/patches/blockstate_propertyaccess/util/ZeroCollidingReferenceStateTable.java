@@ -9,7 +9,7 @@ import it.unimi.dsi.fastutil.objects.AbstractReference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,7 +27,7 @@ public final class ZeroCollidingReferenceStateTable<O, S> {
 
     public ZeroCollidingReferenceStateTable(final Collection<Property<?>> properties) {
         this.propertyToIndexer = new Int2ObjectOpenHashMap<>(properties.size());
-        this.properties = new ReferenceOpenHashSet<>(properties);
+        this.properties = new ReferenceArrayList<>(properties);
 
         final List<Property<?>> sortedProperties = new ArrayList<>(properties);
 
