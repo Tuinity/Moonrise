@@ -21,6 +21,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
 import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.level.lighting.LevelLightEngine;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -45,6 +46,10 @@ abstract class SerializableChunkDataMixin {
     @Shadow
     @Final
     private List<SerializableChunkData.SectionData> sectionData;
+
+    @Shadow
+    @Final
+    private static Logger LOGGER;
 
     /**
      * @reason Replace light correctness check with our own
@@ -116,33 +121,45 @@ abstract class SerializableChunkDataMixin {
         final SWMRNibbleArray[] blockNibbles = StarLightEngine.getFilledEmptyLight(world);
         final SWMRNibbleArray[] skyNibbles = StarLightEngine.getFilledEmptyLight(world);
 
-        for (final SerializableChunkData.SectionData sectionData : this.sectionData) {
-            final int y = sectionData.y();
-            final DataLayer blockLight = sectionData.blockLight();
-            final DataLayer skyLight = sectionData.skyLight();
-
-            final int blockState = ((StarlightSectionData)(Object)sectionData).starlight$getBlockLightState();
-            final int skyState = ((StarlightSectionData)(Object)sectionData).starlight$getSkyLightState();
-
-            if (blockState >= 0) {
-                if (blockLight != null) {
-                    blockNibbles[y - minSection] = new SWMRNibbleArray(MixinWorkarounds.clone(blockLight.getData()), blockState); // clone for data safety
-                } else {
-                    blockNibbles[y - minSection] = new SWMRNibbleArray(null, blockState);
-                }
-            }
-
-            if (skyState >= 0 && hasSkyLight) {
-                if (skyLight != null) {
-                    skyNibbles[y - minSection] = new SWMRNibbleArray(MixinWorkarounds.clone(skyLight.getData()), skyState); // clone for data safety
-                } else {
-                    skyNibbles[y - minSection] = new SWMRNibbleArray(null, skyState);
-                }
-            }
+        if (!this.lightCorrect) {
+            ((StarlightChunk)ret).starlight$setBlockNibbles(blockNibbles);
+            ((StarlightChunk)ret).starlight$setSkyNibbles(skyNibbles);
+            return;
         }
 
-        ((StarlightChunk)ret).starlight$setBlockNibbles(blockNibbles);
-        ((StarlightChunk)ret).starlight$setSkyNibbles(skyNibbles);
+        try {
+            for (final SerializableChunkData.SectionData sectionData : this.sectionData) {
+                final int y = sectionData.y();
+                final DataLayer blockLight = sectionData.blockLight();
+                final DataLayer skyLight = sectionData.skyLight();
+
+                final int blockState = ((StarlightSectionData)(Object)sectionData).starlight$getBlockLightState();
+                final int skyState = ((StarlightSectionData)(Object)sectionData).starlight$getSkyLightState();
+
+                if (blockState >= 0) {
+                    if (blockLight != null) {
+                        blockNibbles[y - minSection] = new SWMRNibbleArray(MixinWorkarounds.clone(blockLight.getData()), blockState); // clone for data safety
+                    } else {
+                        blockNibbles[y - minSection] = new SWMRNibbleArray(null, blockState);
+                    }
+                }
+
+                if (skyState >= 0 && hasSkyLight) {
+                    if (skyLight != null) {
+                        skyNibbles[y - minSection] = new SWMRNibbleArray(MixinWorkarounds.clone(skyLight.getData()), skyState); // clone for data safety
+                    } else {
+                        skyNibbles[y - minSection] = new SWMRNibbleArray(null, skyState);
+                    }
+                }
+            }
+
+            ((StarlightChunk)ret).starlight$setBlockNibbles(blockNibbles);
+            ((StarlightChunk)ret).starlight$setSkyNibbles(skyNibbles);
+        } catch (final Throwable thr) {
+            ret.setLightCorrect(false);
+
+            LOGGER.error("Failed to parse light data for chunk " + ret.getPos() + " in world '" + WorldUtil.getWorldName(world) + "'", thr);
+        }
     }
 
     /**
