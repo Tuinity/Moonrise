@@ -80,3 +80,8 @@ config = "moonrise-neoforge.mixins.json"
 "mixin.world.explosions.cache_exposure" = false
 "mixin.world.temperature_cache" = false
 "mixin.world.tick_scheduler" = false
+
+"ferritecore:disabled_options" = [
+    "replaceNeighborLookup",
+    "replacePropertyMap"
+]
