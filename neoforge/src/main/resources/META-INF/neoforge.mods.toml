@@ -13,6 +13,10 @@ displayURL = "https://github.com/Tuinity/Moonrise"
 authors = "Spottedleaf"
 description = "Optimisation mod for the dedicated and integrated server."
 displayTest = "IGNORE_ALL_VERSION"
+"ferritecore:disabled_options" = [
+    "replaceNeighborLookup",
+    "replacePropertyMap"
+]
 
 [[dependencies.moonrise]]
 modId = "neoforge"
