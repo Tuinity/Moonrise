@@ -14,7 +14,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.CollisionGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -1943,6 +1945,7 @@ public final class CollisionUtil {
 
         final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         final CollisionContext collisionShape = new LazyEntityCollisionContext(entity);
+        final boolean useEntityCollisionShape = LazyEntityCollisionContext.useEntityCollisionShape(world, entity);
 
         // special cases:
         if (minBlockY > maxBlockY) {
@@ -2028,7 +2031,10 @@ public final class CollisionUtil {
                                 VoxelShape blockCollision = ((CollisionBlockState)blockData).moonrise$getConstantContextCollisionShape();
 
                                 if (edgeCount == 0 || ((edgeCount != 1 || blockData.hasLargeCollisionShape()) && (edgeCount != 2 || blockData.getBlock() == Blocks.MOVING_PISTON))) {
-                                    if (blockCollision == null) {
+                                    if (useEntityCollisionShape) {
+                                        mutablePos.set(blockX, blockY, blockZ);
+                                        blockCollision = collisionShape.getCollisionShape(blockData, world, mutablePos);
+                                    } else if (blockCollision == null) {
                                         mutablePos.set(blockX, blockY, blockZ);
                                         blockCollision = blockData.getCollisionShape(world, mutablePos, collisionShape);
                                     }
@@ -2150,6 +2156,10 @@ public final class CollisionUtil {
             super(false, 0.0, null, null, entity);
         }
 
+        public static boolean useEntityCollisionShape(final Level world, final Entity entity) {
+            return entity instanceof AbstractMinecart && AbstractMinecart.useExperimentalMovement(world);
+        }
+
         public boolean isDelegated() {
             final boolean delegated = this.delegated;
             this.delegated = false;
@@ -2180,6 +2190,11 @@ public final class CollisionUtil {
         @Override
         public boolean canStandOnFluid(final FluidState state, final FluidState fluidState) {
             return this.getDelegate().canStandOnFluid(state, fluidState);
+        }
+
+        @Override
+        public VoxelShape getCollisionShape(final BlockState blockState, final CollisionGetter collisionGetter, final BlockPos blockPos) {
+            return this.getDelegate().getCollisionShape(blockState, collisionGetter, blockPos);
         }
     }
 
