@@ -60,7 +60,7 @@ publishMods {
         incompatible(
             "not-enough-crashes",
             "starlight",
-            "c2me-fabric"
+            "c2me"
         )
     }
 }
