@@ -42,7 +42,6 @@
     "custom": {
         "lithium:options": {
             "mixin.ai.poi": false,
-            "mixin.alloc.chunk_ticking": false,
             "mixin.alloc.deep_passengers": false,
             "mixin.alloc.entity_tracker": false,
             "mixin.block.flatten_states": false,
@@ -66,7 +65,6 @@
             "mixin.world.block_entity_ticking": false,
             "mixin.world.chunk_access": false,
             "mixin.world.explosions.block_raycast": false,
-            "mixin.world.explosions.cache_exposure": false,
             "mixin.world.temperature_cache": false,
             "mixin.world.tick_scheduler": false
         },
