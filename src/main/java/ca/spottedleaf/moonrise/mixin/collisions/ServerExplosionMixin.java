@@ -439,7 +439,10 @@ abstract class ServerExplosionMixin {
      * @author Spottedleaf
      */
     @Redirect(
-        method = "hurtEntities",
+        method = {
+            "hurtEntities()V",
+            "hurtEntities(Ljava/util/List;)V" // Neo moves logic into this new method
+        },
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/ServerExplosion;getSeenPercent(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;)F"
