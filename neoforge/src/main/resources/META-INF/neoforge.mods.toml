@@ -55,7 +55,7 @@ config = "moonrise.mixins.json"
 [[mixins]]
 config = "moonrise-neoforge.mixins.json"
 
-[mods."lithium:options"]
+["lithium:options"]
 "mixin.ai.poi" = false
 "mixin.alloc.chunk_ticking" = false
 "mixin.alloc.deep_passengers" = false
