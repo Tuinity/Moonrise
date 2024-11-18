@@ -315,6 +315,22 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
         return false;
     }
 
+
+    /**
+     * @reason We need to use {@link ChunkHolder#getChunkToSend()} as the new chunk system will not bring every chunk
+     *         sent to players up to block ticking.
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "broadcastChangedChunks",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ChunkHolder;getTickingChunk()Lnet/minecraft/world/level/chunk/LevelChunk;")
+    )
+    private LevelChunk redirectTickingChunk(final ChunkHolder instance) {
+        return instance.getChunkToSend();
+    }
+
     /**
      * @reason Perform mid-tick chunk task processing during chunk tick
      * @author Spottedleaf
