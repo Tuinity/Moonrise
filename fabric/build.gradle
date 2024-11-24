@@ -1,3 +1,6 @@
+import java.util.stream.Collectors
+import net.fabricmc.loom.util.gradle.SourceSetHelper
+
 plugins {
     id("quiet-fabric-loom")
     id 'maven-publish'
@@ -7,6 +10,7 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
 
     runtimeOnly(project(":").sourceSets.main.output)
     shadow(project(":"))
@@ -46,6 +50,14 @@ tasks.shadowJar {
     relocate 'ca.spottedleaf.concurrentutil', 'ca.spottedleaf.moonrise.libs.ca.spottedleaf.concurrentutil'
     relocate 'ca.spottedleaf.yamlconfig', 'ca.spottedleaf.moonrise.libs.ca.spottedleaf.yamlconfig'
     relocate 'org.yaml.snakeyaml', 'ca.spottedleaf.moonrise.libs.org.yaml.snakeyaml'
+}
+
+tasks.test {
+    def classPathGroups = SourceSetHelper.getClasspath(loom.mods.main, getProject()).stream()
+        .map(File.&getAbsolutePath)
+        .collect(Collectors.joining(File.pathSeparator))
+
+    systemProperty("fabric.classPathGroups", classPathGroups)
 }
 
 publishMods {
