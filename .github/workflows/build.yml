@@ -31,8 +31,8 @@ jobs:
           key: ${{ runner.os }}-project-local-gradle-caches-${{ hashFiles('**/libs.versions.toml', '**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-project-local-gradle-caches-
-      - name: "setup concurrentutil"
-        run: ./installConcurrentUtil.sh
+      - name: "setup dependencies"
+        run: ./install_deps.sh
       - name: "execute gradle build"
         run: ./gradlew build
       - name: Determine Snapshot Status

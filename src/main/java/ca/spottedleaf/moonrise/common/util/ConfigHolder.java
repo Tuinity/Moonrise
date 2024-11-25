@@ -1,10 +1,8 @@
 package ca.spottedleaf.moonrise.common.util;
 
-import ca.spottedleaf.moonrise.common.config.adapter.TypeAdapterRegistry;
-import ca.spottedleaf.moonrise.common.config.config.YamlConfig;
 import ca.spottedleaf.moonrise.common.config.moonrise.MoonriseConfig;
-import ca.spottedleaf.moonrise.common.config.moonrise.adapter.DefaultedTypeAdapter;
-import ca.spottedleaf.moonrise.common.config.moonrise.type.DefaultedValue;
+import ca.spottedleaf.yamlconfig.adapter.TypeAdapterRegistry;
+import ca.spottedleaf.yamlconfig.config.YamlConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;
@@ -17,8 +15,6 @@ public final class ConfigHolder {
     private static final TypeAdapterRegistry CONFIG_ADAPTERS = new TypeAdapterRegistry();
     private static final YamlConfig<MoonriseConfig> CONFIG;
     static {
-        CONFIG_ADAPTERS.putAdapter(DefaultedValue.class, new DefaultedTypeAdapter());
-
         try {
             CONFIG = new YamlConfig<>(MoonriseConfig.class, new MoonriseConfig(), CONFIG_ADAPTERS);
         } catch (final Exception ex) {
