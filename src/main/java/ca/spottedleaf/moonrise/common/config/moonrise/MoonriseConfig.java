@@ -1,12 +1,12 @@
 package ca.spottedleaf.moonrise.common.config.moonrise;
 
-import ca.spottedleaf.moonrise.common.config.InitialiseHook;
-import ca.spottedleaf.moonrise.common.config.annotation.Adaptable;
 import ca.spottedleaf.moonrise.common.config.ui.ClothConfig;
-import ca.spottedleaf.moonrise.common.config.annotation.Serializable;
-import ca.spottedleaf.moonrise.common.config.type.Duration;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
+import ca.spottedleaf.yamlconfig.InitialiseHook;
+import ca.spottedleaf.yamlconfig.annotation.Adaptable;
+import ca.spottedleaf.yamlconfig.annotation.Serializable;
+import ca.spottedleaf.yamlconfig.type.Duration;
 
 @Adaptable
 public final class MoonriseConfig {
