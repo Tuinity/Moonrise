@@ -3,4 +3,4 @@
 	url = https://github.com/Spottedleaf/ConcurrentUtil.git
 [submodule "YamlConfig"]
 	path = YamlConfig
-	url = git@github.com:Spottedleaf/YamlConfig.git
+	url = https://github.com/Spottedleaf/YamlConfig.git
