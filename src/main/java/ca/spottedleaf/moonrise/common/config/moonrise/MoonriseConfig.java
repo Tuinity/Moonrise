@@ -251,4 +251,21 @@ public final class MoonriseConfig {
         )
         public boolean fixMC159283 = false;
     }
+
+    @Serializable
+    public Misc misc = new Misc();
+
+    @Adaptable
+    public static final class Misc {
+
+        @Serializable(
+            serializedKey = "immediately-close-loading-screen",
+            comment = """
+                        Whether the loading screen should be closed immediately when joining servers/SP worlds.
+                        This will let you in game faster, but may result in getting in game before enough chunks are
+                        loaded for rendering.
+                        """
+        )
+        public boolean immediatelyCloseLoadingScreen = false;
+    }
 }
