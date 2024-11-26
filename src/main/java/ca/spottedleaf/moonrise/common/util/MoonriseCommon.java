@@ -32,6 +32,7 @@ public final class MoonriseCommon {
     public static final long WORKER_QUEUE_HOLD_TIME = (long)(20.0e6); // 20ms
     public static final int CLIENT_DIVISION = 0;
     public static final PrioritisedThreadPool.ExecutorGroup RENDER_EXECUTOR_GROUP = MoonriseCommon.WORKER_POOL.createExecutorGroup(CLIENT_DIVISION, 0);
+    public static final PrioritisedThreadPool.ExecutorGroup SECTION_OCCLUSION_EXECUTOR_GROUP = MoonriseCommon.WORKER_POOL.createExecutorGroup(CLIENT_DIVISION, 0);
     public static final int SERVER_DIVISION = 1;
     public static final PrioritisedThreadPool.ExecutorGroup PARALLEL_GEN_GROUP = MoonriseCommon.WORKER_POOL.createExecutorGroup(SERVER_DIVISION, 0);
     public static final PrioritisedThreadPool.ExecutorGroup RADIUS_AWARE_GROUP = MoonriseCommon.WORKER_POOL.createExecutorGroup(SERVER_DIVISION, 0);
