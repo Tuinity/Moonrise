@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.loading_screen;
 
+import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import net.minecraft.client.multiplayer.LevelLoadStatusManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,6 +26,9 @@ abstract class LevelLoadStatusManagerMixin {
             )
     )
     private void immediatelyClose(final CallbackInfo ci) {
+        if (!ConfigHolder.getConfig().misc.immediatelyCloseLoadingScreen) {
+            return;
+        }
         if (this.status == LevelLoadStatusManager.Status.WAITING_FOR_SERVER) {
             this.status = LevelLoadStatusManager.Status.LEVEL_READY;
             ci.cancel();
