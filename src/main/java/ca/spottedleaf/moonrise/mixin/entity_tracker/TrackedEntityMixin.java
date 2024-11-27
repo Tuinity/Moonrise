@@ -146,7 +146,7 @@ abstract class TrackedEntityMixin implements EntityTrackerTrackedEntity {
     @Overwrite
     public int getEffectiveRange() {
         final Entity entity = this.entity;
-        int range = PlatformHooks.get().modifyEntityTrackingRange(entity, this.range);
+        int range = this.range;
 
         if (entity.getPassengers() == ImmutableList.<Entity>of()) {
             return this.scaledRange(range);
