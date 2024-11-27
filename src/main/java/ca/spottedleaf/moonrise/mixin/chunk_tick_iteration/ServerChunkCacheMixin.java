@@ -2,7 +2,7 @@ package ca.spottedleaf.moonrise.mixin.chunk_tick_iteration;
 
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
-import ca.spottedleaf.moonrise.common.util.SimpleRandom;
+import ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
@@ -39,7 +39,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
 
 
     @Unique
-    private final SimpleRandom shuffleRandom = new SimpleRandom(0L);
+    private final SimpleThreadUnsafeRandom shuffleRandom = new SimpleThreadUnsafeRandom(0L);
 
     @Unique
     private boolean isChunkNearPlayer(final ChunkMap chunkMap, final ChunkPos chunkPos, final LevelChunk levelChunk) {

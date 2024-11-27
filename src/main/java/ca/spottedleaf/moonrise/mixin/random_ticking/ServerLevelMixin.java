@@ -2,7 +2,7 @@ package ca.spottedleaf.moonrise.mixin.random_ticking;
 
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.list.ShortList;
-import ca.spottedleaf.moonrise.common.util.SimpleRandom;
+import ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -20,6 +20,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.levelgen.RandomSupport;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.WritableLevelData;
 import org.spongepowered.asm.mixin.Mixin;
@@ -38,7 +39,7 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
     private static final LevelChunkSection[] EMPTY_SECTION_ARRAY = new LevelChunkSection[0];
 
     @Unique
-    private final SimpleRandom simpleRandom = new SimpleRandom(0L);
+    private final SimpleThreadUnsafeRandom simpleRandom = new SimpleThreadUnsafeRandom(RandomSupport.generateUniqueSeed());
 
     /**
      * @reason Use faster random
@@ -72,7 +73,7 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
                                                    @Local(ordinal = 0, argsOnly = true) final int tickSpeed) {
         final LevelChunkSection[] sections = chunk.getSections();
         final int minSection = WorldUtil.getMinSection((ServerLevel)(Object)this);
-        final SimpleRandom simpleRandom = this.simpleRandom;
+        final SimpleThreadUnsafeRandom simpleRandom = this.simpleRandom;
         final boolean doubleTickFluids = !PlatformHooks.get().configFixMC224294();
 
         final ChunkPos cpos = chunk.getPos();
