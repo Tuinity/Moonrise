@@ -6,10 +6,8 @@ plugins {
     id("me.modmuss50.mod-publish-plugin") version "0.8.1" apply false
 }
 
-/*
- * Gets the version name from the latest Git tag
- */
-// https://stackoverflow.com/questions/28498688/gradle-script-to-autoversion-and-include-the-commit-hash-in-android
+extensions.create("runConfigCommon", RunConfigCommon.class)
+
 def getGitCommit = providers.exec {
     commandLine 'git', 'rev-parse', '--short', 'HEAD'
 }.standardOutput.getAsText().map { it.trim() }
@@ -21,29 +19,22 @@ def aw2at = Aw2AtTask.configureDefault(
 )
 
 neoForge {
-    neoFormVersion = "1.21.3-20241023.131943"
+    neoFormVersion = neoform_version
     validateAccessTransformers = true
     accessTransformers.files.setFrom(aw2at.flatMap { t -> t.getOutputFile() })
 }
 
-class FixAsmRule implements ComponentMetadataRule {
-    @Override
-    void execute(ComponentMetadataContext ctx) {
-        ctx.details.allVariants {
-            it.withDependencies {
-                it.removeIf {
-                    it.group == "org.ow2.asm"
-                }
-            }
-        }
-    }
+runConfigCommon {
+    systemProperties.put "mixin.debug", "true"
+    systemProperties.put "Moonrise.MaxViewDistance", "128"
 }
 
 dependencies {
     // todo: check versions
     compileOnly "net.fabricmc:sponge-mixin:0.15.4+mixin.0.8.7"
     compileOnly "io.github.llamalad7:mixinextras-common:0.4.1"
-    components.withModule("net.neoforged:minecraft-dependencies", FixAsmRule.class)
+    // work around minecraft (MDG) forcing ASM 9.3 which is incompatible with the above deps...
+    components.withModule("net.neoforged:minecraft-dependencies", RemoveAsmDependency.class)
 
     api("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     api("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}")
@@ -135,5 +126,17 @@ subprojects {
             accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
             minecraftVersions = supportedMcVersions
         }
+    }
+
+    // Setup a run with lithium for compatibility testing
+    configurations.create("lithium")
+    dependencies {
+        String coordinates =  "maven.modrinth:lithium:"
+        if (getProject().name == "Moonrise-NeoForge") {
+            coordinates += rootProject.neo_lithium_version
+        } else {
+            coordinates += rootProject.fabric_lithium_version
+        }
+        lithium coordinates
     }
 }

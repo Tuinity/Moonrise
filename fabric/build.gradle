@@ -26,15 +26,20 @@ dependencies {
     include fabricApiLibs.base
 }
 
-processResources {
-    inputs.property "version", project.version
-
+tasks.processResources {
+    def properties = [
+        "version": project.version,
+        "minecraft_version": minecraft_version,
+        "loader_version": loader_version,
+        "mod_version": mod_version
+    ]
+    inputs.properties(properties)
     filesMatching("fabric.mod.json") {
-        expand "version": project.version, "minecraft_version": minecraft_version, "loader_version": loader_version, "mod_version": mod_version
+        expand properties
     }
 }
 
-shadowJar {
+tasks.shadowJar {
     archiveClassifier = "dev-all"
     destinationDirectory = layout.buildDirectory.dir("libs")
     configurations = [project.configurations.shadow]
@@ -68,10 +73,8 @@ loom {
     mixin {
         useLegacyMixinAp = false
     }
-    runs.all {
+    runs.configureEach {
         ideConfigGenerated true
-        property "mixin.debug", "true"
-        property "Moonrise.MaxViewDistance", "128"
     }
     mods {
         main {
@@ -81,27 +84,27 @@ loom {
     }
 }
 
+afterEvaluate {
+    loom.runs.configureEach { cfg ->
+        runConfigCommon.systemProperties.get().each {
+            cfg.property it.key, it.value
+        }
+    }
+}
+
 // Setup a run with lithium for compatibility testing
 sourceSets.create("lithium")
-configurations.create("lithium")
 loom {
     createRemapConfigurations(sourceSets.lithium)
     runs {
         register("lithiumClient") {
             client()
-            property "mixin.debug", "true"
         }
     }
 }
+configurations.modLithiumRuntimeOnly {
+    extendsFrom configurations.lithium
+}
 tasks.named("runLithiumClient", net.fabricmc.loom.task.RunGameTask.class) {
     getClasspath().from(configurations.modRuntimeClasspathLithiumMapped)
-}
-dependencies {
-    String coordinates =  "maven.modrinth:lithium:"
-    if (getProject().name == "Moonrise-NeoForge") {
-        coordinates += rootProject.neo_lithium_version
-    } else {
-        coordinates += rootProject.fabric_lithium_version
-    }
-    modLithiumRuntimeOnly coordinates
 }
