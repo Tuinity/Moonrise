@@ -1,15 +1,6 @@
 plugins {
     id("quiet-fabric-loom")
     id 'maven-publish'
-    id 'com.gradleup.shadow'
-}
-
-configurations.create("libs")
-configurations.shadow {
-    extendsFrom(configurations.libs)
-}
-configurations.implementation {
-    extendsFrom(configurations.libs)
 }
 
 dependencies {
@@ -17,10 +8,9 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    // todo: runs are broken (cannot find aw file)
-    //add('shadow', project([path: ":", configuration: "namedElements"]))
-    //runtimeOnly(project(":").sourceSets.main.output)
-    libs(project(":"))
+    runtimeOnly(project(":").sourceSets.main.output)
+    shadow(project(":"))
+    compileOnly(project(":"))
 
     libs("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     libs("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}")

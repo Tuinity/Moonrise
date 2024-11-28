@@ -4,7 +4,6 @@ import java.nio.file.Files
 plugins {
     id("net.neoforged.moddev")
     id 'maven-publish'
-    id 'com.gradleup.shadow'
 }
 
 repositories {
@@ -24,34 +23,43 @@ neoForge {
     version = rootProject.neoforge_version
     validateAccessTransformers = true
     accessTransformers.files.setFrom(aw2at.flatMap { t -> t.getOutputFile() })
+    mods {
+        moonrise {
+            sourceSet sourceSets.main
+            sourceSet rootProject.sourceSets.main
+        }
+    }
     runs {
+        configureEach {
+            additionalRuntimeClasspathConfiguration.extendsFrom configurations.libs
+            systemProperties.put('mixin.debug', 'true')
+        }
         client {
             client()
-            mods.set([]) // Work around classpath issues by using the production jar for dev runs
+            // loadedMods.set([]) // Work around module issues by using the production jar for dev runs
         }
         server {
             server()
-            mods.set([]) // Work around classpath issues by using the production jar for dev runs
+            // loadedMods.set([]) // Work around module issues by using the production jar for dev runs
         }
     }
 }
 
-configurations.implementation {
-    extendsFrom(configurations.shadow)
-}
-
 dependencies {
-    add('shadow', project(":"))
+    runtimeOnly(project(":").sourceSets.main.output)
+    shadow(project(":"))
+    compileOnly(project(":"))
 
-    shadow("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
-    shadow("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}")
-    shadow("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
+    libs("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
+    libs("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}")
+    libs("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
 
     implementation "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_version}"
     jarJar "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_version}"
 }
 
-// Work around classpath issues by using the production jar for dev runs
+// Work around module issues by using the production jar for dev runs
+/*
 tasks.withType(RunGameTask).configureEach {
     dependsOn(tasks.shadowJar)
     doFirst {
@@ -61,6 +69,7 @@ tasks.withType(RunGameTask).configureEach {
         Files.copy(tasks.shadowJar.archiveFile.get().asFile.toPath(), jar.toPath())
     }
 }
+ */
 
 processResources {
     inputs.property "version", project.version

@@ -312,3 +312,5 @@ accessible class net/minecraft/world/level/LocalMobCapCalculator$MobCounts
 
 # SectionStorage$PackedChunk
 accessible class net/minecraft/world/level/chunk/storage/SectionStorage$PackedChunk
+# MDG requires we AT the constructor if we AT the class
+accessible method net/minecraft/world/level/chunk/storage/SectionStorage$PackedChunk <init> (Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;Z)V

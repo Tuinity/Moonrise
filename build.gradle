@@ -3,21 +3,16 @@ import me.modmuss50.mpp.ReleaseType
 plugins {
     id("java-library")
     id("net.neoforged.moddev")
-    id("me.modmuss50.mod-publish-plugin") version "0.7.2" apply false
+    id("me.modmuss50.mod-publish-plugin") version "0.8.1" apply false
 }
 
 /*
  * Gets the version name from the latest Git tag
  */
 // https://stackoverflow.com/questions/28498688/gradle-script-to-autoversion-and-include-the-commit-hash-in-android
-def getGitCommit = { ->
-    def stdout = new ByteArrayOutputStream()
-    exec {
-        commandLine 'git', 'rev-parse', '--short', 'HEAD'
-        standardOutput = stdout
-    }
-    return stdout.toString().trim()
-}
+def getGitCommit = providers.exec {
+    commandLine 'git', 'rev-parse', '--short', 'HEAD'
+}.standardOutput.getAsText().map { it.trim() }
 
 def aw2at = Aw2AtTask.configureDefault(
     getProject(),
@@ -31,10 +26,24 @@ neoForge {
     accessTransformers.files.setFrom(aw2at.flatMap { t -> t.getOutputFile() })
 }
 
+class FixAsmRule implements ComponentMetadataRule {
+    @Override
+    void execute(ComponentMetadataContext ctx) {
+        ctx.details.allVariants {
+            it.withDependencies {
+                it.removeIf {
+                    it.group == "org.ow2.asm"
+                }
+            }
+        }
+    }
+}
+
 dependencies {
     // todo: check versions
-    compileOnly "net.fabricmc:sponge-mixin:0.13.4+mixin.0.8.5"
+    compileOnly "net.fabricmc:sponge-mixin:0.15.4+mixin.0.8.7"
     compileOnly "io.github.llamalad7:mixinextras-common:0.4.1"
+    components.withModule("net.neoforged:minecraft-dependencies", FixAsmRule.class)
 
     api("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     api("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}")
@@ -46,7 +55,7 @@ dependencies {
 
 allprojects {
     group = rootProject.maven_group
-    version = rootProject.mod_version + "+" + getGitCommit()
+    version = rootProject.mod_version + "+" + getGitCommit.get()
 
     plugins.apply("java-library")
 
@@ -94,6 +103,16 @@ allprojects {
 
 subprojects {
     plugins.apply("me.modmuss50.mod-publish-plugin")
+    plugins.apply 'java-library'
+    plugins.apply 'com.gradleup.shadow'
+
+    configurations.create("libs")
+    configurations.shadow {
+        extendsFrom(configurations.libs)
+    }
+    configurations.implementation {
+        extendsFrom(configurations.libs)
+    }
 
     publishMods {
         if (project.version.contains("-beta.")) {
