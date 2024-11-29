@@ -1214,15 +1214,8 @@ public final class MoonriseRegionFileIO {
             try {
                 writeData = this.regionDataController.startWrite(this.chunkX, this.chunkZ, write);
             } catch (final Throwable thr) {
-                // TODO implement this?
-                    /*if (thr instanceof RegionFileStorage.RegionFileSizeException) {
-                        final int maxSize = RegionFile.MAX_CHUNK_SIZE / (1024 * 1024);
-                        LOGGER.error("Chunk at (" + this.chunkX + "," + this.chunkZ + ") in '" + WorldUtil.getWorldName(this.world) + "' exceeds max size of " + maxSize + "MiB, it has been deleted from disk.");
-                    } else */
-                {
-                    failedWrite = thr instanceof IOException;
-                    LOGGER.error("Failed to write chunk data for task: " + this.toString(), thr);
-                }
+                failedWrite = thr instanceof IOException;
+                LOGGER.error("Failed to write chunk data for task: " + this.toString(), thr);
             }
 
             if (writeData == null) {
