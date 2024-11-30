@@ -34,7 +34,7 @@ dependencies {
     compileOnly "net.fabricmc:sponge-mixin:0.15.4+mixin.0.8.7"
     compileOnly "io.github.llamalad7:mixinextras-common:0.4.1"
     // work around minecraft (MDG) forcing ASM 9.3 which is incompatible with the above deps...
-    components.withModule("net.neoforged:minecraft-dependencies", RemoveAsmDependency.class)
+    components.withModule("net.neoforged:minecraft-dependencies", RemoveAsmConstraint.class)
 
     api("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
     api("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}")
