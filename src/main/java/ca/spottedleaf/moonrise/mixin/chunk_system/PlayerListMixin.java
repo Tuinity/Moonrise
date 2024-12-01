@@ -43,4 +43,17 @@ abstract class PlayerListMixin {
     )
     private void doNotAdjustVD(final PlayerList instance, final Packet<?> packet) {}
 
+
+    /**
+     * @reason The RegionizedPlayerChunkLoader will handle the SD packet
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "setSimulationDistance",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/players/PlayerList;broadcastAll(Lnet/minecraft/network/protocol/Packet;)V"
+        )
+    )
+    private void doNotAdjustSD(final PlayerList instance, final Packet<?> packet) {}
 }

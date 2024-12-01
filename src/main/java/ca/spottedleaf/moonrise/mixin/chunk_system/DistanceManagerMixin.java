@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
+import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemDistanceManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
@@ -13,6 +14,7 @@ import net.minecraft.server.level.ThrottlingChunkTaskDispatcher;
 import net.minecraft.server.level.Ticket;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.server.level.TickingTracker;
+import net.minecraft.util.Mth;
 import net.minecraft.util.SortedArraySet;
 import net.minecraft.world.level.ChunkPos;
 import org.spongepowered.asm.mixin.Mixin;
@@ -285,7 +287,10 @@ abstract class DistanceManagerMixin implements ChunkSystemDistanceManager {
      */
     @Overwrite
     public void updateSimulationDistance(final int simulationDistance) {
-        ((ChunkSystemServerLevel)this.moonrise$getChunkMap().level).moonrise$getPlayerChunkLoader().setTickDistance(simulationDistance);
+        // note: vanilla does not clamp to 0, but we do simply because we need a min of 0
+        final int clamped = Mth.clamp(simulationDistance, 0, MoonriseConstants.MAX_VIEW_DISTANCE);
+
+        ((ChunkSystemServerLevel)this.moonrise$getChunkMap().level).moonrise$getPlayerChunkLoader().setTickDistance(clamped);
     }
 
     /**
