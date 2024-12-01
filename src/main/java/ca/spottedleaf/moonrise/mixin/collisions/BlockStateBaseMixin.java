@@ -5,16 +5,12 @@ import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import com.mojang.serialization.MapCodec;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateHolder;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Mixin;
@@ -32,7 +28,7 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
     protected BlockBehaviour.BlockStateBase.Cache cache;
 
     @Shadow
-    public abstract VoxelShape getCollisionShape(BlockGetter blockGetter, BlockPos blockPos, CollisionContext collisionContext);
+    public abstract boolean isAir();
 
     @Shadow
     public VoxelShape[] occlusionShapesByFace;
@@ -99,10 +95,9 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
     private void initCollisionState(final CallbackInfo ci) {
         if (this.cache != null) {
             final VoxelShape collisionShape = this.cache.collisionShape;
-            try {
-                this.constantCollisionShape = this.getCollisionShape(null, null, null);
-            } catch (final Throwable throwable) {
-                // :(
+            if (this.isAir()) {
+                this.constantCollisionShape = Shapes.empty();
+            } else {
                 this.constantCollisionShape = null;
             }
             this.occludesFullBlock = ((CollisionVoxelShape)collisionShape).moonrise$occludesFullBlock();
