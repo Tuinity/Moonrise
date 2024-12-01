@@ -152,8 +152,8 @@ public final class ChunkSystem {
         return RegionizedPlayerChunkLoader.getAPISendViewDistance(player);
     }
 
-    public static int getLoadViewDistance(final ServerPlayer player) {
-        return RegionizedPlayerChunkLoader.getLoadViewDistance(player);
+    public static int getViewDistance(final ServerPlayer player) {
+        return RegionizedPlayerChunkLoader.getAPIViewDistance(player);
     }
 
     public static int getTickViewDistance(final ServerPlayer player) {

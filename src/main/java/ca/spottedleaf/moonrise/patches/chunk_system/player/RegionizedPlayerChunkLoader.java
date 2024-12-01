@@ -6,6 +6,7 @@ import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.misc.AllocatingRateLimiter;
 import ca.spottedleaf.moonrise.common.misc.SingleUserAreaMap;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
@@ -114,14 +115,25 @@ public final class RegionizedPlayerChunkLoader {
         int sendViewDistance
     ) {
         public ViewDistances setTickViewDistance(final int distance) {
+            if (distance != -1 && (distance < (0) || distance > (MoonriseConstants.MAX_VIEW_DISTANCE))) {
+                throw new IllegalArgumentException(Integer.toString(distance));
+            }
             return new ViewDistances(distance, this.loadViewDistance, this.sendViewDistance);
         }
 
         public ViewDistances setLoadViewDistance(final int distance) {
+            // note: load view distance = api view distance + 1
+            if (distance != -1 && (distance < (2 + 1) || distance > (MoonriseConstants.MAX_VIEW_DISTANCE + 1))) {
+                throw new IllegalArgumentException(Integer.toString(distance));
+            }
             return new ViewDistances(this.tickViewDistance, distance, this.sendViewDistance);
         }
 
         public ViewDistances setSendViewDistance(final int distance) {
+            // note: send view distance <= load view distance - 1
+            if (distance != -1 && (distance < (0) || distance > (MoonriseConstants.MAX_VIEW_DISTANCE))) {
+                throw new IllegalArgumentException(Integer.toString(distance));
+            }
             return new ViewDistances(this.tickViewDistance, this.loadViewDistance, distance);
         }
 
@@ -146,16 +158,6 @@ public final class RegionizedPlayerChunkLoader {
     }
 
     public static int getAPIViewDistance(final ServerPlayer player) {
-        final ServerLevel level = player.serverLevel();
-        final PlayerChunkLoaderData data = ((ChunkSystemServerPlayer)player).moonrise$getChunkLoader();
-        if (data == null) {
-            return ((ChunkSystemServerLevel)level).moonrise$getPlayerChunkLoader().getAPIViewDistance();
-        }
-        // view distance = load distance + 1
-        return data.lastLoadDistance - 1;
-    }
-
-    public static int getLoadViewDistance(final ServerPlayer player) {
         final ServerLevel level = player.serverLevel();
         final PlayerChunkLoaderData data = ((ChunkSystemServerPlayer)player).moonrise$getChunkLoader();
         if (data == null) {
@@ -516,7 +518,7 @@ public final class RegionizedPlayerChunkLoader {
                                            final int playerLoadViewDistance, final int worldLoadViewDistance) {
             return Math.min(
                     playerTickViewDistance < 0 ? worldTickViewDistance : playerTickViewDistance,
-                    playerLoadViewDistance < 0 ? worldLoadViewDistance : playerLoadViewDistance
+                    playerLoadViewDistance < 0 ? (worldLoadViewDistance - 1) : (playerLoadViewDistance - 1)
             );
         }
 
