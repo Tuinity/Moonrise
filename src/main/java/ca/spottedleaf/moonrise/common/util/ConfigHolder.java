@@ -47,14 +47,6 @@ public final class ConfigHolder {
     }
 
     public static boolean reloadConfig() {
-        final boolean ret = reloadConfig0();
-
-        CONFIG.callInitialisers();
-
-        return ret;
-    }
-
-    private static boolean reloadConfig0() {
         synchronized (CONFIG) {
             if (CONFIG_FILE.exists()) {
                 try {
@@ -64,6 +56,8 @@ public final class ConfigHolder {
                     return false;
                 }
             }
+
+            CONFIG.callInitialisers();
 
             // write back any changes, or create if needed
             return saveConfig();

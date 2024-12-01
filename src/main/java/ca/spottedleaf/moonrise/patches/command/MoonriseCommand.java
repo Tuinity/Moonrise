@@ -237,7 +237,7 @@ public final class MoonriseCommand {
             return Command.SINGLE_SUCCESS;
         } else {
             ctx.getSource().sendFailure(
-                Component.literal("Reloaded Moonrise config.")
+                Component.literal("Failed to reload Moonrise config, see logs.")
                     .withStyle(ChatFormatting.RED)
             );
             return 0;
