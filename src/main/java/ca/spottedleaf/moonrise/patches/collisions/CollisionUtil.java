@@ -2168,8 +2168,14 @@ public final class CollisionUtil {
 
         public CollisionContext getDelegate() {
             this.delegated = true;
-            final Entity entity = this.getEntity();
+            final Entity entity = super.getEntity();
             return this.delegate == null ? this.delegate = (entity == null ? CollisionContext.empty() : CollisionContext.of(entity)) : this.delegate;
+        }
+
+        @Override
+        public Entity getEntity() {
+            this.getDelegate();
+            return super.getEntity();
         }
 
         @Override
