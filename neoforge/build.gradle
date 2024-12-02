@@ -38,6 +38,10 @@ neoForge {
             server()
         }
     }
+    unitTest {
+        enable()
+        testedMod = mods.moonrise
+    }
 }
 
 dependencies {

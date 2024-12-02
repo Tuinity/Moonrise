@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 
-public class MixinAuditTest {
+class MixinAuditTest {
     @BeforeAll
     static void beforeAll() {
         SharedConstants.tryDetectVersion();

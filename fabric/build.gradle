@@ -52,14 +52,6 @@ tasks.shadowJar {
     relocate 'org.yaml.snakeyaml', 'ca.spottedleaf.moonrise.libs.org.yaml.snakeyaml'
 }
 
-tasks.test {
-    def classPathGroups = SourceSetHelper.getClasspath(loom.mods.main, getProject()).stream()
-        .map(File.&getAbsolutePath)
-        .collect(Collectors.joining(File.pathSeparator))
-
-    systemProperty("fabric.classPathGroups", classPathGroups)
-}
-
 publishMods {
     file = remapJar.archiveFile
     modLoaders = ["fabric"]
@@ -94,6 +86,14 @@ loom {
             sourceSet("main", project.rootProject)
         }
     }
+}
+
+tasks.test {
+    def classPathGroups = SourceSetHelper.getClasspath(loom.mods.main, getProject()).stream()
+        .map(File.&getAbsolutePath)
+        .collect(Collectors.joining(File.pathSeparator))
+
+    systemProperty("fabric.classPathGroups", classPathGroups)
 }
 
 afterEvaluate {
