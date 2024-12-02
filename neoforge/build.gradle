@@ -80,6 +80,7 @@ tasks.shadowJar {
 
 tasks.register("productionJar", Zip.class) {
     archiveClassifier = ""
+    archiveExtension = "jar"
     destinationDirectory = layout.buildDirectory.dir("libs")
     from(tasks.jarJar)
     from(zipTree(tasks.shadowJar.archiveFile))
