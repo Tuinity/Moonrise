@@ -66,11 +66,11 @@ tasks.processResources {
 }
 
 tasks.jar {
-    archiveClassifier = "slim"
+    archiveClassifier = "dev"
 }
 
 tasks.shadowJar {
-    archiveClassifier = ""
+    archiveClassifier = "dev-all"
     destinationDirectory = layout.buildDirectory.dir("libs")
     configurations = [project.configurations.shadow]
     relocate 'ca.spottedleaf.concurrentutil', 'ca.spottedleaf.moonrise.libs.ca.spottedleaf.concurrentutil'
@@ -78,12 +78,19 @@ tasks.shadowJar {
     relocate 'org.yaml.snakeyaml', 'ca.spottedleaf.moonrise.libs.org.yaml.snakeyaml'
 }
 
+tasks.register("productionJar", Zip.class) {
+    archiveClassifier = ""
+    destinationDirectory = layout.buildDirectory.dir("libs")
+    from(tasks.jarJar)
+    from(zipTree(tasks.shadowJar.archiveFile))
+}
+
 tasks.assemble {
-    dependsOn tasks.shadowJar
+    dependsOn tasks.productionJar
 }
 
 publishMods {
-    file = shadowJar.archiveFile
+    file = productionJar.archiveFile
     modLoaders = ["neoforge"]
 
     modrinth {
