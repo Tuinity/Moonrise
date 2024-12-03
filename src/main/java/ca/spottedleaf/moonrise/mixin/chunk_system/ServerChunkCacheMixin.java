@@ -86,6 +86,13 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
                 completable::complete
         );
 
+        if (!completable.isDone() && chunkTaskScheduler.hasShutdown()) {
+            throw new IllegalStateException(
+                "Chunk system has shut down, cannot process chunk requests in world '" + ca.spottedleaf.moonrise.common.util.WorldUtil.getWorldName(this.level) + "' at "
+                    + "(" + chunkX + "," + chunkZ + ") status: " + toStatus
+            );
+        }
+
         if (TickThread.isTickThreadFor(this.level, chunkX, chunkZ)) {
             ChunkTaskScheduler.pushChunkWait(this.level, chunkX, chunkZ);
             this.mainThreadProcessor.managedBlock(completable::isDone);
