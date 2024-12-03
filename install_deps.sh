@@ -5,8 +5,3 @@ git submodule update --init --recursive
 
 cd ConcurrentUtil
 mvn install
-
-cd ..
-
-cd YamlConfig
-mvn install
