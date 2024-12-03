@@ -24,8 +24,8 @@ abstract class AcquirePoiMixin {
      */
     @Redirect(
             method = {
-                    "method_46885",
-                    "*(ZLorg/apache/commons/lang3/mutable/MutableLong;Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;Ljava/util/function/Predicate;Lnet/minecraft/world/entity/ai/behavior/declarative/MemoryAccessor;Ljava/util/Optional;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/PathfinderMob;J)Z"
+                "lambda$create$8",
+                "method_46885"
             },
             at = @At(
                     target = "Lnet/minecraft/world/entity/ai/village/poi/PoiManager;findAllClosestFirstWithType(Ljava/util/function/Predicate;Ljava/util/function/Predicate;Lnet/minecraft/core/BlockPos;ILnet/minecraft/world/entity/ai/village/poi/PoiManager$Occupancy;)Ljava/util/stream/Stream;",
@@ -33,9 +33,9 @@ abstract class AcquirePoiMixin {
                     ordinal = 0
             )
     )
-    private static Stream<Pair<Holder<PoiType>, BlockPos>> aaa(PoiManager poiManager, Predicate<Holder<PoiType>> predicate,
-                                                               Predicate<BlockPos> predicate2, BlockPos blockPos, int i,
-                                                               PoiManager.Occupancy occup) {
+    private static Stream<Pair<Holder<PoiType>, BlockPos>> useLimitedSearch(PoiManager poiManager, Predicate<Holder<PoiType>> predicate,
+                                                                            Predicate<BlockPos> predicate2, BlockPos blockPos, int i,
+                                                                            PoiManager.Occupancy occup) {
         final List<Pair<Holder<PoiType>, BlockPos>> ret = new ArrayList<>();
 
         PoiAccess.findNearestPoiPositions(

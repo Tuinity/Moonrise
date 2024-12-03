@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.common.util;
 
 import com.google.gson.JsonElement;
+import com.google.gson.Strictness;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonWriter;
 import java.io.File;
@@ -16,7 +17,7 @@ public final class JsonUtil {
         final StringWriter stringWriter = new StringWriter();
         final JsonWriter jsonWriter = new JsonWriter(stringWriter);
         jsonWriter.setIndent(" ");
-        jsonWriter.setLenient(false);
+        jsonWriter.setStrictness(Strictness.LENIENT);
         Streams.write(element, jsonWriter);
 
         final String jsonString = stringWriter.toString();
