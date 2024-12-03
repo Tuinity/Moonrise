@@ -271,6 +271,16 @@ public final class ChunkTaskScheduler {
         return this.lockShift;
     }
 
+    private volatile boolean shutdown;
+
+    public boolean hasShutdown() {
+        return this.shutdown;
+    }
+
+    public void setShutdown(final boolean shutdown) {
+        this.shutdown = shutdown;
+    }
+
     public ChunkTaskScheduler(final ServerLevel world) {
         this.world = world;
         // must be >= region shift (in paper, doesn't exist) and must be >= ticket propagator section shift
@@ -522,6 +532,13 @@ public final class ChunkTaskScheduler {
         ChunkAccess loaded = ((ChunkSystemServerLevel)this.world).moonrise$getSpecificChunkIfLoaded(chunkX, chunkZ, status);
         if (loaded != null) {
             return loaded;
+        }
+
+        if (this.hasShutdown()) {
+            throw new IllegalStateException(
+                "Chunk system has shut down, cannot process chunk requests in world '" + ca.spottedleaf.moonrise.common.util.WorldUtil.getWorldName(this.world) + "' at "
+                    + "(" + chunkX + "," + chunkZ + ") status: " + status
+            );
         }
 
         final Long ticketId = getNextNonFullLoadId();

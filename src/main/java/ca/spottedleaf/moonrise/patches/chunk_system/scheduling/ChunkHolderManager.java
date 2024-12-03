@@ -219,6 +219,8 @@ public final class ChunkHolderManager {
                 LOGGER.error("Failed to close '" + type.name() + "' regionfile cache for world '" + WorldUtil.getWorldName(this.world) + "'", ex);
             }
         }
+
+        this.taskScheduler.setShutdown(true);
     }
 
     void ensureInAutosave(final NewChunkHolder holder) {
