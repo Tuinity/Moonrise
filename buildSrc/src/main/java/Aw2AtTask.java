@@ -98,7 +98,8 @@ public abstract class Aw2AtTask extends DefaultTask {
      */
 
     public static AccessTransformSet toAccessTransformSet(final BufferedReader reader) throws IOException {
-        AccessTransformSet atSet = AccessTransformSet.create();
+        // TODO: Remove copied classes once https://github.com/architectury/at/pull/1 is released
+        AccessTransformSet atSet = new at.AccessTransformSetImpl();
 
         new AccessWidenerReader(new AccessWidenerVisitor() {
             @Override
