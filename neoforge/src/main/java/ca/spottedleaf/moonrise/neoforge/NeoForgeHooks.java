@@ -34,6 +34,7 @@ import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.level.ChunkDataEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -114,7 +115,12 @@ public final class NeoForgeHooks implements PlatformHooks {
     @Override
     public void addToGetEntities(final Level world, final Entity entity, final AABB boundingBox, final Predicate<? super Entity> predicate,
                                  final List<Entity> into) {
-        for (final PartEntity<?> part : world.getPartEntities()) {
+        final Collection<PartEntity<?>> parts = world.dragonParts();
+        if (parts.isEmpty()) {
+            return;
+        }
+
+        for (final PartEntity<?> part : parts) {
             if (part != entity && part.getBoundingBox().intersects(boundingBox) && (predicate == null || predicate.test(part))) {
                 into.add(part);
             }
@@ -129,9 +135,18 @@ public final class NeoForgeHooks implements PlatformHooks {
             return;
         }
 
-        for (final PartEntity<?> part : world.getPartEntities()) {
+        final Collection<PartEntity<?>> parts = world.dragonParts();
+        if (parts.isEmpty()) {
+            return;
+        }
+
+        for (final PartEntity<?> part : parts) {
+            if (!part.getBoundingBox().intersects(boundingBox)) {
+                continue;
+            }
+
             final T casted = (T)entityTypeTest.tryCast(part);
-            if (casted != null && casted.getBoundingBox().intersects(boundingBox) && (predicate == null || predicate.test(casted))) {
+            if (casted != null && (predicate == null || predicate.test(casted))) {
                 into.add(casted);
                 if (into.size() >= maxCount) {
                     break;

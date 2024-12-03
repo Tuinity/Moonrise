@@ -209,7 +209,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
     @Override
     public void get(final AABB box, final Consumer<Entity> action) {
         List<Entity> entities = new ArrayList<>();
-        this.getEntitiesWithoutDragonParts(null, box, entities, null);
+        this.getEntities((Entity)null, box, entities, null);
         for (int i = 0, len = entities.size(); i < len; ++i) {
             action.accept(entities.get(i));
         }
@@ -218,7 +218,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
     @Override
     public <U extends Entity> void get(final EntityTypeTest<Entity, U> filter, final AABB box, final AbortableIterationConsumer<U> action) {
         List<Entity> entities = new ArrayList<>();
-        this.getEntitiesWithoutDragonParts(null, box, entities, null);
+        this.getEntities((Entity)null, box, entities, null);
         for (int i = 0, len = entities.size(); i < len; ++i) {
             final U casted = filter.tryCast(entities.get(i));
             if (casted != null && action.accept(casted).shouldAbort()) {
@@ -560,45 +560,6 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
         return slices;
     }
 
-    public void getEntitiesWithoutDragonParts(final Entity except, final AABB box, final List<Entity> into, final Predicate<? super Entity> predicate) {
-        final int minChunkX = (Mth.floor(box.minX) - 2) >> 4;
-        final int minChunkZ = (Mth.floor(box.minZ) - 2) >> 4;
-        final int maxChunkX = (Mth.floor(box.maxX) + 2) >> 4;
-        final int maxChunkZ = (Mth.floor(box.maxZ) + 2) >> 4;
-
-        final int minRegionX = minChunkX >> REGION_SHIFT;
-        final int minRegionZ = minChunkZ >> REGION_SHIFT;
-        final int maxRegionX = maxChunkX >> REGION_SHIFT;
-        final int maxRegionZ = maxChunkZ >> REGION_SHIFT;
-
-        for (int currRegionZ = minRegionZ; currRegionZ <= maxRegionZ; ++currRegionZ) {
-            final int minZ = currRegionZ == minRegionZ ? minChunkZ & REGION_MASK : 0;
-            final int maxZ = currRegionZ == maxRegionZ ? maxChunkZ & REGION_MASK : REGION_MASK;
-
-            for (int currRegionX = minRegionX; currRegionX <= maxRegionX; ++currRegionX) {
-                final ChunkSlicesRegion region = this.getRegion(currRegionX, currRegionZ);
-
-                if (region == null) {
-                    continue;
-                }
-
-                final int minX = currRegionX == minRegionX ? minChunkX & REGION_MASK : 0;
-                final int maxX = currRegionX == maxRegionX ? maxChunkX & REGION_MASK : REGION_MASK;
-
-                for (int currZ = minZ; currZ <= maxZ; ++currZ) {
-                    for (int currX = minX; currX <= maxX; ++currX) {
-                        final ChunkEntitySlices chunk = region.get(currX | (currZ << REGION_SHIFT));
-                        if (chunk == null || !chunk.status.isOrAfter(FullChunkStatus.FULL)) {
-                            continue;
-                        }
-
-                        chunk.getEntitiesWithoutDragonParts(except, box, into, predicate);
-                    }
-                }
-            }
-        }
-    }
-
     public void getEntities(final Entity except, final AABB box, final List<Entity> into, final Predicate<? super Entity> predicate) {
         final int minChunkX = (Mth.floor(box.minX) - 2) >> 4;
         final int minChunkZ = (Mth.floor(box.minZ) - 2) >> 4;
@@ -758,48 +719,6 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
     }
 
     //////// Limited ////////
-
-    public void getEntitiesWithoutDragonParts(final Entity except, final AABB box, final List<Entity> into, final Predicate<? super Entity> predicate,
-                                              final int maxCount) {
-        final int minChunkX = (Mth.floor(box.minX) - 2) >> 4;
-        final int minChunkZ = (Mth.floor(box.minZ) - 2) >> 4;
-        final int maxChunkX = (Mth.floor(box.maxX) + 2) >> 4;
-        final int maxChunkZ = (Mth.floor(box.maxZ) + 2) >> 4;
-
-        final int minRegionX = minChunkX >> REGION_SHIFT;
-        final int minRegionZ = minChunkZ >> REGION_SHIFT;
-        final int maxRegionX = maxChunkX >> REGION_SHIFT;
-        final int maxRegionZ = maxChunkZ >> REGION_SHIFT;
-
-        for (int currRegionZ = minRegionZ; currRegionZ <= maxRegionZ; ++currRegionZ) {
-            final int minZ = currRegionZ == minRegionZ ? minChunkZ & REGION_MASK : 0;
-            final int maxZ = currRegionZ == maxRegionZ ? maxChunkZ & REGION_MASK : REGION_MASK;
-
-            for (int currRegionX = minRegionX; currRegionX <= maxRegionX; ++currRegionX) {
-                final ChunkSlicesRegion region = this.getRegion(currRegionX, currRegionZ);
-
-                if (region == null) {
-                    continue;
-                }
-
-                final int minX = currRegionX == minRegionX ? minChunkX & REGION_MASK : 0;
-                final int maxX = currRegionX == maxRegionX ? maxChunkX & REGION_MASK : REGION_MASK;
-
-                for (int currZ = minZ; currZ <= maxZ; ++currZ) {
-                    for (int currX = minX; currX <= maxX; ++currX) {
-                        final ChunkEntitySlices chunk = region.get(currX | (currZ << REGION_SHIFT));
-                        if (chunk == null || !chunk.status.isOrAfter(FullChunkStatus.FULL)) {
-                            continue;
-                        }
-
-                        if (chunk.getEntitiesWithoutDragonParts(except, box, into, predicate, maxCount)) {
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     public void getEntities(final Entity except, final AABB box, final List<Entity> into, final Predicate<? super Entity> predicate,
                             final int maxCount) {

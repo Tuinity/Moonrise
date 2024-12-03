@@ -15,6 +15,7 @@ import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.boss.EnderDragonPart;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -27,6 +28,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatusTasks;
 import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -111,13 +113,43 @@ public final class FabricHooks implements PlatformHooks {
     @Override
     public void addToGetEntities(final Level world, final Entity entity, final AABB boundingBox, final Predicate<? super Entity> predicate,
                                  final List<Entity> into) {
+        final Collection<EnderDragonPart> parts = world.dragonParts();
+        if (parts.isEmpty()) {
+            return;
+        }
 
+        for (final EnderDragonPart part : parts) {
+            if (part != entity && part.getBoundingBox().intersects(boundingBox) && (predicate == null || predicate.test(part))) {
+                into.add(part);
+            }
+        }
     }
 
     @Override
     public <T extends Entity> void addToGetEntities(final Level world, final EntityTypeTest<Entity, T> entityTypeTest, final AABB boundingBox,
                                                     final Predicate<? super T> predicate, final List<? super T> into, final int maxCount) {
+        if (into.size() >= maxCount) {
+            // fix neoforge issue: do not add if list is already full
+            return;
+        }
 
+        final Collection<EnderDragonPart> parts = world.dragonParts();
+        if (parts.isEmpty()) {
+            return;
+        }
+
+        for (final EnderDragonPart part : parts) {
+            if (!part.getBoundingBox().intersects(boundingBox)) {
+                continue;
+            }
+            final T casted = (T)entityTypeTest.tryCast(part);
+            if (casted != null && (predicate == null || predicate.test(casted))) {
+                into.add(casted);
+                if (into.size() >= maxCount) {
+                    break;
+                }
+            }
+        }
     }
 
     @Override
