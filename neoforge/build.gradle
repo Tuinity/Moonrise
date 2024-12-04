@@ -49,8 +49,8 @@ dependencies {
     shadow(project(":"))
     compileOnly(project(":"))
 
-    libs("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}")
-    libs("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}")
+    libs("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}") { setTransitive(false) }
+    libs("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}") { setTransitive(false) }
     additionalRuntimeClasspath libs("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
 
     implementation "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_version}"
