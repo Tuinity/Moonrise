@@ -67,11 +67,6 @@ allprojects {
     }
 
     repositories {
-        mavenLocal {
-            mavenContent {
-                includeModule("ca.spottedleaf", "concurrentutil")
-            }
-        }
         maven {
             url "https://repo.papermc.io/repository/maven-public/"
             mavenContent {
