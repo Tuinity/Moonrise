@@ -378,19 +378,19 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
             case X: {
                 final double[] values = this.rootCoordinatesX;
                 return CollisionUtil.findFloor(
-                    values, value - this.offsetX, 0, values.length - 1
+                    values, this.offsetX, value, 0, values.length - 1
                 );
             }
             case Y: {
                 final double[] values = this.rootCoordinatesY;
                 return CollisionUtil.findFloor(
-                    values, value - this.offsetY, 0, values.length - 1
+                    values, this.offsetY, value, 0, values.length - 1
                 );
             }
             case Z: {
                 final double[] values = this.rootCoordinatesZ;
                 return CollisionUtil.findFloor(
-                    values, value - this.offsetZ, 0, values.length - 1
+                    values, this.offsetZ, value, 0, values.length - 1
                 );
             }
             default: {
@@ -411,7 +411,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
         // see findIndex
         final int index = CollisionUtil.findFloor(
-            coords, (positiveDir ? (1.0 - CollisionUtil.COLLISION_EPSILON) : (0.0 + CollisionUtil.COLLISION_EPSILON)) - offset,
+            coords, offset, (positiveDir ? (1.0 - CollisionUtil.COLLISION_EPSILON) : (0.0 + CollisionUtil.COLLISION_EPSILON)),
             0, coords.length - 1
         );
 
