@@ -4,7 +4,6 @@ import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
-import ca.spottedleaf.moonrise.common.util.ChunkSystem;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.ChunkEntitySlices;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup;
@@ -111,6 +110,6 @@ public final class ServerEntityLookup extends EntityLookup {
 
     @Override
     protected boolean screenEntity(final Entity entity, final boolean fromDisk, final boolean event) {
-        return ChunkSystem.screenEntity(this.serverWorld, entity, fromDisk, event);
+        return PlatformHooks.get().screenEntity(this.serverWorld, entity, fromDisk, event);
     }
 }

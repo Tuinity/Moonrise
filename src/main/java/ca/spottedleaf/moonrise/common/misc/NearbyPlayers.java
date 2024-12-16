@@ -1,9 +1,9 @@
 package ca.spottedleaf.moonrise.common.misc;
 
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
-import ca.spottedleaf.moonrise.common.util.ChunkSystem;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
 import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickConstants;
@@ -121,8 +121,8 @@ public final class NearbyPlayers {
         players[NearbyMapType.GENERAL.ordinal()].update(chunk.x, chunk.z, GENERAL_AREA_VIEW_DISTANCE);
         players[NearbyMapType.GENERAL_SMALL.ordinal()].update(chunk.x, chunk.z, GENERAL_SMALL_VIEW_DISTANCE);
         players[NearbyMapType.GENERAL_REALLY_SMALL.ordinal()].update(chunk.x, chunk.z, GENERAL_REALLY_SMALL_VIEW_DISTANCE);
-        players[NearbyMapType.TICK_VIEW_DISTANCE.ordinal()].update(chunk.x, chunk.z, ChunkSystem.getTickViewDistance(player));
-        players[NearbyMapType.VIEW_DISTANCE.ordinal()].update(chunk.x, chunk.z, ChunkSystem.getViewDistance(player));
+        players[NearbyMapType.TICK_VIEW_DISTANCE.ordinal()].update(chunk.x, chunk.z, PlatformHooks.get().getTickViewDistance(player));
+        players[NearbyMapType.VIEW_DISTANCE.ordinal()].update(chunk.x, chunk.z, PlatformHooks.get().getViewDistance(player));
         players[NearbyMapType.SPAWN_RANGE.ordinal()].update(chunk.x, chunk.z, ChunkTickConstants.PLAYER_SPAWN_TRACK_RANGE); // Moonrise - chunk tick iteration
     }
 

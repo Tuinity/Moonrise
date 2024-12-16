@@ -1,121 +1,125 @@
 package ca.spottedleaf.moonrise.common.util;
 
 import ca.spottedleaf.concurrentutil.util.Priority;
-import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
 import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemServerChunkCache;
 import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel;
-import com.mojang.logging.LogUtils;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.progress.ChunkProgressListener;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import org.slf4j.Logger;
 import java.util.List;
 import java.util.function.Consumer;
 
-public final class ChunkSystem {
+public abstract class BaseChunkSystemHooks implements ChunkSystemHooks {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
-
-    public static void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run) {
+    @Override
+    public void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run) {
         scheduleChunkTask(level, chunkX, chunkZ, run, Priority.NORMAL);
     }
 
-    public static void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run, final Priority priority) {
+    @Override
+    public void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run, final Priority priority) {
         ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkTask(chunkX, chunkZ, run, priority);
     }
 
-    public static void scheduleChunkLoad(final ServerLevel level, final int chunkX, final int chunkZ, final boolean gen,
-                                         final ChunkStatus toStatus, final boolean addTicket, final Priority priority,
-                                         final Consumer<ChunkAccess> onComplete) {
+    @Override
+    public void scheduleChunkLoad(final ServerLevel level, final int chunkX, final int chunkZ, final boolean gen,
+                                  final ChunkStatus toStatus, final boolean addTicket, final Priority priority,
+                                  final Consumer<ChunkAccess> onComplete) {
         ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkLoad(chunkX, chunkZ, gen, toStatus, addTicket, priority, onComplete);
     }
 
-    public static void scheduleChunkLoad(final ServerLevel level, final int chunkX, final int chunkZ, final ChunkStatus toStatus,
-                                         final boolean addTicket, final Priority priority, final Consumer<ChunkAccess> onComplete) {
+    @Override
+    public void scheduleChunkLoad(final ServerLevel level, final int chunkX, final int chunkZ, final ChunkStatus toStatus,
+                                  final boolean addTicket, final Priority priority, final Consumer<ChunkAccess> onComplete) {
         ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkLoad(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
     }
 
-    public static void scheduleTickingState(final ServerLevel level, final int chunkX, final int chunkZ,
-                                            final FullChunkStatus toStatus, final boolean addTicket,
-                                            final Priority priority, final Consumer<LevelChunk> onComplete) {
+    @Override
+    public void scheduleTickingState(final ServerLevel level, final int chunkX, final int chunkZ,
+                                     final FullChunkStatus toStatus, final boolean addTicket,
+                                     final Priority priority, final Consumer<LevelChunk> onComplete) {
         ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleTickingState(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
     }
 
-    public static List<ChunkHolder> getVisibleChunkHolders(final ServerLevel level) {
+    @Override
+    public List<ChunkHolder> getVisibleChunkHolders(final ServerLevel level) {
         return ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().chunkHolderManager.getOldChunkHolders();
     }
 
-    public static List<ChunkHolder> getUpdatingChunkHolders(final ServerLevel level) {
+    @Override
+    public List<ChunkHolder> getUpdatingChunkHolders(final ServerLevel level) {
         return ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().chunkHolderManager.getOldChunkHolders();
     }
 
-    public static int getVisibleChunkHolderCount(final ServerLevel level) {
+    @Override
+    public int getVisibleChunkHolderCount(final ServerLevel level) {
         return ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().chunkHolderManager.size();
     }
 
-    public static int getUpdatingChunkHolderCount(final ServerLevel level) {
+    @Override
+    public int getUpdatingChunkHolderCount(final ServerLevel level) {
         return ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().chunkHolderManager.size();
     }
 
-    public static boolean hasAnyChunkHolders(final ServerLevel level) {
+    @Override
+    public boolean hasAnyChunkHolders(final ServerLevel level) {
         return getUpdatingChunkHolderCount(level) != 0;
     }
 
-    public static boolean screenEntity(final ServerLevel level, final Entity entity, final boolean fromDisk, final boolean event) {
-        if (!PlatformHooks.get().screenEntity(level, entity, fromDisk, event)) {
-            return false;
-        }
-        return true;
-    }
-
-    public static void onChunkHolderCreate(final ServerLevel level, final ChunkHolder holder) {
+    @Override
+    public void onChunkHolderCreate(final ServerLevel level, final ChunkHolder holder) {
 
     }
 
-    public static void onChunkHolderDelete(final ServerLevel level, final ChunkHolder holder) {
+    @Override
+    public void onChunkHolderDelete(final ServerLevel level, final ChunkHolder holder) {
         // Update progress listener for LevelLoadingScreen
         final ChunkProgressListener progressListener = level.getChunkSource().chunkMap.progressListener;
         if (progressListener != null) {
-            ChunkSystem.scheduleChunkTask(level, holder.getPos().x, holder.getPos().z, () -> {
+            this.scheduleChunkTask(level, holder.getPos().x, holder.getPos().z, () -> {
                 progressListener.onStatusChange(holder.getPos(), null);
             });
         }
     }
 
-    public static void onChunkPreBorder(final LevelChunk chunk, final ChunkHolder holder) {
+    @Override
+    public void onChunkPreBorder(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerChunkCache)((ServerLevel)chunk.getLevel()).getChunkSource())
-                .moonrise$setFullChunk(chunk.getPos().x, chunk.getPos().z, chunk);
+            .moonrise$setFullChunk(chunk.getPos().x, chunk.getPos().z, chunk);
     }
 
-    public static void onChunkBorder(final LevelChunk chunk, final ChunkHolder holder) {
+    @Override
+    public void onChunkBorder(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().add(
-                ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
+            ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
         );
     }
 
-    public static void onChunkNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
+    @Override
+    public void onChunkNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().remove(
-                ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
+            ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
         );
     }
 
-    public static void onChunkPostNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
+    @Override
+    public void onChunkPostNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerChunkCache)((ServerLevel)chunk.getLevel()).getChunkSource())
-                .moonrise$setFullChunk(chunk.getPos().x, chunk.getPos().z, null);
+            .moonrise$setFullChunk(chunk.getPos().x, chunk.getPos().z, null);
     }
 
-    public static void onChunkTicking(final LevelChunk chunk, final ChunkHolder holder) {
+    @Override
+    public void onChunkTicking(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().add(
-                ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
+            ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
         );
         if (!((ChunkSystemLevelChunk)chunk).moonrise$isPostProcessingDone()) {
             chunk.postProcessGeneration((ServerLevel)chunk.getLevel());
@@ -125,52 +129,60 @@ public final class ChunkSystem {
         ((ChunkTickServerLevel)(ServerLevel)chunk.getLevel()).moonrise$markChunkForPlayerTicking(chunk); // Moonrise - chunk tick iteration
     }
 
-    public static void onChunkNotTicking(final LevelChunk chunk, final ChunkHolder holder) {
+    @Override
+    public void onChunkNotTicking(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().remove(
-                ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
+            ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
         );
         ((ChunkTickServerLevel)(ServerLevel)chunk.getLevel()).moonrise$removeChunkForPlayerTicking(chunk); // Moonrise - chunk tick iteration
     }
 
-    public static void onChunkEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
+    @Override
+    public void onChunkEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getEntityTickingChunks().add(
-                ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
+            ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
         );
     }
 
-    public static void onChunkNotEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
+    @Override
+    public void onChunkNotEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getEntityTickingChunks().remove(
-                ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
+            ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
         );
     }
 
-    public static ChunkHolder getUnloadingChunkHolder(final ServerLevel level, final int chunkX, final int chunkZ) {
+    @Override
+    public ChunkHolder getUnloadingChunkHolder(final ServerLevel level, final int chunkX, final int chunkZ) {
         return null;
     }
 
-    public static int getSendViewDistance(final ServerPlayer player) {
+    @Override
+    public int getSendViewDistance(final ServerPlayer player) {
         return RegionizedPlayerChunkLoader.getAPISendViewDistance(player);
     }
 
-    public static int getViewDistance(final ServerPlayer player) {
+    @Override
+    public int getViewDistance(final ServerPlayer player) {
         return RegionizedPlayerChunkLoader.getAPIViewDistance(player);
     }
 
-    public static int getTickViewDistance(final ServerPlayer player) {
+    @Override
+    public int getTickViewDistance(final ServerPlayer player) {
         return RegionizedPlayerChunkLoader.getAPITickViewDistance(player);
     }
 
-    public static void addPlayerToDistanceMaps(final ServerLevel world, final ServerPlayer player) {
+    @Override
+    public void addPlayerToDistanceMaps(final ServerLevel world, final ServerPlayer player) {
         ((ChunkSystemServerLevel)world).moonrise$getPlayerChunkLoader().addPlayer(player);
     }
 
-    public static void removePlayerFromDistanceMaps(final ServerLevel world, final ServerPlayer player) {
+    @Override
+    public void removePlayerFromDistanceMaps(final ServerLevel world, final ServerPlayer player) {
         ((ChunkSystemServerLevel)world).moonrise$getPlayerChunkLoader().removePlayer(player);
     }
 
-    public static void updateMaps(final ServerLevel world, final ServerPlayer player) {
+    @Override
+    public void updateMaps(final ServerLevel world, final ServerPlayer player) {
         ((ChunkSystemServerLevel)world).moonrise$getPlayerChunkLoader().updatePlayer(player);
     }
-
-    private ChunkSystem() {}
 }

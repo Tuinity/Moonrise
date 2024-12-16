@@ -7,7 +7,6 @@ import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
-import ca.spottedleaf.moonrise.common.util.ChunkSystem;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.ChunkEntitySlices;
@@ -818,7 +817,7 @@ public final class ChunkHolderManager {
     private NewChunkHolder createChunkHolder(final long position) {
         final NewChunkHolder ret = new NewChunkHolder(this.world, CoordinateUtils.getChunkX(position), CoordinateUtils.getChunkZ(position), this.taskScheduler);
 
-        ChunkSystem.onChunkHolderCreate(this.world, ret.vanillaChunkHolder);
+        PlatformHooks.get().onChunkHolderCreate(this.world, ret.vanillaChunkHolder);
 
         return ret;
     }
@@ -1026,7 +1025,7 @@ public final class ChunkHolderManager {
     private void removeChunkHolder(final NewChunkHolder holder) {
         holder.onUnload();
         this.autoSaveQueue.remove(holder);
-        ChunkSystem.onChunkHolderDelete(this.world, holder.vanillaChunkHolder);
+        PlatformHooks.get().onChunkHolderDelete(this.world, holder.vanillaChunkHolder);
         this.chunkHolders.remove(CoordinateUtils.getChunkKey(holder.chunkX, holder.chunkZ));
     }
 

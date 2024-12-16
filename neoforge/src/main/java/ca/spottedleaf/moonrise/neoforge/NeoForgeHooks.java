@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.neoforge;
 
+import ca.spottedleaf.moonrise.common.util.BaseChunkSystemHooks;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
@@ -38,7 +39,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
-public final class NeoForgeHooks implements PlatformHooks {
+public final class NeoForgeHooks extends BaseChunkSystemHooks implements PlatformHooks {
 
     @Override
     public String getBrand() {

@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.fabric;
 
+import ca.spottedleaf.moonrise.common.util.BaseChunkSystemHooks;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import com.mojang.datafixers.DSL;
@@ -32,7 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
-public final class FabricHooks implements PlatformHooks {
+public final class FabricHooks extends BaseChunkSystemHooks implements PlatformHooks {
 
     private static final boolean HAS_FABRIC_LIFECYCLE_EVENTS = FabricLoader.getInstance().isModLoaded("fabric-lifecycle-events-v1");
 

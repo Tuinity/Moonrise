@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
-import ca.spottedleaf.moonrise.common.util.ChunkSystem;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemChunkMap;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
@@ -499,7 +499,7 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
      */
     @Overwrite
     public int getPlayerViewDistance(final ServerPlayer player) {
-        return ChunkSystem.getSendViewDistance(player);
+        return PlatformHooks.get().getSendViewDistance(player);
     }
 
     /**
@@ -597,7 +597,7 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
             )
     )
     private void avoidUpdateChunkTrackingInUpdate(final ChunkMap instance, final ServerPlayer serverPlayer) {
-        ChunkSystem.addPlayerToDistanceMaps(this.level, serverPlayer);
+        PlatformHooks.get().addPlayerToDistanceMaps(this.level, serverPlayer);
     }
 
     /**
@@ -627,7 +627,7 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     )
     private void avoidApplyChunkTrackingViewInUpdate(final ChunkMap instance, final ServerPlayer serverPlayer,
                                                      final ChunkTrackingView chunkTrackingView) {
-        ChunkSystem.removePlayerFromDistanceMaps(this.level, serverPlayer);
+        PlatformHooks.get().removePlayerFromDistanceMaps(this.level, serverPlayer);
     }
 
     /**
@@ -641,7 +641,7 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
         )
     )
     private void updateMapsHook(final ServerPlayer player, final CallbackInfo ci) {
-        ChunkSystem.updateMaps(this.level, player);
+        PlatformHooks.get().updateMaps(this.level, player);
     }
 
     /**
