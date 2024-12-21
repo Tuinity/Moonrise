@@ -3,7 +3,7 @@ import me.modmuss50.mpp.ReleaseType
 plugins {
     id("java-library")
     id("net.neoforged.moddev")
-    id("me.modmuss50.mod-publish-plugin") version "0.8.1" apply false
+    id("me.modmuss50.mod-publish-plugin") version "0.8.4" apply false
 }
 
 extensions.create("runConfigCommon", RunConfigCommon.class)
