@@ -2,11 +2,17 @@ import dev.architectury.at.AccessChange;
 import dev.architectury.at.AccessTransform;
 import dev.architectury.at.AccessTransformSet;
 import dev.architectury.at.ModifierChange;
+import dev.architectury.at.io.AccessTransformFormat;
 import dev.architectury.at.io.AccessTransformFormats;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import javax.inject.Inject;
 import net.fabricmc.accesswidener.AccessWidenerReader;
 import net.fabricmc.accesswidener.AccessWidenerVisitor;
@@ -66,10 +72,27 @@ public abstract class Aw2AtTask extends DefaultTask {
             final AccessTransformSet accessTransformSet = toAccessTransformSet(reader);
             Files.deleteIfExists(this.getOutputFile().get().getAsFile().toPath());
             Files.createDirectories(this.getOutputFile().get().getAsFile().toPath().getParent());
-            AccessTransformFormats.FML.write(this.getOutputFile().get().getAsFile().toPath(), accessTransformSet);
+            writeLF(AccessTransformFormats.FML, this.getOutputFile().get().getAsFile().toPath(), accessTransformSet);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static void writeLF(final AccessTransformFormat format, final Path path, final AccessTransformSet at) throws IOException {
+        final StringWriter stringWriter = new StringWriter();
+        final BufferedWriter writer = new BufferedWriter(stringWriter);
+        format.write(writer, at);
+        writer.close();
+        final List<String> lines = Arrays.stream(stringWriter.toString()
+                // unify line endings
+                .replace("\r\n", "\n")
+                .split("\n"))
+            // skip blank lines
+            .filter(it -> !it.isBlank())
+            // sort
+            .sorted()
+            .toList();
+        Files.writeString(path, String.join("\n", lines));
     }
 
     // Below methods are heavily based on architectury-loom Aw2At class (MIT licensed)
@@ -98,8 +121,7 @@ public abstract class Aw2AtTask extends DefaultTask {
      */
 
     public static AccessTransformSet toAccessTransformSet(final BufferedReader reader) throws IOException {
-        // TODO: Remove copied classes once https://github.com/architectury/at/pull/1 is released
-        AccessTransformSet atSet = new at.AccessTransformSetImpl();
+        AccessTransformSet atSet = AccessTransformSet.create();
 
         new AccessWidenerReader(new AccessWidenerVisitor() {
             @Override
