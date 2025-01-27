@@ -55,7 +55,7 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
     public boolean isUnobstructed(final Entity entity) {
         final AABB boundingBox = entity.getBoundingBox();
         if (CollisionUtil.isEmpty(boundingBox)) {
-            return false;
+            return true;
         }
 
         final List<Entity> entities = this.getEntities(
