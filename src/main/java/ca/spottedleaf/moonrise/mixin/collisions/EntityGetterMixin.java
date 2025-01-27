@@ -74,7 +74,7 @@ interface EntityGetterMixin {
     @Overwrite
     default boolean isUnobstructed(final Entity entity, final VoxelShape voxel) {
         if (voxel.isEmpty()) {
-            return false;
+            return true;
         }
 
         final AABB singleAABB = ((CollisionVoxelShape)voxel).moonrise$getSingleAABBRepresentation();
