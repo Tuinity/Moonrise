@@ -26,6 +26,7 @@
         "chunk_system.ChunkStepMixin",
         "chunk_system.ChunkStorageMixin",
         "chunk_system.DistanceManagerMixin",
+        "chunk_system.DynamicGameEventListenerMixin",
         "chunk_system.EntityGetterMixin",
         "chunk_system.EntityMixin",
         "chunk_system.EntityTickListMixin",
