@@ -14,6 +14,7 @@ import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
@@ -27,6 +28,7 @@ import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatusTasks;
 import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.common.NeoForge;
@@ -260,5 +262,9 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
     @Override
     public int modifyEntityTrackingRange(final Entity entity, final int currentRange) {
         return currentRange;
+    }
+
+    @Override
+    public void onFluidContact(final Entity entity, final TagKey<Fluid> fluid, final BlockPos.MutableBlockPos mutablePos) {
     }
 }

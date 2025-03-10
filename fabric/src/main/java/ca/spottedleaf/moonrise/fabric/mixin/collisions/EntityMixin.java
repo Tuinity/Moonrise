@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.fabric.mixin.collisions;
 
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import net.minecraft.core.BlockPos;
@@ -136,6 +137,7 @@ abstract class EntityMixin {
                                 inFluid = true;
                                 maxHeightDiff = Math.max(maxHeightDiff, diff);
 
+                                PlatformHooks.get().onFluidContact((Entity) (Object) this, fluid, mutablePos);
                                 if (!isPushable) {
                                     continue;
                                 }

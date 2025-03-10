@@ -9,6 +9,7 @@ import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
@@ -19,6 +20,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.AABB;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -101,6 +103,8 @@ public interface PlatformHooks extends ChunkSystemHooks {
     public void postLoadProtoChunk(final ServerLevel world, final ProtoChunk chunk);
 
     public int modifyEntityTrackingRange(final Entity entity, final int currentRange);
+
+    public void onFluidContact(final Entity entity, final TagKey<Fluid> fluid, final BlockPos.MutableBlockPos mutablePos);
 
     public static final class Holder {
         private Holder() {
