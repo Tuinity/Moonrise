@@ -85,6 +85,10 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
             final LevelChunkSection section = sections[sectionIndex];
             final PalettedContainer<BlockState> states = section.states;
             if (!section.isRandomlyTickingBlocks()) {
+                continue;       
+            }
+            
+            if (!((BlockCountingChunkSection)section).anyTickingBlocks()) {
                 continue;
             }
 

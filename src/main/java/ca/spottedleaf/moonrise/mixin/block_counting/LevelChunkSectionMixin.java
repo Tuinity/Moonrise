@@ -65,7 +65,16 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     private short specialCollidingBlocks;
 
     @Unique
-    private final ShortList tickingBlocks = new ShortList();
+    private ShortList tickingBlocks = null;
+
+    @Override
+    public boolean anyTickingBlocks() {
+        return tickingBlocks != null;
+    }
+
+    private void createTickingBlocks() {
+        if (tickingBlocks == null) tickingBlocks = new ShortList();
+    }
 
     @Override
     public final boolean moonrise$hasSpecialCollidingBlocks() {
@@ -74,6 +83,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
 
     @Override
     public final ShortList moonrise$getTickingBlockList() {
+        this.createTickingBlocks();
         return this.tickingBlocks;
     }
 
@@ -117,8 +127,10 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
             final short position = (short)(x | (z << 4) | (y << (4+4)));
 
             if (oldTicking) {
+                this.createTickingBlocks();
                 tickingBlocks.remove(position);
             } else {
+                this.createTickingBlocks();
                 tickingBlocks.add(position);
             }
         }
@@ -150,7 +162,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
         this.tickingBlockCount = (short)0;
         this.tickingFluidCount = (short)0;
         this.specialCollidingBlocks = (short)0;
-        this.tickingBlocks.clear();
+        this.tickingBlocks = null;
 
         if (this.maybeHas((final BlockState state) -> !state.isAir())) {
             final PalettedContainer.Data<BlockState> data = this.states.data;
@@ -193,6 +205,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
 
                     Objects.checkFromToIndex(0, paletteCount, rawLen);
                     for (int i = 0; i < paletteCount; ++i) {
+                        this.createTickingBlocks();
                         tickingBlocks.add(raw[i]);
                     }
                 }
