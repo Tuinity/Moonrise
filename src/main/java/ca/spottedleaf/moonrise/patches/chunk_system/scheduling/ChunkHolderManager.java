@@ -225,7 +225,7 @@ public final class ChunkHolderManager {
     }
 
     void ensureInAutosave(final NewChunkHolder holder) {
-        if (!this.autoSaveQueue.contains(holder)) {
+        if (PlatformHooks.get().configAutoSaveInterval(this.world) > 0 && !this.autoSaveQueue.contains(holder)) {
             holder.lastAutoSave = this.currentTick;
             this.autoSaveQueue.add(holder);
         }
