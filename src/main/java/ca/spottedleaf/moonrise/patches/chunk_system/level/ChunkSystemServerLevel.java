@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.level;
 
 import ca.spottedleaf.concurrentutil.util.Priority;
+import ca.spottedleaf.moonrise.common.list.IteratorSafeOrderedReferenceSet;
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
@@ -10,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import java.util.List;
 import java.util.function.Consumer;
@@ -56,9 +58,9 @@ public interface ChunkSystemServerLevel extends ChunkSystemLevel {
 
     public NearbyPlayers moonrise$getNearbyPlayers();
 
-    public ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getLoadedChunks();
+    public ReferenceList<LevelChunk> moonrise$getLoadedChunks();
 
-    public ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getTickingChunks();
+    public ReferenceList<LevelChunk> moonrise$getTickingChunks();
 
-    public ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getEntityTickingChunks();
+    public ReferenceList<LevelChunk> moonrise$getEntityTickingChunks();
 }

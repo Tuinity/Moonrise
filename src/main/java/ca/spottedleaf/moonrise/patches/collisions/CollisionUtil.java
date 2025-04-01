@@ -2004,11 +2004,10 @@ public final class CollisionUtil {
                                 VoxelShape blockCollision = ((CollisionBlockState)blockData).moonrise$getConstantContextCollisionShape();
 
                                 if (edgeCount == 0 || ((edgeCount != 1 || blockData.hasLargeCollisionShape()) && (edgeCount != 2 || blockData.getBlock() == Blocks.MOVING_PISTON))) {
+                                    mutablePos.set(blockX, blockY, blockZ);
                                     if (useEntityCollisionShape) {
-                                        mutablePos.set(blockX, blockY, blockZ);
                                         blockCollision = collisionShape.getCollisionShape(blockData, world, mutablePos);
                                     } else if (blockCollision == null) {
-                                        mutablePos.set(blockX, blockY, blockZ);
                                         blockCollision = blockData.getCollisionShape(world, mutablePos, collisionShape);
                                     }
 
@@ -2020,7 +2019,6 @@ public final class CollisionUtil {
                                         }
 
                                         if (predicate != null) {
-                                            mutablePos.set(blockX, blockY, blockZ);
                                             if (!predicate.test(blockData, mutablePos)) {
                                                 continue;
                                             }
@@ -2046,7 +2044,6 @@ public final class CollisionUtil {
                                     }
 
                                     if (predicate != null) {
-                                        mutablePos.set(blockX, blockY, blockZ);
                                         if (!predicate.test(blockData, mutablePos)) {
                                             continue;
                                         }
@@ -2126,7 +2123,7 @@ public final class CollisionUtil {
         private boolean delegated;
 
         public LazyEntityCollisionContext(final Entity entity) {
-            super(false, 0.0, null, null, entity);
+            super(false, false, 0.0, null, null, entity);
         }
 
         public static boolean useEntityCollisionShape(final Level world, final Entity entity) {
@@ -2154,6 +2151,11 @@ public final class CollisionUtil {
         @Override
         public boolean isDescending() {
             return this.getDelegate().isDescending();
+        }
+
+        @Override
+        public boolean isPlacement() {
+            return this.getDelegate().isPlacement();
         }
 
         @Override

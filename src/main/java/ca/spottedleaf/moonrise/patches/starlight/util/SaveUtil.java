@@ -56,15 +56,18 @@ public final class SaveUtil {
             tag.putBoolean("isLightOn", false);
         }
         // diff end - store our tag for whether light data is init'd
-        ChunkStatus status = ChunkStatus.byName(tag.getString("Status"));
+        ChunkStatus status = tag.read("Status", ChunkStatus.CODEC).orElse(ChunkStatus.EMPTY);
 
         CompoundTag[] sections = new CompoundTag[maxSection - minSection + 1];
 
-        ListTag sectionsStored = tag.getList("sections", 10);
+        ListTag sectionsStored = tag.getListOrEmpty("sections");
 
         for (int i = 0; i < sectionsStored.size(); ++i) {
-            CompoundTag sectionStored = sectionsStored.getCompound(i);
-            int k = sectionStored.getByte("Y");
+            CompoundTag sectionStored = sectionsStored.getCompound(i).orElse(null);
+            if (sectionStored == null) {
+                continue;
+            }
+            int k = sectionStored.getByteOr("Y", (byte)0);
 
             // strip light data
             sectionStored.remove("BlockLight");
@@ -147,33 +150,38 @@ public final class SaveUtil {
 
 
         // start copy from the original method
-        boolean lit = tag.get("isLightOn") != null && tag.getInt(STARLIGHT_VERSION_TAG) == STARLIGHT_LIGHT_VERSION;
+        boolean lit = tag.get("isLightOn") != null && tag.getIntOr(STARLIGHT_VERSION_TAG, -1) == STARLIGHT_LIGHT_VERSION;
         boolean canReadSky = world.dimensionType().hasSkyLight();
-        ChunkStatus status = ChunkStatus.byName(tag.getString("Status"));
+        ChunkStatus status = tag.read("Status", ChunkStatus.CODEC).orElse(ChunkStatus.EMPTY);
         if (lit && status.isOrAfter(ChunkStatus.LIGHT)) { // diff - we add the status check here
-            ListTag sections = tag.getList("sections", 10);
+            ListTag sections = tag.getListOrEmpty("sections");
 
             for (int i = 0; i < sections.size(); ++i) {
-                CompoundTag sectionData = sections.getCompound(i);
-                int y = sectionData.getByte("Y");
+                CompoundTag sectionData = sections.getCompound(i).orElse(null);
+                if (sectionData == null) {
+                    continue;
+                }
+                int y = sectionData.getByteOr("Y", (byte)0);
 
-                if (sectionData.contains("BlockLight", 7)) {
+                final byte[] blockLight = sectionData.getByteArray("BlockLight").orElse(null);
+                if (blockLight != null) {
                     // this is where our diff is
-                    blockNibbles[y - minSection] = new SWMRNibbleArray(sectionData.getByteArray("BlockLight").clone(), sectionData.getInt(BLOCKLIGHT_STATE_TAG)); // clone for data safety
+                    blockNibbles[y - minSection] = new SWMRNibbleArray(blockLight.clone(), sectionData.getIntOr(BLOCKLIGHT_STATE_TAG, 0)); // clone for data safety
                 } else {
-                    blockNibbles[y - minSection] = new SWMRNibbleArray(null, sectionData.getInt(BLOCKLIGHT_STATE_TAG));
+                    blockNibbles[y - minSection] = new SWMRNibbleArray(null, sectionData.getIntOr(BLOCKLIGHT_STATE_TAG, 0));
                 }
 
                 if (canReadSky) {
-                    if (sectionData.contains("SkyLight", 7)) {
+                    final byte[] skyLight = sectionData.getByteArray("SkyLight").orElse(null);
+                    if (skyLight != null) {
                         // we store under the same key so mod programs editing nbt
                         // can still read the data, hopefully.
                         // however, for compatibility we store chunks as unlit so vanilla
                         // is forced to re-light them if it encounters our data. It's too much of a burden
                         // to try and maintain compatibility with a broken and inferior skylight management system.
-                        skyNibbles[y - minSection] = new SWMRNibbleArray(sectionData.getByteArray("SkyLight").clone(), sectionData.getInt(SKYLIGHT_STATE_TAG)); // clone for data safety
+                        skyNibbles[y - minSection] = new SWMRNibbleArray(skyLight.clone(), sectionData.getIntOr(SKYLIGHT_STATE_TAG, 0)); // clone for data safety
                     } else {
-                        skyNibbles[y - minSection] = new SWMRNibbleArray(null, sectionData.getInt(SKYLIGHT_STATE_TAG));
+                        skyNibbles[y - minSection] = new SWMRNibbleArray(null, sectionData.getIntOr(SKYLIGHT_STATE_TAG, 0));
                     }
                 }
             }

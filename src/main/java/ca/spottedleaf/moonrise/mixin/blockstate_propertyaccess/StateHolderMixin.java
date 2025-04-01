@@ -125,7 +125,7 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
      * @author Spottedleaf
      */
     @Overwrite
-    public <T extends Comparable<T>> T getNullableValue(Property<T> property) {
+    public <T extends Comparable<T>> T getNullableValue(final Property<T> property) {
         return property == null ? null : this.optimisedTable.get(this.tableIndex, property);
     }
 
@@ -166,7 +166,7 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
      */
     @Overwrite
     public Map<Property<?>, Comparable<?>> getValues() {
-        ZeroCollidingReferenceStateTable<O, S> table = this.optimisedTable;
+        final ZeroCollidingReferenceStateTable<O, S> table = this.optimisedTable;
         // We have to use this.values until the table is loaded
         return table.isLoaded() ? table.getMapView(this.tableIndex) : this.values;
     }

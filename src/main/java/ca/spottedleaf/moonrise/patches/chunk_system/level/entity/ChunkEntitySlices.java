@@ -76,7 +76,7 @@ public final class ChunkEntitySlices {
 
     public static List<Entity> readEntities(final ServerLevel world, final CompoundTag compoundTag) {
         // TODO check this and below on update for format changes
-        return EntityType.loadEntitiesRecursive(compoundTag.getList("Entities", 10), world, EntitySpawnReason.LOAD).collect(ImmutableList.toImmutableList());
+        return EntityType.loadEntitiesRecursive(compoundTag.getListOrEmpty("Entities"), world, EntitySpawnReason.LOAD).collect(ImmutableList.toImmutableList());
     }
 
     // Paper start - rewrite chunk system
@@ -84,12 +84,12 @@ public final class ChunkEntitySlices {
         if (from == null) {
             return;
         }
-        final ListTag entitiesFrom = from.getList("Entities", Tag.TAG_COMPOUND);
+        final ListTag entitiesFrom = from.getListOrEmpty("Entities");
         if (entitiesFrom == null || entitiesFrom.isEmpty()) {
             return;
         }
 
-        final ListTag entitiesInto = into.getList("Entities", Tag.TAG_COMPOUND);
+        final ListTag entitiesInto = into.getListOrEmpty("Entities");
         into.put("Entities", entitiesInto); // this is in case into doesn't have any entities
         entitiesInto.addAll(0, entitiesFrom);
     }
@@ -112,7 +112,7 @@ public final class ChunkEntitySlices {
         }
         final CompoundTag ret = NbtUtils.addCurrentDataVersion(new CompoundTag());
         ret.put("Entities", entitiesTag);
-        EntityStorage.writeChunkPos(ret, chunkPos);
+        ret.store("Position", ChunkPos.CODEC, chunkPos);
 
         return !force && entitiesTag.isEmpty() ? null : ret;
     }

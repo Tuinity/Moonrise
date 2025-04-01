@@ -1,13 +1,13 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.level.chunk;
 
-import net.minecraft.server.level.ServerChunkCache;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 
 public interface ChunkSystemLevelChunk {
 
     public boolean moonrise$isPostProcessingDone();
 
-    public ServerChunkCache.ChunkAndHolder moonrise$getChunkAndHolder();
+    public NewChunkHolder moonrise$getChunkHolder();
 
-    public void moonrise$setChunkAndHolder(final ServerChunkCache.ChunkAndHolder holder);
+    public void moonrise$setChunkHolder(final NewChunkHolder holder);
 
 }

@@ -49,8 +49,7 @@ abstract class SortedArraySetMixin<T> extends AbstractSet<T> implements ChunkSys
             if (i >= len) {
                 return false;
             }
-            if (!filter.test(backingArray[i])) {
-                ++i;
+            if (!filter.test(backingArray[i++])) {
                 continue;
             }
             break;
@@ -58,7 +57,7 @@ abstract class SortedArraySetMixin<T> extends AbstractSet<T> implements ChunkSys
 
         // we only want to write back to backingArray if we really need to
 
-        int lastIndex = i; // this is where new elements are shifted to
+        int lastIndex = i - 1; // this is where new elements are shifted to
 
         for (; i < len; ++i) {
             final T curr = backingArray[i];

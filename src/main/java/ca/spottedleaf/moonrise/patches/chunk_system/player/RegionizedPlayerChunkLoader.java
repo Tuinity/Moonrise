@@ -14,6 +14,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunk
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
+import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import ca.spottedleaf.moonrise.patches.chunk_system.util.ParallelSearchRadiusIteration;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
@@ -45,11 +46,8 @@ import java.util.function.Function;
 
 public final class RegionizedPlayerChunkLoader {
 
-    public static final TicketType<Long> PLAYER_TICKET         = TicketType.create("chunk_system:player_ticket", Long::compareTo);
-    public static final TicketType<Long> PLAYER_TICKET_DELAYED = TicketType.create("chunk_system:player_ticket_delayed", Long::compareTo, 5 * 20);
-
-    public static final int MIN_VIEW_DISTANCE = 2;
-    public static final int MAX_VIEW_DISTANCE = 32;
+    public static final TicketType PLAYER_TICKET         = ChunkSystemTicketType.create("chunk_system:player_ticket", Long::compareTo);
+    public static final TicketType PLAYER_TICKET_DELAYED = ChunkSystemTicketType.create("chunk_system:player_ticket_delayed", Long::compareTo, 5L * 20L);
 
     public static final int GENERATED_TICKET_LEVEL = ChunkHolderManager.FULL_LOADED_TICKET_LEVEL;
     public static final int LOADED_TICKET_LEVEL = ChunkTaskScheduler.getTicketLevel(ChunkStatus.EMPTY);
@@ -685,8 +683,7 @@ public final class RegionizedPlayerChunkLoader {
                     }
                     this.pushDelayedTicketOp(
                         ChunkHolderManager.TicketOperation.addOp(
-                            chunk,
-                            PLAYER_TICKET, LOADED_TICKET_LEVEL, this.idBoxed
+                            chunk, PLAYER_TICKET, LOADED_TICKET_LEVEL, this.idBoxed
                         )
                     );
                     chunks.add(chunk);

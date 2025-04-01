@@ -16,9 +16,11 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkLoadTas
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkProgressionTask;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.GenericDataLoadTask;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicket;
+import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import ca.spottedleaf.moonrise.patches.chunk_system.util.ChunkSystemSortedArraySet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ByteLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ByteMap;
 import it.unimi.dsi.fastutil.longs.Long2IntMap;
@@ -65,13 +67,12 @@ public final class ChunkHolderManager {
     public static final int ENTITY_TICKING_TICKET_LEVEL = ChunkLevel.ENTITY_TICKING_LEVEL;
     public static final int MAX_TICKET_LEVEL = ChunkLevel.MAX_LEVEL; // inclusive
 
-    public static final TicketType<Unit> UNLOAD_COOLDOWN = TicketType.create("unload_cooldown", (u1, u2) -> 0, 5 * 20);
+    public static final TicketType UNLOAD_COOLDOWN = ChunkSystemTicketType.create("chunk_system:unload_cooldown", null, 5L * 20L);
 
     private static final long NO_TIMEOUT_MARKER = Long.MIN_VALUE;
-    private static final long PROBE_MARKER = Long.MIN_VALUE + 1;
     public final ReentrantAreaLock ticketLockArea;
 
-    private final ConcurrentLong2ReferenceChainedHashTable<SortedArraySet<Ticket<?>>> tickets = new ConcurrentLong2ReferenceChainedHashTable<>();
+    private final ConcurrentLong2ReferenceChainedHashTable<SortedArraySet<Ticket>> tickets = new ConcurrentLong2ReferenceChainedHashTable<>();
     private final ConcurrentLong2ReferenceChainedHashTable<Long2IntOpenHashMap> sectionToChunkToExpireCount = new ConcurrentLong2ReferenceChainedHashTable<>();
     final ChunkUnloadQueue unloadQueue;
 
@@ -101,6 +102,8 @@ public final class ChunkHolderManager {
 
         return Long.compare(coord1, coord2);
     });
+
+    private final ConcurrentLong2ReferenceChainedHashTable<Long2IntOpenHashMap> ticketCounters = new ConcurrentLong2ReferenceChainedHashTable<>();
 
     public ChunkHolderManager(final ServerLevel world, final ChunkTaskScheduler taskScheduler) {
         this.world = world;
@@ -163,7 +166,6 @@ public final class ChunkHolderManager {
         return this.chunkHolders.size();
     }
 
-    // TODO replace the need for this, specifically: optimise ServerChunkCache#tickChunks
     public Iterable<ChunkHolder> getOldChunkHoldersIterable() {
         return new Iterable<ChunkHolder>() {
             @Override
@@ -411,7 +413,7 @@ public final class ChunkHolderManager {
     public String getTicketDebugString(final long coordinate) {
         final ReentrantAreaLock.Node ticketLock = this.ticketLockArea.lock(CoordinateUtils.getChunkX(coordinate), CoordinateUtils.getChunkZ(coordinate));
         try {
-            final SortedArraySet<Ticket<?>> tickets = this.tickets.get(coordinate);
+            final SortedArraySet<Ticket> tickets = this.tickets.get(coordinate);
 
             return tickets != null ? tickets.first().toString() : "no_ticket";
         } finally {
@@ -421,8 +423,40 @@ public final class ChunkHolderManager {
         }
     }
 
-    public Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> getTicketsCopy() {
-        final Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> ret = new Long2ObjectOpenHashMap<>();
+    public boolean hasTickets() {
+        return !this.tickets.isEmpty();
+    }
+
+    public List<Ticket> getTicketsAt(final int chunkX, final int chunkZ) {
+        final long key = CoordinateUtils.getChunkKey(chunkX, chunkZ);
+
+        if (!this.tickets.containsKey(key)) {
+            // avoid contending lock
+            return new ArrayList<>();
+        }
+
+        final ReentrantAreaLock.Node lock = this.ticketLockArea.lock(chunkX, chunkZ);
+        try {
+            final SortedArraySet<Ticket> tickets = this.tickets.get(key);
+
+            if (tickets == null) {
+                return new ArrayList<>();
+            }
+
+            final List<Ticket> ret = new ArrayList<>(tickets.size());
+
+            for (final Ticket ticket : tickets) {
+                ret.add(ticket);
+            }
+
+            return ret;
+        } finally {
+            this.ticketLockArea.unlock(lock);
+        }
+    }
+
+    public Long2ObjectOpenHashMap<SortedArraySet<Ticket>> getTicketsCopy() {
+        final Long2ObjectOpenHashMap<SortedArraySet<Ticket>> ret = new Long2ObjectOpenHashMap<>();
         final Long2ObjectOpenHashMap<LongArrayList> sections = new Long2ObjectOpenHashMap<>();
         final int sectionShift = this.taskScheduler.getChunkSystemLockShift();
         for (final PrimitiveIterator.OfLong iterator = this.tickets.keyIterator(); iterator.hasNext();) {
@@ -451,12 +485,12 @@ public final class ChunkHolderManager {
             try {
                 for (final LongIterator iterator2 = coordinates.iterator(); iterator2.hasNext();) {
                     final long coord = iterator2.nextLong();
-                    final SortedArraySet<Ticket<?>> tickets = this.tickets.get(coord);
+                    final SortedArraySet<Ticket> tickets = this.tickets.get(coord);
                     if (tickets == null) {
                         // removed before we acquired lock
                         continue;
                     }
-                    ret.put(coord, ((ChunkSystemSortedArraySet<Ticket<?>>)tickets).moonrise$copy());
+                    ret.put(coord, ((ChunkSystemSortedArraySet<Ticket>)tickets).moonrise$copy());
                 }
             } finally {
                 this.ticketLockArea.unlock(ticketLock);
@@ -474,16 +508,16 @@ public final class ChunkHolderManager {
         }
     }
 
-    private static int getTicketLevelAt(SortedArraySet<Ticket<?>> tickets) {
+    private static int getTicketLevelAt(final SortedArraySet<Ticket> tickets) {
         return !tickets.isEmpty() ? tickets.first().getTicketLevel() : MAX_TICKET_LEVEL + 1;
     }
 
-    public <T> boolean addTicketAtLevel(final TicketType<T> type, final ChunkPos chunkPos, final int level,
+    public <T> boolean addTicketAtLevel(final TicketType type, final ChunkPos chunkPos, final int level,
                                         final T identifier) {
         return this.addTicketAtLevel(type, CoordinateUtils.getChunkKey(chunkPos), level, identifier);
     }
 
-    public <T> boolean addTicketAtLevel(final TicketType<T> type, final int chunkX, final int chunkZ, final int level,
+    public <T> boolean addTicketAtLevel(final TicketType type, final int chunkX, final int chunkZ, final int level,
                                         final T identifier) {
         return this.addTicketAtLevel(type, CoordinateUtils.getChunkKey(chunkX, chunkZ), level, identifier);
     }
@@ -524,29 +558,29 @@ public final class ChunkHolderManager {
 
     // supposed to return true if the ticket was added and did not replace another
     // but, we always return false if the ticket cannot be added
-    public <T> boolean addTicketAtLevel(final TicketType<T> type, final long chunk, final int level, final T identifier) {
+    public <T> boolean addTicketAtLevel(final TicketType type, final long chunk, final int level, final T identifier) {
         return this.addTicketAtLevel(type, chunk, level, identifier, true);
     }
 
-    <T> boolean addTicketAtLevel(final TicketType<T> type, final long chunk, final int level, final T identifier, final boolean lock) {
-        final long removeDelay = type.timeout <= 0 ? NO_TIMEOUT_MARKER : type.timeout;
+    <T> boolean addTicketAtLevel(final TicketType type, final long chunk, final int level, final T identifier, final boolean lock) {
+        final long removeDelay = type.timeout() <= 0 ? NO_TIMEOUT_MARKER : type.timeout();
         if (level > MAX_TICKET_LEVEL) {
             return false;
         }
 
         final int chunkX = CoordinateUtils.getChunkX(chunk);
         final int chunkZ = CoordinateUtils.getChunkZ(chunk);
-        final Ticket<T> ticket = new Ticket<>(type, level, identifier);
-        ((ChunkSystemTicket<T>)(Object)ticket).moonrise$setRemoveDelay(removeDelay);
+        final Ticket ticket = new Ticket(type, level, removeDelay);
+        ((ChunkSystemTicket<T>)(Object)ticket).moonrise$setIdentifier(identifier);
 
         final ReentrantAreaLock.Node ticketLock = lock ? this.ticketLockArea.lock(chunkX, chunkZ) : null;
         try {
-            final SortedArraySet<Ticket<?>> ticketsAtChunk = this.tickets.computeIfAbsent(chunk, (final long keyInMap) -> {
-                return SortedArraySet.create(4);
+            final SortedArraySet<Ticket> ticketsAtChunk = this.tickets.computeIfAbsent(chunk, (final long keyInMap) -> {
+                return (SortedArraySet)SortedArraySet.create(4);
             });
 
             final int levelBefore = getTicketLevelAt(ticketsAtChunk);
-            final Ticket<T> current = (Ticket<T>)((ChunkSystemSortedArraySet<Ticket<?>>)ticketsAtChunk).moonrise$replace(ticket);
+            final Ticket current = (Ticket)((ChunkSystemSortedArraySet<Ticket>)ticketsAtChunk).moonrise$replace(ticket);
             final int levelAfter = getTicketLevelAt(ticketsAtChunk);
 
             if (current != ticket) {
@@ -563,6 +597,7 @@ public final class ChunkHolderManager {
                 if (removeDelay != NO_TIMEOUT_MARKER) {
                     this.addExpireCount(chunkX, chunkZ);
                 }
+                this.addTicketCounter(type, chunk);
             }
 
             if (levelBefore != levelAfter) {
@@ -577,36 +612,85 @@ public final class ChunkHolderManager {
         }
     }
 
-    public <T> boolean removeTicketAtLevel(final TicketType<T> type, final ChunkPos chunkPos, final int level, final T identifier) {
+    private void addTicketCounter(final TicketType type, final long pos) {
+        final long[] counterTypes = ((ChunkSystemTicketType<?>)(Object)type).moonrise$getCounterTypes();
+        if (counterTypes.length == 0) {
+            return;
+        }
+
+        synchronized (this.ticketCounters) {
+            for (final long counterType : counterTypes) {
+                final Long2IntOpenHashMap oldCounters = this.ticketCounters.get(counterType);
+                final Long2IntOpenHashMap newCounters = oldCounters == null ? new Long2IntOpenHashMap() : oldCounters.clone();
+
+                newCounters.addTo(pos, 1);
+
+                this.ticketCounters.put(counterType, newCounters);
+            }
+        }
+    }
+
+    private void removeTicketCounter(final TicketType type, final long pos) {
+        final long[] counterTypes = ((ChunkSystemTicketType<?>)(Object)type).moonrise$getCounterTypes();
+        if (counterTypes.length == 0) {
+            return;
+        }
+
+        synchronized (this.ticketCounters) {
+            for (final long counterType : counterTypes) {
+                final Long2IntOpenHashMap oldCounters = this.ticketCounters.get(counterType);
+                final Long2IntOpenHashMap newCounters = oldCounters == null ? new Long2IntOpenHashMap() : oldCounters.clone();
+
+                final int currCount = newCounters.get(pos);
+                if (currCount <= 0) {
+                    throw new IllegalStateException("Count must be > 0 at this stage");
+                }
+                if (currCount == 1) {
+                    newCounters.remove(pos);
+                } else {
+                    newCounters.put(pos, currCount - 1);
+                }
+
+                this.ticketCounters.put(counterType, newCounters);
+            }
+        }
+    }
+
+    public Long2IntOpenHashMap getTicketCounters(final long counterType) {
+        return this.ticketCounters.get(counterType);
+    }
+
+    public <T> boolean removeTicketAtLevel(final TicketType type, final ChunkPos chunkPos, final int level, final T identifier) {
         return this.removeTicketAtLevel(type, CoordinateUtils.getChunkKey(chunkPos), level, identifier);
     }
 
-    public <T> boolean removeTicketAtLevel(final TicketType<T> type, final int chunkX, final int chunkZ, final int level, final T identifier) {
+    public <T> boolean removeTicketAtLevel(final TicketType type, final int chunkX, final int chunkZ, final int level, final T identifier) {
         return this.removeTicketAtLevel(type, CoordinateUtils.getChunkKey(chunkX, chunkZ), level, identifier);
     }
 
-    public <T> boolean removeTicketAtLevel(final TicketType<T> type, final long chunk, final int level, final T identifier) {
+    public <T> boolean removeTicketAtLevel(final TicketType type, final long chunk, final int level, final T identifier) {
         return this.removeTicketAtLevel(type, chunk, level, identifier, true);
     }
 
-    <T> boolean removeTicketAtLevel(final TicketType<T> type, final long chunk, final int level, final T identifier, final boolean lock) {
+    <T> boolean removeTicketAtLevel(final TicketType type, final long chunk, final int level, final T identifier, final boolean lock) {
         if (level > MAX_TICKET_LEVEL) {
             return false;
         }
 
         final int chunkX = CoordinateUtils.getChunkX(chunk);
         final int chunkZ = CoordinateUtils.getChunkZ(chunk);
-        final Ticket<T> probe = new Ticket<>(type, level, identifier);
+        final Ticket probe = new Ticket(type, level, 0L);
+        ((ChunkSystemTicket<T>)(Object)probe).moonrise$setIdentifier(identifier);
 
         final ReentrantAreaLock.Node ticketLock = lock ? this.ticketLockArea.lock(chunkX, chunkZ) : null;
         try {
-            final SortedArraySet<Ticket<?>> ticketsAtChunk = this.tickets.get(chunk);
+            final SortedArraySet<Ticket> ticketsAtChunk = this.tickets.get(chunk);
             if (ticketsAtChunk == null) {
                 return false;
             }
 
             final int oldLevel = getTicketLevelAt(ticketsAtChunk);
-            final Ticket<T> ticket = (Ticket<T>)((ChunkSystemSortedArraySet<Ticket<?>>)ticketsAtChunk).moonrise$removeAndGet(probe);
+            final Ticket ticket = (Ticket)((ChunkSystemSortedArraySet<Ticket>)ticketsAtChunk).moonrise$removeAndGet(probe);
 
             if (ticket == null) {
                 return false;
@@ -615,8 +699,7 @@ public final class ChunkHolderManager {
             final int newLevel = getTicketLevelAt(ticketsAtChunk);
             // we should not change the ticket levels while the target region may be ticking
             if (oldLevel != newLevel) {
-                final Ticket<ChunkPos> unknownTicket = new Ticket<>(TicketType.UNKNOWN, level, new ChunkPos(chunk));
-                ((ChunkSystemTicket<ChunkPos>)(Object)unknownTicket).moonrise$setRemoveDelay(Math.max(1, TicketType.UNKNOWN.timeout));
+                final Ticket unknownTicket = new Ticket(TicketType.UNKNOWN, level);
                 if (ticketsAtChunk.add(unknownTicket)) {
                     this.addExpireCount(chunkX, chunkZ);
                 } else {
@@ -629,6 +712,8 @@ public final class ChunkHolderManager {
                 this.removeExpireCount(chunkX, chunkZ);
             }
 
+            this.removeTicketCounter(type, chunk);
+
             return true;
         } finally {
             if (ticketLock != null) {
@@ -638,8 +723,8 @@ public final class ChunkHolderManager {
     }
 
     // atomic with respect to all add/remove/addandremove ticket calls for the given chunk
-    public <T, V> void addAndRemoveTickets(final long chunk, final TicketType<T> addType, final int addLevel, final T addIdentifier,
-                                           final TicketType<V> removeType, final int removeLevel, final V removeIdentifier) {
+    public <T, V> void addAndRemoveTickets(final long chunk, final TicketType addType, final int addLevel, final T addIdentifier,
+                                           final TicketType removeType, final int removeLevel, final V removeIdentifier) {
         final ReentrantAreaLock.Node ticketLock = this.ticketLockArea.lock(CoordinateUtils.getChunkX(chunk), CoordinateUtils.getChunkZ(chunk));
         try {
             this.addTicketAtLevel(addType, chunk, addLevel, addIdentifier, false);
@@ -650,8 +735,8 @@ public final class ChunkHolderManager {
     }
 
     // atomic with respect to all add/remove/addandremove ticket calls for the given chunk
-    public <T, V> boolean addIfRemovedTicket(final long chunk, final TicketType<T> addType, final int addLevel, final T addIdentifier,
-                                             final TicketType<V> removeType, final int removeLevel, final V removeIdentifier) {
+    public <T, V> boolean addIfRemovedTicket(final long chunk, final TicketType addType, final int addLevel, final T addIdentifier,
+                                             final TicketType removeType, final int removeLevel, final V removeIdentifier) {
         final ReentrantAreaLock.Node ticketLock = this.ticketLockArea.lock(CoordinateUtils.getChunkX(chunk), CoordinateUtils.getChunkZ(chunk));
         try {
             if (this.removeTicketAtLevel(removeType, chunk, removeLevel, removeIdentifier, false)) {
@@ -664,7 +749,7 @@ public final class ChunkHolderManager {
         }
     }
 
-    public <T> void removeAllTicketsFor(final TicketType<T> ticketType, final int ticketLevel, final T ticketIdentifier) {
+    public <T> void removeAllTicketsFor(final TicketType ticketType, final int ticketLevel, final T ticketIdentifier) {
         if (ticketLevel > MAX_TICKET_LEVEL) {
             return;
         }
@@ -710,7 +795,7 @@ public final class ChunkHolderManager {
 
         final int sectionShift = ((ChunkSystemServerLevel)this.world).moonrise$getRegionChunkShift();
 
-        final Predicate<Ticket<?>> expireNow = (final Ticket<?> ticket) -> {
+        final Predicate<Ticket> expireNow = (final Ticket ticket) -> {
             long removeDelay = ((ChunkSystemTicket<?>)(Object)ticket).moonrise$getRemoveDelay();
             if (removeDelay == NO_TIMEOUT_MARKER) {
                 return false;
@@ -746,7 +831,7 @@ public final class ChunkHolderManager {
                     final long chunkKey = entry.getLongKey();
                     final int expireCount = entry.getIntValue();
 
-                    final SortedArraySet<Ticket<?>> tickets = this.tickets.get(chunkKey);
+                    final SortedArraySet<Ticket> tickets = this.tickets.get(chunkKey);
                     final int levelBefore = getTicketLevelAt(tickets);
 
                     final int sizeBefore = tickets.size();
@@ -1164,7 +1249,7 @@ public final class ChunkHolderManager {
                             this.removeChunkHolder(holder);
                         } else {
                             // add cooldown so the next unload check is not immediately next tick
-                            this.addTicketAtLevel(UNLOAD_COOLDOWN, CoordinateUtils.getChunkKey(holder.chunkX, holder.chunkZ), MAX_TICKET_LEVEL, Unit.INSTANCE, false);
+                            this.addTicketAtLevel(UNLOAD_COOLDOWN, CoordinateUtils.getChunkKey(holder.chunkX, holder.chunkZ), MAX_TICKET_LEVEL, null, false);
                         }
                     }
                 } finally {
@@ -1188,42 +1273,42 @@ public final class ChunkHolderManager {
 
     public static record TicketOperation<T, V> (
         TicketOperationType op, long chunkCoord,
-        TicketType<T> ticketType, int ticketLevel, T identifier,
-        TicketType<V> ticketType2, int ticketLevel2, V identifier2
+        TicketType ticketType, int ticketLevel, T identifier,
+        TicketType ticketType2, int ticketLevel2, V identifier2
     ) {
 
         private TicketOperation(TicketOperationType op, long chunkCoord,
-                                TicketType<T> ticketType, int ticketLevel, T identifier) {
+                                TicketType ticketType, int ticketLevel, T identifier) {
             this(op, chunkCoord, ticketType, ticketLevel, identifier, null, 0, null);
         }
 
-        public static <T> TicketOperation<T, T> addOp(final ChunkPos chunk, final TicketType<T> type, final int ticketLevel, final T identifier) {
+        public static <T> TicketOperation<T, T> addOp(final ChunkPos chunk, final TicketType type, final int ticketLevel, final T identifier) {
             return addOp(CoordinateUtils.getChunkKey(chunk), type, ticketLevel, identifier);
         }
 
-        public static <T> TicketOperation<T, T> addOp(final int chunkX, final int chunkZ, final TicketType<T> type, final int ticketLevel, final T identifier) {
+        public static <T> TicketOperation<T, T> addOp(final int chunkX, final int chunkZ, final TicketType type, final int ticketLevel, final T identifier) {
             return addOp(CoordinateUtils.getChunkKey(chunkX, chunkZ), type, ticketLevel, identifier);
         }
 
-        public static <T> TicketOperation<T, T> addOp(final long chunk, final TicketType<T> type, final int ticketLevel, final T identifier) {
+        public static <T> TicketOperation<T, T> addOp(final long chunk, final TicketType type, final int ticketLevel, final T identifier) {
             return new TicketOperation<>(TicketOperationType.ADD, chunk, type, ticketLevel, identifier);
         }
 
-        public static <T> TicketOperation<T, T> removeOp(final ChunkPos chunk, final TicketType<T> type, final int ticketLevel, final T identifier) {
+        public static <T> TicketOperation<T, T> removeOp(final ChunkPos chunk, final TicketType type, final int ticketLevel, final T identifier) {
             return removeOp(CoordinateUtils.getChunkKey(chunk), type, ticketLevel, identifier);
         }
 
-        public static <T> TicketOperation<T, T> removeOp(final int chunkX, final int chunkZ, final TicketType<T> type, final int ticketLevel, final T identifier) {
+        public static <T> TicketOperation<T, T> removeOp(final int chunkX, final int chunkZ, final TicketType type, final int ticketLevel, final T identifier) {
             return removeOp(CoordinateUtils.getChunkKey(chunkX, chunkZ), type, ticketLevel, identifier);
         }
 
-        public static <T> TicketOperation<T, T> removeOp(final long chunk, final TicketType<T> type, final int ticketLevel, final T identifier) {
+        public static <T> TicketOperation<T, T> removeOp(final long chunk, final TicketType type, final int ticketLevel, final T identifier) {
             return new TicketOperation<>(TicketOperationType.REMOVE, chunk, type, ticketLevel, identifier);
         }
 
         public static <T, V> TicketOperation<T, V> addIfRemovedOp(final long chunk,
-                                                                  final TicketType<T> addType, final int addLevel, final T addIdentifier,
-                                                                  final TicketType<V> removeType, final int removeLevel, final V removeIdentifier) {
+                                                                  final TicketType addType, final int addLevel, final T addIdentifier,
+                                                                  final TicketType removeType, final int removeLevel, final V removeIdentifier) {
             return new TicketOperation<>(
                 TicketOperationType.ADD_IF_REMOVED, chunk, addType, addLevel, addIdentifier,
                 removeType, removeLevel, removeIdentifier
@@ -1231,8 +1316,8 @@ public final class ChunkHolderManager {
         }
 
         public static <T, V> TicketOperation<T, V> addAndRemove(final long chunk,
-                                                                final TicketType<T> addType, final int addLevel, final T addIdentifier,
-                                                                final TicketType<V> removeType, final int removeLevel, final V removeIdentifier) {
+                                                                final TicketType addType, final int addLevel, final T addIdentifier,
+                                                                final TicketType removeType, final int removeLevel, final V removeIdentifier) {
             return new TicketOperation<>(
                 TicketOperationType.ADD_AND_REMOVE, chunk, addType, addLevel, addIdentifier,
                 removeType, removeLevel, removeIdentifier
@@ -1391,11 +1476,11 @@ public final class ChunkHolderManager {
         final JsonArray allTicketsJson = new JsonArray();
         ret.add("tickets", allTicketsJson);
 
-        for (final Iterator<ConcurrentLong2ReferenceChainedHashTable.TableEntry<SortedArraySet<Ticket<?>>>> iterator = this.tickets.entryIterator();
+        for (final Iterator<ConcurrentLong2ReferenceChainedHashTable.TableEntry<SortedArraySet<Ticket>>> iterator = this.tickets.entryIterator();
             iterator.hasNext();) {
-            final ConcurrentLong2ReferenceChainedHashTable.TableEntry<SortedArraySet<Ticket<?>>> coordinateTickets = iterator.next();
+            final ConcurrentLong2ReferenceChainedHashTable.TableEntry<SortedArraySet<Ticket>> coordinateTickets = iterator.next();
             final long coordinate = coordinateTickets.getKey();
-            final SortedArraySet<Ticket<?>> tickets = coordinateTickets.getValue();
+            final SortedArraySet<Ticket> tickets = coordinateTickets.getValue();
 
             final JsonObject coordinateJson = new JsonObject();
             allTicketsJson.add(coordinateJson);
@@ -1410,17 +1495,17 @@ public final class ChunkHolderManager {
             // directly over the set using the iterator
             // however, it also means we need to null-check the values, and there is a possibility that we _miss_ an
             // entry OR iterate over an entry multiple times
-            for (final Object ticketUncasted : ((ChunkSystemSortedArraySet<Ticket<?>>)tickets).moonrise$copyBackingArray()) {
+            for (final Object ticketUncasted : ((ChunkSystemSortedArraySet<Ticket>)tickets).moonrise$copyBackingArray()) {
                 if (ticketUncasted == null) {
                     continue;
                 }
-                final Ticket<?> ticket = (Ticket<?>)ticketUncasted;
+                final Ticket ticket = (Ticket)ticketUncasted;
                 final JsonObject ticketSerialized = new JsonObject();
                 ticketsSerialized.add(ticketSerialized);
 
                 ticketSerialized.addProperty("type", ticket.getType().toString());
                 ticketSerialized.addProperty("level", Integer.valueOf(ticket.getTicketLevel()));
-                ticketSerialized.addProperty("identifier", Objects.toString(ticket.key));
+                ticketSerialized.addProperty("identifier", Objects.toString(((ChunkSystemTicket<?>)(Object)ticket).moonrise$getIdentifier()));
                 ticketSerialized.addProperty("remove_tick", Long.valueOf(((ChunkSystemTicket<?>)(Object)ticket).moonrise$getRemoveDelay()));
             }
         }

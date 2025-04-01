@@ -19,16 +19,16 @@ import org.spongepowered.asm.mixin.Unique;
 abstract class ServerLevelMixin implements ChunkTickServerLevel {
 
     @Unique
-    private static final ServerChunkCache.ChunkAndHolder[] EMPTY_PLAYER_CHUNK_HOLDERS = new ServerChunkCache.ChunkAndHolder[0];
+    private static final LevelChunk[] EMPTY_LEVEL_CHUNKS = new LevelChunk[0];
 
     @Unique
-    private final ReferenceList<ServerChunkCache.ChunkAndHolder> playerTickingChunks = new ReferenceList<>(EMPTY_PLAYER_CHUNK_HOLDERS);
+    private final ReferenceList<LevelChunk> playerTickingChunks = new ReferenceList<>(EMPTY_LEVEL_CHUNKS);
 
     @Unique
     private final Long2IntOpenHashMap playerTickingRequests = new Long2IntOpenHashMap();
 
     @Override
-    public final ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getPlayerTickingChunks() {
+    public final ReferenceList<LevelChunk> moonrise$getPlayerTickingChunks() {
         return this.playerTickingChunks;
     }
 
@@ -39,12 +39,12 @@ abstract class ServerLevelMixin implements ChunkTickServerLevel {
             return;
         }
 
-        this.playerTickingChunks.add(((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder());
+        this.playerTickingChunks.add(chunk);
     }
 
     @Override
     public final void moonrise$removeChunkForPlayerTicking(final LevelChunk chunk) {
-        this.playerTickingChunks.remove(((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder());
+        this.playerTickingChunks.remove(chunk);
     }
 
     @Override
@@ -65,9 +65,7 @@ abstract class ServerLevelMixin implements ChunkTickServerLevel {
             return;
         }
 
-        this.playerTickingChunks.add(
-            ((ChunkSystemLevelChunk)(LevelChunk)chunkHolder.getCurrentChunk()).moonrise$getChunkAndHolder()
-        );
+        this.playerTickingChunks.add((LevelChunk)chunkHolder.getCurrentChunk());
     }
 
     @Override
@@ -93,8 +91,6 @@ abstract class ServerLevelMixin implements ChunkTickServerLevel {
             return;
         }
 
-        this.playerTickingChunks.remove(
-            ((ChunkSystemLevelChunk)(LevelChunk)chunkHolder.getCurrentChunk()).moonrise$getChunkAndHolder()
-        );
+        this.playerTickingChunks.remove((LevelChunk)chunkHolder.getCurrentChunk());
     }
 }

@@ -11,9 +11,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(DynamicGameEventListener.class)
 abstract class DynamicGameEventListenerMixin {
-    @Shadow @Nullable private SectionPos lastSection;
+    @Shadow
+    @Nullable
+    private SectionPos lastSection;
 
-    @Inject(method = "remove", at = @At("RETURN"))
+    @Inject(
+        method = "remove",
+        at = @At("RETURN")
+    )
     private void onRemove(final CallbackInfo ci) {
         // We need to unset the last section when removed, otherwise if the same instance is re-added at the same position it
         // will assume there was no change and fail to re-register.

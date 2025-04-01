@@ -6,4 +6,8 @@ public interface ChunkSystemTicket<T> {
 
     public void moonrise$setRemoveDelay(final long removeDelay);
 
+    public T moonrise$getIdentifier();
+
+    public void moonrise$setIdentifier(final T identifier);
+
 }

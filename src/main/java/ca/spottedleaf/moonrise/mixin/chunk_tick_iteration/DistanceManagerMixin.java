@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.TriState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,20 +22,24 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class DistanceManagerMixin implements ChunkTickDistanceManager {
 
     @Shadow
-    private DistanceManager.FixedPlayerDistanceChunkTracker naturalSpawnChunkCounter;
+    public DistanceManager.FixedPlayerDistanceChunkTracker naturalSpawnChunkCounter;
 
 
     @Unique
     private final PositionCountingAreaMap<ServerPlayer> spawnChunkTracker = new PositionCountingAreaMap<>();
+    @Unique
+    private final PositionCountingAreaMap<ServerPlayer> narrowSpawnChunkTracker = new PositionCountingAreaMap<>();
 
     @Override
     public final void moonrise$addPlayer(final ServerPlayer player, final SectionPos pos) {
         this.spawnChunkTracker.add(player, pos.x(), pos.z(), ChunkTickConstants.PLAYER_SPAWN_TRACK_RANGE);
+        this.narrowSpawnChunkTracker.add(player, pos.x(), pos.z(), ChunkTickConstants.NARROW_SPAWN_TRACK_RANGE);
     }
 
     @Override
     public final void moonrise$removePlayer(final ServerPlayer player, final SectionPos pos) {
         this.spawnChunkTracker.remove(player);
+        this.narrowSpawnChunkTracker.remove(player);
     }
 
     @Override
@@ -43,9 +48,16 @@ abstract class DistanceManagerMixin implements ChunkTickDistanceManager {
                                             final boolean oldIgnore, final boolean newIgnore) {
         if (newIgnore) {
             this.spawnChunkTracker.remove(player);
+            this.narrowSpawnChunkTracker.remove(player);
         } else {
             this.spawnChunkTracker.addOrUpdate(player, newPos.x(), newPos.z(), ChunkTickConstants.PLAYER_SPAWN_TRACK_RANGE);
+            this.narrowSpawnChunkTracker.addOrUpdate(player, newPos.x(), newPos.z(), ChunkTickConstants.NARROW_SPAWN_TRACK_RANGE);
         }
+    }
+
+    @Override
+    public final boolean moonrise$hasAnyNearbyNarrow(final int chunkX, final int chunkZ) {
+        return this.narrowSpawnChunkTracker.hasObjectsNear(chunkX, chunkZ);
     }
 
     /**
@@ -104,8 +116,11 @@ abstract class DistanceManagerMixin implements ChunkTickDistanceManager {
      * @author Spottedleaf
      */
     @Overwrite
-    public boolean hasPlayersNearby(final long pos) {
-        return this.spawnChunkTracker.hasObjectsNear(CoordinateUtils.getChunkX(pos), CoordinateUtils.getChunkZ(pos));
+    public TriState hasPlayersNearby(final long pos) {
+        if (this.narrowSpawnChunkTracker.hasObjectsNear(pos)) {
+            return TriState.TRUE;
+        }
+        return this.spawnChunkTracker.hasObjectsNear(pos) ? TriState.DEFAULT : TriState.FALSE;
     }
 
     /**

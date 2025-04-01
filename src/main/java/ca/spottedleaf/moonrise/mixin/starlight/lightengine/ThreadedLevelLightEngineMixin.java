@@ -49,10 +49,10 @@ import java.util.function.Supplier;
 abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements StarLightLightingProvider {
 
     @Shadow
-    private ConsecutiveExecutor consecutiveExecutor;
+    public ConsecutiveExecutor consecutiveExecutor;
 
     @Shadow
-    private ChunkTaskDispatcher taskDispatcher;
+    public ChunkTaskDispatcher taskDispatcher;
 
     public ThreadedLevelLightEngineMixin(final LightChunkGetter chunkProvider, final boolean hasBlockLight, final boolean hasSkyLight) {
         super(chunkProvider, hasBlockLight, hasSkyLight);
@@ -86,10 +86,10 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
 
         final Long ticketId = Long.valueOf(this.chunkWorkCounter.getAndIncrement());
         final ChunkPos pos = new ChunkPos(chunkX, chunkZ);
-        world.getChunkSource().addRegionTicket(StarLightInterface.CHUNK_WORK_TICKET, pos, StarLightInterface.REGION_LIGHT_TICKET_LEVEL, ticketId);
+        ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAtLevel(StarLightInterface.CHUNK_WORK_TICKET, pos, StarLightInterface.LIGHT_TICKET_LEVEL, ticketId);
 
         scheduledTask.queueOrRunTask(() -> {
-            world.getChunkSource().removeRegionTicket(StarLightInterface.CHUNK_WORK_TICKET, pos, StarLightInterface.REGION_LIGHT_TICKET_LEVEL, ticketId);
+            ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().chunkHolderManager.removeTicketAtLevel(StarLightInterface.CHUNK_WORK_TICKET, pos, StarLightInterface.LIGHT_TICKET_LEVEL, ticketId);
         });
     }
 
@@ -105,7 +105,7 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
             final ChunkPos pos = iterator.next();
 
             final Long id = ChunkTaskScheduler.getNextChunkRelightId();
-            world.getChunkSource().addRegionTicket(ChunkTaskScheduler.CHUNK_RELIGHT, pos, StarLightInterface.REGION_LIGHT_TICKET_LEVEL, id);
+            ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAtLevel(ChunkTaskScheduler.CHUNK_RELIGHT, pos, StarLightInterface.LIGHT_TICKET_LEVEL, id);
             ticketIds.put(pos, id);
 
             final ChunkAccess chunk = (ChunkAccess)world.getChunkSource().getChunkForLighting(pos.x, pos.z);
@@ -113,7 +113,7 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
                 // cannot relight this chunk
                 iterator.remove();
                 ticketIds.remove(pos);
-                world.getChunkSource().removeRegionTicket(ChunkTaskScheduler.CHUNK_RELIGHT, pos, StarLightInterface.REGION_LIGHT_TICKET_LEVEL, id);
+                ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().chunkHolderManager.removeTicketAtLevel(ChunkTaskScheduler.CHUNK_RELIGHT, pos, StarLightInterface.LIGHT_TICKET_LEVEL, id);
                 continue;
             }
         }
@@ -160,9 +160,9 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
                         }
 
                         for (final Map.Entry<ChunkPos, Long> entry : ticketIds.entrySet()) {
-                            world.getChunkSource().removeRegionTicket(
+                            ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().chunkHolderManager.removeTicketAtLevel(
                                     ChunkTaskScheduler.CHUNK_RELIGHT, entry.getKey(),
-                                    StarLightInterface.REGION_LIGHT_TICKET_LEVEL, entry.getValue()
+                                    StarLightInterface.LIGHT_TICKET_LEVEL, entry.getValue()
                             );
                         }
                     }

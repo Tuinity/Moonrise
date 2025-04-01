@@ -2,18 +2,27 @@ package ca.spottedleaf.moonrise.mixin.chunk_tick_iteration;
 
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
+import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
+import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
+import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickDistanceManager;
+import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel;
 import com.llamalad7.mixinextras.sugar.Local;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ChunkMap;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import net.minecraft.world.level.chunk.LevelChunk;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -85,11 +94,15 @@ abstract class ChunkMapMixin {
     }
 
     /**
-     * @reason Avoid checking first if there are nearby players, as we make internal perform this implicitly.
+     * @reason Avoid checking for DEFAULT state, as we make internal perform this implicitly.
      * @author Spottedleaf
      */
     @Overwrite
     public boolean anyPlayerCloseEnoughForSpawning(final ChunkPos pos) {
+        if (((ChunkTickDistanceManager)this.distanceManager).moonrise$hasAnyNearbyNarrow(pos.x, pos.z)) {
+            return true;
+        }
+
         return this.anyPlayerCloseEnoughForSpawningInternal(pos);
     }
 
@@ -151,5 +164,112 @@ abstract class ChunkMapMixin {
         }
 
         return ret == null ? new ArrayList<>() : ret;
+    }
+
+    @Unique
+    private boolean isChunkNearPlayer(final ChunkMap chunkMap, final ChunkPos chunkPos, final LevelChunk levelChunk) {
+        final ChunkData chunkData = ((ChunkSystemLevelChunk)levelChunk).moonrise$getChunkHolder().holderData;
+        final NearbyPlayers.TrackedChunk nearbyPlayers = chunkData.nearbyPlayers;
+        if (nearbyPlayers == null) {
+            return false;
+        }
+
+        if (((ChunkTickDistanceManager)this.distanceManager).moonrise$hasAnyNearbyNarrow(chunkPos.x, chunkPos.z)) {
+            return true;
+        }
+
+        final ReferenceList<ServerPlayer> players = nearbyPlayers.getPlayers(NearbyPlayers.NearbyMapType.SPAWN_RANGE);
+
+        if (players == null) {
+            return false;
+        }
+
+        final ServerPlayer[] raw = players.getRawDataUnchecked();
+        final int len = players.size();
+
+        Objects.checkFromIndexSize(0, len, raw.length);
+        for (int i = 0; i < len; ++i) {
+            if (chunkMap.playerIsCloseEnoughForSpawning(raw[i], chunkPos)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @reason Use the player ticking chunks list, which already contains chunks that are:
+     *         1. entity ticking
+     *         2. within spawn range (8 chunks on any axis)
+     * @author Spottedleaf
+     */
+    @Inject(
+        method = "collectSpawningChunks",
+        // use cancellable inject to be compatible with the chunk system's hook here
+        cancellable = true,
+        at = @At(
+            value = "HEAD"
+        )
+    )
+    public void collectSpawningChunks(final List<LevelChunk> list, final CallbackInfo ci) {
+        final ReferenceList<LevelChunk> tickingChunks = ((ChunkTickServerLevel)this.level).moonrise$getPlayerTickingChunks();
+
+        final Long2IntOpenHashMap forceSpawningChunks = ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler()
+            .chunkHolderManager.getTicketCounters(ChunkSystemTicketType.COUNTER_TYPER_NATURAL_SPAWNING_FORCED);
+
+        final LevelChunk[] raw = tickingChunks.getRawDataUnchecked();
+        final int size = tickingChunks.size();
+
+        Objects.checkFromToIndex(0, size, raw.length);
+
+        if (forceSpawningChunks != null && !forceSpawningChunks.isEmpty()) {
+            // note: expect forceSpawningChunks.size <<< tickingChunks.size
+            final LongOpenHashSet seen = new LongOpenHashSet(forceSpawningChunks.size());
+
+            final ChunkHolderManager chunkHolderManager = ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager;
+
+            // note: this fixes a bug in neoforge where these chunks don't tick away from a player...
+            // note: this is NOT the only problem with their implementation, either...
+            for (final LongIterator iterator = forceSpawningChunks.keySet().longIterator(); iterator.hasNext();) {
+                final long pos = iterator.nextLong();
+
+                final NewChunkHolder holder = chunkHolderManager.getChunkHolder(pos);
+
+                if (holder == null || !holder.isEntityTickingReady()) {
+                    continue;
+                }
+
+                seen.add(pos);
+
+                list.add((LevelChunk)holder.getCurrentChunk());
+            }
+
+            for (int i = 0; i < size; ++i) {
+                final LevelChunk levelChunk = raw[i];
+
+                if (seen.contains(CoordinateUtils.getChunkKey(levelChunk.getPos()))) {
+                    // do not add duplicate chunks
+                    continue;
+                }
+
+                if (!this.isChunkNearPlayer((ChunkMap)(Object)this, levelChunk.getPos(), levelChunk)) {
+                    continue;
+                }
+
+                list.add(levelChunk);
+            }
+        } else {
+            for (int i = 0; i < size; ++i) {
+                final LevelChunk levelChunk = raw[i];
+
+                if (!this.isChunkNearPlayer((ChunkMap)(Object)this, levelChunk.getPos(), levelChunk)) {
+                    continue;
+                }
+
+                list.add(levelChunk);
+            }
+        }
+
+        ci.cancel();
     }
 }

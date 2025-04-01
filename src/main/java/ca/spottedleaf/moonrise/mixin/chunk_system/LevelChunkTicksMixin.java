@@ -105,12 +105,12 @@ abstract class LevelChunkTicksMixin<T> implements ChunkSystemLevelChunkTicks, Se
      * @author Spottedleaf
      */
     @Inject(
-            method = "save(JLjava/util/function/Function;)Lnet/minecraft/nbt/ListTag;",
+            method = "pack",
             at = @At(
                     value = "HEAD"
             )
     )
-    private void saveHook(final long time, final Function<T, String> idFunction, final CallbackInfoReturnable<ListTag> cir) {
+    private void saveHook(final long time, final CallbackInfoReturnable<ListTag> cir) {
         this.lastSaved = time;
     }
 

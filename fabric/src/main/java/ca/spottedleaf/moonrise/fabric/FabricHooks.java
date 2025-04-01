@@ -3,9 +3,11 @@ package ca.spottedleaf.moonrise.fabric;
 import ca.spottedleaf.moonrise.common.util.BaseChunkSystemHooks;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
+import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixer;
 import com.mojang.serialization.Dynamic;
+import it.unimi.dsi.fastutil.longs.LongArrays;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
@@ -15,6 +17,7 @@ import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.boss.EnderDragonPart;
 import net.minecraft.world.level.BlockGetter;
@@ -254,5 +257,10 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
     @Override
     public int modifyEntityTrackingRange(final Entity entity, final int currentRange) {
         return currentRange;
+    }
+
+    @Override
+    public long[] getCounterTypesUncached(final TicketType type) {
+        return type == TicketType.FORCED ? new long[] { ChunkSystemTicketType.COUNTER_TYPE_FORCED } : LongArrays.EMPTY_ARRAY;
     }
 }

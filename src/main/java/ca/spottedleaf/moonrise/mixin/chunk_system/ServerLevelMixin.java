@@ -10,7 +10,6 @@ import ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.EntityData
 import ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.PoiDataController;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevelReader;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
-import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.server.ServerEntityLookup;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
@@ -27,13 +26,11 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.progress.ChunkProgressListener;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.RandomSequences;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
@@ -64,12 +61,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 @Mixin(ServerLevel.class)
@@ -121,16 +116,16 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     private final NearbyPlayers nearbyPlayers = new NearbyPlayers((ServerLevel)(Object)this);
 
     @Unique
-    private static final ServerChunkCache.ChunkAndHolder[] EMPTY_CHUNK_AND_HOLDERS = new ServerChunkCache.ChunkAndHolder[0];
+    private static final LevelChunk[] EMPTY_LEVEL_CHUNKS = new LevelChunk[0];
 
     @Unique
-    private final ReferenceList<ServerChunkCache.ChunkAndHolder> loadedChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
+    private final ReferenceList<LevelChunk> loadedChunks = new ReferenceList<>(EMPTY_LEVEL_CHUNKS);
 
     @Unique
-    private final ReferenceList<ServerChunkCache.ChunkAndHolder> tickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
+    private final ReferenceList<LevelChunk> tickingChunks = new ReferenceList<>(EMPTY_LEVEL_CHUNKS);
 
     @Unique
-    private final ReferenceList<ServerChunkCache.ChunkAndHolder> entityTickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
+    private final ReferenceList<LevelChunk> entityTickingChunks = new ReferenceList<>(EMPTY_LEVEL_CHUNKS);
 
     /**
      * @reason Initialise fields / destroy entity manager state
@@ -334,17 +329,17 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     }
 
     @Override
-    public final ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getLoadedChunks() {
+    public final ReferenceList<LevelChunk> moonrise$getLoadedChunks() {
         return this.loadedChunks;
     }
 
     @Override
-    public final ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getTickingChunks() {
+    public final ReferenceList<LevelChunk> moonrise$getTickingChunks() {
         return this.tickingChunks;
     }
 
     @Override
-    public final ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getEntityTickingChunks() {
+    public final ReferenceList<LevelChunk> moonrise$getEntityTickingChunks() {
         return this.entityTickingChunks;
     }
 
@@ -666,7 +661,7 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
      * @author Spottedleaf
      */
     @Overwrite
-    public boolean isPositionEntityTicking(BlockPos pos) {
+    public boolean isPositionEntityTicking(final BlockPos pos) {
         final NewChunkHolder chunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(CoordinateUtils.getChunkKey(pos));
         return chunkHolder != null && chunkHolder.isEntityTickingReady();
     }
@@ -676,7 +671,7 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
      * @author Spottedleaf
      */
     @Overwrite
-    public boolean isNaturalSpawningAllowed(final BlockPos pos) {
+    public boolean areEntitiesActuallyLoadedAndTicking(final ChunkPos pos) {
         final NewChunkHolder chunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(CoordinateUtils.getChunkKey(pos));
         return chunkHolder != null && chunkHolder.isEntityTickingReady();
     }
@@ -685,8 +680,14 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
      * @reason Redirect to chunk system
      * @author Spottedleaf
      */
-    @Overwrite
-    public boolean isNaturalSpawningAllowed(final ChunkPos pos) {
+    @Redirect(
+        method = "canSpawnEntitiesInChunk",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;canPositionTick(Lnet/minecraft/world/level/ChunkPos;)Z"
+        )
+    )
+    private <T extends EntityAccess> boolean redirectCanEntitiesSpawnTickCheck(final PersistentEntitySectionManager<T> instance, final ChunkPos pos) {
         final NewChunkHolder chunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(CoordinateUtils.getChunkKey(pos));
         return chunkHolder != null && chunkHolder.isEntityTickingReady();
     }

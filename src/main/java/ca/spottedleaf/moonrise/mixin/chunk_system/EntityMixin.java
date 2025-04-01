@@ -4,6 +4,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
 import ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import com.google.common.collect.ImmutableList;
+import com.mojang.logging.LogUtils;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -33,16 +34,14 @@ abstract class EntityMixin implements ChunkSystemEntity {
     protected abstract Stream<Entity> getIndirectPassengersStream();
 
     @Shadow
-    @Final
-    private static Logger LOGGER;
-
-    @Shadow
     private Level level;
 
     @Shadow
     @Nullable
     private Entity.RemovalReason removalReason;
 
+    @Unique
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     @Unique
     private final boolean isHardColliding = this.moonrise$isHardCollidingUncached();
