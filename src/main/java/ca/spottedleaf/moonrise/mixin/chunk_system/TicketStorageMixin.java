@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicket;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketStorage;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
@@ -164,7 +165,7 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
     @Overwrite
     public boolean addTicket(final long pos, final Ticket ticket) {
         final boolean ret = ((ChunkSystemServerLevel)this.chunkMap.level).moonrise$getChunkTaskScheduler().chunkHolderManager
-            .addTicketAtLevel(ticket.getType(), pos, ticket.getTicketLevel(), null);
+            .addTicketAtLevel(ticket.getType(), pos, ticket.getTicketLevel(), ((ChunkSystemTicket<?>)ticket).moonrise$getIdentifier());
 
         this.setDirty();
 
@@ -178,7 +179,7 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
     @Overwrite
     public boolean removeTicket(final long pos, final Ticket ticket) {
         final boolean ret = ((ChunkSystemServerLevel)this.chunkMap.level).moonrise$getChunkTaskScheduler().chunkHolderManager
-            .removeTicketAtLevel(ticket.getType(), pos, ticket.getTicketLevel(), null);
+            .removeTicketAtLevel(ticket.getType(), pos, ticket.getTicketLevel(), ((ChunkSystemTicket<?>)ticket).moonrise$getIdentifier());
 
         if (ret) {
             this.setDirty();
@@ -194,6 +195,7 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
     @Overwrite
     public void purgeStaleTickets() {
         ((ChunkSystemServerLevel)this.chunkMap.level).moonrise$getChunkTaskScheduler().chunkHolderManager.tick();
+        this.setDirty();
     }
 
     /**
