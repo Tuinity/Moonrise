@@ -124,14 +124,13 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
         final boolean oldTicking = oldState.isRandomlyTicking();
         final boolean newTicking = newState.isRandomlyTicking();
         if (oldTicking != newTicking) {
+            this.createTickingBlocks();
             final ShortList tickingBlocks = this.tickingBlocks;
             final short position = (short)(x | (z << 4) | (y << (4+4)));
 
             if (oldTicking) {
-                this.createTickingBlocks();
                 tickingBlocks.remove(position);
             } else {
-                this.createTickingBlocks();
                 tickingBlocks.add(position);
             }
         }
@@ -200,13 +199,13 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                     final short[] raw = coordinates.elements();
                     final int rawLen = raw.length;
 
+                    this.createTickingBlocks();
                     final ShortList tickingBlocks = this.tickingBlocks;
 
                     tickingBlocks.setMinCapacity(Math.min((rawLen + tickingBlocks.size()) * 3 / 2, 16*16*16));
 
                     Objects.checkFromToIndex(0, paletteCount, rawLen);
                     for (int i = 0; i < paletteCount; ++i) {
-                        this.createTickingBlocks();
                         tickingBlocks.add(raw[i]);
                     }
                 }
