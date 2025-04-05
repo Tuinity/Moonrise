@@ -194,9 +194,8 @@ accessible class net/minecraft/server/level/ChunkMap$DistanceManager
 
 # DistanceManager
 mutable field net/minecraft/server/level/DistanceManager playersPerChunk Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;
-mutable field net/minecraft/server/level/DistanceManager tickets Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;
-mutable field net/minecraft/server/level/DistanceManager ticketTracker Lnet/minecraft/server/level/DistanceManager$ChunkTicketTracker;
-mutable field net/minecraft/server/level/DistanceManager tickingTicketsTracker Lnet/minecraft/server/level/TickingTracker;
+mutable field net/minecraft/server/level/DistanceManager loadingChunkTracker Lnet/minecraft/server/level/LoadingChunkTracker;
+mutable field net/minecraft/server/level/DistanceManager simulationChunkTracker Lnet/minecraft/server/level/SimulationChunkTracker;
 mutable field net/minecraft/server/level/DistanceManager playerTicketManager Lnet/minecraft/server/level/DistanceManager$PlayerTicketTracker;
 mutable field net/minecraft/server/level/DistanceManager chunksToUpdateFutures Ljava/util/Set;
 mutable field net/minecraft/server/level/DistanceManager ticketDispatcher Lnet/minecraft/server/level/ThrottlingChunkTaskDispatcher;
@@ -205,21 +204,12 @@ mutable field net/minecraft/server/level/DistanceManager mainThreadExecutor Ljav
 mutable field net/minecraft/server/level/DistanceManager naturalSpawnChunkCounter Lnet/minecraft/server/level/DistanceManager$FixedPlayerDistanceChunkTracker;
 
 
-# DistanceManager$ChunkTicketTracker
-accessible class net/minecraft/server/level/DistanceManager$ChunkTicketTracker
-
-
 # DistanceManager$PlayerTicketTracker
 accessible class net/minecraft/server/level/DistanceManager$PlayerTicketTracker
 
 
 # DistanceManager$FixedPlayerDistanceChunkTracker
 accessible class net/minecraft/server/level/DistanceManager$FixedPlayerDistanceChunkTracker
-
-
-# Ticket
-accessible field net/minecraft/server/level/Ticket key Ljava/lang/Object;
-accessible field net/minecraft/server/level/TicketType timeout J
 
 
 # ServerChunkCache
@@ -239,14 +229,6 @@ mutable field net/minecraft/server/level/ServerLevel entityManager Lnet/minecraf
 # ServerLevel$EntityCallbacks
 accessible class net/minecraft/server/level/ServerLevel$EntityCallbacks
 accessible method net/minecraft/server/level/ServerLevel$EntityCallbacks <init> (Lnet/minecraft/server/level/ServerLevel;)V
-
-
-# EntityStorage
-accessible method net/minecraft/world/level/chunk/storage/EntityStorage readChunkPos (Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/world/level/ChunkPos;
-accessible method net/minecraft/world/level/chunk/storage/EntityStorage writeChunkPos (Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/world/level/ChunkPos;)V
-
-# Ticket
-accessible method net/minecraft/server/level/Ticket <init> (Lnet/minecraft/server/level/TicketType;ILjava/lang/Object;)V
 
 
 # ChunkStorage
@@ -285,11 +267,6 @@ accessible class net/minecraft/server/level/ChunkMap$TrackedEntity
 accessible field net/minecraft/server/level/ChunkMap$TrackedEntity serverEntity Lnet/minecraft/server/level/ServerEntity;
 
 
-# ServerChunkCache$ChunkAndHolder
-accessible class net/minecraft/server/level/ServerChunkCache$ChunkAndHolder
-accessible method net/minecraft/server/level/ServerChunkCache$ChunkAndHolder <init> (Lnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/server/level/ChunkHolder;)V
-
-
 # LevelLoadStatusManager$Status
 accessible class net/minecraft/client/multiplayer/LevelLoadStatusManager$Status
 
@@ -314,3 +291,15 @@ accessible class net/minecraft/world/level/LocalMobCapCalculator$MobCounts
 accessible class net/minecraft/world/level/chunk/storage/SectionStorage$PackedChunk
 # MDG requires we AT the constructor if we AT the class
 accessible method net/minecraft/world/level/chunk/storage/SectionStorage$PackedChunk <init> (Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;Z)V
+
+
+# Ticket
+accessible method net/minecraft/server/level/Ticket <init> (Lnet/minecraft/server/level/TicketType;IJ)V
+
+
+# LoadingChunkTracker
+accessible class net/minecraft/server/level/LoadingChunkTracker
+
+
+# TicketStorage
+mutable field net/minecraft/world/level/TicketStorage tickets Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;

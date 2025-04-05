@@ -87,7 +87,7 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
 
                 if (doTick && this.shouldTickBlocksAt(tileEntity.getPos())) {
                     tileEntity.tick();
-                    // call mid tick tasks for chunk system
+                    // call mid-tick tasks for chunk system
                     if ((++tickedEntities & 7) == 0) {
                         ((ChunkSystemLevel)(Level)(Object)this).moonrise$midTickTasks();
                     }

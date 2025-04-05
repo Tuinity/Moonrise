@@ -70,7 +70,7 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
                 this.chunkHolder.replaceProtoChunk(new ImposterProtoChunk(chunk, false));
             }
 
-            ((ChunkSystemLevelChunk)chunk).moonrise$setChunkAndHolder(new ServerChunkCache.ChunkAndHolder(chunk, this.chunkHolder.vanillaChunkHolder));
+            ((ChunkSystemLevelChunk)chunk).moonrise$setChunkHolder(this.chunkHolder);
 
             final NewChunkHolder chunkHolder = this.chunkHolder;
 

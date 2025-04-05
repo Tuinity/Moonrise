@@ -182,7 +182,7 @@ public abstract class StarLightEngine {
             for (int dx = -radius; dx <= radius; ++dx) {
                 final int cx = centerChunkX + dx;
                 final int cz = centerChunkZ + dz;
-                final boolean isTwoRadius = Math.max(IntegerUtil.branchlessAbs(dx), IntegerUtil.branchlessAbs(dz)) == 2;
+                final boolean isTwoRadius = Math.max(Math.abs(dx), Math.abs(dz)) == 2;
                 final ChunkAccess chunk = (ChunkAccess)chunkProvider.getChunkForLighting(cx, cz);
 
                 if (chunk == null) {

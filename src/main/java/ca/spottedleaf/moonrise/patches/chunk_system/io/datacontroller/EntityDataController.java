@@ -48,7 +48,7 @@ public final class EntityDataController extends MoonriseRegionFileIO.RegionDataC
     }
 
     private static void checkPosition(final ChunkPos pos, final CompoundTag nbt) {
-        final ChunkPos nbtPos = nbt == null ? null : EntityStorage.readChunkPos(nbt);
+        final ChunkPos nbtPos = nbt == null ? null : nbt.read("Position", ChunkPos.CODEC).orElse(null);
         if (nbtPos != null && !pos.equals(nbtPos)) {
             throw new IllegalArgumentException(
                     "Entity chunk coordinate and serialized data do not have matching coordinates, trying to serialize coordinate " + pos.toString()

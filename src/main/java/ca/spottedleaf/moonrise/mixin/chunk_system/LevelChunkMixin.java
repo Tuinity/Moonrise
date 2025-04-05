@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticks.ChunkSystemLevelChunkTicks;
 import net.minecraft.core.Registry;
 import net.minecraft.server.level.ServerChunkCache;
@@ -48,7 +49,7 @@ abstract class LevelChunkMixin extends ChunkAccess implements ChunkSystemLevelCh
     private boolean postProcessingDone;
 
     @Unique
-    private ServerChunkCache.ChunkAndHolder chunkAndHolder;
+    private NewChunkHolder chunkAndHolder;
 
     @Override
     public final boolean moonrise$isPostProcessingDone() {
@@ -56,12 +57,12 @@ abstract class LevelChunkMixin extends ChunkAccess implements ChunkSystemLevelCh
     }
 
     @Override
-    public final ServerChunkCache.ChunkAndHolder moonrise$getChunkAndHolder() {
+    public final NewChunkHolder moonrise$getChunkHolder() {
         return this.chunkAndHolder;
     }
 
     @Override
-    public final void moonrise$setChunkAndHolder(final ServerChunkCache.ChunkAndHolder holder) {
+    public final void moonrise$setChunkHolder(final NewChunkHolder holder) {
         this.chunkAndHolder = holder;
     }
 

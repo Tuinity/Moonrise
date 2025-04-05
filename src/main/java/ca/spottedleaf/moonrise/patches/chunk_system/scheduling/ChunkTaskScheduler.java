@@ -22,6 +22,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkProgres
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkUpgradeGenericStatusTask;
 import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
 import ca.spottedleaf.moonrise.patches.chunk_system.status.ChunkSystemChunkStep;
+import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import ca.spottedleaf.moonrise.patches.chunk_system.util.ParallelSearchRadiusIteration;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -73,35 +74,35 @@ public final class ChunkTaskScheduler {
         LOGGER.info("Chunk system is using population gen parallelism: " + useParallelGen);
     }
 
-    public static final TicketType<Long> CHUNK_LOAD = TicketType.create("chunk_system:chunk_load", Long::compareTo);
+    public static final TicketType CHUNK_LOAD = ChunkSystemTicketType.create("chunk_system:chunk_load", Long::compareTo);
     private static final AtomicLong CHUNK_LOAD_IDS = new AtomicLong();
 
     public static Long getNextChunkLoadId() {
         return Long.valueOf(CHUNK_LOAD_IDS.getAndIncrement());
     }
 
-    public static final TicketType<Long> NON_FULL_CHUNK_LOAD = TicketType.create("chunk_system:non_full_load", Long::compareTo);
+    public static final TicketType NON_FULL_CHUNK_LOAD = ChunkSystemTicketType.create("chunk_system:non_full_load", Long::compareTo);
     private static final AtomicLong NON_FULL_CHUNK_LOAD_IDS = new AtomicLong();
 
     public static Long getNextNonFullLoadId() {
         return Long.valueOf(NON_FULL_CHUNK_LOAD_IDS.getAndIncrement());
     }
 
-    public static final TicketType<Long> ENTITY_LOAD = TicketType.create("chunk_system:entity_load", Long::compareTo);
+    public static final TicketType ENTITY_LOAD = ChunkSystemTicketType.create("chunk_system:entity_load", Long::compareTo);
     private static final AtomicLong ENTITY_LOAD_IDS = new AtomicLong();
 
     public static Long getNextEntityLoadId() {
         return Long.valueOf(ENTITY_LOAD_IDS.getAndIncrement());
     }
 
-    public static final TicketType<Long> POI_LOAD = TicketType.create("chunk_system:poi_load", Long::compareTo);
+    public static final TicketType POI_LOAD = ChunkSystemTicketType.create("chunk_system:poi_load", Long::compareTo);
     private static final AtomicLong POI_LOAD_IDS = new AtomicLong();
 
     public static Long getNextPoiLoadId() {
         return Long.valueOf(POI_LOAD_IDS.getAndIncrement());
     }
 
-    public static final TicketType<Long> CHUNK_RELIGHT = TicketType.create("starlight:chunk_relight", Long::compareTo);
+    public static final TicketType CHUNK_RELIGHT = ChunkSystemTicketType.create("starlight:chunk_relight", Long::compareTo);
     private static final AtomicLong CHUNK_RELIGHT_IDS = new AtomicLong();
 
     public static Long getNextChunkRelightId() {

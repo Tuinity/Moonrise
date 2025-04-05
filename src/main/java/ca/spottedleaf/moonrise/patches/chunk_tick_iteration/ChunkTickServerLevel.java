@@ -6,7 +6,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 
 public interface ChunkTickServerLevel {
 
-    public ReferenceList<ServerChunkCache.ChunkAndHolder> moonrise$getPlayerTickingChunks();
+    public ReferenceList<LevelChunk> moonrise$getPlayerTickingChunks();
 
     public void moonrise$markChunkForPlayerTicking(final LevelChunk chunk);
 

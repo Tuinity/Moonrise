@@ -21,7 +21,7 @@ public abstract class BaseChunkSystemHooks implements ChunkSystemHooks {
 
     @Override
     public void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run) {
-        scheduleChunkTask(level, chunkX, chunkZ, run, Priority.NORMAL);
+        this.scheduleChunkTask(level, chunkX, chunkZ, run, Priority.NORMAL);
     }
 
     @Override
@@ -71,7 +71,7 @@ public abstract class BaseChunkSystemHooks implements ChunkSystemHooks {
 
     @Override
     public boolean hasAnyChunkHolders(final ServerLevel level) {
-        return getUpdatingChunkHolderCount(level) != 0;
+        return this.getUpdatingChunkHolderCount(level) != 0;
     }
 
     @Override
@@ -98,16 +98,12 @@ public abstract class BaseChunkSystemHooks implements ChunkSystemHooks {
 
     @Override
     public void onChunkBorder(final LevelChunk chunk, final ChunkHolder holder) {
-        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().add(
-            ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
-        );
+        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().add(chunk);
     }
 
     @Override
     public void onChunkNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
-        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().remove(
-            ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
-        );
+        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().remove(chunk);
     }
 
     @Override
@@ -118,37 +114,29 @@ public abstract class BaseChunkSystemHooks implements ChunkSystemHooks {
 
     @Override
     public void onChunkTicking(final LevelChunk chunk, final ChunkHolder holder) {
-        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().add(
-            ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
-        );
+        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().add(chunk);
         if (!((ChunkSystemLevelChunk)chunk).moonrise$isPostProcessingDone()) {
             chunk.postProcessGeneration((ServerLevel)chunk.getLevel());
         }
         ((ServerLevel)chunk.getLevel()).startTickingChunk(chunk);
         ((ServerLevel)chunk.getLevel()).getChunkSource().chunkMap.tickingGenerated.incrementAndGet();
-        ((ChunkTickServerLevel)(ServerLevel)chunk.getLevel()).moonrise$markChunkForPlayerTicking(chunk); // Moonrise - chunk tick iteration
     }
 
     @Override
     public void onChunkNotTicking(final LevelChunk chunk, final ChunkHolder holder) {
-        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().remove(
-            ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
-        );
-        ((ChunkTickServerLevel)(ServerLevel)chunk.getLevel()).moonrise$removeChunkForPlayerTicking(chunk); // Moonrise - chunk tick iteration
+        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().remove(chunk);
     }
 
     @Override
     public void onChunkEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
-        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getEntityTickingChunks().add(
-            ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
-        );
+        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getEntityTickingChunks().add(chunk);
+        ((ChunkTickServerLevel)(ServerLevel)chunk.getLevel()).moonrise$markChunkForPlayerTicking(chunk); // Moonrise - chunk tick iteration
     }
 
     @Override
     public void onChunkNotEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
-        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getEntityTickingChunks().remove(
-            ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
-        );
+        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getEntityTickingChunks().remove(chunk);
+        ((ChunkTickServerLevel)(ServerLevel)chunk.getLevel()).moonrise$removeChunkForPlayerTicking(chunk); // Moonrise - chunk tick iteration
     }
 
     @Override

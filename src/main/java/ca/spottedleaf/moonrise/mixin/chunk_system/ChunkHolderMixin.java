@@ -366,7 +366,7 @@ abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSy
     /**
      * @reason Use ticket system to control ticket levels
      * @author Spottedleaf
-     * @see net.minecraft.server.level.ServerChunkCache#addRegionTicket(TicketType, ChunkPos, int, Object)
+     * @see net.minecraft.server.level.ServerChunkCache#addTicketWithRadius(TicketType, ChunkPos, int)
      */
     @Overwrite
     public void setTicketLevel(int i) {

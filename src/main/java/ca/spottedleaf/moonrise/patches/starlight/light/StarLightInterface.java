@@ -9,6 +9,7 @@ import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkStatus;
+import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.ShortCollection;
@@ -39,10 +40,8 @@ import java.util.function.IntConsumer;
 
 public final class StarLightInterface {
 
-    public static final TicketType<Long> CHUNK_WORK_TICKET = TicketType.create("starlight:chunk_work_ticket", Long::compareTo);
+    public static final TicketType CHUNK_WORK_TICKET = ChunkSystemTicketType.create("starlight:chunk_work_ticket", Long::compareTo);
     public static final int LIGHT_TICKET_LEVEL = ChunkLevel.byStatus(ChunkStatus.LIGHT);
-    // ticket level = ChunkLevel.byStatus(FullChunkStatus.FULL) - input
-    public static final int REGION_LIGHT_TICKET_LEVEL = ChunkLevel.byStatus(FullChunkStatus.FULL) - LIGHT_TICKET_LEVEL;
 
     /**
      * Can be {@code null}, indicating the light is all empty.

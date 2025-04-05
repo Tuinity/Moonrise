@@ -13,4 +13,6 @@ public interface ChunkTickDistanceManager {
                                       final SectionPos oldPos, final SectionPos newPos,
                                       final boolean oldIgnore, final boolean newIgnore);
 
+    public boolean moonrise$hasAnyNearbyNarrow(final int chunkX, final int chunkZ);
+
 }

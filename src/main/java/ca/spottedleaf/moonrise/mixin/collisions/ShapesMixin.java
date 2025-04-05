@@ -345,11 +345,8 @@ abstract class ShapesMixin {
      * @author Spottedleaf
      */
     @Overwrite
-    public static boolean blockOccudes(final VoxelShape first, final VoxelShape second, final Direction direction) {
-        final boolean firstBlock = first == BLOCK;
-        final boolean secondBlock = second == BLOCK;
-
-        if (firstBlock & secondBlock) {
+    public static boolean blockOccludes(final VoxelShape first, final VoxelShape second, final Direction direction) {
+        if (first == BLOCK & second == BLOCK) {
             return true;
         }
 

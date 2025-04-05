@@ -3,18 +3,17 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
-import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
-import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
 import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemServerChunkCache;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.ChunkResult;
+import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
@@ -35,8 +34,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -58,9 +55,6 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
 
     @Unique
     private final ConcurrentLong2ReferenceChainedHashTable<LevelChunk> fullChunks = new ConcurrentLong2ReferenceChainedHashTable<>();
-
-    @Unique
-    private long chunksTicked;
 
     @Override
     public final void moonrise$setFullChunk(final int chunkX, final int chunkZ, final LevelChunk chunk) {
@@ -339,38 +333,34 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
     }
 
     /**
-     * @reason Perform mid-tick chunk task processing during chunk tick
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;JLjava/util/List;)V",
-            at = @At(
-                    value = "INVOKE",
-                    shift = At.Shift.AFTER,
-                    target = "Lnet/minecraft/server/level/ServerLevel;tickChunk(Lnet/minecraft/world/level/chunk/LevelChunk;I)V"
-            )
-    )
-    private void midTickChunks(final CallbackInfo ci) {
-        if ((++this.chunksTicked & 7L) != 0L) {
-            return;
-        }
-
-        ((ChunkSystemMinecraftServer)this.level.getServer()).moonrise$executeMidTickTasks();
-    }
-
-    /**
-     * @reason In the chunk system, ticking chunks always have loaded entities. Of course, they are also always
-     *         marked to be as ticking as well.
+     * @reason In the chunk system, spawn chunks will return only entity ticking chunks - we can elide the
+     *         entity ticking range check.
      * @author Spottedleaf
      */
     @Redirect(
-        method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;JLjava/util/List;)V",
+        method = "tickSpawningChunk",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerLevel;shouldTickBlocksAt(J)Z"
+            target = "Lnet/minecraft/server/level/DistanceManager;inEntityTickingRange(J)Z"
         )
     )
-    private boolean shortShouldTickBlocks(final ServerLevel instance, final long pos) {
+    private boolean shortTickThunder(final DistanceManager instance, final long pos) {
         return true;
+    }
+
+    /**
+     * @reason In the chunk system, spawn chunks will return only entity ticking chunks - we can elide the
+     *         entity ticking check.
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "tickSpawningChunk",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerLevel;canSpawnEntitiesInChunk(Lnet/minecraft/world/level/ChunkPos;)Z"
+        )
+    )
+    private boolean onlyCheckWBForSpawning(final ServerLevel instance, final ChunkPos pos) {
+        return instance.getWorldBorder().isWithinBounds(pos);
     }
 }

@@ -60,13 +60,13 @@ abstract class SerializableChunkDataMixin {
         method = "parse",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/nbt/CompoundTag;getBoolean(Ljava/lang/String;)Z",
+            target = "Lnet/minecraft/nbt/CompoundTag;getBooleanOr(Ljava/lang/String;Z)Z",
             ordinal = 0
         )
     )
-    private static boolean setLightCorrect(final CompoundTag instance, final String string,
+    private static boolean setLightCorrect(final CompoundTag instance, final String string, final boolean dfl,
                                            @Local(ordinal = 0, argsOnly = false) final ChunkStatus status) {
-        final boolean starlightCorrect = instance.get("isLightOn") != null && instance.getInt(SaveUtil.STARLIGHT_VERSION_TAG) == SaveUtil.STARLIGHT_LIGHT_VERSION;
+        final boolean starlightCorrect = instance.get("isLightOn") != null && instance.getIntOr(SaveUtil.STARLIGHT_VERSION_TAG, -1) == SaveUtil.STARLIGHT_LIGHT_VERSION;
         return status.isOrAfter(ChunkStatus.LIGHT) && starlightCorrect;
     }
 
@@ -84,17 +84,17 @@ abstract class SerializableChunkDataMixin {
     )
     private static SerializableChunkData.SectionData readStarlightState(final int y, final LevelChunkSection chunkSection,
                                                                         final DataLayer blockLight, final DataLayer skyLight,
-                                                                        @Local(ordinal = 3, argsOnly = false) final CompoundTag sectionData) {
+                                                                        @Local(ordinal = 2, argsOnly = false) final CompoundTag sectionData) {
         final SerializableChunkData.SectionData ret = new SerializableChunkData.SectionData(
             y, chunkSection, blockLight, skyLight
         );
 
-        if (sectionData.contains(SaveUtil.BLOCKLIGHT_STATE_TAG, Tag.TAG_ANY_NUMERIC)) {
-            ((StarlightSectionData)(Object)ret).starlight$setBlockLightState(sectionData.getInt(SaveUtil.BLOCKLIGHT_STATE_TAG));
+        if (sectionData.contains(SaveUtil.BLOCKLIGHT_STATE_TAG)) {
+            ((StarlightSectionData)(Object)ret).starlight$setBlockLightState(sectionData.getIntOr(SaveUtil.BLOCKLIGHT_STATE_TAG, 0));
         }
 
-        if (sectionData.contains(SaveUtil.SKYLIGHT_STATE_TAG, Tag.TAG_ANY_NUMERIC)) {
-            ((StarlightSectionData)(Object)ret).starlight$setSkyLightState(sectionData.getInt(SaveUtil.SKYLIGHT_STATE_TAG));
+        if (sectionData.contains(SaveUtil.SKYLIGHT_STATE_TAG)) {
+            ((StarlightSectionData)(Object)ret).starlight$setSkyLightState(sectionData.getIntOr(SaveUtil.SKYLIGHT_STATE_TAG, 0));
         }
 
         return ret;

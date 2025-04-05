@@ -159,7 +159,7 @@ public final class PoiChunk {
 
         final RegistryOps<Tag> registryOps = RegistryOps.create(NbtOps.INSTANCE, world.registryAccess());
 
-        final CompoundTag sections = data.getCompound("Sections");
+        final CompoundTag sections = data.getCompoundOrEmpty("Sections");
 
         if (sections.isEmpty()) {
             // nothing to parse
@@ -176,7 +176,7 @@ public final class PoiChunk {
                 continue;
             }
 
-            final CompoundTag section = sections.getCompound(key);
+            final CompoundTag section = sections.getCompoundOrEmpty(key);
             final DataResult<PoiSection.Packed> deserializeResult = PoiSection.Packed.CODEC.parse(registryOps, section);
             final int finalSectionY = sectionY;
             final PoiSection.Packed packed = deserializeResult.resultOrPartial((final String description) -> {

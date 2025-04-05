@@ -4,9 +4,11 @@ import ca.spottedleaf.moonrise.common.util.BaseChunkSystemHooks;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixer;
 import com.mojang.serialization.Dynamic;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -14,6 +16,7 @@ import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
@@ -260,5 +263,19 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
     @Override
     public int modifyEntityTrackingRange(final Entity entity, final int currentRange) {
         return currentRange;
+    }
+
+    @Override
+    public long[] getCounterTypesUncached(final TicketType type) {
+        final LongArrayList ret = new LongArrayList();
+
+        if (type == TicketType.FORCED) {
+            ret.add(ChunkSystemTicketType.COUNTER_TYPE_FORCED);
+        }
+        if (type.forceNaturalSpawning()) {
+            ret.add(ChunkSystemTicketType.COUNTER_TYPER_NATURAL_SPAWNING_FORCED);
+        }
+
+        return ret.toLongArray();
     }
 }

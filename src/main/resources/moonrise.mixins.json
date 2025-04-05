@@ -52,6 +52,8 @@
         "chunk_system.StructureCheckMixin",
         "chunk_system.StructureTemplate$PaletteMixin",
         "chunk_system.TicketMixin",
+        "chunk_system.TicketStorageMixin",
+        "chunk_system.TicketTypeMixin",
         "chunk_tick_iteration.ChunkMapMixin",
         "chunk_tick_iteration.DistanceManagerMixin",
         "chunk_tick_iteration.ServerChunkCacheMixin",

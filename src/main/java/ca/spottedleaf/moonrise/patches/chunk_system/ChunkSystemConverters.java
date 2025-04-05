@@ -19,8 +19,7 @@ public final class ChunkSystemConverters {
     }
 
     private static int getDataVersion(final CompoundTag data, final int dfl) {
-        return !data.contains(SharedConstants.DATA_VERSION_TAG, Tag.TAG_ANY_NUMERIC)
-            ? dfl : data.getInt(SharedConstants.DATA_VERSION_TAG);
+        return data.getIntOr(SharedConstants.DATA_VERSION_TAG, dfl);
     }
 
     public static CompoundTag convertPoiCompoundTag(final CompoundTag data, final ServerLevel world) {

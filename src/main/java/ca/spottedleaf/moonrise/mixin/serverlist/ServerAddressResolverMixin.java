@@ -17,7 +17,7 @@ interface ServerAddressResolverMixin {
     @Redirect(
             method = {
                     "method_36903",
-                    "*(Lnet/minecraft/client/multiplayer/resolver/ServerAddress;)Ljava/util/Optional;"
+                    "lambda$static$0"
             },
             at = @At(
                     value = "INVOKE",

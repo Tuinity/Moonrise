@@ -32,6 +32,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.StaticCache2D;
 import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.TicketStorage;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -43,7 +44,6 @@ import net.minecraft.world.level.chunk.storage.IOWorker;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
 import net.minecraft.world.level.entity.ChunkStatusUpdateListener;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
-import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -124,11 +124,11 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
             )
     )
     private void constructor(
-        ServerLevel arg, LevelStorageSource.LevelStorageAccess arg2, DataFixer dataFixer,
-        StructureTemplateManager arg3, Executor executor, BlockableEventLoop<Runnable> arg4,
-        LightChunkGetter arg5, ChunkGenerator arg6, ChunkProgressListener arg7,
-        ChunkStatusUpdateListener arg8, Supplier<DimensionDataStorage> supplier, int j, boolean bl,
-        final CallbackInfo ci) {
+        ServerLevel p_214836_, LevelStorageSource.LevelStorageAccess p_214837_, DataFixer p_214838_,
+        StructureTemplateManager p_214839_, Executor p_214840_, BlockableEventLoop p_214841_,
+        LightChunkGetter p_214842_, ChunkGenerator p_214843_, ChunkProgressListener p_214844_,
+        ChunkStatusUpdateListener p_214845_, Supplier p_214846_, TicketStorage p_394462_, int p_214847_,
+        boolean p_214848_, CallbackInfo ci) {
         // intentionally destroy old chunk system hooks
         this.updatingChunkMap = null;
         this.visibleChunkMap = null;
@@ -143,7 +143,8 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
         // Dummy impl for mods that try to loadAsync directly
         this.worker = new IOWorker(
             // copied from super call
-            new RegionStorageInfo(arg2.getLevelId(), arg.dimension(), "chunk"), arg2.getDimensionPath(arg.dimension()).resolve("region"), bl
+            new RegionStorageInfo(p_214837_.getLevelId(), p_214836_.dimension(), "chunk"),
+            p_214837_.getDimensionPath(p_214836_.dimension()).resolve("region"), p_214848_
         ) {
             @Override
             public boolean isOldChunkAround(final ChunkPos chunkPos, final int i) {
@@ -543,13 +544,31 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
      * @author Spottedleaf
      */
     @Redirect(
-        method = "forEachSpawnCandidateChunk",
+        method = "collectSpawningChunks",
         at = @At(
             value = "INVOKE",
             target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectLinkedOpenHashMap;get(J)Ljava/lang/Object;"
         )
     )
-    private <V> V redirectChunkHolderGet(final Long2ObjectLinkedOpenHashMap<V> instance, final long key) {
+    private <V> V redirectChunkHolderGetForSpawning(final Long2ObjectLinkedOpenHashMap<V> instance, final long key) {
+        return (V)this.getVisibleChunkIfPresent(key);
+    }
+
+    /**
+     * @reason Route to new chunk system
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = {
+            "method_67499",
+            "lambda$forEachBlockTickingChunk$36"
+        },
+        at = @At(
+            value = "INVOKE",
+            target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectLinkedOpenHashMap;get(J)Ljava/lang/Object;"
+        )
+    )
+    private <V> V redirectChunkHolderGetForBlockTicking(final Long2ObjectLinkedOpenHashMap<V> instance, final long key) {
         return (V)this.getVisibleChunkIfPresent(key);
     }
 
