@@ -88,7 +88,7 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
                 continue;       
             }
             
-            if (!((BlockCountingChunkSection)section).anyTickingBlocks()) {
+            if (!((BlockCountingChunkSection)section).moonrise$anyTickingBlocks()) {
                 continue;
             }
 

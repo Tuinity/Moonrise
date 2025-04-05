@@ -68,7 +68,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     private ShortList tickingBlocks = null;
 
     @Override
-    public boolean anyTickingBlocks() {
+    public boolean moonrise$anyTickingBlocks() {
         return tickingBlocks != null;
     }
 
