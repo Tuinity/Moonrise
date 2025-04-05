@@ -72,6 +72,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
         return tickingBlocks != null;
     }
 
+    @Unique
     private void createTickingBlocks() {
         if (tickingBlocks == null) tickingBlocks = new ShortList();
     }
