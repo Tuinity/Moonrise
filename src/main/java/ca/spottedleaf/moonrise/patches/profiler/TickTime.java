@@ -14,14 +14,14 @@ public final record TickTime(
 
     /**
      * The difference between the start tick time and the scheduled start tick time. This value is
-     * < 0 if the tick started before the scheduled tick time.
+     * &lt; 0 if the tick started before the scheduled tick time.
      */
     public final long startOvershoot() {
         return this.tickStart - this.scheduledTickStart;
     }
 
     /**
-     * The difference from the end tick time and the start tick time. Always >= 0 (unless nanoTime is just wrong).
+     * The difference from the end tick time and the start tick time. Always &ge; 0 (unless nanoTime is just wrong).
      */
     public final long tickLength() {
         return this.tickEnd - this.tickStart;
