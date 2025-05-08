@@ -179,6 +179,10 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
         }
     }
 
+    public Iterable<Entity> getAllMapped() {
+        return this.entityByUUID.values();
+    }
+
     public int getEntityCount() {
         synchronized (this.accessibleEntities) {
             return this.accessibleEntities.size();

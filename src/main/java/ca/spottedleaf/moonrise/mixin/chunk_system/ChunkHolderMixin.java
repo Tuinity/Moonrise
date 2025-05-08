@@ -397,8 +397,14 @@ abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSy
      * @reason Chunk system hooks for ticket level updating now in {@link NewChunkHolder#processTicketLevelUpdate(List, List)}
      * @author Spottedleaf
      */
-    @Overwrite
-    public void updateFutures(final ChunkMap chunkMap, final Executor executor) {
+    // inject to avoid conflicting with fabric API's mixin here, we call their event in FabricHooks
+    @Inject(
+        method = "updateFutures",
+        at = @At(
+            value = "HEAD"
+        )
+    )
+    public void clobberUpdateFutures(final ChunkMap chunkMap, final Executor executor, final CallbackInfo ci) {
         throw new UnsupportedOperationException();
     }
 
