@@ -5,6 +5,7 @@ import net.neoforged.moddevgradle.internal.RunGameTask
 plugins {
     id("net.neoforged.moddev")
     id 'maven-publish'
+    id 'xyz.jpenilla.resource-factory-neoforge-convention' version '1.3.0-SNAPSHOT'
 }
 
 repositories {
@@ -57,18 +58,6 @@ dependencies {
     jarJar "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_version}"
 }
 
-tasks.processResources {
-    def properties = [
-        "version": project.version,
-        "minecraft_version": minecraft_version,
-        "mod_version": mod_version
-    ]
-    inputs.properties(properties)
-    filesMatching("META-INF/neoforge.mods.toml") {
-        expand properties
-    }
-}
-
 tasks.jar {
     archiveClassifier = "dev"
 }
@@ -92,6 +81,75 @@ tasks.register("productionJar", Zip.class) {
 
 tasks.assemble {
     dependsOn tasks.productionJar
+}
+
+neoForgeModsToml {
+    license = "GPLv3"
+    issueTrackerUrl = "https://github.com/Tuinity/Moonrise"
+    showAsResourcePack = false
+
+    mods.register("moonrise") {
+        setConventionsFromProjectMeta(project)
+        displayName = "Moonrise"
+        displayUrl = "https://github.com/Tuinity/Moonrise"
+        authors = "Spottedleaf"
+        description = "Optimisation mod for the dedicated and integrated server."
+        logoFile = "assets/moonrise/icon.png"
+        custom.put(
+            "ferritecore:disabled_options",
+            simpleCustomValueList(String, ["replaceNeighborLookup", "replacePropertyMap"])
+        )
+
+        dependencies {
+            required("neoforge", "[21.5,)")
+            required("minecraft", "1.21.5")
+
+            incompatible("notenoughcrashes")
+            incompatible("starlight")
+            incompatible("c2me")
+        }
+    }
+
+    mixins(
+        "moonrise.mixins.json",
+        "moonrise-neoforge.mixins.json"
+    )
+
+    custom.put(
+        "lithium:options",
+        simpleCustomValueMap(
+            String,
+            Boolean,
+            [
+                "mixin.ai.poi": false,
+                "mixin.alloc.deep_passengers": false,
+                "mixin.alloc.entity_tracker": false,
+                "mixin.block.flatten_states": false,
+                "mixin.chunk.entity_class_groups": false,
+                "mixin.chunk.no_validation": false,
+                "mixin.collections.chunk_tickets": false,
+                "mixin.collections.entity_ticking": false,
+                "mixin.entity.collisions.intersection": false,
+                "mixin.entity.collisions.movement": false,
+                "mixin.entity.collisions.unpushable_cramming": false,
+                "mixin.entity.replace_entitytype_predicates": false,
+                "mixin.math.fast_blockpos": false,
+                "mixin.math.fast_util": false,
+                "mixin.minimal_nonvanilla.collisions.empty_space": false,
+                "mixin.minimal_nonvanilla.world.expiring_chunk_tickets": false,
+                "mixin.shapes.blockstate_cache": false,
+                "mixin.shapes.optimized_matching": false,
+                "mixin.shapes.specialized_shapes": false,
+                "mixin.util.block_tracking": false,
+                "mixin.util.entity_movement_tracking": false,
+                "mixin.world.block_entity_ticking": false,
+                "mixin.world.chunk_access": false,
+                "mixin.world.explosions.block_raycast": false,
+                "mixin.world.temperature_cache": false,
+                "mixin.world.tick_scheduler": false,
+            ]
+        )
+    )
 }
 
 publishMods {

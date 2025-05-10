@@ -1,9 +1,11 @@
 import java.util.stream.Collectors
 import net.fabricmc.loom.util.gradle.SourceSetHelper
+import xyz.jpenilla.resourcefactory.fabric.Environment
 
 plugins {
     id("quiet-fabric-loom")
     id 'maven-publish'
+    id 'xyz.jpenilla.resource-factory-fabric-convention' version '1.3.0-SNAPSHOT'
 }
 
 dependencies {
@@ -31,19 +33,6 @@ dependencies {
     include fabricApiLibs.base
 }
 
-tasks.processResources {
-    def properties = [
-        "version": project.version,
-        "minecraft_version": minecraft_version,
-        "loader_version": loader_version,
-        "mod_version": mod_version
-    ]
-    inputs.properties(properties)
-    filesMatching("fabric.mod.json") {
-        expand properties
-    }
-}
-
 tasks.shadowJar {
     archiveClassifier = "dev-all"
     destinationDirectory = layout.buildDirectory.dir("libs")
@@ -51,6 +40,72 @@ tasks.shadowJar {
     relocate 'ca.spottedleaf.concurrentutil', 'ca.spottedleaf.moonrise.libs.ca.spottedleaf.concurrentutil'
     relocate 'ca.spottedleaf.yamlconfig', 'ca.spottedleaf.moonrise.libs.ca.spottedleaf.yamlconfig'
     relocate 'org.yaml.snakeyaml', 'ca.spottedleaf.moonrise.libs.org.yaml.snakeyaml'
+}
+
+fabricModJson {
+    id = "moonrise"
+    name = "Moonrise"
+    description = "Optimisation mod for the dedicated and integrated server."
+    author("Spottedleaf")
+    contact {
+        issues = "https://github.com/Tuinity/Moonrise/issues"
+        sources = "https://github.com/Tuinity/Moonrise"
+        extra.put("discord", "https://discord.gg/tuinity")
+        homepage = "https://www.curseforge.com/minecraft/mc-mods/moonrise"
+    }
+    breaks("notenoughcrashes")
+    breaks("starlight")
+    breaks("c2me")
+    license("GPL-3.0-only")
+    icon("assets/moonrise/icon.png")
+    environment = Environment.ANY
+    clientEntrypoint("ca.spottedleaf.moonrise.fabric.MoonriseFabricClient")
+    entrypoint("modmenu", "ca.spottedleaf.moonrise.fabric.MoonriseModMenuHook")
+    mixin("moonrise.mixins.json")
+    mixin("moonrise-fabric.mixins.json")
+    accessWidener = "moonrise.accesswidener"
+    depends("fabricloader", ">=${loader_version}")
+    depends("minecraft", ">1.21.4 <1.21.6")
+    depends("fabric-command-api-v2", "*")
+    custom.put(
+        "ferritecore:disabled_options",
+        simpleCustomValueList(String, ["replaceNeighborLookup", "replacePropertyMap"])
+    )
+    custom.put(
+        "lithium:options",
+        simpleCustomValueMap(
+            String,
+            Boolean,
+            [
+                "mixin.ai.poi": false,
+                "mixin.alloc.deep_passengers": false,
+                "mixin.alloc.entity_tracker": false,
+                "mixin.block.flatten_states": false,
+                "mixin.chunk.entity_class_groups": false,
+                "mixin.chunk.no_validation": false,
+                "mixin.collections.chunk_tickets": false,
+                "mixin.collections.entity_ticking": false,
+                "mixin.entity.collisions.intersection": false,
+                "mixin.entity.collisions.movement": false,
+                "mixin.entity.collisions.unpushable_cramming": false,
+                "mixin.entity.replace_entitytype_predicates": false,
+                "mixin.math.fast_blockpos": false,
+                "mixin.math.fast_util": false,
+                "mixin.minimal_nonvanilla.collisions.empty_space": false,
+                "mixin.minimal_nonvanilla.world.expiring_chunk_tickets": false,
+                "mixin.shapes.blockstate_cache": false,
+                "mixin.shapes.optimized_matching": false,
+                "mixin.shapes.specialized_shapes": false,
+                "mixin.util.block_tracking": false,
+                "mixin.util.entity_movement_tracking": false,
+                "mixin.world.block_entity_ticking": false,
+                "mixin.world.chunk_access": false,
+                "mixin.world.explosions.block_raycast": false,
+                "mixin.world.temperature_cache": false,
+                "mixin.world.tick_scheduler": false,
+            ]
+        )
+    )
 }
 
 publishMods {
