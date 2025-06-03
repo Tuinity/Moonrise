@@ -117,9 +117,11 @@ public final class NewChunkHolder {
 
         if (!transientChunk) {
             if (entityChunk != null) {
-                final List<Entity> entities = ChunkEntitySlices.readEntities(this.world, entityChunk);
+                final ChunkPos pos = new ChunkPos(this.chunkX, this.chunkZ);
 
-                ((ChunkSystemServerLevel)this.world).moonrise$getEntityLookup().addEntityChunkEntities(entities, new ChunkPos(this.chunkX, this.chunkZ));
+                final List<Entity> entities = ChunkEntitySlices.readEntities(this.world, pos, entityChunk);
+
+                ((ChunkSystemServerLevel)this.world).moonrise$getEntityLookup().addEntityChunkEntities(entities, pos);
             }
         }
 

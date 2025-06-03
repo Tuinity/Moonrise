@@ -2091,7 +2091,7 @@ public final class CollisionUtil {
                 continue;
             }
 
-            if ((entity == null && otherEntity.canBeCollidedWith()) || (entity != null && entity.canCollideWith(otherEntity))) {
+            if ((entity == null && otherEntity.canBeCollidedWith(entity)) || (entity != null && entity.canCollideWith(otherEntity))) {
                 if (checkOnly) {
                     return true;
                 } else {

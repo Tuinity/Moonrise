@@ -15,8 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerPlayer.class)
 abstract class ServerPlayerMixin extends Player implements ChunkSystemServerPlayer {
-    public ServerPlayerMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile) {
-        super(level, blockPos, f, gameProfile);
+    public ServerPlayerMixin(final Level p_250508_, final GameProfile p_252153_) {
+        super(p_250508_, p_252153_);
     }
 
     @Unique

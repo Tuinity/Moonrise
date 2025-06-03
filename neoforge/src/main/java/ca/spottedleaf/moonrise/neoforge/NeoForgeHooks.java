@@ -7,6 +7,7 @@ import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixer;
+import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Dynamic;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.minecraft.core.BlockPos;
@@ -17,6 +18,7 @@ import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
@@ -30,6 +32,7 @@ import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatusTasks;
 import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.common.NeoForge;
@@ -38,11 +41,14 @@ import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.level.ChunkDataEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
+import org.slf4j.Logger;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
 public final class NeoForgeHooks extends BaseChunkSystemHooks implements PlatformHooks {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     @Override
     public String getBrand() {
@@ -257,7 +263,9 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
 
     @Override
     public void postLoadProtoChunk(final ServerLevel world, final ProtoChunk chunk) {
-        ChunkStatusTasks.postLoadProtoChunk(world, chunk.getEntities());
+        try (final ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(chunk.problemPath(), LOGGER)) {
+            ChunkStatusTasks.postLoadProtoChunk(world, TagValueInput.create(scopedCollector, world.registryAccess(), chunk.getEntities()));
+        }
     }
 
     @Override

@@ -3,6 +3,7 @@ package ca.spottedleaf.moonrise.patches.chunk_system.entity;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.animal.HappyGhast;
 import net.minecraft.world.entity.monster.Shulker;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import net.minecraft.world.entity.vehicle.Boat;
@@ -13,7 +14,7 @@ public interface ChunkSystemEntity {
 
     // for mods to override
     public default boolean moonrise$isHardCollidingUncached() {
-        return this instanceof Boat || this instanceof AbstractMinecart || this instanceof Shulker || ((Entity)this).canBeCollidedWith();
+        return this instanceof Boat || this instanceof AbstractMinecart || this instanceof Shulker || this instanceof HappyGhast || ((Entity)this).canBeCollidedWith(null);
     }
 
     public FullChunkStatus moonrise$getChunkStatus();

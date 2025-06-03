@@ -608,6 +608,22 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     }
 
     /**
+     * @reason Not needed in new chunk system, also avoid accessing old entity manager
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = {
+            "method_72080",
+            "lambda$waitForChunkAndEntities$21"
+        },
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;processPendingLoads()V"
+        )
+    )
+    private void redirectWaitForChunks(final PersistentEntitySectionManager<Entity> instance) {}
+
+    /**
      * @reason Level close now handles this
      * @author Spottedleaf
      */

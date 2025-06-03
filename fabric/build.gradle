@@ -20,9 +20,9 @@ dependencies {
     libs("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}") { setTransitive(false) }
     libs("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
 
-    modImplementation "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
-    include "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
-    modImplementation "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
+    //modImplementation "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
+    //include "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
+    //modImplementation "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
 
     modImplementation platform(fabricApiLibs.bom)
     modImplementation fabricApiLibs.command.api.v2

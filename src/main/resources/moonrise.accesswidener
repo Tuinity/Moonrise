@@ -177,7 +177,7 @@ accessible method net/minecraft/server/network/PlayerChunkSender sendChunk (Lnet
 
 
 # ChunkStatusTasks
-accessible method net/minecraft/world/level/chunk/status/ChunkStatusTasks postLoadProtoChunk (Lnet/minecraft/server/level/ServerLevel;Ljava/util/List;)V
+accessible method net/minecraft/world/level/chunk/status/ChunkStatusTasks postLoadProtoChunk (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/storage/ValueInput$ValueInputList;)V
 accessible method net/minecraft/world/level/chunk/status/ChunkStatusTasks light (Lnet/minecraft/world/level/chunk/status/WorldGenContext;Lnet/minecraft/world/level/chunk/status/ChunkStep;Lnet/minecraft/util/StaticCache2D;Lnet/minecraft/world/level/chunk/ChunkAccess;)Ljava/util/concurrent/CompletableFuture;
 
 

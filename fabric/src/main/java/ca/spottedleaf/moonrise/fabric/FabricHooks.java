@@ -6,6 +6,7 @@ import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixer;
+import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Dynamic;
 import it.unimi.dsi.fastutil.longs.LongArrays;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
@@ -18,6 +19,7 @@ import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.boss.EnderDragonPart;
 import net.minecraft.world.level.BlockGetter;
@@ -31,7 +33,9 @@ import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatusTasks;
 import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.AABB;
+import org.slf4j.Logger;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
@@ -39,6 +43,8 @@ import java.util.function.Predicate;
 public final class FabricHooks extends BaseChunkSystemHooks implements PlatformHooks {
 
     private static final boolean HAS_FABRIC_LIFECYCLE_EVENTS = FabricLoader.getInstance().isModLoaded("fabric-lifecycle-events-v1");
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     @Override
     public String getBrand() {
@@ -251,7 +257,9 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
 
     @Override
     public void postLoadProtoChunk(final ServerLevel world, final ProtoChunk chunk) {
-        ChunkStatusTasks.postLoadProtoChunk(world, chunk.getEntities());
+        try (final ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(chunk.problemPath(), LOGGER)) {
+            ChunkStatusTasks.postLoadProtoChunk(world, TagValueInput.create(scopedCollector, world.registryAccess(), chunk.getEntities()));
+        }
     }
 
     @Override

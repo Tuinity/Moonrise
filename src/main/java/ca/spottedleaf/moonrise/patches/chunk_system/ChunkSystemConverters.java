@@ -15,7 +15,7 @@ public final class ChunkSystemConverters {
     private static final int DEFAULT_ENTITY_CHUNK_DATA_VERSION = -1;
 
     private static int getCurrentVersion() {
-        return SharedConstants.getCurrentVersion().getDataVersion().getVersion();
+        return SharedConstants.getCurrentVersion().dataVersion().version();
     }
 
     private static int getDataVersion(final CompoundTag data, final int dfl) {

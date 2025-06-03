@@ -119,7 +119,7 @@ public final class PoiChunk {
         final CompoundTag sections = new CompoundTag();
         ret.put("Sections", sections);
 
-        ret.putInt("DataVersion", SharedConstants.getCurrentVersion().getDataVersion().getVersion());
+        ret.putInt("DataVersion", SharedConstants.getCurrentVersion().dataVersion().version());
 
         final ServerLevel world = this.world;
         final int chunkX = this.chunkX;

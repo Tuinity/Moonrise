@@ -147,7 +147,7 @@ public final class RegionizedPlayerChunkLoader {
     }
 
     public static int getAPITickViewDistance(final ServerPlayer player) {
-        final ServerLevel level = player.serverLevel();
+        final ServerLevel level = player.level();
         final PlayerChunkLoaderData data = ((ChunkSystemServerPlayer)player).moonrise$getChunkLoader();
         if (data == null) {
             return ((ChunkSystemServerLevel)level).moonrise$getPlayerChunkLoader().getAPITickDistance();
@@ -156,7 +156,7 @@ public final class RegionizedPlayerChunkLoader {
     }
 
     public static int getAPIViewDistance(final ServerPlayer player) {
-        final ServerLevel level = player.serverLevel();
+        final ServerLevel level = player.level();
         final PlayerChunkLoaderData data = ((ChunkSystemServerPlayer)player).moonrise$getChunkLoader();
         if (data == null) {
             return ((ChunkSystemServerLevel)level).moonrise$getPlayerChunkLoader().getAPIViewDistance();
@@ -166,7 +166,7 @@ public final class RegionizedPlayerChunkLoader {
     }
 
     public static int getAPISendViewDistance(final ServerPlayer player) {
-        final ServerLevel level = player.serverLevel();
+        final ServerLevel level = player.level();
         final PlayerChunkLoaderData data = ((ChunkSystemServerPlayer)player).moonrise$getChunkLoader();
         if (data == null) {
             return ((ChunkSystemServerLevel)level).moonrise$getPlayerChunkLoader().getAPISendViewDistance();

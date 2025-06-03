@@ -5,6 +5,7 @@ import ca.spottedleaf.moonrise.common.list.EntityList;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
 import ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity;
 import com.google.common.collect.ImmutableList;
+import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
@@ -14,6 +15,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -21,9 +23,14 @@ import net.minecraft.world.entity.boss.EnderDragonPart;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.storage.EntityStorage;
 import net.minecraft.world.level.entity.Visibility;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.phys.AABB;
+import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -31,6 +38,8 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public final class ChunkEntitySlices {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public final int minSection;
     public final int maxSection;
@@ -74,9 +83,12 @@ public final class ChunkEntitySlices {
         this.chunkData = chunkData;
     }
 
-    public static List<Entity> readEntities(final ServerLevel world, final CompoundTag compoundTag) {
-        // TODO check this and below on update for format changes
-        return EntityType.loadEntitiesRecursive(compoundTag.getListOrEmpty("Entities"), world, EntitySpawnReason.LOAD).collect(ImmutableList.toImmutableList());
+    public static List<Entity> readEntities(final ServerLevel world, final ChunkPos pos, final CompoundTag compoundTag) {
+        try (final ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(ChunkAccess.problemPath(pos), LOGGER)) {
+            ValueInput valueinput = TagValueInput.create(scopedCollector, world.registryAccess(), compoundTag);
+            // TODO check this and below on update for format changes
+            return EntityType.loadEntitiesRecursive(valueinput.childrenListOrEmpty("Entities"), world, EntitySpawnReason.LOAD).collect(ImmutableList.toImmutableList());
+        }
     }
 
     // Paper start - rewrite chunk system
@@ -104,12 +116,22 @@ public final class ChunkEntitySlices {
         }
 
         final ListTag entitiesTag = new ListTag();
-        for (final Entity entity : PlatformHooks.get().modifySavedEntities(world, chunkPos.x, chunkPos.z, entities)) {
-            CompoundTag compoundTag = new CompoundTag();
-            if (entity.save(compoundTag)) {
-                entitiesTag.add(compoundTag);
+        try (final ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(ChunkAccess.problemPath(chunkPos), LOGGER)) {
+            for (final Entity entity : PlatformHooks.get().modifySavedEntities(world, chunkPos.x, chunkPos.z, entities)) {
+                final TagValueOutput savedEntity = TagValueOutput.createWithContext(
+                    scopedCollector.forChild(entity.problemPath()), entity.registryAccess()
+                );
+
+                try {
+                    if (entity.save(savedEntity)) {
+                        entitiesTag.add(savedEntity.buildResult());
+                    }
+                } catch (final Exception ex) {
+                    LOGGER.error("Entity type " + entity.getType() + " failed to serialize", ex);
+                }
             }
         }
+
         final CompoundTag ret = NbtUtils.addCurrentDataVersion(new CompoundTag());
         ret.put("Entities", entitiesTag);
         ret.store("Position", ChunkPos.CODEC, chunkPos);
