@@ -16,10 +16,10 @@ public final class MoonriseNeoForge {
     @SuppressWarnings({"rawtypes", "unchecked"})
     public MoonriseNeoForge(final IEventBus modBus) {
         modBus.addListener(FMLClientSetupEvent.class, event -> {
-            /*ModLoadingContext.get().registerExtensionPoint(
+            ModLoadingContext.get().registerExtensionPoint(
                 IConfigScreenFactory.class,
                 () -> (modContainer, parent) -> MoonriseConfigScreen.create(parent)
-            );*/
+            );
             NeoForge.EVENT_BUS.addListener((final RegisterClientCommandsEvent commandsEvent) -> {
                 MoonriseCommand.registerClient((CommandDispatcher) commandsEvent.getDispatcher());
             });

@@ -6,8 +6,11 @@ plugins {
     id 'maven-publish'
 }
 
-sourceSets.create("gui")
-loom.createRemapConfigurations(sourceSets.gui)
+boolean gui = enable_gui == "true"
+if (gui) {
+    sourceSets.create("gui")
+    loom.createRemapConfigurations(sourceSets.gui)
+}
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -23,14 +26,14 @@ dependencies {
     libs("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}") { setTransitive(false) }
     libs("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
 
-    guiCompileOnly(project(":"))
-    runtimeOnly(sourceSets.gui.output)
-    shadow(sourceSets.gui.output)
-    modGuiImplementation "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
-    include "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
-    modGuiImplementation "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
-    if (enable_gui == "true") {
+    if (gui) {
+        guiCompileOnly(project(":"))
+        runtimeOnly(sourceSets.gui.output)
+        shadow(sourceSets.gui.output)
+        modGuiImplementation "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
         modRuntimeOnly "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
+        include "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_version}"
+        modGuiImplementation "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
         modRuntimeOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
     }
 
@@ -41,9 +44,11 @@ dependencies {
     include fabricApiLibs.base
 }
 
-afterEvaluate {
-    configurations.guiCompileOnly {
-        extendsFrom configurations.getByName("minecraftNamedCompile")
+if (gui) {
+    afterEvaluate {
+        configurations.guiCompileOnly {
+            extendsFrom configurations.getByName("minecraftNamedCompile")
+        }
     }
 }
 
