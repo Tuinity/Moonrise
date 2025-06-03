@@ -1,15 +1,13 @@
 package ca.spottedleaf.moonrise.common.config;
 
-/*
 import ca.spottedleaf.moonrise.common.config.moonrise.MoonriseConfig;
 import ca.spottedleaf.moonrise.common.config.ui.ConfigWalker;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-*/
+
 public final class MoonriseConfigScreen {
-    /*
     private MoonriseConfigScreen() {
     }
 
@@ -29,5 +27,5 @@ public final class MoonriseConfigScreen {
         }
 
         return builder.build();
-    }*/
+    }
 }
