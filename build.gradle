@@ -4,6 +4,7 @@ plugins {
     id("java-library")
     id("net.neoforged.moddev")
     id("me.modmuss50.mod-publish-plugin") version "0.8.4" apply false
+    id("xyz.jpenilla.resource-factory") version "1.3.0" apply false
 }
 
 extensions.create("runConfigCommon", RunConfigCommon.class)
