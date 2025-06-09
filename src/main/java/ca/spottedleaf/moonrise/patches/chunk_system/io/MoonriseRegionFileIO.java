@@ -1042,7 +1042,7 @@ public final class MoonriseRegionFileIO {
                 LOGGER.error("Failed to decompress chunk data for task: " + this.toString(), thr);
             }
 
-            if (compoundTag == null) {
+            if (throwable == null && compoundTag == null) {
                 // need to re-try from the start
                 this.scheduleReadIO();
                 return;
