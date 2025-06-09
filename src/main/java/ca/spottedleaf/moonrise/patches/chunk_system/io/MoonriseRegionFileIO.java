@@ -376,6 +376,7 @@ public final class MoonriseRegionFileIO {
      * <p>
      *     Impl notes:
      * </p>
+     * <ul>
      * <li>
      *     This function presumes a chunk load for the coordinates is not called during this function (anytime after is OK). This means
      *     saves must be scheduled before a chunk is unloaded.
@@ -383,6 +384,7 @@ public final class MoonriseRegionFileIO {
      * <li>
      *     Writes may be called concurrently, although only the "later" write will go through.
      * </li>
+     * </ul>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -402,6 +404,7 @@ public final class MoonriseRegionFileIO {
      * <p>
      *     Impl notes:
      * </p>
+     * <ul>
      * <li>
      *     This function presumes a chunk load for the coordinates is not called during this function (anytime after is OK). This means
      *     saves must be scheduled before a chunk is unloaded.
@@ -409,6 +412,7 @@ public final class MoonriseRegionFileIO {
      * <li>
      *     Writes may be called concurrently, although only the "later" write will go through.
      * </li>
+     * </ul>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -434,6 +438,7 @@ public final class MoonriseRegionFileIO {
      * <p>
      *     Impl notes:
      * </p>
+     * <ul>
      * <li>
      *     This function presumes a chunk load for the coordinates is not called during this function (anytime after is OK). This means
      *     saves must be scheduled before a chunk is unloaded.
@@ -444,6 +449,7 @@ public final class MoonriseRegionFileIO {
      * <li>
      *     The specified write task, if not null, will have its priority controlled by the scheduler.
      * </li>
+     * </ul>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -465,6 +471,7 @@ public final class MoonriseRegionFileIO {
      * <p>
      *     Impl notes:
      * </p>
+     * <ul>
      * <li>
      *     This function presumes a chunk load for the coordinates is not called during this function (anytime after is OK). This means
      *     saves must be scheduled before a chunk is unloaded.
@@ -475,6 +482,7 @@ public final class MoonriseRegionFileIO {
      * <li>
      *     The specified write task, if not null, will have its priority controlled by the scheduler.
      * </li>
+     * </ul>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -537,11 +545,13 @@ public final class MoonriseRegionFileIO {
      * <p>
      *     Impl notes:
      * </p>
+     * <ul>
      * <li>
      *     The {@code onComplete} parameter may be completed during the execution of this function synchronously or it may
      *     be completed asynchronously on this file io thread. Interacting with the file IO thread in the completion of
      *     data is undefined behaviour, and can cause deadlock.
      * </li>
+     * </ul>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -569,11 +579,13 @@ public final class MoonriseRegionFileIO {
      * <p>
      *     Impl notes:
      * </p>
+     * <ul>
      * <li>
      *     The {@code onComplete} parameter may be completed during the execution of this function synchronously or it may
      *     be completed asynchronously on this file io thread. Interacting with the file IO thread in the completion of
      *     data is undefined behaviour, and can cause deadlock.
      * </li>
+     * </ul>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -603,11 +615,13 @@ public final class MoonriseRegionFileIO {
      * <p>
      *     Impl notes:
      * </p>
+     * <ul>
      * <li>
      *     The {@code onComplete} parameter may be completed during the execution of this function synchronously or it may
      *     be completed asynchronously on this file io thread. Interacting with the file IO thread in the completion of
      *     data is undefined behaviour, and can cause deadlock.
      * </li>
+     * </ul>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -637,11 +651,13 @@ public final class MoonriseRegionFileIO {
      * <p>
      *     Impl notes:
      * </p>
+     * <ul>
      * <li>
      *     The {@code onComplete} parameter may be completed during the execution of this function synchronously or it may
      *     be completed asynchronously on this file io thread. Interacting with the file IO thread in the completion of
      *     data is undefined behaviour, and can cause deadlock.
      * </li>
+     * </ul>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -700,11 +716,13 @@ public final class MoonriseRegionFileIO {
      * <p>
      *     Impl notes:
      * </p>
+     * <ul>
      * <li>
      *     The {@code onComplete} parameter may be completed during the execution of this function synchronously or it may
      *     be completed asynchronously on this file io thread. Interacting with the file IO thread in the completion of
      *     data is undefined behaviour, and can cause deadlock.
      * </li>
+     * </ul>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -732,11 +750,13 @@ public final class MoonriseRegionFileIO {
      * <p>
      *     Impl notes:
      * </p>
+     * <ul>
      * <li>
      *     The {@code onComplete} parameter may be completed during the execution of this function synchronously or it may
      *     be completed asynchronously on this file io thread. Interacting with the file IO thread in the completion of
      *     data is undefined behaviour, and can cause deadlock.
      * </li>
+     * </ul>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
