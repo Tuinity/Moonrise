@@ -4,6 +4,8 @@ import ca.spottedleaf.moonrise.common.list.ShortList;
 
 public interface BlockCountingChunkSection {
 
+    public boolean moonrise$anyTickingBlocks();
+
     public boolean moonrise$hasSpecialCollidingBlocks();
 
     public ShortList moonrise$getTickingBlockList();

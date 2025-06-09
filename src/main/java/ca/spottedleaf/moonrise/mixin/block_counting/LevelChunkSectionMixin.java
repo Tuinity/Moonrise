@@ -65,7 +65,17 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     private short specialCollidingBlocks;
 
     @Unique
-    private final ShortList tickingBlocks = new ShortList();
+    private ShortList tickingBlocks = null;
+
+    @Override
+    public boolean moonrise$anyTickingBlocks() {
+        return tickingBlocks != null;
+    }
+
+    @Unique
+    private void createTickingBlocks() {
+        if (tickingBlocks == null) tickingBlocks = new ShortList();
+    }
 
     @Override
     public final boolean moonrise$hasSpecialCollidingBlocks() {
@@ -74,6 +84,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
 
     @Override
     public final ShortList moonrise$getTickingBlockList() {
+        this.createTickingBlocks();
         return this.tickingBlocks;
     }
 
@@ -113,6 +124,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
         final boolean oldTicking = oldState.isRandomlyTicking();
         final boolean newTicking = newState.isRandomlyTicking();
         if (oldTicking != newTicking) {
+            this.createTickingBlocks();
             final ShortList tickingBlocks = this.tickingBlocks;
             final short position = (short)(x | (z << 4) | (y << (4+4)));
 
@@ -150,7 +162,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
         this.tickingBlockCount = (short)0;
         this.tickingFluidCount = (short)0;
         this.specialCollidingBlocks = (short)0;
-        this.tickingBlocks.clear();
+        this.tickingBlocks = null;
 
         if (this.maybeHas((final BlockState state) -> !state.isAir())) {
             final PalettedContainer.Data<BlockState> data = this.states.data;
@@ -187,6 +199,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                     final short[] raw = coordinates.elements();
                     final int rawLen = raw.length;
 
+                    this.createTickingBlocks();
                     final ShortList tickingBlocks = this.tickingBlocks;
 
                     tickingBlocks.setMinCapacity(Math.min((rawLen + tickingBlocks.size()) * 3 / 2, 16*16*16));
