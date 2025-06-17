@@ -29,6 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 @Mixin(TicketStorage.class)
@@ -193,8 +194,8 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
      * @author Spottedleaf
      */
     @Overwrite
-    public void purgeStaleTickets() {
-        ((ChunkSystemServerLevel)this.chunkMap.level).moonrise$getChunkTaskScheduler().chunkHolderManager.tick();
+    public void purgeStaleTickets(final ChunkMap chunkMap) {
+        ((ChunkSystemServerLevel)chunkMap.level).moonrise$getChunkTaskScheduler().chunkHolderManager.tick();
         this.setDirty();
     }
 
@@ -208,11 +209,11 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
         method = "deactivateTicketsOnClosing",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/TicketStorage;removeTicketIf(Ljava/util/function/Predicate;Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;)V"
+            target = "Lnet/minecraft/world/level/TicketStorage;removeTicketIf(Ljava/util/function/BiPredicate;Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;)V"
         )
     )
     private void avoidRemovingTicketsOnShutdown(final TicketStorage instance,
-                                                final Predicate<Ticket> predicate,
+                                                final BiPredicate<Long, Ticket> predicate,
                                                 final Long2ObjectOpenHashMap<List<Ticket>> tickets) {}
 
     /**
@@ -220,7 +221,7 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
      * @author Spottedleaf
      */
     @Overwrite
-    public void removeTicketIf(final Predicate<Ticket> predicate, final Long2ObjectOpenHashMap<List<Ticket>> into) {
+    public void removeTicketIf(final BiPredicate<Long, Ticket> predicate, final Long2ObjectOpenHashMap<List<Ticket>> into) {
         throw new UnsupportedOperationException();
     }
 

@@ -81,11 +81,6 @@ allprojects {
         }
         maven { url = "https://maven.shedaniel.me/" }
         maven { url = "https://maven.terraformersmc.com/releases/" }
-        mavenLocal {
-            mavenContent {
-                includeModule("net.neoforged", "neoforge")
-            }
-        }
     }
 
     // make build reproducible
