@@ -54,6 +54,7 @@
         "chunk_system.TicketMixin",
         "chunk_system.TicketStorageMixin",
         "chunk_system.TicketTypeMixin",
+        "chunk_system.WaypointTransmitterMixin",
         "chunk_tick_iteration.ChunkMapMixin",
         "chunk_tick_iteration.DistanceManagerMixin",
         "chunk_tick_iteration.ServerChunkCacheMixin",
@@ -144,5 +145,5 @@
     },
     "overwrites": {
         "conformVisibility": true
-  }
+    }
 }
