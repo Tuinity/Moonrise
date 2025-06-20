@@ -46,7 +46,7 @@ import java.util.function.Function;
 public final class RegionizedPlayerChunkLoader {
 
     public static final TicketType<Long> PLAYER_TICKET         = TicketType.create("chunk_system:player_ticket", Long::compareTo);
-    public static final TicketType<Long> PLAYER_TICKET_DELAYED = TicketType.create("chunk_system:player_ticket_delayed", Long::compareTo, 5 * 20);
+    public static final TicketType<Long> PLAYER_TICKET_DELAYED = TicketType.create("chunk_system:player_ticket_delayed", Long::compareTo, 1);
 
     public static final int MIN_VIEW_DISTANCE = 2;
     public static final int MAX_VIEW_DISTANCE = 32;
@@ -54,6 +54,10 @@ public final class RegionizedPlayerChunkLoader {
     public static final int GENERATED_TICKET_LEVEL = ChunkHolderManager.FULL_LOADED_TICKET_LEVEL;
     public static final int LOADED_TICKET_LEVEL = ChunkTaskScheduler.getTicketLevel(ChunkStatus.EMPTY);
     public static final int TICK_TICKET_LEVEL = ChunkHolderManager.ENTITY_TICKING_TICKET_LEVEL;
+
+    public static void setUnloadDelay(final long ticks) {
+        PLAYER_TICKET_DELAYED.timeout = Math.max(1, ticks);
+    }
 
     public static final class ViewDistanceHolder {
 

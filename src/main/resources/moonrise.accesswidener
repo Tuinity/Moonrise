@@ -210,6 +210,7 @@ accessible class net/minecraft/server/level/DistanceManager$FixedPlayerDistanceC
 # Ticket
 accessible field net/minecraft/server/level/Ticket key Ljava/lang/Object;
 accessible field net/minecraft/server/level/TicketType timeout J
+mutable field net/minecraft/server/level/TicketType timeout J
 
 
 # ServerChunkCache

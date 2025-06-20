@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.common.config.moonrise;
 
 import ca.spottedleaf.moonrise.common.config.ui.ClothConfig;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
+import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.yamlconfig.InitialiseHook;
 import ca.spottedleaf.yamlconfig.annotation.Adaptable;
@@ -38,7 +39,7 @@ public final class MoonriseConfig {
 
 
         @Adaptable
-        public static final class Basic {
+        public static final class Basic implements InitialiseHook {
             @Serializable(
                     comment = """
                             The maximum rate of chunks to send to any given player, per second. If this value is <= 0,
@@ -72,6 +73,20 @@ public final class MoonriseConfig {
                     section = CHUNK_SYSTEM_SECTION
             )
             public double playerMaxGenRate = -1.0;
+
+            @Serializable(
+                comment = """
+                            The delay before chunks are unloaded around players once they leave their view distance.
+                            The Vanilla value is 0 ticks. Setting this value higher (i.e 5s) will allow pets to teleport
+                            to their owners when they teleport.
+                            """
+            )
+            public Duration playerChunkUnloadDelay = Duration.parse("0t");
+
+            @Override
+            public void initialise() {
+                RegionizedPlayerChunkLoader.setUnloadDelay(this.playerChunkUnloadDelay.getTimeTicks());
+            }
         }
 
         @Serializable(
