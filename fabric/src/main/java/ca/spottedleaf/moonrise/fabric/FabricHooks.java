@@ -271,4 +271,9 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
     public long[] getCounterTypesUncached(final TicketType type) {
         return type == TicketType.FORCED ? new long[] { ChunkSystemTicketType.COUNTER_TYPE_FORCED } : LongArrays.EMPTY_ARRAY;
     }
+
+    @Override
+    public boolean addTicketForEnderPearls() {
+        return true;
+    }
 }

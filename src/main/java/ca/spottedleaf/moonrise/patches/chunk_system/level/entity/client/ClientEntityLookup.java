@@ -45,8 +45,7 @@ public final class ClientEntityLookup extends EntityLookup {
         final boolean ticking = this.tickingChunks.contains(CoordinateUtils.getChunkKey(chunkX, chunkZ));
 
         final ChunkEntitySlices ret = new ChunkEntitySlices(
-                this.world, chunkX, chunkZ,
-                ticking ? FullChunkStatus.ENTITY_TICKING : FullChunkStatus.FULL, null,
+            this.world, chunkX, chunkZ, ticking ? FullChunkStatus.ENTITY_TICKING : FullChunkStatus.FULL, null,
             WorldUtil.getMinSection(this.world), WorldUtil.getMaxSection(this.world)
         );
 

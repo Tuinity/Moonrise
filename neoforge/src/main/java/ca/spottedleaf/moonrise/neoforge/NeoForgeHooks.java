@@ -286,4 +286,9 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
 
         return ret.toLongArray();
     }
+
+    @Override
+    public boolean addTicketForEnderPearls() {
+        return true;
+    }
 }

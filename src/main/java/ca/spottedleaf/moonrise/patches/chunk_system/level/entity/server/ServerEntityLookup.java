@@ -7,9 +7,14 @@ import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.ChunkEntitySlices;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
+import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.projectile.ThrownEnderpearl;
 import net.minecraft.world.level.entity.LevelCallback;
 
 public final class ServerEntityLookup extends EntityLookup {
@@ -18,6 +23,13 @@ public final class ServerEntityLookup extends EntityLookup {
 
     private final ServerLevel serverWorld;
     public final ReferenceList<Entity> trackerEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY); // Moonrise - entity tracker
+
+    // Vanilla does not increment ticket timeouts if the chunk is progressing in generation. They made this change in 1.21.6 so that the ender pearl
+    // ticket does not expire if the chunk fails to generate before the timeout expires. Rather than blindly adjusting the entire system behavior
+    // to fix this small issue, we instead add non-expirable tickets here to keep ender pearls ticking. This is how the original feature should have
+    // been implemented, but I don't think Vanilla has proper entity add/remove hooks like we do. Fixes MC-297591
+    private static final TicketType ENDER_PEARL_TICKER = ChunkSystemTicketType.create("chunk_system:ender_pearl_ticker", null);
+    private final Long2IntOpenHashMap enderPearlChunkCount = new Long2IntOpenHashMap();
 
     public ServerEntityLookup(final ServerLevel world, final LevelCallback<Entity> worldCallback) {
         super(world, worldCallback);
@@ -63,6 +75,10 @@ public final class ServerEntityLookup extends EntityLookup {
         if (entity instanceof ServerPlayer player) {
             ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().tickPlayer(player);
         }
+        if (entity instanceof ThrownEnderpearl enderpearl && (oldSectionX != newSectionX || oldSectionZ != newSectionZ)) {
+            this.removeEnderPearl(CoordinateUtils.getChunkKey(oldSectionX, oldSectionZ));
+            this.addEnderPearl(CoordinateUtils.getChunkKey(newSectionX, newSectionZ));
+        }
         PlatformHooks.get().entityMove(
             entity,
             CoordinateUtils.getChunkSectionKey(oldSectionX, oldSectionY, oldSectionZ),
@@ -75,12 +91,18 @@ public final class ServerEntityLookup extends EntityLookup {
         if (entity instanceof ServerPlayer player) {
             ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().addPlayer(player);
         }
+        if (entity instanceof ThrownEnderpearl enderpearl) {
+            this.addEnderPearl(CoordinateUtils.getChunkKey(enderpearl.chunkPosition()));
+        }
     }
 
     @Override
     protected void removeEntityCallback(final Entity entity) {
         if (entity instanceof ServerPlayer player) {
             ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().removePlayer(player);
+        }
+        if (entity instanceof ThrownEnderpearl enderpearl) {
+            this.removeEnderPearl(CoordinateUtils.getChunkKey(enderpearl.chunkPosition()));
         }
     }
 
@@ -111,5 +133,24 @@ public final class ServerEntityLookup extends EntityLookup {
     @Override
     protected boolean screenEntity(final Entity entity, final boolean fromDisk, final boolean event) {
         return PlatformHooks.get().screenEntity(this.serverWorld, entity, fromDisk, event);
+    }
+
+    private void addEnderPearl(final long coordinate) {
+        final int oldCount = this.enderPearlChunkCount.addTo(coordinate, 1);
+        if (oldCount != 0) {
+            return;
+        }
+        ((ChunkSystemServerLevel)this.serverWorld).moonrise$getChunkTaskScheduler().chunkHolderManager
+            .addTicketAtLevel(ENDER_PEARL_TICKER, coordinate, ChunkHolderManager.ENTITY_TICKING_TICKET_LEVEL, null);
+    }
+
+    private void removeEnderPearl(final long coordinate) {
+        final int oldCount = this.enderPearlChunkCount.addTo(coordinate, -1);
+        if (oldCount != 1) {
+            return;
+        }
+        this.enderPearlChunkCount.remove(coordinate);
+        ((ChunkSystemServerLevel)this.serverWorld).moonrise$getChunkTaskScheduler().chunkHolderManager
+            .removeTicketAtLevel(ENDER_PEARL_TICKER, coordinate, ChunkHolderManager.ENTITY_TICKING_TICKET_LEVEL, null);
     }
 }
