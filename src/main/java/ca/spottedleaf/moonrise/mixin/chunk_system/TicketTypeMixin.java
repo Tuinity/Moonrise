@@ -3,7 +3,10 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import net.minecraft.server.level.TicketType;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -13,6 +16,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Mixin(TicketType.class)
 abstract class TicketTypeMixin<T> implements ChunkSystemTicketType<T> {
+
+    @Final
+    @Shadow
+    @Mutable
+    private long timeout;
 
     @Unique
     private static AtomicLong ID_GENERATOR;
@@ -65,5 +73,10 @@ abstract class TicketTypeMixin<T> implements ChunkSystemTicketType<T> {
         }
 
         return this.counterTypes = PlatformHooks.get().getCounterTypesUncached((TicketType)(Object)this);
+    }
+
+    @Override
+    public final void moonrise$setTimeout(final long to) {
+        this.timeout = to;
     }
 }

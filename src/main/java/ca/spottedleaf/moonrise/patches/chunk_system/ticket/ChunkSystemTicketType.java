@@ -30,4 +30,5 @@ public interface ChunkSystemTicketType<T> {
 
     public long[] moonrise$getCounterTypes();
 
+    public void moonrise$setTimeout(final long to);
 }
