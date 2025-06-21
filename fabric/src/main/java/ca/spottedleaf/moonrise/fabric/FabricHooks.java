@@ -273,7 +273,7 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
     }
 
     @Override
-    public boolean addTicketForEnderPearls() {
+    public boolean addTicketForEnderPearls(final ServerLevel world) {
         return true;
     }
 }

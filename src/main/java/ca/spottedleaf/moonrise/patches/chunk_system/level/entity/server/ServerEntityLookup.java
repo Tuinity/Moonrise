@@ -30,10 +30,12 @@ public final class ServerEntityLookup extends EntityLookup {
     // been implemented, but I don't think Vanilla has proper entity add/remove hooks like we do. Fixes MC-297591
     private static final TicketType ENDER_PEARL_TICKER = ChunkSystemTicketType.create("chunk_system:ender_pearl_ticker", null);
     private final Long2IntOpenHashMap enderPearlChunkCount = new Long2IntOpenHashMap();
+    private final boolean keepEnderPearlsTicking;
 
     public ServerEntityLookup(final ServerLevel world, final LevelCallback<Entity> worldCallback) {
         super(world, worldCallback);
         this.serverWorld = world;
+        this.keepEnderPearlsTicking = PlatformHooks.get().addTicketForEnderPearls(world);
     }
 
     @Override
@@ -136,6 +138,10 @@ public final class ServerEntityLookup extends EntityLookup {
     }
 
     private void addEnderPearl(final long coordinate) {
+        if (!this.keepEnderPearlsTicking) {
+            return;
+        }
+
         final int oldCount = this.enderPearlChunkCount.addTo(coordinate, 1);
         if (oldCount != 0) {
             return;
@@ -145,6 +151,10 @@ public final class ServerEntityLookup extends EntityLookup {
     }
 
     private void removeEnderPearl(final long coordinate) {
+        if (!this.keepEnderPearlsTicking) {
+            return;
+        }
+
         final int oldCount = this.enderPearlChunkCount.addTo(coordinate, -1);
         if (oldCount != 1) {
             return;

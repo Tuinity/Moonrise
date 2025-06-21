@@ -288,7 +288,7 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
     }
 
     @Override
-    public boolean addTicketForEnderPearls() {
+    public boolean addTicketForEnderPearls(final ServerLevel world) {
         return true;
     }
 }
