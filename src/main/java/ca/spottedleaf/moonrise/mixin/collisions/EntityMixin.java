@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
+import ca.spottedleaf.moonrise.common.util.EntityCachedBlockPosHolder;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
@@ -27,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(Entity.class)
-abstract class EntityMixin {
+abstract class EntityMixin implements EntityCachedBlockPosHolder {
 
     @Shadow
     private Level level;
@@ -49,6 +50,15 @@ abstract class EntityMixin {
 
     @Shadow
     private boolean onGround;
+
+    @Unique
+    public final BlockPos.MutableBlockPos moonrise$cachedBlockPos = new BlockPos.MutableBlockPos();
+
+    @Unique
+    @Override
+    public BlockPos.MutableBlockPos moonrise$getCachedBlockPos() {
+        return moonrise$cachedBlockPos;
+    }
 
     @Unique
     private static float[] calculateStepHeights(final AABB box, final List<VoxelShape> voxels, final List<AABB> aabbs, final float stepHeight,

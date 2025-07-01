@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.patches.collisions;
 
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
+import ca.spottedleaf.moonrise.common.util.EntityCachedBlockPosHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemEntityGetter;
 import ca.spottedleaf.moonrise.patches.collisions.block.CollisionBlockState;
 import ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity;
@@ -1891,6 +1892,7 @@ public final class CollisionUtil {
                                                               final int collisionFlags, final BiPredicate<BlockState, BlockPos> predicate) {
         final boolean checkOnly = (collisionFlags & COLLISION_FLAG_CHECK_ONLY) != 0;
         boolean ret = false;
+        final BlockPos.MutableBlockPos mutablePos;
 
         if ((collisionFlags & COLLISION_FLAG_CHECK_BORDER) != 0) {
             final WorldBorder worldBorder = world.getWorldBorder();
@@ -1903,7 +1905,8 @@ public final class CollisionUtil {
                     ret = true;
                 }
             }
-        }
+            mutablePos = entity != null ? ((EntityCachedBlockPosHolder) entity).moonrise$getCachedBlockPos() : new BlockPos.MutableBlockPos();
+        } else mutablePos = new BlockPos.MutableBlockPos();
 
         final int minSection = WorldUtil.getMinSection(world);
 
@@ -1916,7 +1919,6 @@ public final class CollisionUtil {
         final int minBlockZ = Mth.floor(aabb.minZ - COLLISION_EPSILON) - 1;
         final int maxBlockZ = Mth.floor(aabb.maxZ + COLLISION_EPSILON) + 1;
 
-        final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         final CollisionContext collisionShape = new LazyEntityCollisionContext(entity);
         final boolean useEntityCollisionShape = LazyEntityCollisionContext.useEntityCollisionShape(world, entity);
 
