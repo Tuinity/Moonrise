@@ -1,0 +1,75 @@
+plugins {
+	id 'java-library'
+}
+
+dependencies {
+	api("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}") { setTransitive(false) }
+	api("ca.spottedleaf:yamlconfig:${rootProject.yamlconfig_version}") { setTransitive(false) }
+	api("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
+}
+
+repositories {
+	mavenCentral() {
+		mavenContent {
+			includeGroup("org.yaml")
+		}
+	}
+}
+
+def getGitCommit = providers.exec {
+	commandLine 'git', 'rev-parse', '--short', 'HEAD'
+}.standardOutput.getAsText().map { it.trim() }
+
+allprojects {
+	group = rootProject.maven_group
+	version = rootProject.mod_version + "+" + getGitCommit.get()
+
+	plugins.apply("java-library")
+
+	java {
+		withSourcesJar()
+
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(21)
+		}
+	}
+
+	repositories {
+		maven {
+			url = "https://repo.papermc.io/repository/maven-public/"
+			mavenContent {
+				includeGroup("ca.spottedleaf")
+			}
+		}
+	}
+
+	// make build reproducible
+	tasks.withType(AbstractArchiveTask).configureEach {
+		preserveFileTimestamps = false
+		reproducibleFileOrder = true
+	}
+
+	tasks.withType(JavaCompile).configureEach {
+		it.options.encoding = 'UTF-8'
+		it.options.release = 21
+	}
+
+	tasks.jar.configure {
+		from(rootProject.file("LICENSE")) {
+			rename { "${it}_${rootProject.base.archivesName.get()}"}
+		}
+	}
+}
+
+subprojects {
+	plugins.apply 'java-library'
+	plugins.apply 'com.gradleup.shadow'
+
+	configurations.create("libs")
+	configurations.shadow {
+		extendsFrom(configurations.libs)
+	}
+	configurations.implementation {
+		extendsFrom(configurations.libs)
+	}
+}

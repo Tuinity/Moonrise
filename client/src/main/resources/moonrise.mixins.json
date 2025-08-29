@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "ca.spottedleaf.moonrise.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "starlight.AlphaChunkStorageMixin",
+    "starlight.ChunkNibbleStorageMixin",
+    "starlight.WorldChunkMixin",
+    "starlight.WorldMixin"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+	}
+}

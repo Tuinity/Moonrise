@@ -1,0 +1,27 @@
+pluginManagement {
+	repositories {
+		gradlePluginPortal()
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+		}
+		maven {
+			name = 'Ornithe Releases'
+			url = 'https://maven.ornithemc.net/releases'
+		}
+	}
+}
+
+plugins {
+	id 'fabric-loom' version '1.11.7' apply false
+	id 'ploceus' version '1.11.6' apply false
+	id 'com.gradleup.shadow' version '8.3.6' apply false
+}
+
+rootProject.name = "Moonrise"
+
+include("client")
+findProject(":client").name = "Moonrise-Client"
+include("server")
+findProject(":server").name = "Moonrise-Server"
+

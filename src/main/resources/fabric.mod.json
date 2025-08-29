@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "moonrise",
+  "version": "${version}",
+  "name": "Moonrise",
+  "description": "",
+  "authors": [
+    "Spottedleaf"
+  ],
+  "contact": {
+    "issues": "https://github.com/Tuinity/Moonrise/issues",
+    "sources": "https://github.com/Tuinity/Moonrise",
+    "discord": "https://discord.gg/tuinity",
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/moonrise"
+  },
+  "license": "GPL-3.0-only",
+  "icon": "assets/moonrise/icon.png",
+  "environment": "${environment}",
+  "entrypoints": {},
+  "mixins": [
+    "moonrise.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "1.0.0-beta.7.3",
+    "osl-entrypoints": ">=0.4.0"
+  }
+}
