@@ -18,10 +18,10 @@ plugins {
 	id 'com.gradleup.shadow' version '8.3.6' apply false
 }
 
-rootProject.name = "Moonrise"
+rootProject.name = "Moonrise-Beta"
 
 include("client")
-findProject(":client").name = "Moonrise-Client"
+findProject(":client").name = "Moonrise-Beta-Client"
 include("server")
-findProject(":server").name = "Moonrise-Server"
+findProject(":server").name = "Moonrise-Beta-Server"
 
