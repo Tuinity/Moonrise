@@ -4,6 +4,7 @@
   "package": "ca.spottedleaf.moonrise.server.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "regionfile.RegionFileMixin",
     "starlight.AlphaChunkStorageMixin",
     "starlight.ChunkNibbleStorageMixin",
     "starlight.WorldChunkMixin",
@@ -13,5 +14,8 @@
   "server": [],
   "injectors": {
     "defaultRequire": 1
+  },
+  "overwrites": {
+    "conformVisibility": true
   }
 }
