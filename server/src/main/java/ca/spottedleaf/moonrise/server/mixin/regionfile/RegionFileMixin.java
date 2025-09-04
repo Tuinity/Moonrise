@@ -173,7 +173,7 @@ abstract class RegionFileMixin {
 
 			// only free old allocation after finishing write to new data
 			for (int i = 0; i < oldBlockSize; ++i) {
-				this.blockEmptyFlags.set(oldBlockOffset + i, true);
+				this.blockEmptyFlags.set(oldBlockOffset + i, Boolean.TRUE);
 			}
 		} catch (final IOException ex) {
 			ex.printStackTrace();

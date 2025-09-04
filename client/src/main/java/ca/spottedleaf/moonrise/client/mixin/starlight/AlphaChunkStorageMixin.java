@@ -32,6 +32,10 @@ abstract class AlphaChunkStorageMixin {
 		nbt.putBoolean(LIGHT_FLAG_TAG, ((StarlightChunk)chunk).starlight$isLightingDone());
 	}
 
+	/**
+	 * @reason Support reading/writing light flag
+	 * @author Spottedleaf
+	 */
 	@Inject(
 		method = "loadChunkFromNbt",
 		at = @At(
