@@ -5,6 +5,9 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "regionfile.RegionFileMixin",
+    "skylands.AlphaWorldStorageMixin",
+    "skylands.RegionWorldStorageMixin",
+    "skylands.client.WorldMixin",
     "starlight.AlphaChunkStorageMixin",
     "starlight.ChunkNibbleStorageMixin",
     "starlight.WorldChunkMixin",

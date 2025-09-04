@@ -69,6 +69,7 @@ public final class StarlightEngine {
 	// always initialsed during start of lighting.
 	// index = x + (z * 5)
 	private final StarlightChunk[] chunkCache = new StarlightChunk[5 * 5];
+	private final StarlightNibbleArray[] nibbleCache = new StarlightNibbleArray[5 * 5];
 
 	private int encodeOffsetX;
 	private int encodeOffsetY;
@@ -148,12 +149,13 @@ public final class StarlightEngine {
 	}
 
 	private void setChunkInCache(final int chunkX, final int chunkZ, final StarlightChunk chunk) {
-		this.chunkCache[chunkX + 5*chunkZ + this.chunkIndexOffset] = chunk;
+		final int index = chunkX + 5*chunkZ + this.chunkIndexOffset;
+		this.chunkCache[index] = chunk;
+		this.nibbleCache[index] = chunk == null ? null : (this.skylightPropagator ? chunk.starlight$getSkyLight() : chunk.starlight$getBlockLight());
 	}
 
 	private StarlightNibbleArray getNibbleFromCache(final int chunkX, final int chunkZ) {
-		final StarlightChunk chunk = this.getChunkInCache(chunkX, chunkZ);
-		return chunk == null ? null : (this.skylightPropagator ? chunk.starlight$getSkyLight() : chunk.starlight$getBlockLight());
+		return this.nibbleCache[chunkX + 5*chunkZ + this.chunkIndexOffset];
 	}
 
 	private int getBlockState(final int worldX, final int worldY, final int worldZ) {
@@ -198,6 +200,7 @@ public final class StarlightEngine {
 			}
 		}
 		Arrays.fill(this.chunkCache, null);
+		Arrays.fill(this.nibbleCache, null);
 	}
 
 	private void setLightLevel(final int worldX, final int worldY, final int worldZ, final int level) {
