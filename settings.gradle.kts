@@ -4,25 +4,20 @@ pluginManagement {
             mavenContent { releasesOnly() }
         }
         gradlePluginPortal()
-        maven {
-            name = 'Fabric'
-            url = 'https://maven.fabricmc.net/'
+        maven("https://maven.fabricmc.net/") {
+            name = "Fabric"
         }
-        maven {
-            name = 'NeoForged'
-            url = 'https://maven.neoforged.net/releases/'
+        maven("https://maven.neoforged.net/releases/") {
+            name = "NeoForged"
         }
-        maven {
+        maven("https://repo.papermc.io/repository/maven-public/") {
             name = "PaperMC"
-            url = "https://repo.papermc.io/repository/maven-public/"
         }
-        maven {
-            name = 'jmp'
-            url = 'https://repo.jpenilla.xyz/snapshots'
+        maven("https://repo.jpenilla.xyz/snapshots") {
+            name = "jmp"
         }
-        maven {
-            name = 'architectury'
-            url = 'https://maven.architectury.dev/'
+        maven("https://maven.architectury.dev/") {
+            name = "architectury"
         }
     }
 }
@@ -31,13 +26,12 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
     id("quiet-fabric-loom") version "1.11.325"
     id("net.neoforged.moddev.repositories") version "2.0.107"
-    id 'com.gradleup.shadow' version '9.1.0' apply false
+    id("com.gradleup.shadow") version "9.1.0" apply false
 }
 
 dependencyResolutionManagement {
     repositories {
-        maven {
-            url = "https://api.modrinth.com/maven"
+        maven("https://api.modrinth.com/maven") {
             mavenContent {
                 includeGroup("maven.modrinth")
             }
@@ -45,16 +39,15 @@ dependencyResolutionManagement {
         mavenCentral {
             mavenContent { releasesOnly() }
         }
-        maven {
+        maven("https://repo.papermc.io/repository/maven-public/") {
             name = "PaperMC"
-            url = "https://repo.papermc.io/repository/maven-public/"
         }
-        maven { url = "https://maven.shedaniel.me/" }
-        maven { url = "https://maven.terraformersmc.com/releases/" }
+        maven("https://maven.shedaniel.me/")
+        maven("https://maven.terraformersmc.com/releases/")
     }
     versionCatalogs {
         create("fabricApiLibs") {
-            from("net.fabricmc.fabric-api:fabric-api-catalog:${fabric_api_version}")
+            from("net.fabricmc.fabric-api:fabric-api-catalog:${providers.gradleProperty("fabric_api_version").get()}")
         }
     }
 }
@@ -62,7 +55,7 @@ dependencyResolutionManagement {
 rootProject.name = "Moonrise"
 
 include("fabric")
-findProject(":fabric").name = "Moonrise-Fabric"
+findProject(":fabric")!!.name = "Moonrise-Fabric"
 //include("neoforge")
 //findProject(":neoforge").name = "Moonrise-NeoForge"
 
