@@ -123,6 +123,9 @@ afterEvaluate {
         runConfigCommon.systemProperties.get().each {
             cfg.property it.key, it.value
         }
+        runConfigCommon.jvmArgs.get().each {
+            cfg.vmArgs.add(it)
+        }
     }
 }
 

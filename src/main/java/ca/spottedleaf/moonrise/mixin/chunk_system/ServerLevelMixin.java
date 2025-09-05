@@ -270,6 +270,13 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     public final void moonrise$loadChunksAsync(final int minChunkX, final int maxChunkX, final int minChunkZ, final int maxChunkZ,
                                                final ChunkStatus chunkStatus, final Priority priority,
                                                final Consumer<List<ChunkAccess>> onLoad) {
+        this.moonrise$loadChunksAsync(minChunkX, maxChunkX, minChunkZ, maxChunkZ, chunkStatus, priority, onLoad, null);
+    }
+
+    @Override
+    public final void moonrise$loadChunksAsync(final int minChunkX, final int maxChunkX, final int minChunkZ, final int maxChunkZ,
+                                               final ChunkStatus chunkStatus, final Priority priority,
+                                               final Consumer<List<ChunkAccess>> onLoad, final Consumer<ChunkAccess> onEachLoad) {
         final ChunkTaskScheduler chunkTaskScheduler = this.moonrise$getChunkTaskScheduler();
         final ChunkHolderManager chunkHolderManager = chunkTaskScheduler.chunkHolderManager;
 
@@ -287,9 +294,14 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
                 }
                 chunkHolderManager.addTicketAtLevel(ChunkTaskScheduler.CHUNK_LOAD, chunk.getPos(), ticketLevel, holderIdentifier);
             }
+            if (onEachLoad != null) {
+                onEachLoad.accept(chunk);
+            }
             if (loadedChunks.incrementAndGet() == requiredChunks) {
                 try {
-                    onLoad.accept(java.util.Collections.unmodifiableList(ret));
+                    if (onLoad != null) {
+                        onLoad.accept(java.util.Collections.unmodifiableList(ret));
+                    }
                 } finally {
                     for (int i = 0, len = ret.size(); i < len; ++i) {
                         final ChunkPos chunkPos = ret.get(i).getPos();

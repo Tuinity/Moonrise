@@ -40,6 +40,7 @@
         "chunk_system.PlayerListMixin",
         "chunk_system.PoiManagerMixin",
         "chunk_system.PoiSectionMixin",
+        "chunk_system.PrepareSpawnTaskPreparingMixin",
         "chunk_system.RegionFileMixin",
         "chunk_system.RegionFileStorageMixin",
         "chunk_system.SectionStorageMixin",

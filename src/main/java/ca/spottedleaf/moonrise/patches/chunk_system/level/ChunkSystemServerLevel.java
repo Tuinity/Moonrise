@@ -50,6 +50,10 @@ public interface ChunkSystemServerLevel extends ChunkSystemLevel {
                                          final ChunkStatus chunkStatus, final Priority priority,
                                          final Consumer<List<ChunkAccess>> onLoad);
 
+    public void moonrise$loadChunksAsync(final int minChunkX, final int maxChunkX, final int minChunkZ, final int maxChunkZ,
+                                         final ChunkStatus chunkStatus, final Priority priority,
+                                         final Consumer<List<ChunkAccess>> onLoad, final Consumer<ChunkAccess> onEachLoad);
+
     public RegionizedPlayerChunkLoader.ViewDistanceHolder moonrise$getViewDistanceHolder();
 
     public long moonrise$getLastMidTickFailure();
