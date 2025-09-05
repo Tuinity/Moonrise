@@ -452,8 +452,8 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     }
 
     /**
-     * @reason Destroy old chunk system hooks
-     * @author Spottedleaf
+     * @reason Redirect to new chunk system
+     * @author jpenilla
      */
     @Overwrite
     public Stream<ChunkHolder> allChunksWithAtLeastStatus(ChunkStatus status) {
