@@ -35,14 +35,8 @@ public final class MoonriseChunkLoadCounter extends ChunkLoadCounter {
             chunkPos.z + chunkRadius,
             status,
             priority,
-            (chunks) -> {
-                ret.complete(null);
-                System.out.println("done");
-            },
-            (chunk) -> {
-                this.loaded.incrementAndGet();
-                System.out.println("loaded: " + this.loaded.get() + " / " + expected);
-            }
+            (chunks) -> ret.complete(null),
+            (chunk) -> this.loaded.incrementAndGet()
         );
         return ret;
     }
