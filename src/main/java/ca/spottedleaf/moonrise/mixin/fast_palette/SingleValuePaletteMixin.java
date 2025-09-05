@@ -3,6 +3,7 @@ package ca.spottedleaf.moonrise.mixin.fast_palette;
 import ca.spottedleaf.moonrise.patches.fast_palette.FastPalette;
 import ca.spottedleaf.moonrise.patches.fast_palette.FastPaletteData;
 import net.minecraft.world.level.chunk.Palette;
+import net.minecraft.world.level.chunk.PaletteResize;
 import net.minecraft.world.level.chunk.SingleValuePalette;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
@@ -42,7 +43,7 @@ abstract class SingleValuePaletteMixin<T> implements Palette<T>, FastPalette<T> 
                     target = "Lnet/minecraft/world/level/chunk/SingleValuePalette;value:Ljava/lang/Object;"
             )
     )
-    private void updateRawPalette1(final T object, final CallbackInfoReturnable<Integer> cir) {
+    private void updateRawPalette1(final T object, final PaletteResize<T> resize, CallbackInfoReturnable<Integer> cir) {
         if (this.rawPalette != null) {
             this.rawPalette[0] = object;
         }

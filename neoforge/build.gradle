@@ -7,13 +7,6 @@ plugins {
     id 'maven-publish'
 }
 
-repositories {
-    maven {
-        name = 'NeoForged'
-        url = 'https://maven.neoforged.net/releases/'
-    }
-}
-
 def aw2at = Aw2AtTask.configureDefault(
     getProject(),
     rootProject.layout.projectDirectory.file("src/main/resources/moonrise.accesswidener").getAsFile(),

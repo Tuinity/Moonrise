@@ -35,12 +35,7 @@ abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedCo
      * @author Spottedleaf
      */
     @Inject(
-            // cannot use `<init>*` due to https://github.com/FabricMC/tiny-remapper/issues/137
-            method = {
-                "<init>(Lnet/minecraft/core/IdMap;Lnet/minecraft/world/level/chunk/PalettedContainer$Strategy;Lnet/minecraft/world/level/chunk/PalettedContainer$Configuration;Lnet/minecraft/util/BitStorage;Ljava/util/List;)V",
-                "<init>(Lnet/minecraft/core/IdMap;Lnet/minecraft/world/level/chunk/PalettedContainer$Strategy;Lnet/minecraft/world/level/chunk/PalettedContainer$Data;)V",
-                "<init>(Lnet/minecraft/core/IdMap;Ljava/lang/Object;Lnet/minecraft/world/level/chunk/PalettedContainer$Strategy;)V"
-            },
+            method = "<init>*",
             at = @At(
                     value = "RETURN"
             ),
@@ -103,7 +98,7 @@ abstract class PalettedContainerMixin<T> implements PaletteResize<T>, PalettedCo
      */
     @Overwrite
     public T getAndSet(final int index, final T value) {
-        final int paletteIdx = this.data.palette().idFor(value);
+        final int paletteIdx = this.data.palette().idFor(value, this);
         final PalettedContainer.Data<T> data = this.data;
         final int prev = data.storage().getAndSet(index, paletteIdx);
         return this.readPalette(data, prev);

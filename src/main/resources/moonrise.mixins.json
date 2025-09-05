@@ -132,7 +132,6 @@
         "collisions.LiquidBlockRendererMixin",
         "collisions.ParticleMixin",
         "config.MinecraftMixin",
-        "loading_screen.LevelLoadStatusManagerMixin",
         "profiler.MinecraftMixin",
         "render.SectionRenderDispatcherMixin",
         "serverlist.ClientConnectionMixin",

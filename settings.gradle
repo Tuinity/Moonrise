@@ -1,6 +1,8 @@
 pluginManagement {
     repositories {
-        mavenCentral()
+        mavenCentral {
+            mavenContent { releasesOnly() }
+        }
         gradlePluginPortal()
         maven {
             name = 'Fabric'
@@ -9,6 +11,10 @@ pluginManagement {
         maven {
             name = 'NeoForged'
             url = 'https://maven.neoforged.net/releases/'
+        }
+        maven {
+            name = "PaperMC"
+            url = "https://repo.papermc.io/repository/maven-public/"
         }
         maven {
             name = 'jmp'
@@ -23,17 +29,28 @@ pluginManagement {
 
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-    id("quiet-fabric-loom") version "1.10.317" apply false
-    id("net.neoforged.moddev") version "2.0.103" apply false
-    id 'com.gradleup.shadow' version '8.3.6' apply false
+    id("quiet-fabric-loom") version "1.11.325"
+    id("net.neoforged.moddev.repositories") version "2.0.107"
+    id 'com.gradleup.shadow' version '9.1.0' apply false
 }
 
 dependencyResolutionManagement {
     repositories {
         maven {
-            name = 'Fabric'
-            url = 'https://maven.fabricmc.net/'
+            url = "https://api.modrinth.com/maven"
+            mavenContent {
+                includeGroup("maven.modrinth")
+            }
         }
+        mavenCentral {
+            mavenContent { releasesOnly() }
+        }
+        maven {
+            name = "PaperMC"
+            url = "https://repo.papermc.io/repository/maven-public/"
+        }
+        maven { url = "https://maven.shedaniel.me/" }
+        maven { url = "https://maven.terraformersmc.com/releases/" }
     }
     versionCatalogs {
         create("fabricApiLibs") {
@@ -46,8 +63,8 @@ rootProject.name = "Moonrise"
 
 include("fabric")
 findProject(":fabric").name = "Moonrise-Fabric"
-include("neoforge")
-findProject(":neoforge").name = "Moonrise-NeoForge"
+//include("neoforge")
+//findProject(":neoforge").name = "Moonrise-NeoForge"
 
 // includeBuild("../YamlConfig") // Uncomment to use local YamlConfig
 // includeBuild("../ConcurrentUtil") // Uncomment to use local ConcurrentUtil

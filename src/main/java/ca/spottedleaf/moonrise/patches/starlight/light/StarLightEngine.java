@@ -135,7 +135,7 @@ public abstract class StarLightEngine {
     protected StarLightEngine(final boolean skylightPropagator, final Level world) {
         this.skylightPropagator = skylightPropagator;
         this.emittedLightMask = skylightPropagator ? 0 : 0xF;
-        this.isClientSide = world.isClientSide;
+        this.isClientSide = world.isClientSide();
         this.world = world;
         this.minLightSection = WorldUtil.getMinLightSection(world);
         this.maxLightSection = WorldUtil.getMaxLightSection(world);

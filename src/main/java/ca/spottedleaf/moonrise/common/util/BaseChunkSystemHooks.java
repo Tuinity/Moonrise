@@ -10,7 +10,6 @@ import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -81,13 +80,6 @@ public abstract class BaseChunkSystemHooks implements ChunkSystemHooks {
 
     @Override
     public void onChunkHolderDelete(final ServerLevel level, final ChunkHolder holder) {
-        // Update progress listener for LevelLoadingScreen
-        final ChunkProgressListener progressListener = level.getChunkSource().chunkMap.progressListener;
-        if (progressListener != null) {
-            this.scheduleChunkTask(level, holder.getPos().x, holder.getPos().z, () -> {
-                progressListener.onStatusChange(holder.getPos(), null);
-            });
-        }
     }
 
     @Override
@@ -119,7 +111,8 @@ public abstract class BaseChunkSystemHooks implements ChunkSystemHooks {
             chunk.postProcessGeneration((ServerLevel)chunk.getLevel());
         }
         ((ServerLevel)chunk.getLevel()).startTickingChunk(chunk);
-        ((ServerLevel)chunk.getLevel()).getChunkSource().chunkMap.tickingGenerated.incrementAndGet();
+        // TODO - probably need to increment the ChunkLoadCounter thing here...?
+        // ((ServerLevel)chunk.getLevel()).getChunkSource().chunkMap.tickingGenerated.incrementAndGet();
     }
 
     @Override

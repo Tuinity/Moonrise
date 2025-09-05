@@ -66,23 +66,6 @@ allprojects {
         useJUnitPlatform()
     }
 
-    repositories {
-        maven {
-            url = "https://repo.papermc.io/repository/maven-public/"
-            mavenContent {
-                includeGroup("ca.spottedleaf")
-            }
-        }
-        maven {
-            url = "https://api.modrinth.com/maven"
-            mavenContent {
-                includeGroup("maven.modrinth")
-            }
-        }
-        maven { url = "https://maven.shedaniel.me/" }
-        maven { url = "https://maven.terraformersmc.com/releases/" }
-    }
-
     // make build reproducible
     tasks.withType(AbstractArchiveTask).configureEach {
         preserveFileTimestamps = false

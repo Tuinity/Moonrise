@@ -30,7 +30,6 @@ import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.RandomSequences;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
@@ -139,7 +138,7 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     )
     private void init(MinecraftServer minecraftServer, Executor executor,
                       LevelStorageSource.LevelStorageAccess levelStorageAccess, ServerLevelData serverLevelData,
-                      ResourceKey<Level> resourceKey, LevelStem levelStem, ChunkProgressListener chunkProgressListener,
+                      ResourceKey<Level> resourceKey, LevelStem levelStem,
                       boolean bl, long l, List<CustomSpawner> list, boolean bl2, RandomSequences randomSequences,
                       CallbackInfo ci) {
         this.entityManager = null;
@@ -611,17 +610,14 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
      * @reason Not needed in new chunk system, also avoid accessing old entity manager
      * @author Spottedleaf
      */
-    @Redirect(
-        method = {
-            "method_72080",
-            "lambda$waitForChunkAndEntities$21"
-        },
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/level/entity/PersistentEntitySectionManager;processPendingLoads()V"
-        )
+    @Inject(
+        method = "waitForEntities",
+        at = @At("HEAD"),
+        cancellable = true
     )
-    private void redirectWaitForChunks(final PersistentEntitySectionManager<Entity> instance) {}
+    private void redirectWaitForEntities(ChunkPos chunkPos, int radius, CallbackInfo ci) {
+        ci.cancel();
+    }
 
     /**
      * @reason Level close now handles this

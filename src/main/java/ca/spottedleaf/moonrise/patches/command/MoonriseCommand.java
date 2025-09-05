@@ -46,7 +46,7 @@ public final class MoonriseCommand {
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             literal("moonrise").requires((final CommandSourceStack src) -> {
-                return src.hasPermission(src.getServer().getOperatorUserPermissionLevel()) || !(src.getServer() instanceof DedicatedServer);
+                return src.hasPermission(src.getServer().operatorUserPermissionLevel()) || !(src.getServer() instanceof DedicatedServer);
             }).then(literal("holderinfo")
                 .executes(MoonriseCommand::holderInfo)
             ).then(literal("chunkinfo")

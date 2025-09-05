@@ -5,6 +5,7 @@ import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
+import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
@@ -17,6 +18,7 @@ import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
@@ -34,6 +36,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -82,7 +85,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
 
         if (!completable.isDone() && chunkTaskScheduler.hasShutdown()) {
             throw new IllegalStateException(
-                "Chunk system has shut down, cannot process chunk requests in world '" + ca.spottedleaf.moonrise.common.util.WorldUtil.getWorldName(this.level) + "' at "
+                "Chunk system has shut down, cannot process chunk requests in world '" + WorldUtil.getWorldName(this.level) + "' at "
                     + "(" + chunkX + "," + chunkZ + ") status: " + toStatus
             );
         }
@@ -362,5 +365,14 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
     )
     private boolean onlyCheckWBForSpawning(final ServerLevel instance, final ChunkPos pos) {
         return instance.getWorldBorder().isWithinBounds(pos);
+    }
+
+    /**
+     * @reason Support new chunk system
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public CompletableFuture<?> addTicketAndLoadWithRadius(TicketType ticketType, ChunkPos chunkPos, int radius) {
+        return ((ChunkSystemServerLevel) this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAndLoadWithRadius(ticketType, chunkPos, radius);
     }
 }

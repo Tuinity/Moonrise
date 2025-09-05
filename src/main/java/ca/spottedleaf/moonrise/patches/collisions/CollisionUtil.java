@@ -2123,7 +2123,7 @@ public final class CollisionUtil {
         private boolean delegated;
 
         public LazyEntityCollisionContext(final Entity entity) {
-            super(false, false, 0.0, null, null, entity);
+            super(false, false, 0.0, null, false, entity);
         }
 
         public static boolean useEntityCollisionShape(final Level world, final Entity entity) {
@@ -2166,6 +2166,11 @@ public final class CollisionUtil {
         @Override
         public boolean isHoldingItem(final Item item) {
             return this.getDelegate().isHoldingItem(item);
+        }
+
+        @Override
+        public boolean alwaysCollideWithFluid() {
+            return this.getDelegate().alwaysCollideWithFluid();
         }
 
         @Override

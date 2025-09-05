@@ -323,7 +323,7 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
         private ProtoChunk getEmptyChunk() {
             return new ProtoChunk(
                 new ChunkPos(this.chunkX, this.chunkZ), UpgradeData.EMPTY, this.world,
-                this.world.registryAccess().lookupOrThrow(Registries.BIOME), (BlendingData)null
+                this.world.palettedContainerFactory(), (BlendingData)null
             );
         }
 
@@ -344,7 +344,7 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
 
                 // unpack the data
                 final SerializableChunkData chunkData = SerializableChunkData.parse(
-                    this.world, this.world.registryAccess(), converted
+                    this.world, this.world.palettedContainerFactory(), converted
                 );
 
                 if (chunkData == null) {

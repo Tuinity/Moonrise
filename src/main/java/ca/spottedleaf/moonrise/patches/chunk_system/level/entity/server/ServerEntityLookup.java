@@ -28,7 +28,7 @@ public final class ServerEntityLookup extends EntityLookup {
     // ticket does not expire if the chunk fails to generate before the timeout expires. Rather than blindly adjusting the entire system behavior
     // to fix this small issue, we instead add non-expirable tickets here to keep ender pearls ticking. This is how the original feature should have
     // been implemented, but I don't think Vanilla has proper entity add/remove hooks like we do. Fixes MC-297591
-    private static final TicketType ENDER_PEARL_TICKER = ChunkSystemTicketType.create("chunk_system:ender_pearl_ticker", null);
+    private static final TicketType ENDER_PEARL_TICKER = ChunkSystemTicketType.create("chunk_system:ender_pearl_ticker", null, 0L, TicketType.FLAG_LOADING | TicketType.FLAG_SIMULATION | TicketType.FLAG_KEEP_DIMENSION_ACTIVE);
     private final Long2IntOpenHashMap enderPearlChunkCount = new Long2IntOpenHashMap();
     private final boolean keepEnderPearlsTicking;
 

@@ -23,7 +23,7 @@ accessible field net/minecraft/world/level/chunk/PalettedContainer data Lnet/min
 # PalettedContainer.Data
 accessible class net/minecraft/world/level/chunk/PalettedContainer$Data
 # MDG requires we AT the constructor if we AT the class
-accessible method net/minecraft/world/level/chunk/PalettedContainer$Data <init> (Lnet/minecraft/world/level/chunk/PalettedContainer$Configuration;Lnet/minecraft/util/BitStorage;Lnet/minecraft/world/level/chunk/Palette;)V
+accessible method net/minecraft/world/level/chunk/PalettedContainer$Data <init> (Lnet/minecraft/world/level/chunk/Configuration;Lnet/minecraft/util/BitStorage;Lnet/minecraft/world/level/chunk/Palette;)V
 
 
 # PaletteResize
@@ -46,8 +46,8 @@ mutable field net/minecraft/server/level/ChunkMap lightTaskDispatcher Lnet/minec
 accessible method net/minecraft/server/level/ChunkMap setServerViewDistance (I)V
 accessible method net/minecraft/server/level/ChunkMap upgradeChunkTag (Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/nbt/CompoundTag;
 accessible field net/minecraft/server/level/ChunkMap worldGenContext Lnet/minecraft/world/level/chunk/status/WorldGenContext;
-accessible field net/minecraft/server/level/ChunkMap tickingGenerated Ljava/util/concurrent/atomic/AtomicInteger;
-accessible field net/minecraft/server/level/ChunkMap progressListener Lnet/minecraft/server/level/progress/ChunkProgressListener;
+#accessible field net/minecraft/server/level/ChunkMap tickingGenerated Ljava/util/concurrent/atomic/AtomicInteger;
+#accessible field net/minecraft/server/level/ChunkMap progressListener Lnet/minecraft/server/level/progress/ChunkProgressListener;
 accessible method net/minecraft/server/level/ChunkMap playerIsCloseEnoughForSpawning (Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/ChunkPos;)Z
 mutable field net/minecraft/server/level/ChunkMap chunksToEagerlySave Lit/unimi/dsi/fastutil/longs/LongSet;
 mutable field net/minecraft/server/level/ChunkMap activeChunkWrites Ljava/util/concurrent/atomic/AtomicInteger;
@@ -268,7 +268,7 @@ accessible field net/minecraft/server/level/ChunkMap$TrackedEntity serverEntity 
 
 
 # LevelLoadStatusManager$Status
-accessible class net/minecraft/client/multiplayer/LevelLoadStatusManager$Status
+#accessible class net/minecraft/client/multiplayer/LevelLoadStatusManager$Status
 
 
 # RegionFile
@@ -303,3 +303,7 @@ accessible class net/minecraft/server/level/LoadingChunkTracker
 
 # TicketStorage
 mutable field net/minecraft/world/level/TicketStorage tickets Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;
+
+
+# PrepareSpawnTask
+accessible class net/minecraft/server/network/config/PrepareSpawnTask$Preparing

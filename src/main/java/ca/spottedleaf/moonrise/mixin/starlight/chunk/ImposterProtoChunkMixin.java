@@ -8,6 +8,7 @@ import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.PalettedContainerFactory;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.UpgradeData;
 import net.minecraft.world.level.levelgen.blending.BlendingData;
@@ -23,8 +24,8 @@ abstract class ImposterProtoChunkMixin extends ProtoChunk implements StarlightCh
     @Shadow
     private LevelChunk wrapped;
 
-    public ImposterProtoChunkMixin(final ChunkPos chunkPos, final UpgradeData upgradeData, final LevelHeightAccessor levelHeightAccessor, final Registry<Biome> registry, @Nullable final BlendingData blendingData) {
-        super(chunkPos, upgradeData, levelHeightAccessor, registry, blendingData);
+    public ImposterProtoChunkMixin(final ChunkPos chunkPos, final UpgradeData upgradeData, final LevelHeightAccessor levelHeightAccessor, final PalettedContainerFactory palettedContainerFactory, @Nullable final BlendingData blendingData) {
+        super(chunkPos, upgradeData, levelHeightAccessor, palettedContainerFactory, blendingData);
     }
 
     @Override

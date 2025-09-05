@@ -31,6 +31,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -333,7 +334,7 @@ abstract class ServerExplosionMixin {
             value = "HEAD"
         )
     )
-    private void initCacheFields(final CallbackInfo ci) {
+    private void initCacheFields(final CallbackInfoReturnable<Integer> cir) {
         this.blockCache = new Long2ObjectOpenHashMap<>();
         this.chunkPosCache = new long[CHUNK_CACHE_WIDTH * CHUNK_CACHE_WIDTH];
         Arrays.fill(this.chunkPosCache, ChunkPos.INVALID_CHUNK_POS);
@@ -462,7 +463,7 @@ abstract class ServerExplosionMixin {
             value = "RETURN"
         )
     )
-    private void destroyCacheFields(final CallbackInfo ci) {
+    private void destroyCacheFields(final CallbackInfoReturnable<Integer> cir) {
         this.blockCache = null;
         this.chunkPosCache = null;
         this.chunkCache = null;

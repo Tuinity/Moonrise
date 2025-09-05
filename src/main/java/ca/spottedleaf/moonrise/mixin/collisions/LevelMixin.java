@@ -43,9 +43,6 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
     @Shadow
     public abstract LevelChunk getChunk(int x, int z);
 
-    @Shadow
-    public abstract WorldBorder getWorldBorder();
-
     /**
      * Route to faster lookup.
      * See {@link EntityGetterMixin#isUnobstructed(Entity, VoxelShape)} for expected behavior

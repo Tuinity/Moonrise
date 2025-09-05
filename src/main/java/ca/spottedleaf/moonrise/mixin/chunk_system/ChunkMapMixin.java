@@ -19,6 +19,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StreamTagVisitor;
 import net.minecraft.server.level.ChunkGenerationTask;
 import net.minecraft.server.level.ChunkHolder;
+import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ChunkResult;
 import net.minecraft.server.level.ChunkTaskDispatcher;
@@ -27,7 +28,6 @@ import net.minecraft.server.level.GeneratingChunkMap;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StaticCache2D;
 import net.minecraft.util.thread.BlockableEventLoop;
@@ -65,6 +65,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntFunction;
 import java.util.function.IntSupplier;
+import java.util.stream.Stream;
 
 @Mixin(ChunkMap.class)
 abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap, ChunkHolder.PlayerProvider, GeneratingChunkMap {
@@ -126,7 +127,7 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     private void constructor(
         ServerLevel p_214836_, LevelStorageSource.LevelStorageAccess p_214837_, DataFixer p_214838_,
         StructureTemplateManager p_214839_, Executor p_214840_, BlockableEventLoop p_214841_,
-        LightChunkGetter p_214842_, ChunkGenerator p_214843_, ChunkProgressListener p_214844_,
+        LightChunkGetter p_214842_, ChunkGenerator p_214843_,
         ChunkStatusUpdateListener p_214845_, Supplier p_214846_, TicketStorage p_394462_, int p_214847_,
         boolean p_214848_, CallbackInfo ci) {
         // intentionally destroy old chunk system hooks
@@ -448,6 +449,19 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     @Overwrite
     public CompletableFuture<ChunkResult<LevelChunk>> prepareAccessibleChunk(final ChunkHolder holder) {
         throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @reason Destroy old chunk system hooks
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public Stream<ChunkHolder> allChunksWithAtLeastStatus(ChunkStatus status) {
+        final int i = ChunkLevel.byStatus(status);
+        return ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager
+            .getOldChunkHolders()
+            .stream()
+            .filter(holder -> holder.getTicketLevel() <= i);
     }
 
     /**

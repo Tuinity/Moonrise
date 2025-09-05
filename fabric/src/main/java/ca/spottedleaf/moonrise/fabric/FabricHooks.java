@@ -269,7 +269,12 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
 
     @Override
     public long[] getCounterTypesUncached(final TicketType type) {
-        return type == TicketType.FORCED ? new long[] { ChunkSystemTicketType.COUNTER_TYPE_FORCED } : LongArrays.EMPTY_ARRAY;
+        if (type == TicketType.FORCED) {
+            return new long[]{ChunkSystemTicketType.COUNTER_TYPE_FORCED, ChunkSystemTicketType.COUNTER_TYPE_KEEP_DIMENSION_ACTIVE};
+        } else if (type.shouldKeepDimensionActive()) {
+            return new long[]{ChunkSystemTicketType.COUNTER_TYPE_KEEP_DIMENSION_ACTIVE};
+        }
+        return LongArrays.EMPTY_ARRAY;
     }
 
     @Override

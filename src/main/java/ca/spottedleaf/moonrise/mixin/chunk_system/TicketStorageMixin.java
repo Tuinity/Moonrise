@@ -125,6 +125,16 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
         }
     }
 
+    /**
+     * @reason Support new chunk system
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public boolean shouldKeepDimensionActive() {
+        final Long2IntOpenHashMap ticketCounters = ((ChunkSystemServerLevel) this.chunkMap.level).moonrise$getChunkTaskScheduler().chunkHolderManager
+            .getTicketCounters(ChunkSystemTicketType.COUNTER_TYPE_KEEP_DIMENSION_ACTIVE);
+        return ticketCounters != null && !ticketCounters.isEmpty();
+    }
 
     /**
      * @reason Avoid setting old chunk system state
@@ -209,11 +219,11 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
         method = "deactivateTicketsOnClosing",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/TicketStorage;removeTicketIf(Ljava/util/function/BiPredicate;Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;)V"
+            target = "Lnet/minecraft/world/level/TicketStorage;removeTicketIf(Lnet/minecraft/world/level/TicketStorage$TicketPredicate;Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;)V"
         )
     )
     private void avoidRemovingTicketsOnShutdown(final TicketStorage instance,
-                                                final BiPredicate<Long, Ticket> predicate,
+                                                final TicketStorage.TicketPredicate predicate,
                                                 final Long2ObjectOpenHashMap<List<Ticket>> tickets) {}
 
     /**
@@ -221,7 +231,7 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
      * @author Spottedleaf
      */
     @Overwrite
-    public void removeTicketIf(final BiPredicate<Long, Ticket> predicate, final Long2ObjectOpenHashMap<List<Ticket>> into) {
+    public void removeTicketIf(final TicketStorage.TicketPredicate predicate, final Long2ObjectOpenHashMap<List<Ticket>> into) {
         throw new UnsupportedOperationException();
     }
 
