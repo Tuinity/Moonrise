@@ -127,7 +127,7 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
 
     /**
      * @reason Support new chunk system
-     * @author Spottedleaf
+     * @author jpenilla
      */
     @Overwrite
     public boolean shouldKeepDimensionActive() {
