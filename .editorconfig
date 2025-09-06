@@ -5,9 +5,6 @@ indent_style = space
 insert_final_newline = true
 max_line_length = off
 
-[{*.kt,*.kts}]
-indent_size = 2
-
 [*.java]
 ij_java_imports_layout = *,|,$*
 ij_java_generate_final_locals = true

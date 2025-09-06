@@ -1,11 +1,17 @@
+plugins {
+    `kotlin-dsl`
+}
+
 repositories {
-  gradlePluginPortal()
-  mavenCentral()
-  maven("https://maven.fabricmc.net/")
-  maven("https://maven.architectury.dev/")
+    gradlePluginPortal()
+    mavenCentral {
+        mavenContent { releasesOnly() }
+    }
+    maven("https://maven.fabricmc.net/")
+    maven("https://maven.architectury.dev/")
 }
 
 dependencies {
-  implementation("net.fabricmc:access-widener:2.1.0")
-  implementation("dev.architectury:at:1.0.1")
+    implementation("net.fabricmc:access-widener:2.1.0")
+    implementation("dev.architectury:at:1.0.1")
 }

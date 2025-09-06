@@ -7,8 +7,6 @@ plugins {
     id("me.modmuss50.mod-publish-plugin") version "0.8.4" apply false
 }
 
-extensions.create<RunConfigCommon>("runConfigCommon")
-
 val getGitCommit = providers.exec {
     commandLine("git", "rev-parse", "--short", "HEAD")
 }.standardOutput.asText.map { it.trim() }
@@ -23,12 +21,6 @@ neoForge {
     neoFormVersion = providers.gradleProperty("neoform_version").get()
     validateAccessTransformers = true
     accessTransformers.files.setFrom(aw2at.flatMap { t -> t.outputFile })
-}
-
-extensions.configure<RunConfigCommon>("runConfigCommon") {
-    systemProperties.put("mixin.debug", "true")
-    systemProperties.put("Moonrise.MaxViewDistance", "128")
-    jvmArgs.addAll(listOf("-XX:+UseZGC", "-XX:+ZGenerational", "-XX:+UseDynamicNumberOfGCThreads", "-XX:-ZUncommit"))
 }
 
 dependencies {
@@ -78,16 +70,16 @@ allprojects {
         options.release.set(21)
     }
 
+    val archivesBaseName = rootProject.base.archivesName.get()
     tasks.named<org.gradle.jvm.tasks.Jar>("jar").configure {
         from(rootProject.file("LICENSE")) {
-            rename { "${it}_${rootProject.base.archivesName.get()}" }
+            rename { "${it}_${archivesBaseName}" }
         }
     }
 }
 
 subprojects {
     plugins.apply("me.modmuss50.mod-publish-plugin")
-    plugins.apply("java-library")
     plugins.apply("com.gradleup.shadow")
 
     configurations.create("libs")
