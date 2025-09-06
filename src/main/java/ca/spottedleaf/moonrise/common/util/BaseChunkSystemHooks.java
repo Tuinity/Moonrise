@@ -111,8 +111,6 @@ public abstract class BaseChunkSystemHooks implements ChunkSystemHooks {
             chunk.postProcessGeneration((ServerLevel)chunk.getLevel());
         }
         ((ServerLevel)chunk.getLevel()).startTickingChunk(chunk);
-        // TODO - probably need to increment the ChunkLoadCounter thing here...?
-        // ((ServerLevel)chunk.getLevel()).getChunkSource().chunkMap.tickingGenerated.incrementAndGet();
     }
 
     @Override
