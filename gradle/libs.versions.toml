@@ -1,0 +1,26 @@
+# https://fabricmc.net/develop/
+
+[versions]
+# https://maven.shedaniel.me/me/shedaniel/cloth/
+cloth = "19.0.147"
+fabricLoader = "0.17.2"
+minecraft = "25w37a"
+
+[plugins]
+
+[libraries]
+mixin = "org.spongepowered:mixin:0.8.7"
+mixinExtras = "io.github.llamalad7:mixinextras-common:0.4.1"
+
+fabricLoader = { module = "net.fabricmc:fabric-loader", version.ref = "fabricLoader" }
+fabricLoader-junit = { module = "net.fabricmc:fabric-loader-junit", version.ref = "fabricLoader" }
+fabricMinecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
+
+concurrentutil = "ca.spottedleaf:concurrentutil:0.0.3"
+
+yamlconfig = "ca.spottedleaf:yamlconfig:1.0.2"
+snakeyaml = "org.yaml:snakeyaml:2.3"
+
+clothConfig-neoforge = { module = "me.shedaniel.cloth:cloth-config-neoforge", version.ref = "cloth" }
+clothConfig-fabric = { module = "me.shedaniel.cloth:cloth-config-fabric", version.ref = "cloth" }
+modmenu = "com.terraformersmc:modmenu:15.0.0-beta.3"

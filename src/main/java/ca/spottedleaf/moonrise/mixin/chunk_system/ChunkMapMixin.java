@@ -738,13 +738,4 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     public int size() {
         return ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.size();
     }
-
-    /**
-     * @reason Route to new chunk system
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public Iterable<ChunkHolder> getChunks() {
-        return ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.getOldChunkHoldersIterable();
-    }
 }
