@@ -5,6 +5,7 @@ import ca.spottedleaf.concurrentutil.completable.CallbackCompletable;
 import ca.spottedleaf.concurrentutil.completable.Completable;
 import ca.spottedleaf.concurrentutil.executor.Cancellable;
 import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.executor.queue.AreaDependentQueue;
 import ca.spottedleaf.concurrentutil.executor.queue.PrioritisedTaskQueue;
 import ca.spottedleaf.concurrentutil.function.BiLong1Function;
 import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
@@ -1037,7 +1038,7 @@ public final class MoonriseRegionFileIO {
         public void scheduleReadIO() {
             final PrioritisedExecutor.PrioritisedTask task;
             synchronized (this) {
-                task = this.regionDataController.ioScheduler.createTask(this.chunkX, this.chunkZ, this::performReadIO, this.priority);
+                task = this.regionDataController.createRegionIoTask(this.chunkX, this.chunkZ, this::performReadIO, this.priority);
                 this.currentTask = task;
             }
             task.queue();
@@ -1242,7 +1243,7 @@ public final class MoonriseRegionFileIO {
         private void scheduleWriteIO(final InProgressWrite inProgressWrite) {
             final PrioritisedExecutor.PrioritisedTask task;
             synchronized (this) {
-                task = this.regionDataController.ioScheduler.createTask(this.chunkX, this.chunkZ, () -> {
+                task = this.regionDataController.createRegionIoTask(this.chunkX, this.chunkZ, () -> {
                     ChunkIOTask.this.runWriteIO(inProgressWrite);
                 }, this.priority);
                 this.currentTask = task;
@@ -1406,8 +1407,8 @@ public final class MoonriseRegionFileIO {
 
         public final RegionFileType type;
         private final PrioritisedExecutor compressionExecutor;
-        private final IOScheduler ioScheduler;
         private final ConcurrentLong2ReferenceChainedHashTable<ChunkIOTask> chunkTasks = new ConcurrentLong2ReferenceChainedHashTable<>();
+        private final AreaDependentQueue regionIoQueue;
 
         private final AtomicLong inProgressTasks = new AtomicLong();
 
@@ -1415,7 +1416,13 @@ public final class MoonriseRegionFileIO {
                                     final PrioritisedExecutor compressionExecutor) {
             this.type = type;
             this.compressionExecutor = compressionExecutor;
-            this.ioScheduler = new IOScheduler(ioExecutor);
+            this.regionIoQueue = new AreaDependentQueue(ioExecutor, 5); // same as regionfile shift
+        }
+
+
+        public PrioritisedExecutor.PrioritisedTask createRegionIoTask(final int chunkX, final int chunkZ, final Runnable run,
+                                                                      final Priority priority) {
+            return this.regionIoQueue.createTask(chunkX >> 5, chunkZ >> 5, 0, run, priority);
         }
 
         final void startTask(final ChunkIOTask task) {
@@ -1464,237 +1471,6 @@ public final class MoonriseRegionFileIO {
 
             public void run(final RegionFile regionFile) throws IOException;
 
-        }
-    }
-
-    private static final class IOScheduler {
-
-        private final ConcurrentLong2ReferenceChainedHashTable<RegionIOTasks> regionTasks = new ConcurrentLong2ReferenceChainedHashTable<>();
-        private final PrioritisedExecutor executor;
-
-        public IOScheduler(final PrioritisedExecutor executor) {
-            this.executor = executor;
-        }
-
-        public PrioritisedExecutor.PrioritisedTask createTask(final int chunkX, final int chunkZ,
-                                                              final Runnable run, final Priority priority) {
-            final PrioritisedExecutor.PrioritisedTask[] ret = new PrioritisedExecutor.PrioritisedTask[1];
-            final long subOrder = this.executor.generateNextSubOrder();
-            this.regionTasks.compute(CoordinateUtils.getChunkKey(chunkX >> REGION_FILE_SHIFT, chunkZ >> REGION_FILE_SHIFT),
-                    (final long regionKey, final RegionIOTasks existing) -> {
-                final RegionIOTasks res;
-                if (existing != null) {
-                    res = existing;
-                } else {
-                    res = new RegionIOTasks(regionKey, IOScheduler.this);
-                }
-
-                ret[0] = res.createTask(run, priority, subOrder);
-
-                return res;
-            });
-
-            return ret[0];
-        }
-    }
-
-    private static final class RegionIOTasks implements Runnable {
-
-        private static final Logger LOGGER = LoggerFactory.getLogger(RegionIOTasks.class);
-
-        private final PrioritisedTaskQueue queue = new PrioritisedTaskQueue();
-        private final long regionKey;
-        private final IOScheduler ioScheduler;
-        private long createdTasks;
-        private long executedTasks;
-
-        private PrioritisedExecutor.PrioritisedTask task;
-
-        public RegionIOTasks(final long regionKey, final IOScheduler ioScheduler) {
-            this.regionKey = regionKey;
-            this.ioScheduler = ioScheduler;
-        }
-
-        public PrioritisedExecutor.PrioritisedTask createTask(final Runnable run, final Priority priority,
-                                                              final long subOrder) {
-            ++this.createdTasks;
-            return new WrappedTask(this.queue.createTask(run, priority, subOrder));
-        }
-
-        private void adjustTaskPriority() {
-            final PrioritisedTaskQueue.PrioritySubOrderPair priority = this.queue.getHighestPrioritySubOrder();
-            if (this.task == null) {
-                if (priority == null) {
-                    return;
-                }
-                this.task = this.ioScheduler.executor.createTask(this, priority.priority(), priority.subOrder());
-                this.task.queue();
-            } else {
-                if (priority == null) {
-                    throw new IllegalStateException();
-                } else {
-                    this.task.setPriorityAndSubOrder(priority.priority(), priority.subOrder());
-                }
-            }
-        }
-
-        @Override
-        public void run() {
-            final Runnable run;
-            synchronized (this) {
-                run = this.queue.pollTask();
-            }
-
-            try {
-                run.run();
-            } finally {
-                synchronized (this) {
-                    this.task = null;
-                    this.adjustTaskPriority();
-                }
-                this.ioScheduler.regionTasks.compute(this.regionKey, (final long keyInMap, final RegionIOTasks tasks) -> {
-                    if (tasks != RegionIOTasks.this) {
-                        throw new IllegalStateException("Region task mismatch");
-                    }
-                    ++tasks.executedTasks;
-                    if (tasks.createdTasks != tasks.executedTasks) {
-                        return tasks;
-                    }
-
-                    if (tasks.task != null) {
-                        throw new IllegalStateException("Task may not be null when created==executed");
-                    }
-
-                    return null;
-                });
-            }
-        }
-
-        private final class WrappedTask implements PrioritisedExecutor.PrioritisedTask {
-
-            private final PrioritisedExecutor.PrioritisedTask wrapped;
-
-            public WrappedTask(final PrioritisedExecutor.PrioritisedTask wrap) {
-                this.wrapped = wrap;
-            }
-
-            @Override
-            public PrioritisedExecutor getExecutor() {
-                return RegionIOTasks.this.ioScheduler.executor;
-            }
-
-            @Override
-            public boolean queue() {
-                synchronized (RegionIOTasks.this) {
-                    if (this.wrapped.queue()) {
-                        RegionIOTasks.this.adjustTaskPriority();
-                        return true;
-                    }
-                    return false;
-                }
-            }
-
-            @Override
-            public boolean isQueued() {
-                return this.wrapped.isQueued();
-            }
-
-            @Override
-            public boolean cancel() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public boolean execute() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Priority getPriority() {
-                return this.wrapped.getPriority();
-            }
-
-            @Override
-            public boolean setPriority(final Priority priority) {
-                synchronized (RegionIOTasks.this) {
-                    if (this.wrapped.setPriority(priority) && this.wrapped.isQueued()) {
-                        RegionIOTasks.this.adjustTaskPriority();
-                        return true;
-                    }
-                    return false;
-                }
-            }
-
-            @Override
-            public boolean raisePriority(final Priority priority) {
-                synchronized (RegionIOTasks.this) {
-                    if (this.wrapped.raisePriority(priority) && this.wrapped.isQueued()) {
-                        RegionIOTasks.this.adjustTaskPriority();
-                        return true;
-                    }
-                    return false;
-                }
-            }
-
-            @Override
-            public boolean lowerPriority(final Priority priority) {
-                synchronized (RegionIOTasks.this) {
-                    if (this.wrapped.lowerPriority(priority) && this.wrapped.isQueued()) {
-                        RegionIOTasks.this.adjustTaskPriority();
-                        return true;
-                    }
-                    return false;
-                }
-            }
-
-            @Override
-            public long getSubOrder() {
-                return this.wrapped.getSubOrder();
-            }
-
-            @Override
-            public boolean setSubOrder(final long subOrder) {
-                synchronized (RegionIOTasks.this) {
-                    if (this.wrapped.setSubOrder(subOrder) && this.wrapped.isQueued()) {
-                        RegionIOTasks.this.adjustTaskPriority();
-                        return true;
-                    }
-                    return false;
-                }
-            }
-
-            @Override
-            public boolean raiseSubOrder(final long subOrder) {
-                synchronized (RegionIOTasks.this) {
-                    if (this.wrapped.raiseSubOrder(subOrder) && this.wrapped.isQueued()) {
-                        RegionIOTasks.this.adjustTaskPriority();
-                        return true;
-                    }
-                    return false;
-                }
-            }
-
-            @Override
-            public boolean lowerSubOrder(final long subOrder) {
-                synchronized (RegionIOTasks.this) {
-                    if (this.wrapped.lowerSubOrder(subOrder) && this.wrapped.isQueued()) {
-                        RegionIOTasks.this.adjustTaskPriority();
-                        return true;
-                    }
-                    return false;
-                }
-            }
-
-            @Override
-            public boolean setPriorityAndSubOrder(final Priority priority, final long subOrder) {
-                synchronized (RegionIOTasks.this) {
-                    if (this.wrapped.setPriorityAndSubOrder(priority, subOrder) && this.wrapped.isQueued()) {
-                        RegionIOTasks.this.adjustTaskPriority();
-                        return true;
-                    }
-                    return false;
-                }
-            }
         }
     }
 }

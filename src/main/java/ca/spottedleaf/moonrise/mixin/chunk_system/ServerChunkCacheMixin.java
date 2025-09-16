@@ -372,7 +372,9 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
      * @author Spottedleaf
      */
     @Overwrite
-    public CompletableFuture<?> addTicketAndLoadWithRadius(TicketType ticketType, ChunkPos chunkPos, int radius) {
-        return ((ChunkSystemServerLevel) this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAndLoadWithRadius(ticketType, chunkPos, radius);
+    public CompletableFuture<?> addTicketAndLoadWithRadius(final TicketType ticketType, final ChunkPos chunkPos, final int radius) {
+        return ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAndLoadWithRadius(
+            ticketType, chunkPos, radius, ChunkStatus.FULL, Priority.NORMAL
+        );
     }
 }

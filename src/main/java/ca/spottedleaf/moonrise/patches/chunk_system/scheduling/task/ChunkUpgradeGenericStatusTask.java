@@ -6,7 +6,6 @@ import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkStatus;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
-import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerChunkCache;
@@ -20,7 +19,6 @@ import net.minecraft.world.level.chunk.status.WorldGenContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.lang.invoke.VarHandle;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -51,7 +49,7 @@ public final class ChunkUpgradeGenericStatusTask extends ChunkProgressionTask im
         } else {
             final int writeRadius = ((ChunkSystemChunkStatus)this.toStatus).moonrise$getWriteRadius();
             if (writeRadius < 0) {
-                this.generateTask = this.scheduler.radiusAwareScheduler.createInfiniteRadiusTask(this, priority);
+                throw new IllegalStateException("Infinite write radius is not supported");
             } else {
                 this.generateTask = this.scheduler.radiusAwareScheduler.createTask(chunkX, chunkZ, writeRadius, this, priority);
             }

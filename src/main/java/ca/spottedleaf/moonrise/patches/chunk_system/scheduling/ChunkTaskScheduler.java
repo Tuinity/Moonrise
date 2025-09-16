@@ -1,8 +1,9 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling;
 
 import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
+import ca.spottedleaf.concurrentutil.executor.queue.AreaDependentQueue;
 import ca.spottedleaf.concurrentutil.executor.queue.PrioritisedTaskQueue;
-import ca.spottedleaf.concurrentutil.executor.thread.PrioritisedThreadPool;
+import ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.concurrentutil.util.Priority;
@@ -14,7 +15,6 @@ import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkStatus;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer;
-import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.executor.RadiusAwarePrioritisedExecutor;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkFullTask;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkLightTask;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkLoadTask;
@@ -67,11 +67,7 @@ public final class ChunkTaskScheduler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChunkTaskScheduler.class);
 
     public static void init(final boolean useParallelGen) {
-        for (final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor executor : MoonriseCommon.RADIUS_AWARE_GROUP.getAllExecutors()) {
-            executor.setMaxParallelism(useParallelGen ? -1 : 1);
-        }
-
-        LOGGER.info("Chunk system is using population gen parallelism: " + useParallelGen);
+        LOGGER.info("Chunk system is using population gen parallelism: " + true);
     }
 
     public static final TicketType CHUNK_LOAD = ChunkSystemTicketType.create("chunk_system:chunk_load", Long::compareTo);
@@ -115,13 +111,12 @@ public final class ChunkTaskScheduler {
     }
 
     public final ServerLevel world;
-    public final RadiusAwarePrioritisedExecutor radiusAwareScheduler;
-    public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor parallelGenExecutor;
-    private final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor radiusAwareGenExecutor;
-    public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor loadExecutor;
-    public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor ioExecutor;
-    public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor compressionExecutor;
-    public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor saveExecutor;
+    public final AreaDependentQueue radiusAwareScheduler;
+    public final BalancedPrioritisedThreadPool.OrderedStreamGroup.Queue parallelGenExecutor;
+    public final BalancedPrioritisedThreadPool.OrderedStreamGroup.Queue loadExecutor;
+    public final BalancedPrioritisedThreadPool.OrderedStreamGroup.Queue ioExecutor;
+    public final BalancedPrioritisedThreadPool.OrderedStreamGroup.Queue compressionExecutor;
+    public final BalancedPrioritisedThreadPool.OrderedStreamGroup.Queue saveExecutor;
 
     private final PrioritisedTaskQueue mainThreadExecutor = new PrioritisedTaskQueue();
 
@@ -292,14 +287,13 @@ public final class ChunkTaskScheduler {
         this.lockShift = Math.max(((ChunkSystemServerLevel)world).moonrise$getRegionChunkShift(), ThreadedTicketLevelPropagator.SECTION_SHIFT);
         this.schedulingLockArea = new ReentrantAreaLock(this.getChunkSystemLockShift());
 
-        this.parallelGenExecutor = MoonriseCommon.PARALLEL_GEN_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
-        this.radiusAwareGenExecutor = MoonriseCommon.RADIUS_AWARE_GROUP.createExecutor(1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
-        this.loadExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
-        this.radiusAwareScheduler = new RadiusAwarePrioritisedExecutor(this.radiusAwareGenExecutor, 16);
-        this.ioExecutor = MoonriseCommon.SERVER_REGION_IO_GROUP.createExecutor(-1, MoonriseCommon.IO_QUEUE_HOLD_TIME, 0);
+        this.parallelGenExecutor = MoonriseCommon.SERVER_GROUP.createExecutor();
+        this.loadExecutor = MoonriseCommon.SERVER_GROUP.createExecutor();
+        this.radiusAwareScheduler = new AreaDependentQueue(this.parallelGenExecutor, 4); // 4 -> 16x16 grid
+        this.ioExecutor = MoonriseCommon.SERVER_IO_GROUP.createExecutor();
         // we need a separate executor here so that on shutdown we can continue to process I/O tasks
-        this.compressionExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
-        this.saveExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
+        this.compressionExecutor = MoonriseCommon.SERVER_GROUP.createExecutor();
+        this.saveExecutor = MoonriseCommon.SERVER_GROUP.createExecutor();
         this.chunkHolderManager = new ChunkHolderManager(world, this);
     }
 
@@ -852,14 +846,12 @@ public final class ChunkTaskScheduler {
     }
 
     public boolean halt(final boolean sync, final long maxWaitNS) {
-        this.radiusAwareGenExecutor.halt();
         this.parallelGenExecutor.halt();
         this.loadExecutor.halt();
         if (sync) {
             final long time = System.nanoTime();
             for (long failures = 9L;; failures = ConcurrentUtil.linearLongBackoff(failures, 500_000L, 50_000_000L)) {
                 if (
-                        !this.radiusAwareGenExecutor.isActive() &&
                         !this.parallelGenExecutor.isActive() &&
                         !this.loadExecutor.isActive()
                 ) {

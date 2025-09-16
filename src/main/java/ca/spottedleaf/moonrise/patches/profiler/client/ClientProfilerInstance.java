@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.patches.profiler.client;
 
-import ca.spottedleaf.concurrentutil.executor.thread.PrioritisedThreadPool;
+import ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool;
 import ca.spottedleaf.moonrise.patches.profiler.LProfileGraph;
 import ca.spottedleaf.moonrise.patches.profiler.LProfilerRegistry;
 import ca.spottedleaf.moonrise.patches.profiler.LeafProfiler;
@@ -37,7 +37,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
     }
 
     private final Path root;
-    private final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor dumpPool;
+    private final BalancedPrioritisedThreadPool.OrderedStreamGroup.Queue dumpPool;
 
     private final LProfilerRegistry registry = new LProfilerRegistry();
 
@@ -67,7 +67,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
 
     public ClientProfilerInstance() {
         this.root = Path.of("moonrise", "profiler", "large_ticks");
-        this.dumpPool = MoonriseCommon.CLIENT_PROFILER_IO_GROUP.createExecutor(1, MoonriseCommon.IO_QUEUE_HOLD_TIME, 0);
+        this.dumpPool = MoonriseCommon.CLIENT_IO_GROUP.createExecutor();
     }
 
     private void reset() {

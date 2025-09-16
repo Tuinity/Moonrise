@@ -101,8 +101,25 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
         final Map<ChunkPos, Long> ticketIds = new HashMap<>();
         final ServerLevel world = (ServerLevel)this.starlight$getLightEngine().getWorld();
 
+        if (chunks.isEmpty()) {
+            if (onComplete != null) {
+                onComplete.accept(0);
+            }
+            return 0;
+        }
+
+        int minX = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        int maxX = Integer.MIN_VALUE;
+
         for (final Iterator<ChunkPos> iterator = chunks.iterator(); iterator.hasNext();) {
             final ChunkPos pos = iterator.next();
+
+            minX = Math.min(pos.x, minX);
+            minZ = Math.min(pos.z, minZ);
+            maxX = Math.max(pos.x, maxX);
+            maxZ = Math.max(pos.z, maxZ);
 
             final Long id = ChunkTaskScheduler.getNextChunkRelightId();
             ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAtLevel(ChunkTaskScheduler.CHUNK_RELIGHT, pos, StarLightInterface.LIGHT_TICKET_LEVEL, id);
@@ -118,7 +135,7 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
             }
         }
 
-        ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().radiusAwareScheduler.queueInfiniteRadiusTask(() -> {
+        ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().radiusAwareScheduler.queueTask(minX, minZ, maxX, maxZ, () -> {
             ThreadedLevelLightEngineMixin.this.starlight$getLightEngine().relightChunks(
                     chunks,
                     (final ChunkPos pos) -> {

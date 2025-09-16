@@ -1481,13 +1481,14 @@ public final class ChunkHolderManager {
         return ret;
     }
 
-    public CompletableFuture<?> addTicketAndLoadWithRadius(TicketType ticketType, ChunkPos chunkPos, int radius) {
+    public CompletableFuture<?> addTicketAndLoadWithRadius(final TicketType ticketType, final ChunkPos chunkPos, final int radius,
+                                                           final ChunkStatus status, final Priority priority) {
         final CompletableFuture<?> future = new CompletableFuture<>();
         ((ChunkSystemServerLevel) this.world).moonrise$loadChunksAsync(
             chunkPos.getMiddleBlockPosition(0),
             radius << 4,
-            ChunkStatus.FULL,
-            Priority.NORMAL,
+            status,
+            priority,
             holders -> future.complete(null)
         );
         return future;

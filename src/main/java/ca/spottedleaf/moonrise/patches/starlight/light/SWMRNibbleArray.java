@@ -1,6 +1,9 @@
 package ca.spottedleaf.moonrise.patches.starlight.light;
 
 import net.minecraft.world.level.chunk.DataLayer;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 
@@ -17,14 +20,14 @@ public final class SWMRNibbleArray {
      * Initialised nibble - Has light data.
      */
 
-    protected static final int INIT_STATE_NULL   = 0; // null
-    protected static final int INIT_STATE_UNINIT = 1; // uninitialised
-    protected static final int INIT_STATE_INIT   = 2; // initialised
-    protected static final int INIT_STATE_HIDDEN = 3; // initialised, but conversion to Vanilla data should be treated as if NULL
+    private static final int INIT_STATE_NULL   = 0; // null
+    private static final int INIT_STATE_UNINIT = 1; // uninitialised
+    private static final int INIT_STATE_INIT   = 2; // initialised
+    private static final int INIT_STATE_HIDDEN = 3; // initialised, but conversion to Vanilla data should be treated as if NULL
 
     public static final int ARRAY_SIZE = 16 * 16 * 16 / (8/4); // blocks / bytes per block
     // this allows us to maintain only 1 byte array when we're not updating
-    static final ThreadLocal<ArrayDeque<byte[]>> WORKING_BYTES_POOL = ThreadLocal.withInitial(ArrayDeque::new);
+    private static final ThreadLocal<ArrayDeque<byte[]>> WORKING_BYTES_POOL = ThreadLocal.withInitial(ArrayDeque::new);
 
     private static byte[] allocateBytes() {
         final byte[] inPool = WORKING_BYTES_POOL.get().pollFirst();
@@ -49,12 +52,12 @@ public final class SWMRNibbleArray {
         }
     }
 
-    protected int stateUpdating;
-    protected volatile int stateVisible;
+    private int stateUpdating;
+    private volatile int stateVisible;
 
-    protected byte[] storageUpdating;
-    protected boolean updatingDirty; // only returns whether storageUpdating is dirty
-    protected volatile byte[] storageVisible;
+    private byte[] storageUpdating;
+    private boolean updatingDirty; // only returns whether storageUpdating is dirty
+    private volatile byte[] storageVisible;
 
     public SWMRNibbleArray() {
         this(null, false); // lazy init
@@ -147,15 +150,13 @@ public final class SWMRNibbleArray {
         }
     }
 
-    protected static boolean isAllZero(final byte[] data) {
-        for (int i = 0; i < (ARRAY_SIZE >>> 4); ++i) {
-            byte whole = data[i << 4];
+    private static final VarHandle LONG_VIEW = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.nativeOrder());
 
-            for (int k = 1; k < (1 << 4); ++k) {
-                whole |= data[(i << 4) | k];
-            }
+    private static boolean isAllZero(final byte[] data) {
+        final int len = data.length / Long.BYTES; // assume divisible
 
-            if (whole != 0) {
+        for (int i = 0; i < len; ++i) {
+            if (0L != (long)LONG_VIEW.get(data, i << 3)) {
                 return false;
             }
         }
@@ -306,7 +307,7 @@ public final class SWMRNibbleArray {
     }
 
     // operation type: updating
-    protected void swapUpdatingAndMarkDirty() {
+    private void swapUpdatingAndMarkDirty() {
         if (this.updatingDirty) {
             return;
         }
