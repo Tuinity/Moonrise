@@ -170,6 +170,8 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
         }
     }
 
+    // TODO Level#hasEntities?
+
     /**
      * Route to faster lookup
      * @author Spottedleaf

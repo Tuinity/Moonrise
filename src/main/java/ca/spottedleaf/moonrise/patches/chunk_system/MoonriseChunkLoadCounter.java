@@ -24,7 +24,8 @@ public final class MoonriseChunkLoadCounter extends ChunkLoadCounter {
         final ChunkPos chunkPos,
         final int chunkRadius,
         final ChunkStatus status,
-        final Priority priority
+        final Priority priority,
+        final Runnable done
     ) {
         this.expected = (chunkRadius * 2 + 1) * (chunkRadius * 2 + 1);
         final CompletableFuture<?> ret = new CompletableFuture<>();
@@ -35,7 +36,12 @@ public final class MoonriseChunkLoadCounter extends ChunkLoadCounter {
             chunkPos.z + chunkRadius,
             status,
             priority,
-            (chunks) -> ret.complete(null),
+            (chunks) -> {
+                if (done != null) {
+                    done.run();
+                }
+                ret.complete(null);
+            },
             (chunk) -> this.loaded.incrementAndGet()
         );
         return ret;

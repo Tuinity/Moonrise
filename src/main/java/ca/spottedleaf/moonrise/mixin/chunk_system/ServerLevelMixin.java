@@ -627,7 +627,17 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
         at = @At("HEAD"),
         cancellable = true
     )
-    private void redirectWaitForEntities(ChunkPos chunkPos, int radius, CallbackInfo ci) {
+    private void redirectWaitForEntities(final ChunkPos chunkPos, final int radius, final CallbackInfo ci) {
+        final List<ChunkPos> chunks = ChunkPos.rangeClosed(chunkPos, radius).toList();
+        this.server.managedBlock(() -> {
+            for (final ChunkPos chunkpos : chunks) {
+                if (!this.areEntitiesLoaded(chunkpos.toLong())) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
         ci.cancel();
     }
 

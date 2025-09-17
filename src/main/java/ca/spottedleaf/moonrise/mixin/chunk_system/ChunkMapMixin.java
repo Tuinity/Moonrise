@@ -12,6 +12,7 @@ import com.mojang.datafixers.DataFixer;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -737,5 +738,19 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     @Overwrite
     public int size() {
         return ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.size();
+    }
+
+    /**
+     * @reason Route to new chunk system
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public void forEachReadyToSendChunk(final Consumer<LevelChunk> consumer) {
+        for (final ChunkHolder holder : ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.getOldChunkHolders()) {
+            final LevelChunk chunkToSend = holder.getChunkToSend();
+            if (chunkToSend != null) {
+                consumer.accept(chunkToSend);
+            }
+        }
     }
 }
