@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_tick_iteration;
 
+import ca.spottedleaf.concurrentutil.map.ConcurrentLong2LongChainedHashTable;
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
@@ -29,6 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.PrimitiveIterator;
 
 @Mixin(ChunkMap.class)
 abstract class ChunkMapMixin {
@@ -214,7 +216,7 @@ abstract class ChunkMapMixin {
     public void collectSpawningChunks(final List<LevelChunk> list, final CallbackInfo ci) {
         final ReferenceList<LevelChunk> tickingChunks = ((ChunkTickServerLevel)this.level).moonrise$getPlayerTickingChunks();
 
-        final Long2IntOpenHashMap forceSpawningChunks = ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler()
+        final ConcurrentLong2LongChainedHashTable forceSpawningChunks = ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler()
             .chunkHolderManager.getTicketCounters(ChunkSystemTicketType.COUNTER_TYPER_NATURAL_SPAWNING_FORCED);
 
         final LevelChunk[] raw = tickingChunks.getRawDataUnchecked();
@@ -230,7 +232,7 @@ abstract class ChunkMapMixin {
 
             // note: this fixes a bug in neoforge where these chunks don't tick away from a player...
             // note: this is NOT the only problem with their implementation, either...
-            for (final LongIterator iterator = forceSpawningChunks.keySet().longIterator(); iterator.hasNext();) {
+            for (final PrimitiveIterator.OfLong iterator = forceSpawningChunks.keyIterator(); iterator.hasNext();) {
                 final long pos = iterator.nextLong();
 
                 final NewChunkHolder holder = chunkHolderManager.getChunkHolder(pos);

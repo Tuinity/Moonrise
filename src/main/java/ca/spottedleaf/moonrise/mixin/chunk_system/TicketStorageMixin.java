@@ -1,14 +1,14 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
+import ca.spottedleaf.concurrentutil.map.ConcurrentLong2LongChainedHashTable;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicket;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketStorage;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
-import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.Ticket;
@@ -26,10 +26,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.PrimitiveIterator;
 import java.util.function.BiConsumer;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 @Mixin(TicketStorage.class)
@@ -108,14 +109,14 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
             throw new IllegalStateException("Bad injection point");
         }
 
-        final Long2ObjectOpenHashMap<SortedArraySet<Ticket>> tickets = ((ChunkSystemServerLevel)this.chunkMap.level)
+        final Long2ObjectOpenHashMap<Collection<Ticket>> tickets = ((ChunkSystemServerLevel)this.chunkMap.level)
             .moonrise$getChunkTaskScheduler().chunkHolderManager.getTicketsCopy();
 
-        for (final Iterator<Long2ObjectMap.Entry<SortedArraySet<Ticket>>> iterator = tickets.long2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
-            final Long2ObjectMap.Entry<SortedArraySet<Ticket>> entry = iterator.next();
+        for (final Iterator<Long2ObjectMap.Entry<Collection<Ticket>>> iterator = tickets.long2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
+            final Long2ObjectMap.Entry<Collection<Ticket>> entry = iterator.next();
 
             final long pos = entry.getLongKey();
-            final SortedArraySet<Ticket> chunkTickets = entry.getValue();
+            final Collection<Ticket> chunkTickets = entry.getValue();
 
             final ChunkPos chunkPos = new ChunkPos(pos);
 
@@ -131,7 +132,7 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
      */
     @Overwrite
     public boolean shouldKeepDimensionActive() {
-        final Long2IntOpenHashMap ticketCounters = ((ChunkSystemServerLevel) this.chunkMap.level).moonrise$getChunkTaskScheduler().chunkHolderManager
+        final ConcurrentLong2LongChainedHashTable ticketCounters = ((ChunkSystemServerLevel)this.chunkMap.level).moonrise$getChunkTaskScheduler().chunkHolderManager
             .getTicketCounters(ChunkSystemTicketType.COUNTER_TYPE_KEEP_DIMENSION_ACTIVE);
         return ticketCounters != null && !ticketCounters.isEmpty();
     }
@@ -250,14 +251,25 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
      */
     @Overwrite
     public LongSet getForceLoadedChunks() {
-        final Long2IntOpenHashMap forced = ((ChunkSystemServerLevel)this.chunkMap.level).moonrise$getChunkTaskScheduler()
+        final ConcurrentLong2LongChainedHashTable forced = ((ChunkSystemServerLevel)this.chunkMap.level).moonrise$getChunkTaskScheduler()
             .chunkHolderManager.getTicketCounters(ChunkSystemTicketType.COUNTER_TYPE_FORCED);
 
         if (forced == null) {
-            return LongSet.of();
+            return new LongLinkedOpenHashSet();
         }
 
-        return forced.keySet();
+        // note: important to presize correctly using size/loadfactor to avoid awful write performance
+        //       think: iteration over our map has the same hash strategy, and if ret is not sized
+        //       correctly then every (ret.table.length) may collide. During resize, open hashed tables
+        //       (like LongLinkedOpenHashSet) must reinsert - leading to O(n^2) to copy IF we do not initially
+        //       size correctly
+        final LongLinkedOpenHashSet ret = new LongLinkedOpenHashSet(forced.size(), forced.getLoadFactor());
+
+        for (final PrimitiveIterator.OfLong iterator = forced.keyIterator(); iterator.hasNext();) {
+            ret.add(iterator.nextLong());
+        }
+
+        return ret;
     }
 
     /**

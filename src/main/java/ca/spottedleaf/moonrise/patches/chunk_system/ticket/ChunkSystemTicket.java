@@ -1,6 +1,8 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.ticket;
 
-public interface ChunkSystemTicket<T> {
+import net.minecraft.server.level.Ticket;
+
+public interface ChunkSystemTicket<T> extends Comparable<Ticket> {
 
     public long moonrise$getRemoveDelay();
 
