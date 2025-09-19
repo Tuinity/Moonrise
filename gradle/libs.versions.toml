@@ -16,7 +16,7 @@ fabricLoader = { module = "net.fabricmc:fabric-loader", version.ref = "fabricLoa
 fabricLoader-junit = { module = "net.fabricmc:fabric-loader-junit", version.ref = "fabricLoader" }
 fabricMinecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
 
-concurrentutil = "ca.spottedleaf:concurrentutil:0.0.4-20250917.230334-3"
+concurrentutil = "ca.spottedleaf:concurrentutil:0.0.4"
 
 yamlconfig = "ca.spottedleaf:yamlconfig:1.0.2"
 snakeyaml = "org.yaml:snakeyaml:2.3"
