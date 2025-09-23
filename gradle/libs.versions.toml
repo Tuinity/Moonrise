@@ -4,7 +4,7 @@
 # https://maven.shedaniel.me/me/shedaniel/cloth/
 cloth = "19.0.147"
 fabricLoader = "0.17.2"
-minecraft = "1.21.9-pre1"
+minecraft = "1.21.9-pre4"
 
 [plugins]
 
