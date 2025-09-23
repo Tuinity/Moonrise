@@ -19,7 +19,7 @@ public final class SaveUtil {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public static final int STARLIGHT_LIGHT_VERSION = 9;
+    public static final int STARLIGHT_LIGHT_VERSION = 10;
 
     public static int getLightVersion() {
         return STARLIGHT_LIGHT_VERSION;
