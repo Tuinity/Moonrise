@@ -10,6 +10,7 @@ import com.mojang.datafixers.DataFixer;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Dynamic;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrays;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -282,6 +283,9 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
         }
         if (type.forceNaturalSpawning()) {
             ret.add(ChunkSystemTicketType.COUNTER_TYPER_NATURAL_SPAWNING_FORCED);
+        }
+        if (type.shouldKeepDimensionActive()) {
+            ret.add(ChunkSystemTicketType.COUNTER_TYPE_KEEP_DIMENSION_ACTIVE);
         }
 
         return ret.toLongArray();
