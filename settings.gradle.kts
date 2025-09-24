@@ -39,6 +39,14 @@ dependencyResolutionManagement {
         mavenCentral {
             mavenContent { releasesOnly() }
         }
+        maven { // TODO - remove once neoforge is on main repo
+            name = "Maven for PR #2639" // https://github.com/neoforged/NeoForge/pull/2639
+            url = uri("https://prmaven.neoforged.net/NeoForge/pr2639")
+            content {
+                includeModule("net.neoforged", "neoforge")
+                includeModule("net.neoforged", "testframework")
+            }
+        }
         maven("https://repo.papermc.io/repository/maven-public/") {
             name = "PaperMC"
         }
@@ -56,8 +64,8 @@ rootProject.name = "Moonrise"
 
 include("fabric")
 findProject(":fabric")!!.name = "Moonrise-Fabric"
-//include("neoforge")
-//findProject(":neoforge").name = "Moonrise-NeoForge"
+include("neoforge")
+findProject(":neoforge")!!.name = "Moonrise-NeoForge"
 
 // includeBuild("../YamlConfig") // Uncomment to use local YamlConfig
 // includeBuild("../ConcurrentUtil") // Uncomment to use local ConcurrentUtil

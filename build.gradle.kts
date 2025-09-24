@@ -14,7 +14,7 @@ val aw2at = Aw2AtTask.configureDefault(
 )
 
 neoForge {
-    neoFormVersion = providers.gradleProperty("neoform_version").get()
+    neoFormVersion = libs.versions.neoform.get()
     validateAccessTransformers = true
     accessTransformers.files.setFrom(aw2at.flatMap { t -> t.outputFile })
 }
