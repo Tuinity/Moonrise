@@ -202,27 +202,7 @@ public final class MoonriseConfig {
     public ChunkSystem chunkSystem = new ChunkSystem();
 
     @Adaptable
-    public static final class ChunkSystem implements InitialiseHook {
-
-        @Serializable(
-                comment = """
-                        Whether to run generation population in parallel. By default this is set to false,
-                        as mods affecting world gen are not safe to run in parallel. If you have no mods affecting
-                        gen and are saturating the population generation (~10 threads of the worker pool generating
-                        chunks), you may set this to true to possibly increase generation speed.
-                        """
-        )
-        @ClothConfig(
-                tooltip = "tooltip.moonrise.populatorparallelism",
-                fieldKeyName = "option.moonrise.populatorparallelism",
-                section = CHUNK_SYSTEM_SECTION
-        )
-        public boolean populationGenParallelism = false;
-
-        @Override
-        public void initialise() {
-            ChunkTaskScheduler.init(this.populationGenParallelism);
-        }
+    public static final class ChunkSystem {
     }
 
     @Serializable

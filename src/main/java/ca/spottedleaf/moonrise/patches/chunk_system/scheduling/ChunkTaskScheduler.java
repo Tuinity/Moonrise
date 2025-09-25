@@ -66,10 +66,6 @@ public final class ChunkTaskScheduler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChunkTaskScheduler.class);
 
-    public static void init(final boolean useParallelGen) {
-        LOGGER.info("Chunk system is using population gen parallelism: " + true);
-    }
-
     public static final TicketType CHUNK_LOAD = ChunkSystemTicketType.create("chunk_system:chunk_load", Long::compareTo);
     private static final AtomicLong CHUNK_LOAD_IDS = new AtomicLong();
 
