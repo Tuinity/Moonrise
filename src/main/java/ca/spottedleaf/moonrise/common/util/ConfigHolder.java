@@ -36,7 +36,7 @@ public final class ConfigHolder {
             """, PlatformHooks.get().getBrand());
 
     static {
-        reloadConfig();
+        reloadConfig(true);
     }
 
     public static YamlConfig<MoonriseConfig> getConfigRaw() {
@@ -48,12 +48,21 @@ public final class ConfigHolder {
     }
 
     public static boolean reloadConfig() {
+        return reloadConfig(false);
+    }
+
+    public static boolean reloadConfig(final boolean startup) {
         synchronized (CONFIG) {
             if (CONFIG_FILE.exists()) {
                 try {
                     CONFIG.load(CONFIG_FILE);
                 } catch (final Exception ex) {
-                    LOGGER.error("Failed to load configuration, using defaults", ex);
+                    if (startup) {
+                        LOGGER.error("Failed to load configuration, using defaults", ex);
+                        CONFIG.callInitialisers();
+                    } else {
+                        LOGGER.error("Failed to reload configuration", ex);
+                    }
                     return false;
                 }
             }
