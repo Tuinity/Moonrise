@@ -902,11 +902,11 @@ public abstract class ThreadedTicketLevelPropagator {
         private final Long2ByteLinkedOpenHashMap updatedPositions = new Long2ByteLinkedOpenHashMap();
 
         private final long[] resizeIncreaseQueue() {
-            return this.increaseQueue = Arrays.copyOf(this.increaseQueue, this.increaseQueue.length * 2);
+            return this.increaseQueue = Arrays.copyOf(this.increaseQueue, Math.max(4, this.increaseQueue.length + (this.increaseQueue.length >>> 1)));
         }
 
         private final long[] resizeDecreaseQueue() {
-            return this.decreaseQueue = Arrays.copyOf(this.decreaseQueue, this.decreaseQueue.length * 2);
+            return this.decreaseQueue = Arrays.copyOf(this.decreaseQueue, Math.max(4, this.decreaseQueue.length + (this.decreaseQueue.length >>> 1)));
         }
 
         private final void appendToIncreaseQueue(final long value) {
