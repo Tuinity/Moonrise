@@ -11,7 +11,6 @@ import it.unimi.dsi.fastutil.shorts.Short2ByteLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.Short2ByteMap;
 import it.unimi.dsi.fastutil.shorts.ShortOpenHashSet;
 import java.lang.invoke.VarHandle;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -749,27 +748,19 @@ public abstract class ThreadedTicketLevelPropagator {
         }
     }
 
-
     private static final class Propagator {
 
-        private static final ArrayDeque<Propagator> CACHED_PROPAGATORS = new ArrayDeque<>();
-        private static final int MAX_PROPAGATORS = Runtime.getRuntime().availableProcessors() * 2;
+        private static final ThreadLocal<Propagator> PROPAGATOR = new ThreadLocal<>();
 
         private static Propagator acquirePropagator() {
-            synchronized (CACHED_PROPAGATORS) {
-                final Propagator ret = CACHED_PROPAGATORS.pollFirst();
-                if (ret != null) {
-                    return ret;
-                }
-            }
-            return new Propagator();
+            final Propagator ret = PROPAGATOR.get();
+            PROPAGATOR.set(null);
+            return ret == null ? new Propagator() : ret;
         }
 
         private static void returnPropagator(final Propagator propagator) {
-            synchronized (CACHED_PROPAGATORS) {
-                if (CACHED_PROPAGATORS.size() < MAX_PROPAGATORS) {
-                    CACHED_PROPAGATORS.add(propagator);
-                }
+            if (PROPAGATOR.get() == null) {
+                PROPAGATOR.set(propagator);
             }
         }
 
@@ -826,8 +817,8 @@ public abstract class ThreadedTicketLevelPropagator {
         // must hold ticket lock for (centerSectionX,centerSectionZ) in radius rad
         // must call setupEncodeOffset
         private final void setupCaches(final ThreadedTicketLevelPropagator propagator,
-                                         final int centerSectionX, final int centerSectionZ,
-                                         final int rad) {
+                                       final int centerSectionX, final int centerSectionZ,
+                                       final int rad) {
             for (int dz = -rad; dz <= rad; ++dz) {
                 for (int dx = -rad; dx <= rad; ++dx) {
                     final int sectionX = centerSectionX + dx;
@@ -895,51 +886,6 @@ public abstract class ThreadedTicketLevelPropagator {
                 (1L << ((1 + 0) | ((1 + 1) << 2))) |
                 (1L << ((1 + 1) | ((1 + 1) << 2)))
         );
-
-        private void ex(int bitset) {
-            for (int i = 0, len = Integer.bitCount(bitset); i < len; ++i) {
-                final int set = Integer.numberOfTrailingZeros(bitset);
-                final int tailingBit = (-bitset) & bitset;
-                // XOR to remove the trailing bit
-                bitset ^= tailingBit;
-
-                // the encoded value set is (x_val) | (z_val << 2), totaling 4 bits
-                // thus, the bitset is 16 bits wide where each one represents a direction to propagate and the
-                // index of the set bit is the encoded value
-                // the encoded coordinate has 3 valid states:
-                // 0b00 (0) -> -1
-                // 0b01 (1) -> 0
-                // 0b10 (2) -> 1
-                // the decode operation then is val - 1, and the encode operation is val + 1
-                final int xOff = (set & 3) - 1;
-                final int zOff = ((set >>> 2) & 3) - 1;
-                System.out.println("Encoded: (" + xOff + "," + zOff + ")");
-            }
-        }
-
-        private void ch(long bs, int shift) {
-            int bitset = (int)(bs >>> shift);
-            for (int i = 0, len = Integer.bitCount(bitset); i < len; ++i) {
-                final int set = Integer.numberOfTrailingZeros(bitset);
-                final int tailingBit = (-bitset) & bitset;
-                // XOR to remove the trailing bit
-                bitset ^= tailingBit;
-
-                // the encoded value set is (x_val) | (z_val << 2), totaling 4 bits
-                // thus, the bitset is 16 bits wide where each one represents a direction to propagate and the
-                // index of the set bit is the encoded value
-                // the encoded coordinate has 3 valid states:
-                // 0b00 (0) -> -1
-                // 0b01 (1) -> 0
-                // 0b10 (2) -> 1
-                // the decode operation then is val - 1, and the encode operation is val + 1
-                final int xOff = (set & 3) - 1;
-                final int zOff = ((set >>> 2) & 3) - 1;
-                if (Math.abs(xOff) > 1 || Math.abs(zOff) > 1 || (xOff | zOff) == 0) {
-                    throw new IllegalStateException();
-                }
-            }
-        }
 
         // whether the increase propagator needs to write the propagated level to the position, used to avoid cascading
         // updates for sources
@@ -1298,160 +1244,4 @@ public abstract class ThreadedTicketLevelPropagator {
             this.performIncrease();
         }
     }
-
-    /*
-    private static final java.util.Random random = new java.util.Random(4L);
-    private static final List<io.papermc.paper.chunk.system.RegionizedPlayerChunkLoader.SingleUserAreaMap<Void>> walkers =
-        new java.util.ArrayList<>();
-    static final int PLAYERS = 0;
-    static final int RAD_BLOCKS = 10000;
-    static final int RAD = RAD_BLOCKS >> 4;
-    static final int RAD_BIG_BLOCKS = 100_000;
-    static final int RAD_BIG = RAD_BIG_BLOCKS >> 4;
-    static final int VD = 4;
-    static final int BIG_PLAYERS = 50;
-    static final double WALK_CHANCE = 0.10;
-    static final double TP_CHANCE = 0.01;
-    static final int TP_BACK_PLAYERS = 200;
-    static final double TP_BACK_CHANCE = 0.25;
-    static final double TP_STEAL_CHANCE = 0.25;
-    private static final List<io.papermc.paper.chunk.system.RegionizedPlayerChunkLoader.SingleUserAreaMap<Void>> tpBack =
-        new java.util.ArrayList<>();
-
-    public static void main(final String[] args) {
-        final ReentrantAreaLock ticketLock = new ReentrantAreaLock(SECTION_SHIFT);
-        final ReentrantAreaLock schedulingLock = new ReentrantAreaLock(SECTION_SHIFT);
-        final Long2ByteLinkedOpenHashMap levelMap = new Long2ByteLinkedOpenHashMap();
-        final Long2ByteLinkedOpenHashMap refMap = new Long2ByteLinkedOpenHashMap();
-        final io.papermc.paper.util.misc.Delayed8WayDistancePropagator2D ref = new io.papermc.paper.util.misc.Delayed8WayDistancePropagator2D((final long coordinate, final byte oldLevel, final byte newLevel) -> {
-            if (newLevel == 0) {
-                refMap.remove(coordinate);
-            } else {
-                refMap.put(coordinate, newLevel);
-            }
-        });
-        final ThreadedTicketLevelPropagator propagator = new ThreadedTicketLevelPropagator() {
-            @Override
-            protected void processLevelUpdates(Long2ByteLinkedOpenHashMap updates) {
-                for (final long key : updates.keySet()) {
-                    final byte val = updates.get(key);
-                    if (val == 0) {
-                        levelMap.remove(key);
-                    } else {
-                        levelMap.put(key, val);
-                    }
-                }
-            }
-
-            @Override
-            protected void processSchedulingUpdates(Long2ByteLinkedOpenHashMap updates, List<ChunkProgressionTask> scheduledTasks, List<NewChunkHolder> changedFullStatus) {}
-        };
-
-        for (;;) {
-            if (walkers.isEmpty() && tpBack.isEmpty()) {
-                for (int i = 0; i < PLAYERS; ++i) {
-                    int rad = i < BIG_PLAYERS ? RAD_BIG : RAD;
-                    int posX = random.nextInt(-rad, rad + 1);
-                    int posZ = random.nextInt(-rad, rad + 1);
-
-                    io.papermc.paper.chunk.system.RegionizedPlayerChunkLoader.SingleUserAreaMap<Void> map = new io.papermc.paper.chunk.system.RegionizedPlayerChunkLoader.SingleUserAreaMap<>(null) {
-                        @Override
-                        protected void addCallback(Void parameter, int chunkX, int chunkZ) {
-                            int src = 45 - 31 + 1;
-                            ref.setSource(chunkX, chunkZ, src);
-                            propagator.setSource(chunkX, chunkZ, src);
-                        }
-
-                        @Override
-                        protected void removeCallback(Void parameter, int chunkX, int chunkZ) {
-                            ref.removeSource(chunkX, chunkZ);
-                            propagator.removeSource(chunkX, chunkZ);
-                        }
-                    };
-
-                    map.add(posX, posZ, VD);
-
-                    walkers.add(map);
-                }
-                for (int i = 0; i < TP_BACK_PLAYERS; ++i) {
-                    int rad = RAD_BIG;
-                    int posX = random.nextInt(-rad, rad + 1);
-                    int posZ = random.nextInt(-rad, rad + 1);
-
-                    io.papermc.paper.chunk.system.RegionizedPlayerChunkLoader.SingleUserAreaMap<Void> map = new io.papermc.paper.chunk.system.RegionizedPlayerChunkLoader.SingleUserAreaMap<>(null) {
-                        @Override
-                        protected void addCallback(Void parameter, int chunkX, int chunkZ) {
-                            int src = 45 - 31 + 1;
-                            ref.setSource(chunkX, chunkZ, src);
-                            propagator.setSource(chunkX, chunkZ, src);
-                        }
-
-                        @Override
-                        protected void removeCallback(Void parameter, int chunkX, int chunkZ) {
-                            ref.removeSource(chunkX, chunkZ);
-                            propagator.removeSource(chunkX, chunkZ);
-                        }
-                    };
-
-                    map.add(posX, posZ, random.nextInt(1, 63));
-
-                    tpBack.add(map);
-                }
-            } else {
-                for (int i = 0; i < PLAYERS; ++i) {
-                    if (random.nextDouble() > WALK_CHANCE) {
-                        continue;
-                    }
-
-                    io.papermc.paper.chunk.system.RegionizedPlayerChunkLoader.SingleUserAreaMap<Void> map = walkers.get(i);
-
-                    int updateX = random.nextInt(-1, 2);
-                    int updateZ = random.nextInt(-1, 2);
-
-                    map.update(map.lastChunkX + updateX, map.lastChunkZ + updateZ, VD);
-                }
-
-                for (int i = 0; i < PLAYERS; ++i) {
-                    if (random.nextDouble() > TP_CHANCE) {
-                        continue;
-                    }
-
-                    int rad = i < BIG_PLAYERS ? RAD_BIG : RAD;
-                    int posX = random.nextInt(-rad, rad + 1);
-                    int posZ = random.nextInt(-rad, rad + 1);
-
-                    io.papermc.paper.chunk.system.RegionizedPlayerChunkLoader.SingleUserAreaMap<Void> map = walkers.get(i);
-
-                    map.update(posX, posZ, VD);
-                }
-
-                for (int i = 0; i < TP_BACK_PLAYERS; ++i) {
-                    if (random.nextDouble() > TP_BACK_CHANCE) {
-                        continue;
-                    }
-
-                    io.papermc.paper.chunk.system.RegionizedPlayerChunkLoader.SingleUserAreaMap<Void> map = tpBack.get(i);
-
-                    map.update(-map.lastChunkX, -map.lastChunkZ, random.nextInt(1, 63));
-
-                    if (random.nextDouble() > TP_STEAL_CHANCE) {
-                        propagator.performUpdate(
-                            map.lastChunkX >> SECTION_SHIFT, map.lastChunkZ >> SECTION_SHIFT, schedulingLock, null, null
-                        );
-                        propagator.performUpdate(
-                            (-map.lastChunkX >> SECTION_SHIFT), (-map.lastChunkZ >> SECTION_SHIFT), schedulingLock, null, null
-                        );
-                    }
-                }
-            }
-
-            ref.propagateUpdates();
-            propagator.performUpdates(ticketLock, schedulingLock, null, null);
-
-            if (!refMap.equals(levelMap)) {
-                throw new IllegalStateException("Error!");
-            }
-        }
-    }
-     */
 }
