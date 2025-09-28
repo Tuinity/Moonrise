@@ -54,6 +54,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Path;
@@ -461,13 +462,13 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     }
 
     /**
-     * @reason Destroy old chunk system hooks
-     * @author Spottedleaf
+     * @reason Allow events but prevent actual saving
+     * @author MrlingXD
      * @see NewChunkHolder#save(boolean)
      */
-    @Overwrite
-    public boolean save(final ChunkAccess chunk) {
-        throw new UnsupportedOperationException();
+    @Inject(method = "save", at = @At("RETURN"), cancellable = true)
+    public void save(final ChunkAccess chunk, final CallbackInfoReturnable<Boolean> cir) {
+        cir.setReturnValue(false);
     }
 
     /**
