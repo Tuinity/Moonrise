@@ -26,7 +26,7 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
     id("quiet-fabric-loom") version "1.11.325"
     // https://projects.neoforged.net/neoforged/moddevgradle
-    id("net.neoforged.moddev.repositories") version "2.0.107"
+    id("net.neoforged.moddev.repositories") version "2.0.110"
 }
 
 dependencyResolutionManagement {
@@ -38,14 +38,6 @@ dependencyResolutionManagement {
         }
         mavenCentral {
             mavenContent { releasesOnly() }
-        }
-        maven { // TODO - remove once neoforge is on main repo
-            name = "Maven for PR #2639" // https://github.com/neoforged/NeoForge/pull/2639
-            url = uri("https://prmaven.neoforged.net/NeoForge/pr2639")
-            content {
-                includeModule("net.neoforged", "neoforge")
-                includeModule("net.neoforged", "testframework")
-            }
         }
         maven("https://repo.papermc.io/repository/maven-public/") {
             name = "PaperMC"

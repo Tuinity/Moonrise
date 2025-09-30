@@ -36,7 +36,7 @@
     "accessWidener": "moonrise.accesswidener",
     "depends": {
         "fabricloader": ">=${loader_version}",
-        "minecraft": ">1.21.6 <1.21.9",
+        "minecraft": ">1.21.8 <1.21.10",
         "fabric-command-api-v2": "*"
     },
     "custom": {

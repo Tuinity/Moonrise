@@ -4,11 +4,11 @@
 # https://maven.shedaniel.me/me/shedaniel/cloth/
 cloth = "19.0.147"
 fabricLoader = "0.17.2"
-minecraft = "1.21.9-pre4"
+minecraft = "1.21.9"
 # https://projects.neoforged.net/neoforged/neoforge
-neoforge= "21.9.0-alpha.1.21.9-pre3.20250923.155515"
+neoforge= "21.9.1-beta"
 # https://projects.neoforged.net/neoforged/neoform
-neoform = "1.21.9-pre4-20250923.154059"
+neoform = "1.21.9-20250930.151910"
 
 [plugins]
 
