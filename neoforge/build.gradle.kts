@@ -38,6 +38,8 @@ neoForge {
     }
 }
 
+val gui = rootProject.property("enable_gui").toString() == "true"
+
 dependencies {
     runtimeOnly(rootProject.sourceSets.main.get().output)
     shadow(project(":"))
@@ -48,8 +50,12 @@ dependencies {
     libs(libs.snakeyaml)
     "additionalRuntimeClasspath"(libs.snakeyaml)
 
-    implementation(libs.clothConfig.neoforge)
-    jarJar(libs.clothConfig.neoforge)
+    if (gui) {
+        implementation(libs.clothConfig.neoforge)
+        jarJar(libs.clothConfig.neoforge)
+    } else {
+        compileOnly(libs.clothConfig.neoforge)
+    }
 }
 
 tasks.processResources {
