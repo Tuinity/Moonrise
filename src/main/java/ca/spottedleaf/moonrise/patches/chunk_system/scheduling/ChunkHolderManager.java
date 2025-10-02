@@ -1446,6 +1446,11 @@ public final class ChunkHolderManager {
 
         boolean ret = false;
 
+        if (pendingFullLoadUpdate.isEmpty()) {
+            // avoid allocating changedFullStatus
+            return ret;
+        }
+
         final List<NewChunkHolder> changedFullStatus = new ArrayList<>();
 
         NewChunkHolder holder;

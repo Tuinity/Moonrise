@@ -338,6 +338,17 @@ public final class ChunkTaskScheduler {
         return this.mainThreadExecutor.executeTask();
     }
 
+    // run only tasks queued before this function was invoked
+    public void executeAllRecentlyQueuedMainThreadTasks() {
+        // note: order of retrieval is important to avoid race conditions
+        final long executed = this.mainThreadExecutor.getTotalTasksExecuted();
+        final long scheduled = this.mainThreadExecutor.getTotalTasksScheduled();
+
+        final long left = scheduled - executed;
+        // may execute more tasks than expected due to recursion
+        for (long i = 0; i < left && this.mainThreadExecutor.executeTask(); ++i);
+    }
+
     public void raisePriority(final int x, final int z, final Priority priority) {
         this.chunkHolderManager.raisePriority(x, z, priority);
     }

@@ -7,6 +7,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskSchedule
 import ca.spottedleaf.yamlconfig.InitialiseHook;
 import ca.spottedleaf.yamlconfig.annotation.Adaptable;
 import ca.spottedleaf.yamlconfig.annotation.Serializable;
+import ca.spottedleaf.yamlconfig.type.DefaultedValue;
 import ca.spottedleaf.yamlconfig.type.Duration;
 
 @Adaptable
@@ -252,5 +253,37 @@ public final class MoonriseConfig {
 
     @Adaptable
     public static final class Misc {
+    }
+
+    @Serializable
+    public TickLoop tickLoop = new TickLoop();
+
+    @Adaptable
+    public static final class TickLoop {
+
+        // update comment when changing
+        public static final Integer DEFAULT_CATCHUP_TICKS = Integer.valueOf(5);
+
+        @Serializable(
+            comment = """
+                Configures the maximum number of ticks the server will attempt to catch up on.
+                The server will attempt to catch up by "sprinting." This is visually apparent by
+                watching mobs move/attack quickly after the server lags.
+                
+                If the server falls behind by 10 ticks and the configured value is 5, then the server
+                will only attempt to catch up by 5 ticks.
+                
+                Tick catchup exists so that temporary spikes in server lag do not cause the server time
+                to fall behind wall time over a long period. However, the speedup caused by the catchup
+                process may be disruptive to players.
+                
+                The default value is set to 5 so that players are not unnecessarily disrupted if the server
+                happens to lag for any reason, and so that small lag spikes do not cause de-sync from wall
+                time. Note that this value is smaller than Vanilla, which is at least 20 ticks.
+                
+                To disable tick catchup, set the configured value to 1.
+                """
+        )
+        public DefaultedValue<Integer> catchupTicks = new DefaultedValue<>();
     }
 }
