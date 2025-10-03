@@ -501,7 +501,7 @@ public final class MoonriseCommand {
             final double tps1m = report1m.tpsData().segmentAll().average();
             final double tps5m = report5m.tpsData().segmentAll().average();
             final double tps15m = report15m.tpsData().segmentAll().average();
-            final double expectedTps = (1.0 / tickIntervalNS) * 1.0E9;
+            final double expectedTps = (1.0E9 / tickIntervalNS);
 
             return Component.literal(" ").withStyle(ChatFormatting.BLUE)
                 .append(Component.literal(ONE_DECIMAL_PLACES.get().format(tps5s)).withColor(getTPSColour(tps5s, expectedTps)))

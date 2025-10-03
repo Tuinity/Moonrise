@@ -96,7 +96,8 @@ public final class TickData {
             computeSegmentData(data, percent99BestStart, percent99BestEnd, inverse),
             computeSegmentData(data, percent95BestStart, percent95BestEnd, inverse),
             computeSegmentData(data, percent1WorstStart, percent1WorstEnd, inverse),
-            computeSegmentData(data, percent5WorstStart, percent5WorstEnd, inverse)
+            computeSegmentData(data, percent5WorstStart, percent5WorstEnd, inverse),
+            data
         );
     }
 
@@ -317,7 +318,8 @@ public final class TickData {
         SegmentData segment99PercentBest,
         SegmentData segment95PercentBest,
         SegmentData segment5PercentWorst,
-        SegmentData segment1PercentWorst
+        SegmentData segment1PercentWorst,
+        long[] rawData
     ) {}
 
     public static final record SegmentData(
