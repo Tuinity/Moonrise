@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.common.util;
+package ca.spottedleaf.moonrise.common.time;
 
 
 /**

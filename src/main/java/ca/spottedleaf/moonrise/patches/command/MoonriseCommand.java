@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.patches.command;
 
+import ca.spottedleaf.moonrise.common.time.TickData;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.JsonUtil;
@@ -9,6 +10,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskSchedule
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import ca.spottedleaf.moonrise.patches.profiler.client.ProfilerMinecraft;
 import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
+import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopMinecraftServer;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -20,9 +22,12 @@ import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
@@ -33,6 +38,7 @@ import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import java.io.File;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +48,9 @@ import static net.minecraft.commands.Commands.literal;
 public final class MoonriseCommand {
 
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static final ThreadLocal<DecimalFormat> ONE_DECIMAL_PLACES = ThreadLocal.withInitial(() -> {
+        return new DecimalFormat("#,##0.0");
+    });
 
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
@@ -66,6 +75,8 @@ public final class MoonriseCommand {
                 .then(literal("chunks")
                     .executes(MoonriseCommand::debugChunks)
                 )
+            ).then(literal("tps")
+                .executes(MoonriseCommand::tps)
             )
         );
     }
@@ -327,5 +338,212 @@ public final class MoonriseCommand {
             ctx.getSource().sendFailure(Component.literal("Failed to dump chunk information, see console").withStyle(ChatFormatting.RED));
             return 0;
         }
+    }
+
+
+    // https://en.wikipedia.org/wiki/HSL_and_HSV#HSL_to_RGB
+    private static int colorFromHSV(final double h, final double s, final double v) {
+        final double c = v * s;
+        final double hh = h / 60.0;
+        final double x = c * (1 - Math.abs((hh % 2) - 1));
+
+        final double m = v - c;
+        final double cm = c + m;
+        final double xm = x + m;
+
+        final double r, g, b;
+        if (hh >= 0.0 && hh < 1.0) {
+            r = cm;
+            g = xm;
+            b = m;
+        } else if (hh >= 1.0 && hh < 2.0) {
+            r = xm;
+            g = cm;
+            b = m;
+        } else if (hh >= 2.0 && hh < 3.0) {
+            r = m;
+            g = cm;
+            b = xm;
+        } else if (hh >= 3.0 && hh < 4.0) {
+            r = m;
+            g = xm;
+            b = cm;
+        } else if (hh >= 4.0 && hh < 5.0) {
+            r = xm;
+            g = m;
+            b = cm;
+        } else if (hh >= 5.0 && hh < 6.0) {
+            r = cm;
+            g = m;
+            b = xm;
+        } else {
+            // out of range
+            r = g = b = m;
+        }
+
+        return (Math.toIntExact(Math.round(r * 255)) << 16) |
+               (Math.toIntExact(Math.round(g * 255)) << 8) |
+                Math.toIntExact(Math.round(b * 255));
+    }
+
+    // reference tps: 20
+    private static int getColourForTPS(final double tps) {
+        final double difference = Math.min(Math.abs(20.0 - tps), 20.0);
+        final double coordinate;
+        if (difference <= 2.0) {
+            // >= 18 tps
+            coordinate = 70.0 + ((140.0 - 70.0)/(0.0 - 2.0)) * (difference - 2.0);
+        } else if (difference <= 5.0) {
+            // >= 15 tps
+            coordinate = 30.0 + ((70.0 - 30.0)/(2.0 - 5.0)) * (difference - 5.0);
+        } else if (difference <= 10.0) {
+            // >= 10 tps
+            coordinate = 10.0 + ((30.0 - 10.0)/(5.0 - 10.0)) * (difference - 10.0);
+        } else {
+            // >= 0.0 tps
+            coordinate = 0.0 + ((10.0 - 0.0)/(10.0 - 20.0)) * (difference - 20.0);
+        }
+
+        return colorFromHSV(coordinate, 85.0 / 100.0, 80.0 / 100.0);
+    }
+
+    private static int getTPSColour(final double tps, final double expectedTps) {
+        return getColourForTPS(tps * (20.0 / expectedTps));
+    }
+
+    private static int getColourForMSPT(final double mspt) {
+        final double clamped = Math.min(Math.abs(mspt), 50.0);
+        final double coordinate;
+        if (clamped <= 15.0) {
+            coordinate = 130.0 + ((140.0 - 130.0)/(0.0 - 15.0)) * (clamped - 15.0);
+        } else if (clamped <= 25.0) {
+            coordinate = 90.0 + ((130.0 - 90.0)/(15.0 - 25.0)) * (clamped - 25.0);
+        } else if (clamped <= 35.0) {
+            coordinate = 30.0 + ((90.0 - 30.0)/(25.0 - 35.0)) * (clamped - 35.0);
+        } else if (clamped <= 40.0) {
+            coordinate = 15.0 + ((30.0 - 15.0)/(35.0 - 40.0)) * (clamped - 40.0);
+        } else {
+            coordinate = 0.0 + ((15.0 - 0.0)/(40.0 - 50.0)) * (clamped - 50.0);
+        }
+
+        return colorFromHSV(coordinate, 85.0 / 100.0f, 80.0 / 100.0f);
+    }
+
+    private static int getMSPTColour(final double mspt, final double expectedMaxMSPT) {
+        return getColourForMSPT(mspt * (50.0 / expectedMaxMSPT));
+    }
+
+    private static MutableComponent formatMSPTReport(final TickData.TickReportData report, final long tickIntervalNS) {
+        final TickData.SegmentedAverage timePerTickData = report.timePerTickData();
+
+        final TickData.SegmentData all = timePerTickData.segmentAll();
+        final TickData.SegmentData percentile = timePerTickData.segment5PercentWorst();
+
+        final double minMS = all.least() / 1.0E6;
+        final double medMS = all.median() / 1.0E6;
+        final double avgMS = all.average() / 1.0E6;
+        final double percent = percentile.least() / 1.0E6; // show the smallest value in the 95% percentile
+        final double max = all.greatest() / 1.0E6;
+        final double expectedMSPT = (double)tickIntervalNS / 1.0E6;
+
+        return Component.literal("").withStyle(ChatFormatting.BLUE)
+            .append(Component.literal(ONE_DECIMAL_PLACES.get().format(minMS)).withColor(getMSPTColour(minMS, expectedMSPT)))
+            .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+            .append(Component.literal(ONE_DECIMAL_PLACES.get().format(medMS)).withColor(getMSPTColour(medMS, expectedMSPT)))
+            .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+            .append(Component.literal(ONE_DECIMAL_PLACES.get().format(avgMS)).withColor(getMSPTColour(avgMS, expectedMSPT)))
+            .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+            .append(Component.literal(ONE_DECIMAL_PLACES.get().format(percent)).withColor(getMSPTColour(percent, expectedMSPT)))
+            .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+            .append(Component.literal(ONE_DECIMAL_PLACES.get().format(max)).withColor(getMSPTColour(max, expectedMSPT)));
+    }
+
+    public static int tps(final CommandContext<CommandSourceStack> ctx) {
+        final MinecraftServer server = ctx.getSource().getServer();
+
+        final TickData tickTimes5s = ((TickLoopMinecraftServer)server).moonrise$getTickData5s();
+        final TickData tickTimes10s = ((TickLoopMinecraftServer)server).moonrise$getTickData10s();
+        final TickData tickTimes1m = ((TickLoopMinecraftServer)server).moonrise$getTickData1m();
+        final TickData tickTimes5m = ((TickLoopMinecraftServer)server).moonrise$getTickData5m();
+        final TickData tickTimes15m = ((TickLoopMinecraftServer)server).moonrise$getTickData15m();
+
+        final long now = Util.getNanos();
+        final long tickIntervalNS = server.tickRateManager().nanosecondsPerTick();
+
+        final TickData.TickReportData report5s = tickTimes5s.generateTickReport(null, now, tickIntervalNS);
+        final TickData.TickReportData report10s = tickTimes10s.generateTickReport(null, now, tickIntervalNS);
+        final TickData.TickReportData report1m = tickTimes1m.generateTickReport(null, now, tickIntervalNS);
+        final TickData.TickReportData report5m = tickTimes5m.generateTickReport(null, now, tickIntervalNS);
+        final TickData.TickReportData report15m = tickTimes15m.generateTickReport(null, now, tickIntervalNS);
+
+        if (report5s == null || report10s == null || report1m == null || report5m == null || report15m == null) {
+            ctx.getSource().sendSuccess(() -> {
+                return Component.literal("No tick data to report").withStyle(ChatFormatting.RED);
+            }, false);
+            return 0;
+        }
+
+        ctx.getSource().sendSuccess(() -> {
+            return Component.literal("TPS ").withStyle(ChatFormatting.BLUE)
+                .append(Component.literal("5s").withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal("10s").withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal("1m").withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal("5m").withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal("15m").withStyle(ChatFormatting.DARK_AQUA));
+        }, false);
+        ctx.getSource().sendSuccess(() -> {
+            final double tps5s = report5s.tpsData().segmentAll().average();
+            final double tps10s = report10s.tpsData().segmentAll().average();
+            final double tps1m = report1m.tpsData().segmentAll().average();
+            final double tps5m = report5m.tpsData().segmentAll().average();
+            final double tps15m = report15m.tpsData().segmentAll().average();
+            final double expectedTps = (1.0 / tickIntervalNS) * 1.0E9;
+
+            return Component.literal(" ").withStyle(ChatFormatting.BLUE)
+                .append(Component.literal(ONE_DECIMAL_PLACES.get().format(tps5s)).withColor(getTPSColour(tps5s, expectedTps)))
+                .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(ONE_DECIMAL_PLACES.get().format(tps10s)).withColor(getTPSColour(tps10s, expectedTps)))
+                .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(ONE_DECIMAL_PLACES.get().format(tps1m)).withColor(getTPSColour(tps1m, expectedTps)))
+                .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(ONE_DECIMAL_PLACES.get().format(tps5m)).withColor(getTPSColour(tps5m, expectedTps)))
+                .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(ONE_DECIMAL_PLACES.get().format(tps15m)).withColor(getTPSColour(tps15m, expectedTps)));
+        }, false);
+
+
+        ctx.getSource().sendSuccess(() -> {
+            return Component.literal("");
+        }, false);
+
+
+        ctx.getSource().sendSuccess(() -> {
+            return Component.literal("MSPT ").withStyle(ChatFormatting.BLUE)
+                .append(Component.literal("min").withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal("med").withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal("avg").withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal("95%ile").withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal("max").withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal(" for ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal("10s").withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal("; ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal("1m").withStyle(ChatFormatting.DARK_AQUA));
+        }, false);
+        ctx.getSource().sendSuccess(() -> {
+            return Component.literal(" ").withStyle(ChatFormatting.BLUE)
+                .append(formatMSPTReport(report10s, tickIntervalNS))
+                .append(Component.literal(";  ").withStyle(ChatFormatting.BLUE))
+                .append(formatMSPTReport(report1m, tickIntervalNS));
+        }, false);
+
+        return 0;
     }
 }

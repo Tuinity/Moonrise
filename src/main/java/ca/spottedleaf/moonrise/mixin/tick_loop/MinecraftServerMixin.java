@@ -1,11 +1,15 @@
 package ca.spottedleaf.moonrise.mixin.tick_loop;
 
+import ca.spottedleaf.concurrentutil.scheduler.SchedulerThreadPool;
 import ca.spottedleaf.moonrise.common.config.moonrise.MoonriseConfig;
+import ca.spottedleaf.moonrise.common.time.TickData;
+import ca.spottedleaf.moonrise.common.time.TickTime;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
-import ca.spottedleaf.moonrise.common.util.Schedule;
+import ca.spottedleaf.moonrise.common.time.Schedule;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
 import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopBlockableEventLoop;
+import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopMinecraftServer;
 import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopPacketProcessor;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -33,9 +37,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 @Mixin(MinecraftServer.class)
-abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements ServerInfo, CommandSource, ChunkIOErrorReporter {
+abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements ServerInfo, CommandSource, ChunkIOErrorReporter, TickLoopMinecraftServer {
 
     @Shadow
     @Final
@@ -66,6 +72,15 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
     @Shadow
     private boolean waitingForNextTick;
 
+    @Shadow
+    public abstract boolean pollTask();
+
+    @Shadow
+    public abstract boolean isTickTimeLoggingEnabled();
+
+    @Shadow
+    private long idleTimeNanos;
+
     public MinecraftServerMixin(final String name) {
         super(name);
     }
@@ -73,6 +88,60 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
     // firstPeriod is set on init
     @Unique
     private final Schedule tickSchedule = new Schedule(0L);
+
+    @Unique
+    private final TickData tickTimes5s  = new TickData(TimeUnit.SECONDS.toNanos(5L));
+    @Unique
+    private final TickData tickTimes10s = new TickData(TimeUnit.SECONDS.toNanos(10L));
+    @Unique
+    private final TickData tickTimes1m  = new TickData(TimeUnit.MINUTES.toNanos(1L));
+    @Unique
+    private final TickData tickTimes5m  = new TickData(TimeUnit.MINUTES.toNanos(5L));
+    @Unique
+    private final TickData tickTimes15m = new TickData(TimeUnit.MINUTES.toNanos(15L));
+
+    @Override
+    public final TickData moonrise$getTickData5s() {
+        return this.tickTimes5s;
+    }
+
+    @Override
+    public final TickData moonrise$getTickData10s() {
+        return this.tickTimes10s;
+    }
+
+    @Override
+    public final TickData moonrise$getTickData1m() {
+        return this.tickTimes1m;
+    }
+
+    @Override
+    public final TickData moonrise$getTickData5m() {
+        return this.tickTimes5m;
+    }
+
+    @Override
+    public final TickData moonrise$getTickData15m() {
+        return this.tickTimes15m;
+    }
+
+    @Unique
+    private long lastTickStart;
+
+    @Unique
+    private long currentTickStart;
+
+    @Unique
+    private long scheduledTickStart;
+
+    @Unique
+    private void addTickTime(final TickTime time) {
+        this.tickTimes5s.addDataFrom(time);
+        this.tickTimes10s.addDataFrom(time);
+        this.tickTimes1m.addDataFrom(time);
+        this.tickTimes5m.addDataFrom(time);
+        this.tickTimes15m.addDataFrom(time);
+    }
 
     /**
      * @reason Init the tickSchedule so that it syncs with the nextTickTimeNanos field.
@@ -96,6 +165,8 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
             interval = 0L;
         }
         this.tickSchedule.setNextPeriod(this.nextTickTimeNanos, interval);
+        this.lastTickStart = SchedulerThreadPool.DEADLINE_NOT_SET;
+        this.scheduledTickStart = this.tickSchedule.getDeadline(interval);
     }
 
     /**
@@ -140,7 +211,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
             interval = tickRateManager.nanosecondsPerTick();
 
             // handle catchup logic
-            final long ticksBehind = this.tickSchedule.getPeriodsAhead(interval, now);
+            final long ticksBehind = Math.max(1L, this.tickSchedule.getPeriodsAhead(interval, now));
             final long catchup = (long)Math.max(
                 1,
                 ConfigHolder.getConfig().tickLoop.catchupTicks.getOrDefault(MoonriseConfig.TickLoop.DEFAULT_CATCHUP_TICKS).intValue()
@@ -160,7 +231,108 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
         // disable overloaded logic: the logging, and the updating of nextTickTimeNanos
         this.lastOverloadWarningNanos = this.nextTickTimeNanos;
 
+        this.currentTickStart = now;
+
         return interval;
+    }
+
+    /**
+     * @reason Hook end of tick so that we can record the tick length
+     * @author Spottedleaf
+     */
+    @Inject(
+        method = "runServer",
+        at = @At(
+            value = "INVOKE",
+            target = "Lcom/mojang/jtracy/DiscontinuousFrame;end()V",
+            ordinal = 0,
+            shift = At.Shift.AFTER
+        )
+    )
+    private void hookEndOfTick(final CallbackInfo ci) {
+        final long prevStart = this.lastTickStart;
+        final long currStart = this.currentTickStart;
+        this.lastTickStart = this.currentTickStart;
+        final long scheduledStart = this.scheduledTickStart;
+        this.scheduledTickStart = this.nextTickTimeNanos; // set scheduledStart for next tick
+
+        final long now = Util.getNanos();
+
+        final TickTime time = new TickTime(
+            prevStart,
+            scheduledStart,
+            currStart,
+            0L,
+            now,
+            0L,
+            false,
+            true
+        );
+
+        this.addTickTime(time);
+    }
+
+    /**
+     * @reason Record time spent executing tasks so that it may be reported under MSPT
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "runServer",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/MinecraftServer;waitUntilNextTick()V",
+            ordinal = 0
+        )
+    )
+    private void recordTaskExecutionTimeWhileWaiting(final MinecraftServer instance) {
+        final ProfilerFiller profiler = Profiler.get();
+
+        profiler.push("moonrise:execute_tasks_until_tick");
+        this.waitingForNextTick = true;
+        // implement waitForTasks
+        final boolean isLoggingEnabled = this.isTickTimeLoggingEnabled();
+        try {
+            final long deadline = this.nextTickTimeNanos;
+            for (;;) {
+                final long start = Util.getNanos();
+                if (start - deadline >= 0L) {
+                    // start is ahead of deadline
+                    break;
+                }
+
+                // execute tasks while there are tasks and there is time left
+                // note: we do not need to bypass the task execution check here (like managedBlock) since it checks time
+                while (this.pollTask() && (Util.getNanos() - deadline < 0L));
+
+                final long now = Util.getNanos();
+
+                // record execution time
+                this.addTickTime(
+                    new TickTime(
+                        SchedulerThreadPool.DEADLINE_NOT_SET, SchedulerThreadPool.DEADLINE_NOT_SET,
+                        start, 0L,
+                        now, 0L,
+                        false,
+                        false
+                    )
+                );
+
+                // wait for unpark or deadline
+                final long toWait = deadline - now;
+                if (toWait > 0L) {
+                    LockSupport.parkNanos("waiting for tick or tasks", toWait);
+                    if (isLoggingEnabled) {
+                        this.idleTimeNanos += Util.getNanos() - now;
+                    }
+                } else {
+                    // done
+                    break;
+                }
+            }
+        } finally {
+            this.waitingForNextTick = false;
+        }
+        profiler.pop();
     }
 
     /**
@@ -265,7 +437,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
         this.waitingForNextTick = true;
         try {
             this.managedBlock(() -> {
-                // done if time in next time >= 0
+                // done if time in next tick >= 0
                 return Util.getNanos() - this.nextTickTimeNanos >= 0L;
             });
         } finally {
