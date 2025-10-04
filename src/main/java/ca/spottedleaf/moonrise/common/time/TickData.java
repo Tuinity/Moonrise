@@ -51,18 +51,14 @@ public final class TickData {
         final int len = toIndex - fromIndex;
         long sum = 0L;
         final double median = median(arr, fromIndex, toIndex);
-        long min = arr[0];
-        long max = arr[0];
+        long min = Long.MAX_VALUE;
+        long max = Long.MIN_VALUE;
 
         for (int i = fromIndex; i < toIndex; ++i) {
             final long val = arr[i];
             sum += val;
-            if (val < min) {
-                min = val;
-            }
-            if (val > max) {
-                max = val;
-            }
+            min = Math.min(min, val);
+            max = Math.max(max, val);
         }
 
         if (inverse) {
