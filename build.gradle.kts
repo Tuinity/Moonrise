@@ -13,10 +13,13 @@ val aw2at = Aw2AtTask.configureDefault(
     sourceSets.main.get()
 )
 
+sourceSets.create("lithium")
+
 neoForge {
     neoFormVersion = libs.versions.neoform.get()
     validateAccessTransformers = true
     accessTransformers.files.setFrom(aw2at.flatMap { t -> t.outputFile })
+    addModdingDependenciesTo(sourceSets.getByName("lithium"))
 }
 
 dependencies {
@@ -31,6 +34,9 @@ dependencies {
 
     // todo: does cloth publish a platform-agnostic jar in mojang mappings?
     compileOnly(libs.clothConfig.neoforge)
+
+    "lithiumCompileOnly"("maven.modrinth:lithium:${rootProject.property("neo_lithium_version")}")
+    compileOnly(sourceSets.getByName("lithium").output)
 }
 
 subprojects {

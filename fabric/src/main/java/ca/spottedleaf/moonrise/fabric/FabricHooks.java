@@ -52,6 +52,11 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
     }
 
     @Override
+    public boolean isModLoaded(final String modId) {
+        return FabricLoader.getInstance().isModLoaded(modId);
+    }
+
+    @Override
     public int getLightEmission(final BlockState blockState, final BlockGetter world, final BlockPos pos) {
         return blockState.getLightEmission();
     }

@@ -20,6 +20,7 @@ dependencies {
     testImplementation(libs.fabricLoader.junit)
 
     runtimeOnly(rootProject.sourceSets.main.get().output)
+    runtimeOnly(rootProject.sourceSets.getByName("lithium").output)
     shadow(project(":"))
     compileOnly(project(":"))
 
@@ -105,6 +106,7 @@ loom {
         create("main") {
             sourceSet("main")
             sourceSet("main", project.rootProject)
+            sourceSet("lithium", project.rootProject)
         }
     }
 }
