@@ -15,7 +15,10 @@ if (gui) {
 
 dependencies {
     minecraft(libs.fabricMinecraft)
-    mappings(loom.officialMojangMappings())
+    mappings(loom.layered {
+        officialMojangMappings()
+        parchment(rootProject.property("neoForge.parchment.parchmentArtifact"))
+    })
     modImplementation(libs.fabricLoader)
     testImplementation(libs.fabricLoader.junit)
 
