@@ -56,6 +56,7 @@
             "mixin.math.fast_blockpos": false,
             "mixin.math.fast_util": false,
             "mixin.minimal_nonvanilla.collisions.empty_space": false,
+            "mixin.minimal_nonvanilla.spawning": false,
             "mixin.minimal_nonvanilla.world.expiring_chunk_tickets": false,
             "mixin.shapes.blockstate_cache": false,
             "mixin.shapes.optimized_matching": false,
@@ -64,6 +65,7 @@
             "mixin.util.entity_movement_tracking": false,
             "mixin.world.block_entity_ticking": false,
             "mixin.world.chunk_access": false,
+            "mixin.world.chunk_ticking.random_block_ticking": false,
             "mixin.world.explosions.block_raycast": false,
             "mixin.world.temperature_cache": false,
             "mixin.world.tick_scheduler": false
