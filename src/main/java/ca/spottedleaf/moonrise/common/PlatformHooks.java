@@ -31,6 +31,10 @@ public interface PlatformHooks extends ChunkSystemHooks {
 
     public String getBrand();
 
+    public default boolean isModLoaded(final String modId) {
+        return false;
+    }
+
     public int getLightEmission(final BlockState blockState, final BlockGetter world, final BlockPos pos);
 
     public Predicate<BlockState> maybeHasLightEmission();

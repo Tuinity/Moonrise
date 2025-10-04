@@ -22,6 +22,7 @@ neoForge {
         register("moonrise") {
             sourceSet(sourceSets.main.get())
             sourceSet(rootProject.sourceSets.main.get())
+            sourceSet(rootProject.sourceSets.getByName("lithium"))
         }
     }
     runs {
@@ -42,6 +43,7 @@ val gui = rootProject.property("enable_gui").toString() == "true"
 
 dependencies {
     runtimeOnly(rootProject.sourceSets.main.get().output)
+    runtimeOnly(rootProject.sourceSets.getByName("lithium").output)
     shadow(project(":"))
     compileOnly(project(":"))
 
