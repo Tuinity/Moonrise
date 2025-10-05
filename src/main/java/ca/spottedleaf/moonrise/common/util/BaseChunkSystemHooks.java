@@ -7,7 +7,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevel
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
 import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemServerChunkCache;
 import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel;
-import ca.spottledleaf.moonrise.compat.lithium.LithiumHooks;
+import ca.spottedleaf.moonrise.compat.lithium.LithiumHooks;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;

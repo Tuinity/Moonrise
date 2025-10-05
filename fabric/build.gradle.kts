@@ -25,6 +25,7 @@ dependencies {
     runtimeOnly(rootProject.sourceSets.main.get().output)
     runtimeOnly(rootProject.sourceSets.getByName("lithium").output)
     shadow(project(":"))
+    shadow(rootProject.sourceSets.getByName("lithium").output)
     compileOnly(project(":"))
 
     libs(libs.concurrentutil) { isTransitive = false }

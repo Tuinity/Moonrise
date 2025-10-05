@@ -1,4 +1,4 @@
-package ca.spottledleaf.moonrise.compat.lithium;
+package ca.spottedleaf.moonrise.compat.lithium;
 
 import net.caffeinemc.mods.lithium.common.world.chunk.ChunkStatusTracker;
 import net.minecraft.server.level.ServerLevel;
