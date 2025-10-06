@@ -8,10 +8,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunkSection;
-import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
@@ -82,75 +80,59 @@ abstract class EntityMixin {
         final int minChunkX = minBlockX >> 4;
         final int maxChunkX = maxBlockX >> 4;
 
-        final int minChunkY = minBlockY >> 4;
-        final int maxChunkY = maxBlockY >> 4;
-
         final int minChunkZ = minBlockZ >> 4;
         final int maxChunkZ = maxBlockZ >> 4;
 
         final ChunkSource chunkSource = world.getChunkSource();
 
+        final int chunkLenX = maxChunkX - minChunkX + 1;
+        // chunk index = (x - minX) + (maxX-minX+1)*(z - minZ)
+        //             = x + (maxX-minX+1)*z - (minX + (maxX-minX+1)*minZ)
+        final int chunkOffset = -(minChunkX + chunkLenX*minChunkZ);
+        //             = x + (maxX-minX+1)*z + chunkOffset
+        final LevelChunkSection[][] sections = new LevelChunkSection[chunkLenX * (maxChunkZ - minChunkZ + 1)][];
+
+        // init chunks
         for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
             for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
-                final LevelChunkSection[] sections = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, false).getSections();
+                sections[currChunkX + chunkLenX*currChunkZ + chunkOffset] = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, false).getSections();
+            }
+        }
 
-                // bound y
-                for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
-                    final int sectionIdx = currChunkY - minSection;
-                    if (sectionIdx < 0 || sectionIdx >= sections.length) {
+        for (int currX = minBlockX; currX <= maxBlockX; ++currX) {
+            for (int currY = minBlockY; currY <= maxBlockY; ++currY) {
+                for (int currZ = minBlockZ; currZ <= maxBlockZ; ++currZ) {
+                    final FluidState fluidState = sections[(currX >> 4) + chunkLenX*(currZ >> 4) + chunkOffset][(currY >> 4) - minSection]
+                                                    .states.get((currX & 15) | ((currZ & 15) << 4) | ((currY & 15) << 8)).getFluidState();
+
+                    if (fluidState.isEmpty() || !fluidState.is(fluid)) {
                         continue;
                     }
-                    final LevelChunkSection section = sections[sectionIdx];
-                    if (section.hasOnlyAir()) {
-                        // empty
+
+                    mutablePos.set(currX, currY, currZ);
+
+                    final double height = (double)((float)currY + fluidState.getHeight(world, mutablePos));
+                    final double diff = height - boundingBox.minY;
+
+                    if (diff < 0.0) {
                         continue;
                     }
 
-                    final PalettedContainer<BlockState> blocks = section.states;
+                    inFluid = true;
+                    maxHeightDiff = Math.max(maxHeightDiff, diff);
 
-                    final int minXIterate = currChunkX == minChunkX ? (minBlockX & 15) : 0;
-                    final int maxXIterate = currChunkX == maxChunkX ? (maxBlockX & 15) : 15;
-                    final int minZIterate = currChunkZ == minChunkZ ? (minBlockZ & 15) : 0;
-                    final int maxZIterate = currChunkZ == maxChunkZ ? (maxBlockZ & 15) : 15;
-                    final int minYIterate = currChunkY == minChunkY ? (minBlockY & 15) : 0;
-                    final int maxYIterate = currChunkY == maxChunkY ? (maxBlockY & 15) : 15;
+                    if (!isPushable) {
+                        continue;
+                    }
 
-                    for (int currY = minYIterate; currY <= maxYIterate; ++currY) {
-                        for (int currZ = minZIterate; currZ <= maxZIterate; ++currZ) {
-                            for (int currX = minXIterate; currX <= maxXIterate; ++currX) {
-                                final FluidState fluidState = blocks.get((currX) | (currZ << 4) | ((currY) << 8)).getFluidState();
+                    ++totalPushes;
 
-                                if (fluidState.isEmpty() || !fluidState.is(fluid)) {
-                                    continue;
-                                }
+                    final Vec3 flow = fluidState.getFlow(world, mutablePos);
 
-                                mutablePos.set(currX | (currChunkX << 4), currY | (currChunkY << 4), currZ | (currChunkZ << 4));
-
-                                final double height = (double)((float)mutablePos.getY() + fluidState.getHeight(world, mutablePos));
-                                final double diff = height - boundingBox.minY;
-
-                                if (diff < 0.0) {
-                                    continue;
-                                }
-
-                                inFluid = true;
-                                maxHeightDiff = Math.max(maxHeightDiff, diff);
-
-                                if (!isPushable) {
-                                    continue;
-                                }
-
-                                ++totalPushes;
-
-                                final Vec3 flow = fluidState.getFlow(world, mutablePos);
-
-                                if (diff < 0.4) {
-                                    pushVector = pushVector.add(flow.scale(diff));
-                                } else {
-                                    pushVector = pushVector.add(flow);
-                                }
-                            }
-                        }
+                    if (maxHeightDiff < 0.4) {
+                        pushVector = pushVector.add(flow.scale(maxHeightDiff));
+                    } else {
+                        pushVector = pushVector.add(flow);
                     }
                 }
             }
@@ -158,11 +140,11 @@ abstract class EntityMixin {
 
         this.fluidHeight.put(fluid, maxHeightDiff);
 
-        if (pushVector.lengthSqr() == 0.0) {
+        if (pushVector == Vec3.ZERO) {
             return inFluid;
         }
 
-        // note: totalPushes != 0 as pushVector != 0
+        // note: totalPushes != 0 as pushVector was changed
         pushVector = pushVector.scale(1.0 / totalPushes);
         final Vec3 currMovement = this.getDeltaMovement();
 
