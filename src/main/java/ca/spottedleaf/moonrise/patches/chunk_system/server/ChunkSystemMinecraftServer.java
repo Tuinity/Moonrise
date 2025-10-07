@@ -6,4 +6,6 @@ public interface ChunkSystemMinecraftServer {
 
     public void moonrise$executeMidTickTasks();
 
+    public void moonrise$issueEmergencySave();
+
 }

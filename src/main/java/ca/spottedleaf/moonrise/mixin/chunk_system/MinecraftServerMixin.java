@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
+import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
@@ -11,6 +12,7 @@ import net.minecraft.server.ServerTickRateManager;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.players.PlayerList;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
@@ -44,6 +46,9 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
     @Shadow
     @Final
     private static Logger LOGGER;
+
+    @Shadow
+    public abstract PlayerList getPlayerList();
 
     public MinecraftServerMixin(String string) {
         super(string);
@@ -123,6 +128,24 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
                 return;
             }
         }
+    }
+
+    @Override
+    public final void moonrise$issueEmergencySave() {
+        LOGGER.warn("Performing emergency save...");
+
+        LOGGER.info("Saving all players...");
+        this.getPlayerList().saveAll();
+        LOGGER.info("Saved all players");
+
+        LOGGER.info("Saving all worlds...");
+        for (final ServerLevel world : this.getAllLevels()) {
+            LOGGER.info("Saving chunks in world '" + WorldUtil.getWorldName(world) + "'...");
+            ((ChunkSystemServerLevel)world).moonrise$issueEmergencySave();
+            LOGGER.info("Saved chunks in world '" + WorldUtil.getWorldName(world) + "'...");
+        }
+        LOGGER.info("Saved all worlds");
+        LOGGER.warn("Performed emergency save");
     }
 
     /**

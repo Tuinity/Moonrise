@@ -67,4 +67,6 @@ public interface ChunkSystemServerLevel extends ChunkSystemLevel {
     public ReferenceList<LevelChunk> moonrise$getTickingChunks();
 
     public ReferenceList<LevelChunk> moonrise$getEntityTickingChunks();
+
+    public void moonrise$issueEmergencySave();
 }

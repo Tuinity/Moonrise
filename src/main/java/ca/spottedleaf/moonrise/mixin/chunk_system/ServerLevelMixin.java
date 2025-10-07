@@ -369,6 +369,13 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
         return true;
     }
 
+    @Override
+    public final void moonrise$issueEmergencySave() {
+        this.moonrise$getChunkTaskScheduler().chunkHolderManager.saveAllChunks(
+            true, true, true, true
+        );
+    }
+
     /**
      * @reason Declare method in this class so that any invocations are virtual, and not interface.
      * @author Spottedleaf

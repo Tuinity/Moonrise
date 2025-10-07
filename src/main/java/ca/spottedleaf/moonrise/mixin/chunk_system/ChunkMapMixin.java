@@ -308,7 +308,7 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
 
         if (!shutdown) {
             ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.saveAllChunks(
-                    flush, false, false
+                    flush, false, false, false
             );
         } else {
             ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.close(

@@ -203,7 +203,7 @@ public final class ChunkHolderManager {
         }
 
         if (save) {
-            this.saveAllChunks(true, true, true);
+            this.saveAllChunks(true, true, true, false);
         }
 
         MoonriseRegionFileIO.flush(this.world);
@@ -267,11 +267,16 @@ public final class ChunkHolderManager {
         }
     }
 
-    public void saveAllChunks(final boolean flush, final boolean shutdown, final boolean logProgress) {
+    public void saveAllChunks(final boolean flush, final boolean shutdown, final boolean logProgress,
+                              final boolean emergency) {
         final List<NewChunkHolder> holders = this.getChunkHolders();
 
         if (logProgress) {
-            LOGGER.info("Saving all chunkholders for world '" + WorldUtil.getWorldName(this.world) + "'");
+            if (emergency) {
+                LOGGER.info("Emergency saving all chunkholders for world '" + WorldUtil.getWorldName(this.world) + "'");
+            } else {
+                LOGGER.info("Saving all chunkholders for world '" + WorldUtil.getWorldName(this.world) + "'");
+            }
         }
 
         final DecimalFormat format = new DecimalFormat("#0.00");
@@ -287,7 +292,7 @@ public final class ChunkHolderManager {
         int savedEntity = 0;
         int savedPoi = 0;
 
-        if (shutdown) {
+        if (shutdown && !emergency) {
             // Normal unload process does not occur during shutdown: fire event manually
             // for mods that expect ChunkEvent.Unload to fire on shutdown (before LevelEvent.Unload)
             for (int i = 0, len = holders.size(); i < len; ++i) {
