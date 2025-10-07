@@ -367,6 +367,21 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
     }
 
     /**
+     * @reason Our call to runAllTasksAtTickStart() will process packets and
+     *         times it correctly, whereas Vanilla does not record task execution
+     *         time for it
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "runServer",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/network/PacketProcessor;processQueuedPackets()V"
+        )
+    )
+    private void dropVanillaPacketProcessing(final PacketProcessor instance) {}
+
+    /**
      * @reason Even if the server is falling behind in ticks, we want to ensure that we process immediately all
      *         player packets so that perceived latency from players is minimized. We need to run this after incrementing
      *         the tickCount field so that all tasks queued before the tick start are guaranteed to run (see above mixin).
