@@ -127,7 +127,6 @@
         "starlight.world.WorldGenRegionMixin",
         "tick_loop.BlockableEventLoopMixin",
         "tick_loop.MinecraftServerMixin",
-        "tick_loop.PacketProcessorMixin",
         "util_thread_counts.UtilMixin",
         "util_threading_detector.PalettedContainerMixin",
         "util_threading_detector.ThreadingDetectorMixin",

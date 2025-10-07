@@ -5,7 +5,8 @@
     "chunk_system.NeoForgeMinecraftServerMixin",
     "chunk_system.NeoForgeServerLevelMixin",
     "chunk_system.NeoForgeTicketStorageMixin",
-    "collisions.EntityMixin"
+    "collisions.EntityMixin",
+    "tick_loop.PacketProcessorMixin"
   ],
   "client": [
     "command.ClientCommandSourceStackMixin"

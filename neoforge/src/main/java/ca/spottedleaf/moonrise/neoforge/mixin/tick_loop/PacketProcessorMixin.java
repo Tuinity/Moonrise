@@ -1,14 +1,15 @@
-package ca.spottedleaf.moonrise.mixin.tick_loop;
+package ca.spottedleaf.moonrise.neoforge.mixin.tick_loop;
 
 import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopPacketProcessor;
+import java.util.Queue;
+import java.util.concurrent.locks.LockSupport;
 import net.minecraft.network.PacketProcessor;
+import net.neoforged.neoforge.network.handling.QueuedPacket;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import java.util.Queue;
-import java.util.concurrent.locks.LockSupport;
 
 @Mixin(PacketProcessor.class)
 abstract class PacketProcessorMixin implements AutoCloseable, TickLoopPacketProcessor {
@@ -18,11 +19,11 @@ abstract class PacketProcessorMixin implements AutoCloseable, TickLoopPacketProc
 
     @Shadow
     @Final
-    private Queue<PacketProcessor.ListenerAndPacket<?>> packetsToBeHandled;
+    private Thread runningThread;
 
     @Shadow
     @Final
-    private Thread runningThread;
+    private Queue<QueuedPacket> packetsToBeHandled;
 
     @Override
     public final boolean moonrise$executeSinglePacket() {
@@ -30,7 +31,7 @@ abstract class PacketProcessorMixin implements AutoCloseable, TickLoopPacketProc
             return false;
         }
 
-        final PacketProcessor.ListenerAndPacket<?> task = this.packetsToBeHandled.poll();
+        final QueuedPacket task = this.packetsToBeHandled.poll();
         if (task == null) {
             return false;
         }

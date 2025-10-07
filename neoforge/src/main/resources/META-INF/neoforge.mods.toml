@@ -21,14 +21,14 @@ displayTest = "IGNORE_ALL_VERSION"
 [[dependencies.moonrise]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.0,)"
+versionRange = "[21.9.12,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.moonrise]]
 modId = "minecraft"
 type = "required"
-versionRange = "(1.21.8,1.21.10)"
+versionRange = "(1.21.8,1.21.11)"
 ordering = "NONE"
 side = "BOTH"
 
