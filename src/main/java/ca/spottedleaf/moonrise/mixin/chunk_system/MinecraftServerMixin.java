@@ -138,7 +138,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
             return true;
         }
 
-        if (this.tickRateManager.isSprinting() || this.haveTime()) {
+        if (this.tickRateManager.isSprinting() || this.shouldRunAllTasks() || this.haveTime()) {
             boolean ret = false;
             for (final ServerLevel world : this.getAllLevels()) {
                 if (world.getChunkSource().pollTask()) {

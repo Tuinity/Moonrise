@@ -619,7 +619,8 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     }
 
     /**
-     * @reason Not needed in new chunk system, also avoid accessing old entity manager
+     * @reason Not needed in new chunk system, avoid accessing old entity manager,
+     *         block on the correct queue
      * @author Spottedleaf
      */
     @Inject(
@@ -629,7 +630,7 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     )
     private void redirectWaitForEntities(final ChunkPos chunkPos, final int radius, final CallbackInfo ci) {
         final List<ChunkPos> chunks = ChunkPos.rangeClosed(chunkPos, radius).toList();
-        this.server.managedBlock(() -> {
+        this.chunkSource.mainThreadProcessor.managedBlock(() -> {
             for (final ChunkPos chunkpos : chunks) {
                 if (!this.areEntitiesLoaded(chunkpos.toLong())) {
                     return false;

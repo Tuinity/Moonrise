@@ -2,8 +2,10 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.core.BlockPos;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -11,7 +13,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.function.BooleanSupplier;
 
 @Mixin(ServerPlayer.class)
 abstract class ServerPlayerMixin extends Player implements ChunkSystemServerPlayer {
@@ -51,6 +55,22 @@ abstract class ServerPlayerMixin extends Player implements ChunkSystemServerPlay
     @Override
     public final RegionizedPlayerChunkLoader.ViewDistanceHolder moonrise$getViewDistanceHolder() {
         return this.viewDistanceHolder;
+    }
+
+    /**
+     * @reason Do not process packets while waiting for spawn location
+     * @author Spottedleaf
+     */
+    @Redirect(
+        method = "adjustSpawnLocation",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/MinecraftServer;managedBlock(Ljava/util/function/BooleanSupplier;)V"
+        )
+    )
+    private void blockOnCorrectQueue(final MinecraftServer instance, final BooleanSupplier isDone,
+                                     final @Local(ordinal = 0, argsOnly = true) ServerLevel world) {
+        world.getChunkSource().mainThreadProcessor.managedBlock(isDone);
     }
 
     /**
