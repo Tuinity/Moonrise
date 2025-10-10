@@ -19,6 +19,7 @@ configurations.implementation {
 
 dependencies {
     add('shadow', project([path: ":", configuration: "namedElements"]))
+    shadow(rootProject.sourceSets.getByName("lithium").output)
     neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
 
     shadow("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}") { setTransitive(false) }

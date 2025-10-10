@@ -18,6 +18,13 @@ def getGitCommit = { ->
     return stdout.toString().trim()
 }
 
+sourceSets.create("lithium")
+loom.createRemapConfigurations(sourceSets.getByName("lithium"))
+afterEvaluate {
+    configurations.named("lithiumCompileOnly") {
+        extendsFrom(configurations.getByName("minecraftNamedCompile"))
+    }
+}
 
 dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
@@ -27,6 +34,9 @@ dependencies {
     api("org.yaml:snakeyaml:${rootProject.snakeyaml_version}")
 
     modImplementation "me.shedaniel.cloth:cloth-config:${rootProject.cloth_version}"
+
+    "modLithiumCompileOnly"("maven.modrinth:lithium:${rootProject.property("neo_lithium_version")}")
+    compileOnly(sourceSets.getByName("lithium").output)
 }
 
 File awFile = file("src/main/resources/moonrise.accesswidener")
@@ -96,6 +106,7 @@ subprojects {
         main {
             sourceSet("main")
             sourceSet("main", project.rootProject)
+            sourceSet("lithium", project.rootProject)
         }
     }
     loom.runs.all {

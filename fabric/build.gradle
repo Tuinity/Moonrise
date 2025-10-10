@@ -15,6 +15,8 @@ configurations.implementation {
 dependencies {
     add('shadow', project([path: ":", configuration: "namedElements"]))
     runtimeOnly(project(":").sourceSets.main.output)
+    runtimeOnly(rootProject.sourceSets.getByName("lithium").output)
+    shadow(rootProject.sourceSets.getByName("lithium").output)
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     libs("ca.spottedleaf:concurrentutil:${rootProject.concurrentutil_version}") { setTransitive(false) }

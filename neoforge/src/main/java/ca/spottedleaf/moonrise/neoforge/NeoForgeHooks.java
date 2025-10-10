@@ -23,6 +23,8 @@ import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.entity.PartEntity;
@@ -38,6 +40,15 @@ public final class NeoForgeHooks implements PlatformHooks {
     @Override
     public String getBrand() {
         return "Moonrise";
+    }
+
+    @Override
+    public boolean isModLoaded(final String modId) {
+        final ModList modList = ModList.get();
+        if (modList == null) {
+            return LoadingModList.get().getModFileById(modId) != null;
+        }
+        return modList.isLoaded(modId);
     }
 
     @Override

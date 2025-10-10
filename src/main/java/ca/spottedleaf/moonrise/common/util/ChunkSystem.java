@@ -7,6 +7,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevel
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
 import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemServerChunkCache;
 import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel;
+import ca.spottedleaf.moonrise.compat.lithium.LithiumHooks;
 import com.mojang.logging.LogUtils;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.FullChunkStatus;
@@ -24,6 +25,7 @@ import java.util.function.Consumer;
 public final class ChunkSystem {
 
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static final boolean HAS_LITHIUM = PlatformHooks.get().isModLoaded("lithium");
 
     public static void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run) {
         scheduleChunkTask(level, chunkX, chunkZ, run, Priority.NORMAL);
@@ -100,12 +102,18 @@ public final class ChunkSystem {
         ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().add(
                 ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
         );
+        if (HAS_LITHIUM) {
+            LithiumHooks.onChunkAccessible((ServerLevel) chunk.getLevel(), chunk);
+        }
     }
 
     public static void onChunkNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().remove(
                 ((ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
         );
+        if (HAS_LITHIUM) {
+            LithiumHooks.onChunkInaccessible((ServerLevel) chunk.getLevel(), chunk.getPos());
+        }
     }
 
     public static void onChunkPostNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
