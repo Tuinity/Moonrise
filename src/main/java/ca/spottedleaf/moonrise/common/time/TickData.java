@@ -103,8 +103,12 @@ public final class TickData {
         long tickTimeCPU
     ) {}
 
-    // rets null if there is no data
     public TickReportData generateTickReport(final TickTime inProgress, final long endTime, final long tickInterval) {
+        return this.generateTickReport(inProgress, endTime, tickInterval, false);
+    }
+
+    // rets null if there is no data
+    public TickReportData generateTickReport(final TickTime inProgress, final long endTime, final long tickInterval, final boolean createFakeTick) {
         if (this.timeData.isEmpty() && inProgress == null) {
             return null;
         }
@@ -183,7 +187,7 @@ public final class TickData {
                             (last.supportCPUTime() ? last.tickCpuTime() : 0L) + totalCpuTime
                         )
                     );
-                } else {
+                } else if (createFakeTick) {
                     // we do not have a tick to collapse into, so we must make one up
                     // we will assume that the tick is "starting now" and ongoing
 
@@ -214,6 +218,10 @@ public final class TickData {
             }
         }
 
+
+        if (collapsedData.isEmpty()) {
+            return null;
+        }
 
         final int collectedTicks = collapsedData.size();
         final long[] tickStartToStartDifferences = new long[collectedTicks];
