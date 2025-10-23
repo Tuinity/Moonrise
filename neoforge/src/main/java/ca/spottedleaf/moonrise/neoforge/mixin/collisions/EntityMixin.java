@@ -48,7 +48,7 @@ abstract class EntityMixin implements IEntityExtension {
      * @author Spottedleaf
      */
     @Overwrite
-    public void updateFluidHeightAndDoFluidPushing() {
+    public void updateFluidHeightAndDoFluidPushing(final boolean doFluidPushing) {
         if (this.touchingUnloadedChunk()) {
             return;
         }
@@ -155,6 +155,10 @@ abstract class EntityMixin implements IEntityExtension {
             final FluidPushCalculation calculation = entry.getValue();
 
             this.setFluidTypeHeight(type, calculation.maxHeightDiff);
+
+            if (!doFluidPushing) {
+                continue;
+            }
 
             Vec3 pushVector = calculation.pushVector;
 

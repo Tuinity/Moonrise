@@ -21,7 +21,7 @@ displayTest = "IGNORE_ALL_VERSION"
 [[dependencies.moonrise]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.9.12,)"
+versionRange = "[21.10.31,)"
 ordering = "NONE"
 side = "BOTH"
 
