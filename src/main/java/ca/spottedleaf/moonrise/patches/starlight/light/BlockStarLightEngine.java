@@ -20,8 +20,8 @@ import java.util.Set;
 
 public final class BlockStarLightEngine extends StarLightEngine {
 
-    public BlockStarLightEngine(final Level world) {
-        super(false, world);
+    public BlockStarLightEngine() {
+        super(false);
     }
 
     @Override

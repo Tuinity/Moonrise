@@ -88,17 +88,17 @@ public abstract class StarLightEngine {
     // for the y chunk section it's from [minLightSection, maxLightSection] or [0, maxLightSection - minLightSection]
     // index = x + (z * 5) + (y * 25)
     // null index indicates the chunk section doesn't exist (empty or out of bounds)
-    protected final LevelChunkSection[] sectionCache;
+    protected LevelChunkSection[] sectionCache;
 
     // the exact same as above, except for storing fast access to SWMRNibbleArray
     // for the y chunk section it's from [minLightSection, maxLightSection] or [0, maxLightSection - minLightSection]
     // index = x + (z * 5) + (y * 25)
-    protected final SWMRNibbleArray[] nibbleCache;
+    protected SWMRNibbleArray[] nibbleCache;
 
     // the exact same as above, except for storing fast access to nibbles to call change callbacks for
     // for the y chunk section it's from [minLightSection, maxLightSection] or [0, maxLightSection - minLightSection]
     // index = x + (z * 5) + (y * 25)
-    protected final boolean[] notifyUpdateCache;
+    protected boolean[] notifyUpdateCache;
 
     // always initialsed during start of lighting.
     // index = x + (z * 5)
@@ -124,27 +124,39 @@ public abstract class StarLightEngine {
 
     protected final boolean skylightPropagator;
     protected final int emittedLightMask;
-    protected final boolean isClientSide;
+    protected boolean isClientSide;
 
-    protected final Level world;
-    protected final int minLightSection;
-    protected final int maxLightSection;
-    protected final int minSection;
-    protected final int maxSection;
+    protected Level world;
+    protected int minLightSection;
+    protected int maxLightSection;
+    protected int minSection;
+    protected int maxSection;
 
-    protected StarLightEngine(final boolean skylightPropagator, final Level world) {
+    protected StarLightEngine(final boolean skylightPropagator) {
         this.skylightPropagator = skylightPropagator;
         this.emittedLightMask = skylightPropagator ? 0 : 0xF;
-        this.isClientSide = world.isClientSide();
-        this.world = world;
-        this.minLightSection = WorldUtil.getMinLightSection(world);
-        this.maxLightSection = WorldUtil.getMaxLightSection(world);
-        this.minSection = WorldUtil.getMinSection(world);
-        this.maxSection = WorldUtil.getMaxSection(world);
+    }
 
-        this.sectionCache = new LevelChunkSection[5 * 5 * ((this.maxLightSection - this.minLightSection + 1) + 2)]; // add two extra sections for buffer
-        this.nibbleCache = new SWMRNibbleArray[5 * 5 * ((this.maxLightSection - this.minLightSection + 1) + 2)]; // add two extra sections for buffer
-        this.notifyUpdateCache = new boolean[5 * 5 * ((this.maxLightSection - this.minLightSection + 1) + 2)]; // add two extra sections for buffer
+    public void setWorld(final Level world) {
+        this.world = world;
+        if (world != null) {
+            this.isClientSide = world.isClientSide();
+            this.minLightSection = WorldUtil.getMinLightSection(world);
+            this.maxLightSection = WorldUtil.getMaxLightSection(world);
+            this.minSection = WorldUtil.getMinSection(world);
+            this.maxSection = WorldUtil.getMaxSection(world);
+            final int minArraySize = 5 * 5 * ((this.maxLightSection - this.minLightSection + 1) + 2); // add two extra sections for buffer
+
+            if (this.sectionCache == null || this.sectionCache.length < minArraySize) {
+                this.sectionCache = new LevelChunkSection[minArraySize];
+            }
+            if (this.nibbleCache == null || this.nibbleCache.length < minArraySize) {
+                this.nibbleCache = new SWMRNibbleArray[minArraySize];
+            }
+            if (this.notifyUpdateCache == null || this.notifyUpdateCache.length < minArraySize) {
+                this.notifyUpdateCache = new boolean[minArraySize];
+            }
+        }
     }
 
     protected final void setupEncodeOffset(final int centerX, final int centerY, final int centerZ) {

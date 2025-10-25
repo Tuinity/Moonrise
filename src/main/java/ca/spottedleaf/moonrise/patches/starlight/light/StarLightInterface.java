@@ -47,8 +47,8 @@ public final class StarLightInterface {
     public final Level world;
     public final LightChunkGetter lightAccess;
 
-    private final ThreadLocal<SkyStarLightEngine> cachedSkyPropagator;
-    private final ThreadLocal<BlockStarLightEngine> cachedBlockPropagator;
+    private static final ThreadLocal<SkyStarLightEngine> SKY_PROPAGATOR = new ThreadLocal<>();
+    private static final ThreadLocal<BlockStarLightEngine> BLOCK_PROPAGATOR = new ThreadLocal<>();
 
     private final LightQueue lightQueue;
 
@@ -69,8 +69,6 @@ public final class StarLightInterface {
     public StarLightInterface(final LightChunkGetter lightAccess, final boolean hasSkyLight, final boolean hasBlockLight, final LevelLightEngine lightEngine) {
         this.lightAccess = lightAccess;
         this.world = lightAccess == null ? null : (Level)lightAccess.getLevel();
-        this.cachedSkyPropagator = hasSkyLight && lightAccess != null ? new ThreadLocal<>() : null;
-        this.cachedBlockPropagator = hasBlockLight && lightAccess != null ? new ThreadLocal<>() : null;
         this.isClientSide = !(this.world instanceof ServerLevel);
         if (this.world == null) {
             this.minSection = -4;
@@ -359,43 +357,61 @@ public final class StarLightInterface {
     }
 
     public SkyStarLightEngine getSkyLightEngine() {
-        if (this.cachedSkyPropagator == null) {
+        if (!this.hasSkyLight || this.world == null) {
             return null;
         }
-        final SkyStarLightEngine ret = this.cachedSkyPropagator.get();
-        this.cachedSkyPropagator.set(null);
+
+        SkyStarLightEngine ret = SKY_PROPAGATOR.get();
+        SKY_PROPAGATOR.set(null);
 
         if (ret == null) {
-            return new SkyStarLightEngine(this.world);
+            ret = new SkyStarLightEngine();
         }
+
+        ret.setWorld(this.world);
+
         return ret;
     }
 
     public void releaseSkyLightEngine(final SkyStarLightEngine engine) {
-        if (this.cachedSkyPropagator == null || this.cachedSkyPropagator.get() != null) {
+        if (engine != null) {
+            engine.setWorld(null);
+        }
+
+        if (!this.hasSkyLight || this.world == null || SKY_PROPAGATOR.get() != null) {
             return;
         }
-        this.cachedSkyPropagator.set(engine);
+
+        SKY_PROPAGATOR.set(engine);
     }
 
     public BlockStarLightEngine getBlockLightEngine() {
-        if (this.cachedBlockPropagator == null) {
+        if (!this.hasBlockLight || this.world == null) {
             return null;
         }
-        final BlockStarLightEngine ret = this.cachedBlockPropagator.get();
-        this.cachedBlockPropagator.set(null);
+
+        BlockStarLightEngine ret = BLOCK_PROPAGATOR.get();
+        BLOCK_PROPAGATOR.set(null);
 
         if (ret == null) {
-            return new BlockStarLightEngine(this.world);
+            ret = new BlockStarLightEngine();
         }
+
+        ret.setWorld(this.world);
+
         return ret;
     }
 
     public void releaseBlockLightEngine(final BlockStarLightEngine engine) {
-        if (this.cachedBlockPropagator == null || this.cachedBlockPropagator.get() != null) {
+        if (engine != null) {
+            engine.setWorld(null);
+        }
+
+        if (!this.hasBlockLight || this.world == null || BLOCK_PROPAGATOR.get() != null) {
             return;
         }
-        this.cachedBlockPropagator.set(engine);
+
+        BLOCK_PROPAGATOR.set(engine);
     }
 
     public LightQueue.ChunkTasks blockChange(final BlockPos pos) {
@@ -882,7 +898,7 @@ public final class StarLightInterface {
             }
 
             public boolean markTicketAdded() {
-                return !this.ticketAdded.get() && !this.ticketAdded.getAndSet(true);
+                return !this.ticketAdded.get() && false == this.ticketAdded.compareAndExchange(false, true);
             }
 
             public void schedule() {

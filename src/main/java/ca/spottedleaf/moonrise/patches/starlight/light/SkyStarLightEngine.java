@@ -50,11 +50,21 @@ public final class SkyStarLightEngine extends StarLightEngine {
         Arrays.fill(this.heightMapBlockChange, Integer.MIN_VALUE); // clear heightmap
     }
 
-    protected final boolean[] nullPropagationCheckCache;
+    protected boolean[] nullPropagationCheckCache;
 
-    public SkyStarLightEngine(final Level world) {
-        super(true, world);
-        this.nullPropagationCheckCache = new boolean[WorldUtil.getTotalLightSections(world)];
+    public SkyStarLightEngine() {
+        super(true);
+    }
+
+    @Override
+    public void setWorld(final Level world) {
+        super.setWorld(world);
+        if (world != null) {
+            final int minArraySize = WorldUtil.getTotalLightSections(world);
+            if (this.nullPropagationCheckCache == null || this.nullPropagationCheckCache.length < minArraySize) {
+                this.nullPropagationCheckCache = new boolean[minArraySize];
+            }
+        }
     }
 
     @Override
@@ -439,8 +449,6 @@ public final class SkyStarLightEngine extends StarLightEngine {
 
         this.performLightDecrease(lightAccess);
     }
-
-    protected final int[] heightMapGen = new int[32 * 32];
 
     @Override
     protected void lightChunk(final LightChunkGetter lightAccess, final ChunkAccess chunk, final boolean needsEdgeChecks) {
