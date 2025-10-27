@@ -31,7 +31,7 @@ abstract class PlayerSpawnFinderMixin {
         final ChunkPos chunkPos, final int radius) {
 
         return ((ChunkSystemServerLevel)instance.level).moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAndLoadWithRadius(
-            ticketType, chunkPos, radius, ChunkStatus.FULL, Priority.HIGH
+            ticketType, chunkPos, 0, ChunkStatus.FULL, Priority.HIGH
         );
     }
 }
