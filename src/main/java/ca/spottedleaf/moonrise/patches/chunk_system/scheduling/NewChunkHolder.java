@@ -919,7 +919,7 @@ public final class NewChunkHolder {
         if (entityChunk != null) {
             this.saveEntities(entityChunk, true);
             // yes this is a hack to pass the compound tag through...
-            final CompoundTag lastEntityUnload = this.lastEntityUnload;
+            final CompletableFuture<CompoundTag> lastEntityUnload = this.lastEntityUnload;
             this.lastEntityUnload = null;
 
             if (entityChunk.unload()) {
@@ -935,7 +935,14 @@ public final class NewChunkHolder {
             }
             // we need to delay the callback until after determining transience, otherwise a potential loader could
             // set entityChunk before we do
-            this.entityDataUnload.completable().complete(lastEntityUnload);
+            CallbackCompletable<CompoundTag> completable = this.entityDataUnload.completable();
+            lastEntityUnload.whenComplete((save, thr) -> {
+                if (thr != null) {
+                    completable.completeWithThrowable(thr);
+                } else {
+                    completable.complete(save);
+                }
+            });
         }
 
         // unload poi data
@@ -1775,10 +1782,10 @@ public final class NewChunkHolder {
     }
 
     private boolean lastEntitySaveNull;
-    private CompoundTag lastEntityUnload;
+    private CompletableFuture<CompoundTag> lastEntityUnload;
     private boolean saveEntities(final ChunkEntitySlices entities, final boolean unloading) {
         try {
-            CompoundTag mergeFrom = null;
+            CompletableFuture<CompoundTag> mergeFrom = null;
             if (entities.isTransient()) {
                 if (!unloading) {
                     // if we're a transient chunk, we cannot save until unloading because otherwise a double save will
@@ -1786,29 +1793,48 @@ public final class NewChunkHolder {
                     return false;
                 }
                 try {
-                    mergeFrom = MoonriseRegionFileIO.loadData(this.world, this.chunkX, this.chunkZ, MoonriseRegionFileIO.RegionFileType.ENTITY_DATA, Priority.BLOCKING);
+                    mergeFrom = new CompletableFuture<>();
+                    CompletableFuture<CompoundTag> finalMergeFrom = mergeFrom;
+                    MoonriseRegionFileIO.loadDataAsync(this.world, this.chunkX, this.chunkZ, MoonriseRegionFileIO.RegionFileType.ENTITY_DATA, (tag, t) -> {
+                        if (t != null) {
+                            finalMergeFrom.completeExceptionally(t);
+                        } else {
+                            finalMergeFrom.complete(tag);
+                        }
+                    }, true, Priority.BLOCKING);
                 } catch (final Exception ex) {
                     LOGGER.error("Cannot merge transient entities for chunk (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "', data on disk will be replaced", ex);
                 }
             }
 
-            final CompoundTag save = entities.save();
+            CompoundTag save = entities.save();
+            CompletableFuture<CompoundTag> saveFuture = CompletableFuture.completedFuture(save);
             if (mergeFrom != null) {
                 if (save == null) {
                     // don't override the data on disk with nothing
+                    this.lastEntityUnload = CompletableFuture.completedFuture(null);
                     return false;
                 } else {
-                    ChunkEntitySlices.copyEntities(mergeFrom, save);
+                    saveFuture = mergeFrom.thenApply(from -> {
+                        ChunkEntitySlices.copyEntities(from, save);
+                        return save;
+                    });
                 }
             }
             if (save == null && this.lastEntitySaveNull) {
+                if (unloading) {
+                    this.lastEntityUnload = CompletableFuture.completedFuture(null);
+                }
                 return false;
             }
-
-            MoonriseRegionFileIO.scheduleSave(this.world, this.chunkX, this.chunkZ, save, MoonriseRegionFileIO.RegionFileType.ENTITY_DATA);
+            saveFuture.thenAccept(tag -> MoonriseRegionFileIO.scheduleSave(this.world, this.chunkX, this.chunkZ, save, MoonriseRegionFileIO.RegionFileType.ENTITY_DATA))
+                    .exceptionally(thr -> {
+                        LOGGER.error("Failed to save entity data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'", thr);
+                        return null;
+                    });
             this.lastEntitySaveNull = save == null;
             if (unloading) {
-                this.lastEntityUnload = save;
+                this.lastEntityUnload = saveFuture;
             }
         } catch (final Throwable thr) {
             LOGGER.error("Failed to save entity data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'", thr);
