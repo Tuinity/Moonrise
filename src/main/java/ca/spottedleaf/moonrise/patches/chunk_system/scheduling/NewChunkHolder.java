@@ -1747,10 +1747,10 @@ public final class NewChunkHolder {
             final Runnable run = () -> {
                 final CompoundTag data = chunkData.write();
 
-                completable.complete(data);
-
                 if (unloading) {
                     NewChunkHolder.this.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, data);
+                } else {
+                    completable.complete(data);
                 }
             };
 
@@ -1764,9 +1764,11 @@ public final class NewChunkHolder {
 
             task.queue();
 
-            MoonriseRegionFileIO.scheduleSave(
-                this.world, this.chunkX, this.chunkZ, completable, task, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, Priority.NORMAL
-            );
+            if (!unloading) {
+                MoonriseRegionFileIO.scheduleSave(
+                    this.world, this.chunkX, this.chunkZ, completable, task, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, Priority.NORMAL
+                );
+            }
         } catch (final Throwable thr) {
             LOGGER.error("Failed to save chunk data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'", thr);
         }
