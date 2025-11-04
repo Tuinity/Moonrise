@@ -22,8 +22,8 @@ fabricMinecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
 
 concurrentutil = "ca.spottedleaf:concurrentutil:0.0.5"
 
-yamlconfig = "ca.spottedleaf:yamlconfig:1.0.2"
-snakeyaml = "org.yaml:snakeyaml:2.3"
+yamlconfig = "ca.spottedleaf:yamlconfig:1.1.0"
+snakeyaml = "org.yaml:snakeyaml:2.5"
 
 clothConfig-neoforge = { module = "me.shedaniel.cloth:cloth-config-neoforge", version.ref = "cloth" }
 clothConfig-fabric = { module = "me.shedaniel.cloth:cloth-config-fabric", version.ref = "cloth" }
