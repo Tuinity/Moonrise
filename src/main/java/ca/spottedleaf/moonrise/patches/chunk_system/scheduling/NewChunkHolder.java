@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling;
 
 import ca.spottedleaf.concurrentutil.completable.CallbackCompletable;
+import ca.spottedleaf.concurrentutil.completable.Completable;
 import ca.spottedleaf.concurrentutil.executor.Cancellable;
 import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
@@ -811,22 +812,15 @@ public final class NewChunkHolder {
         }
     }
 
-    private void removeUnloadTask(final MoonriseRegionFileIO.RegionFileType type) {
-        switch (type) {
-            case CHUNK_DATA: {
-                this.chunkDataUnload = null;
-                return;
-            }
-            case ENTITY_DATA: {
-                this.entityDataUnload = null;
-                return;
-            }
-            case POI_DATA: {
-                this.poiDataUnload = null;
-                return;
-            }
-            default:
-                throw new IllegalStateException("Unknown regionfile type " + type);
+    private void asyncCompleteUnloadTask(final MoonriseRegionFileIO.RegionFileType type, final Completable<CompoundTag> writeCompletable) {
+        final UnloadTask task = this.getUnloadTask(type);
+        if (writeCompletable == null) {
+            task.completable().complete(null);
+        } else {
+            writeCompletable.whenComplete((final CompoundTag write, final Throwable thr) -> {
+                // if thr != null, then complete with null
+                task.completable().complete(write);
+            });
         }
     }
 
@@ -837,7 +831,7 @@ public final class NewChunkHolder {
         // because we hold the scheduling lock, we cannot actually unload anything
         // so, what we do here instead is to null this chunk's state and setup the unload tasks
         // the unload tasks will ensure that any loads that take place after stage1 (i.e during stage2, in which
-        // we do not hold the lock) c
+        // we do not hold the lock) do not load old data
         final ChunkAccess chunk = this.currentChunk;
         final ChunkEntitySlices entityChunk = this.entityChunk;
         final PoiChunk poiChunk = this.poiChunk;
@@ -872,23 +866,6 @@ public final class NewChunkHolder {
         return this.unloadState = (chunk != null || entityChunk != null || poiChunk != null) ? new UnloadState(this, chunk, entityChunk, poiChunk) : null;
     }
 
-    // data is null if failed or does not need to be saved
-    void completeAsyncUnloadDataSave(final MoonriseRegionFileIO.RegionFileType type, final CompoundTag data) {
-        if (data != null) {
-            MoonriseRegionFileIO.scheduleSave(this.world, this.chunkX, this.chunkZ, data, type);
-        }
-
-        this.getUnloadTask(type).completable().complete(data);
-        final ReentrantAreaLock.Node schedulingLock = this.scheduler.schedulingLockArea.lock(this.chunkX, this.chunkZ);
-        try {
-            // can only write to these fields while holding the schedule lock
-            this.removeUnloadTask(type);
-            this.checkUnload();
-        } finally {
-            this.scheduler.schedulingLockArea.unlock(schedulingLock);
-        }
-    }
-
     void unloadStage2(final UnloadState state) {
         this.unloadState = null;
         final ChunkAccess chunk = state.chunk();
@@ -904,23 +881,22 @@ public final class NewChunkHolder {
                 PlatformHooks.get().chunkUnloadFromWorld(levelChunk);
             }
 
+            final Completable<CompoundTag>[] chunkWrite = new Completable[1];
             if (!shouldLevelChunkNotSave) {
-                this.saveChunk(chunk, true);
-            } else {
-                this.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, null);
+                this.saveChunk(chunk, true, chunkWrite);
             }
 
             if (chunk instanceof LevelChunk levelChunk) {
                 this.world.unload(levelChunk);
             }
+
+            this.asyncCompleteUnloadTask(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, chunkWrite[0]);
         }
 
         // unload entity data
         if (entityChunk != null) {
-            this.saveEntities(entityChunk, true);
-            // yes this is a hack to pass the compound tag through...
-            final CompoundTag lastEntityUnload = this.lastEntityUnload;
-            this.lastEntityUnload = null;
+            final Completable<CompoundTag>[] entityWrite = new Completable[1];
+            this.saveEntities(entityChunk, true, entityWrite);
 
             if (entityChunk.unload()) {
                 final ReentrantAreaLock.Node schedulingLock = this.scheduler.schedulingLockArea.lock(this.chunkX, this.chunkZ);
@@ -935,25 +911,26 @@ public final class NewChunkHolder {
             }
             // we need to delay the callback until after determining transience, otherwise a potential loader could
             // set entityChunk before we do
-            this.entityDataUnload.completable().complete(lastEntityUnload);
+            this.asyncCompleteUnloadTask(MoonriseRegionFileIO.RegionFileType.ENTITY_DATA, entityWrite[0]);
         }
 
         // unload poi data
         if (poiChunk != null) {
+            final Completable<CompoundTag>[] poiWrite = new Completable[1];
             if (poiChunk.isDirty() && !shouldLevelChunkNotSave) {
-                this.savePOI(poiChunk, true);
-            } else {
-                this.poiDataUnload.completable().complete(null);
+                this.savePOI(poiChunk, true, poiWrite);
             }
 
             if (poiChunk.isLoaded()) {
                 ((ChunkSystemPoiManager)this.world.getPoiManager()).moonrise$onUnload(CoordinateUtils.getChunkKey(this.chunkX, this.chunkZ));
             }
+            this.asyncCompleteUnloadTask(MoonriseRegionFileIO.RegionFileType.POI_DATA, poiWrite[0]);
         }
     }
 
     boolean unloadStage3() {
-        // can only write to these while holding the schedule lock, and we instantly complete them in stage2
+        // no longer need the unload tasks, as every type has been scheduled to be saved
+        this.chunkDataUnload = null;
         this.poiDataUnload = null;
         this.entityDataUnload = null;
 
@@ -1707,17 +1684,14 @@ public final class NewChunkHolder {
         boolean canSaveEntities = entities != null;
 
         if (canSaveChunk) {
-            canSaveChunk = this.saveChunk(chunk, false);
+            canSaveChunk = this.saveChunk(chunk, false, null);
         }
         if (canSavePOI) {
-            canSavePOI = this.savePOI(poi, false);
+            canSavePOI = this.savePOI(poi, false, null);
         }
         if (canSaveEntities) {
             // on shutdown, we need to force transient entity chunks to save
-            canSaveEntities = this.saveEntities(entities, shutdown);
-            if (shutdown) {
-                this.lastEntityUnload = null;
-            }
+            canSaveEntities = this.saveEntities(entities, shutdown, null);
         }
 
         return executedUnloadTask | canSaveChunk | canSaveEntities | canSavePOI ?
@@ -1729,11 +1703,8 @@ public final class NewChunkHolder {
                 : null;
     }
 
-    private boolean saveChunk(final ChunkAccess chunk, final boolean unloading) {
+    private boolean saveChunk(final ChunkAccess chunk, final boolean unloading, final Completable<CompoundTag>[] chunkSave) {
         if (!chunk.isUnsaved()) {
-            if (unloading) {
-                this.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, null);
-            }
             return false;
         }
         try {
@@ -1742,16 +1713,20 @@ public final class NewChunkHolder {
 
             chunk.tryMarkSaved();
 
-            final CallbackCompletable<CompoundTag> completable = new CallbackCompletable<>();
+            final Completable<CompoundTag> completable = new Completable<>();
 
             final Runnable run = () -> {
-                final CompoundTag data = chunkData.write();
+                final CompoundTag data;
+                try {
+                    data = chunkData.write();
+                } catch (final Throwable thr) {
+                    LOGGER.error("Failed to save chunk data (" + NewChunkHolder.this.chunkX + "," + NewChunkHolder.this.chunkZ + ") in world '" + WorldUtil.getWorldName(NewChunkHolder.this.world) + "'", thr);
+
+                    completable.completeExceptionally(thr);
+                    return;
+                }
 
                 completable.complete(data);
-
-                if (unloading) {
-                    NewChunkHolder.this.completeAsyncUnloadDataSave(MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, data);
-                }
             };
 
             final PrioritisedExecutor.PrioritisedTask task;
@@ -1767,6 +1742,9 @@ public final class NewChunkHolder {
             MoonriseRegionFileIO.scheduleSave(
                 this.world, this.chunkX, this.chunkZ, completable, task, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, Priority.NORMAL
             );
+            if (chunkSave != null) {
+                chunkSave[0] = completable;
+            }
         } catch (final Throwable thr) {
             LOGGER.error("Failed to save chunk data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'", thr);
         }
@@ -1775,40 +1753,53 @@ public final class NewChunkHolder {
     }
 
     private boolean lastEntitySaveNull;
-    private CompoundTag lastEntityUnload;
-    private boolean saveEntities(final ChunkEntitySlices entities, final boolean unloading) {
+    private boolean saveEntities(final ChunkEntitySlices entities, final boolean unloading, final Completable<CompoundTag>[] entitySave) {
         try {
-            CompoundTag mergeFrom = null;
             if (entities.isTransient()) {
                 if (!unloading) {
                     // if we're a transient chunk, we cannot save until unloading because otherwise a double save will
                     // result in double adding the entities
                     return false;
                 }
-                try {
-                    mergeFrom = MoonriseRegionFileIO.loadData(this.world, this.chunkX, this.chunkZ, MoonriseRegionFileIO.RegionFileType.ENTITY_DATA, Priority.BLOCKING);
-                } catch (final Exception ex) {
-                    LOGGER.error("Cannot merge transient entities for chunk (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "', data on disk will be replaced", ex);
+                final CompoundTag save = entities.save();
+                if (save == null) {
+                    // we have no entities to add to the existing chunk
+                    return false;
                 }
+                final Completable<CompoundTag> mergeFrom = MoonriseRegionFileIO.loadDataAsync(
+                    this.world, this.chunkX, this.chunkZ, MoonriseRegionFileIO.RegionFileType.ENTITY_DATA, false, Priority.NORMAL
+                );
+
+                final Completable<CompoundTag> toWrite = mergeFrom.handle((final CompoundTag onDisk, final Throwable thr) -> {
+                    if (thr != null) {
+                        LOGGER.error("Cannot merge transient entities for chunk (" + NewChunkHolder.this.chunkX + "," + NewChunkHolder.this.chunkZ + ") in world '" + WorldUtil.getWorldName(NewChunkHolder.this.world) + "', data on disk will be replaced", thr);
+                        return save;
+                    } else {
+                        ChunkEntitySlices.copyEntities(onDisk, save);
+                        return save;
+                    }
+                });
+
+                MoonriseRegionFileIO.scheduleSave(
+                    this.world, this.chunkX, this.chunkZ, toWrite, null, MoonriseRegionFileIO.RegionFileType.ENTITY_DATA, Priority.NORMAL
+                );
+                this.lastEntitySaveNull = false;
+                if (entitySave != null) {
+                    entitySave[0] = toWrite;
+                }
+
+                return true;
             }
 
             final CompoundTag save = entities.save();
-            if (mergeFrom != null) {
-                if (save == null) {
-                    // don't override the data on disk with nothing
-                    return false;
-                } else {
-                    ChunkEntitySlices.copyEntities(mergeFrom, save);
-                }
-            }
             if (save == null && this.lastEntitySaveNull) {
                 return false;
             }
 
             MoonriseRegionFileIO.scheduleSave(this.world, this.chunkX, this.chunkZ, save, MoonriseRegionFileIO.RegionFileType.ENTITY_DATA);
             this.lastEntitySaveNull = save == null;
-            if (unloading) {
-                this.lastEntityUnload = save;
+            if (entitySave != null) {
+                entitySave[0] = Completable.completed(save);
             }
         } catch (final Throwable thr) {
             LOGGER.error("Failed to save entity data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'", thr);
@@ -1818,21 +1809,18 @@ public final class NewChunkHolder {
     }
 
     private boolean lastPoiSaveNull;
-    private boolean savePOI(final PoiChunk poi, final boolean unloading) {
+    private boolean savePOI(final PoiChunk poi, final boolean unloading, final Completable<CompoundTag>[] poiSave) {
         try {
             final CompoundTag save = poi.save();
             poi.setDirty(false);
             if (save == null && this.lastPoiSaveNull) {
-                if (unloading) {
-                    this.poiDataUnload.completable().complete(null);
-                }
                 return false;
             }
 
             MoonriseRegionFileIO.scheduleSave(this.world, this.chunkX, this.chunkZ, save, MoonriseRegionFileIO.RegionFileType.POI_DATA);
             this.lastPoiSaveNull = save == null;
-            if (unloading) {
-                this.poiDataUnload.completable().complete(save);
+            if (poiSave != null) {
+                poiSave[0] = Completable.completed(save);
             }
         } catch (final Throwable thr) {
             LOGGER.error("Failed to save poi data (" + this.chunkX + "," + this.chunkZ + ") in world '" + WorldUtil.getWorldName(this.world) + "'", thr);

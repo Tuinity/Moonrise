@@ -6,7 +6,6 @@ import ca.spottedleaf.concurrentutil.completable.Completable;
 import ca.spottedleaf.concurrentutil.executor.Cancellable;
 import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.executor.queue.AreaDependentQueue;
-import ca.spottedleaf.concurrentutil.executor.queue.PrioritisedTaskQueue;
 import ca.spottedleaf.concurrentutil.function.BiLong1Function;
 import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
@@ -36,7 +35,6 @@ import java.util.function.Consumer;
 
 public final class MoonriseRegionFileIO {
 
-    private static final int REGION_FILE_SHIFT = 5;
     private static final Logger LOGGER = LoggerFactory.getLogger(MoonriseRegionFileIO.class);
 
     /**
@@ -218,11 +216,11 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Returns the priority for the specified regionfile type for the specified chunk.
+     * Returns the priority for the specified RegionFile type for the specified chunk.
      * @param world Specified world.
      * @param chunkX Specified chunk x.
      * @param chunkZ Specified chunk z.
-     * @param type Specified regionfile type.
+     * @param type Specified RegionFile type.
      * @return The priority for the chunk
      */
     public static Priority getPriority(final ServerLevel world, final int chunkX, final int chunkZ, final RegionFileType type) {
@@ -237,7 +235,7 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Sets the priority for all regionfile types for the specified chunk. Note that great care should
+     * Sets the priority for all RegionFile types for the specified chunk. Note that great care should
      * be taken using this method, as there can be multiple tasks tied to the same chunk that want different
      * priorities.
      *
@@ -259,14 +257,14 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Sets the priority for the specified regionfile type for the specified chunk. Note that great care should
+     * Sets the priority for the specified RegionFile type for the specified chunk. Note that great care should
      * be taken using this method, as there can be multiple tasks tied to the same chunk that want different
      * priorities.
      *
      * @param world Specified world.
      * @param chunkX Specified chunk x.
      * @param chunkZ Specified chunk z.
-     * @param type Specified regionfile type.
+     * @param type Specified RegionFile type.
      * @param priority New priority.
      *
      * @see #raisePriority(ServerLevel, int, int, Priority)
@@ -285,7 +283,7 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Raises the priority for all regionfile types for the specified chunk.
+     * Raises the priority for all RegionFile types for the specified chunk.
      *
      * @param world Specified world.
      * @param chunkX Specified chunk x.
@@ -305,12 +303,12 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Raises the priority for the specified regionfile type for the specified chunk.
+     * Raises the priority for the specified RegionFile type for the specified chunk.
      *
      * @param world Specified world.
      * @param chunkX Specified chunk x.
      * @param chunkZ Specified chunk z.
-     * @param type Specified regionfile type.
+     * @param type Specified RegionFile type.
      * @param priority New priority.
      *
      * @see #setPriority(ServerLevel, int, int, Priority)
@@ -329,7 +327,7 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Lowers the priority for all regionfile types for the specified chunk.
+     * Lowers the priority for all RegionFile types for the specified chunk.
      *
      * @param world Specified world.
      * @param chunkX Specified chunk x.
@@ -349,12 +347,12 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Lowers the priority for the specified regionfile type for the specified chunk.
+     * Lowers the priority for the specified RegionFile type for the specified chunk.
      *
      * @param world Specified world.
      * @param chunkX Specified chunk x.
      * @param chunkZ Specified chunk z.
-     * @param type Specified regionfile type.
+     * @param type Specified RegionFile type.
      * @param priority New priority.
      *
      * @see #raisePriority(ServerLevel, int, int, Priority)
@@ -389,7 +387,7 @@ public final class MoonriseRegionFileIO {
      * @param chunkX Chunk's x coordinate
      * @param chunkZ Chunk's z coordinate
      * @param data Chunk's data
-     * @param type The regionfile type to write to.
+     * @param type The RegionFile type to write to.
      *
      * @throws IllegalStateException If the file io thread has shutdown.
      */
@@ -415,7 +413,7 @@ public final class MoonriseRegionFileIO {
      * @param chunkX Chunk's x coordinate
      * @param chunkZ Chunk's z coordinate
      * @param data Chunk's data
-     * @param type The regionfile type to write to.
+     * @param type The RegionFile type to write to.
      * @param priority The minimum priority to schedule at.
      *
      * @throws IllegalStateException If the file io thread has shutdown.
@@ -451,7 +449,7 @@ public final class MoonriseRegionFileIO {
      * @param chunkZ Chunk's z coordinate
      * @param completable Chunk's pending data
      * @param writeTask The task responsible for completing the pending chunk data
-     * @param type The regionfile type to write to.
+     * @param type The RegionFile type to write to.
      * @param priority The minimum priority to schedule at.
      *
      * @throws IllegalStateException If the file io thread has shutdown.
@@ -482,7 +480,7 @@ public final class MoonriseRegionFileIO {
      * @param chunkZ Chunk's z coordinate
      * @param completable Chunk's pending data
      * @param writeTask The task responsible for completing the pending chunk data
-     * @param type The regionfile type to write to.
+     * @param type The RegionFile type to write to.
      * @param priority The minimum priority to schedule at.
      *
      * @throws IllegalStateException If the file io thread has shutdown.
@@ -532,17 +530,9 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Schedules a load to be executed asynchronously. This task will load all regionfile types, and then call
+     * Schedules a load to be executed asynchronously. This task will load all RegionFile types, and then call
      * {@code onComplete}. This is a bulk load operation, see {@link #loadDataAsync(ServerLevel, int, int, RegionFileType, BiConsumer, boolean)}
      * for single load.
-     * <p>
-     *     Impl notes:
-     * </p>
-     * <li>
-     *     The {@code onComplete} parameter may be completed during the execution of this function synchronously or it may
-     *     be completed asynchronously on this file io thread. Interacting with the file IO thread in the completion of
-     *     data is undefined behaviour, and can cause deadlock.
-     * </li>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -564,17 +554,9 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Schedules a load to be executed asynchronously. This task will load all regionfile types, and then call
+     * Schedules a load to be executed asynchronously. This task will load all RegionFile types, and then call
      * {@code onComplete}. This is a bulk load operation, see {@link #loadDataAsync(ServerLevel, int, int, RegionFileType, BiConsumer, boolean, Priority)}
      * for single load.
-     * <p>
-     *     Impl notes:
-     * </p>
-     * <li>
-     *     The {@code onComplete} parameter may be completed during the execution of this function synchronously or it may
-     *     be completed asynchronously on this file io thread. Interacting with the file IO thread in the completion of
-     *     data is undefined behaviour, and can cause deadlock.
-     * </li>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -598,17 +580,9 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Schedules a load to be executed asynchronously. This task will load data for the specified regionfile type(s), and
+     * Schedules a load to be executed asynchronously. This task will load data for the specified RegionFile type(s), and
      * then call {@code onComplete}. This is a bulk load operation, see {@link #loadDataAsync(ServerLevel, int, int, RegionFileType, BiConsumer, boolean)}
      * for single load.
-     * <p>
-     *     Impl notes:
-     * </p>
-     * <li>
-     *     The {@code onComplete} parameter may be completed during the execution of this function synchronously or it may
-     *     be completed asynchronously on this file io thread. Interacting with the file IO thread in the completion of
-     *     data is undefined behaviour, and can cause deadlock.
-     * </li>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -616,7 +590,7 @@ public final class MoonriseRegionFileIO {
      * @param onComplete Consumer to execute once this task has completed
      * @param intendingToBlock Whether the caller is intending to block on completion. This only affects the cost
      *                         of this call.
-     * @param types The regionfile type(s) to load.
+     * @param types The RegionFile type(s) to load.
      *
      * @return The {@link Cancellable} for this chunk load. Cancelling it will not affect other loads for the same chunk data.
      *
@@ -632,17 +606,9 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Schedules a load to be executed asynchronously. This task will load data for the specified regionfile type(s), and
+     * Schedules a load to be executed asynchronously. This task will load data for the specified RegionFile type(s), and
      * then call {@code onComplete}. This is a bulk load operation, see {@link #loadDataAsync(ServerLevel, int, int, RegionFileType, BiConsumer, boolean, Priority)}
      * for single load.
-     * <p>
-     *     Impl notes:
-     * </p>
-     * <li>
-     *     The {@code onComplete} parameter may be completed during the execution of this function synchronously or it may
-     *     be completed asynchronously on this file io thread. Interacting with the file IO thread in the completion of
-     *     data is undefined behaviour, and can cause deadlock.
-     * </li>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
@@ -650,7 +616,7 @@ public final class MoonriseRegionFileIO {
      * @param onComplete Consumer to execute once this task has completed
      * @param intendingToBlock Whether the caller is intending to block on completion. This only affects the cost
      *                         of this call.
-     * @param types The regionfile type(s) to load.
+     * @param types The RegionFile type(s) to load.
      * @param priority The minimum priority to load the data at.
      *
      * @return The {@link Cancellable} for this chunk load. Cancelling it will not affect other loads for the same chunk data.
@@ -696,20 +662,71 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Schedules a load to be executed asynchronously. This task will load the specified regionfile type, and then call
-     * {@code onComplete}.
-     * <p>
-     *     Impl notes:
-     * </p>
-     * <li>
-     *     The {@code onComplete} parameter may be completed during the execution of this function synchronously or it may
-     *     be completed asynchronously on this file io thread. Interacting with the file IO thread in the completion of
-     *     data is undefined behaviour, and can cause deadlock.
-     * </li>
+     * Schedules a load to be executed asynchronously. This task will load the specified RegionFile type, and then complete
+     * the returned {@link Completable}.
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
      * @param chunkZ Chunk's z coordinate
+     * @param type The RegionFile type to load.
+     * @param intendingToBlock Whether the caller is intending to block on completion. This only affects the cost
+     *                         of this call.
+     *
+     * @return A {@link Completable} which is completed when the data is loaded.
+     *
+     * @see #loadChunkData(ServerLevel, int, int, Consumer, boolean, RegionFileType...)
+     * @see #loadChunkData(ServerLevel, int, int, Consumer, boolean, Priority, RegionFileType...)
+     * @see #loadAllChunkData(ServerLevel, int, int, Consumer, boolean)
+     * @see #loadAllChunkData(ServerLevel, int, int, Consumer, boolean, Priority)
+     */
+    public static Completable<CompoundTag> loadDataAsync(final ServerLevel world, final int chunkX, final int chunkZ,
+                                                         final RegionFileType type, final boolean intendingToBlock) {
+        return MoonriseRegionFileIO.loadDataAsync(world, chunkX, chunkZ, type, intendingToBlock, Priority.NORMAL);
+    }
+
+    /**
+     * Schedules a load to be executed asynchronously. This task will load the specified RegionFile type, and then complete
+     * the returned {@link Completable}.
+     *
+     * @param world Chunk's world
+     * @param chunkX Chunk's x coordinate
+     * @param chunkZ Chunk's z coordinate
+     * @param type The RegionFile type to load.
+     * @param intendingToBlock Whether the caller is intending to block on completion. This only affects the cost
+     *                         of this call.
+     * @param priority Minimum priority to load the data at.
+     *
+     * @return A {@link Completable} which is completed when the data is loaded.
+     *
+     * @see #loadChunkData(ServerLevel, int, int, Consumer, boolean, RegionFileType...)
+     * @see #loadChunkData(ServerLevel, int, int, Consumer, boolean, Priority, RegionFileType...)
+     * @see #loadAllChunkData(ServerLevel, int, int, Consumer, boolean)
+     * @see #loadAllChunkData(ServerLevel, int, int, Consumer, boolean, Priority)
+     */
+    public static Completable<CompoundTag> loadDataAsync(final ServerLevel world, final int chunkX, final int chunkZ,
+                                                         final RegionFileType type, final boolean intendingToBlock,
+                                                         final Priority priority) {
+        final Completable<CompoundTag> ret = new Completable<>();
+
+        MoonriseRegionFileIO.loadDataAsync(world, chunkX, chunkZ, type, (final CompoundTag res, final Throwable thr) -> {
+            if (thr != null) {
+                ret.completeExceptionally(thr);
+            } else {
+                ret.complete(res);
+            }
+        }, intendingToBlock, priority);
+
+        return ret;
+    }
+
+    /**
+     * Schedules a load to be executed asynchronously. This task will load the specified RegionFile type, and then call
+     * {@code onComplete}.
+     *
+     * @param world Chunk's world
+     * @param chunkX Chunk's x coordinate
+     * @param chunkZ Chunk's z coordinate
+     * @param type The RegionFile type to load.
      * @param onComplete Consumer to execute once this task has completed
      * @param intendingToBlock Whether the caller is intending to block on completion. This only affects the cost
      *                         of this call.
@@ -728,20 +745,13 @@ public final class MoonriseRegionFileIO {
     }
 
     /**
-     * Schedules a load to be executed asynchronously. This task will load the specified regionfile type, and then call
+     * Schedules a load to be executed asynchronously. This task will load the specified RegionFile type, and then call
      * {@code onComplete}.
-     * <p>
-     *     Impl notes:
-     * </p>
-     * <li>
-     *     The {@code onComplete} parameter may be completed during the execution of this function synchronously or it may
-     *     be completed asynchronously on this file io thread. Interacting with the file IO thread in the completion of
-     *     data is undefined behaviour, and can cause deadlock.
-     * </li>
      *
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
      * @param chunkZ Chunk's z coordinate
+     * @param type The RegionFile type to load.
      * @param onComplete Consumer to execute once this task has completed
      * @param intendingToBlock Whether the caller is intending to block on completion. This only affects the cost
      *                         of this call.
@@ -844,10 +854,10 @@ public final class MoonriseRegionFileIO {
      * @param world Chunk's world
      * @param chunkX Chunk's x coordinate
      * @param chunkZ Chunk's z coordinate
-     * @param type Regionfile type
+     * @param type RegionFile type
      * @param priority Minimum priority to load the data at.
      *
-     * @return The chunk data for the chunk. Note that a {@code null} result means the chunk or regionfile does not exist on disk.
+     * @return The chunk data for the chunk. Note that a {@code null} result means the chunk or RegionFile does not exist on disk.
      *
      * @throws IOException If the load fails for any reason
      */
@@ -1204,7 +1214,6 @@ public final class MoonriseRegionFileIO {
         }
 
         private void performWriteCompress(final InProgressWrite inProgressWrite) {
-            final CompoundTag write = inProgressWrite.value;
             if (!inProgressWrite.isComplete()) {
                 throw new IllegalStateException("Should be writable");
             }
@@ -1212,11 +1221,15 @@ public final class MoonriseRegionFileIO {
             RegionDataController.WriteData writeData = null;
             boolean failedWrite = false;
 
-            try {
-                writeData = this.regionDataController.startWrite(this.chunkX, this.chunkZ, write);
-            } catch (final Throwable thr) {
-                failedWrite = thr instanceof IOException;
-                LOGGER.error("Failed to write chunk data for task: " + this.toString(), thr);
+            if (inProgressWrite.throwable != null) {
+                LOGGER.error("Serialization task for chunk data failed: " + this.toString(), inProgressWrite.throwable);
+            } else {
+                try {
+                    writeData = this.regionDataController.startWrite(this.chunkX, this.chunkZ, inProgressWrite.value);
+                } catch (final Throwable thr) {
+                    failedWrite = thr instanceof IOException;
+                    LOGGER.error("Failed to write chunk data for task: " + this.toString(), thr);
+                }
             }
 
             if (writeData == null) {
