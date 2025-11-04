@@ -135,6 +135,9 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
     private long scheduledTickStart;
 
     @Unique
+    private long taskExecutionTime;
+
+    @Unique
     private void addTickTime(final TickTime time) {
         this.tickTimes5s.addDataFrom(time);
         this.tickTimes10s.addDataFrom(time);
@@ -265,9 +268,11 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
             0L,
             now,
             0L,
-            false,
-            true
+            this.taskExecutionTime,
+            0L,
+            false
         );
+        this.taskExecutionTime = 0L;
 
         this.addTickTime(time);
     }
@@ -307,15 +312,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
                 final long now = Util.getNanos();
 
                 // record execution time
-                this.addTickTime(
-                    new TickTime(
-                        SchedulerThreadPool.DEADLINE_NOT_SET, SchedulerThreadPool.DEADLINE_NOT_SET,
-                        start, 0L,
-                        now, 0L,
-                        false,
-                        false
-                    )
-                );
+                this.taskExecutionTime += (now - start);
 
                 // wait for unpark or deadline
                 final long toWait = deadline - now;
