@@ -38,6 +38,7 @@
         "chunk_system.LevelReaderMixin",
         "chunk_system.MinecraftServerMixin",
         "chunk_system.NoiseBasedChunkGeneratorMixin",
+        "chunk_system.PersistentEntitySectionManagerMixin",
         "chunk_system.PlayerListMixin",
         "chunk_system.PlayerSpawnFinderMixin",
         "chunk_system.PoiManagerMixin",

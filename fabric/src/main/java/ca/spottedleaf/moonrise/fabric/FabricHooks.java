@@ -44,6 +44,7 @@ import java.util.function.Predicate;
 public final class FabricHooks extends BaseChunkSystemHooks implements PlatformHooks {
 
     private static final boolean HAS_FABRIC_LIFECYCLE_EVENTS = FabricLoader.getInstance().isModLoaded("fabric-lifecycle-events-v1");
+    public static final boolean HAS_ARCHITECTURY = FabricLoader.getInstance().isModLoaded("architectury");
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -113,7 +114,7 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
 
     @Override
     public void chunkSyncSave(final ServerLevel world, final ChunkAccess chunk, final SerializableChunkData data) {
-        if (this.hasArchitectury) {
+        if (HAS_ARCHITECTURY) {
             ArchitecturyHooks.onSaveEvent(chunk, world, data);
         }
     }
@@ -141,6 +142,14 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
                 into.add(part);
             }
         }
+    }
+
+    @Override
+    public boolean onAddEntity(final ServerLevel world, final Entity entity) {
+        if (HAS_ARCHITECTURY) {
+            return ArchitecturyHooks.onEntityAdd(entity, world);
+        }
+        return true;
     }
 
     @Override

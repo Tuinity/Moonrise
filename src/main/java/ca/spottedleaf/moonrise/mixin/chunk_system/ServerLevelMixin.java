@@ -141,7 +141,7 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
                       ResourceKey<Level> resourceKey, LevelStem levelStem,
                       boolean bl, long l, List<CustomSpawner> list, boolean bl2, RandomSequences randomSequences,
                       CallbackInfo ci) {
-        this.entityManager = null;
+        //this.entityManager = null; // Keep entityManager non-null, architectury needs it
 
         this.moonrise$setEntityLookup(new ServerEntityLookup((ServerLevel)(Object)this, ((ServerLevel)(Object)this).new EntityCallbacks()));
         this.chunkTaskScheduler = new ChunkTaskScheduler((ServerLevel)(Object)this);
