@@ -4,7 +4,6 @@ import ca.spottedleaf.moonrise.common.util.BaseChunkSystemHooks;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
-import ca.spottedleaf.moonrise.compat.architectury.ArchitecturyHooks;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixer;
@@ -123,9 +122,6 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
     @Override
     public void chunkSyncSave(final ServerLevel world, final ChunkAccess chunk, final SerializableChunkData data) {
         NeoForge.EVENT_BUS.post(new ChunkDataEvent.Save(chunk, world, data));
-        if (this.hasArchitectury) {
-            ArchitecturyHooks.onSaveEvent(chunk, world, data);
-        }
     }
 
     @Override
