@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 public abstract class BaseChunkSystemHooks implements ChunkSystemHooks {
 
     private final boolean hasLithium = ((PlatformHooks) this).isModLoaded("lithium");
+    protected final boolean hasArchitectury = ((PlatformHooks) this).isModLoaded("architectury");
 
     @Override
     public void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run) {

@@ -3,6 +3,7 @@ package ca.spottedleaf.moonrise.fabric;
 import ca.spottedleaf.moonrise.common.util.BaseChunkSystemHooks;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
+import ca.spottedleaf.moonrise.compat.architectury.ArchitecturyHooks;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixer;
@@ -112,7 +113,9 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
 
     @Override
     public void chunkSyncSave(final ServerLevel world, final ChunkAccess chunk, final SerializableChunkData data) {
-
+        if (this.hasArchitectury) {
+            ArchitecturyHooks.onSaveEvent(chunk, world, data);
+        }
     }
 
     @Override

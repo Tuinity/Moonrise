@@ -1,0 +1,19 @@
+package ca.spottedleaf.moonrise.compat.architectury;
+
+import dev.architectury.event.events.common.ChunkEvent;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.storage.SerializableChunkData;
+
+public final class ArchitecturyHooks {
+    /**
+     * Invokes Architectury's ChunkEvent.SAVE_DATA event.
+     *
+     * @param chunkAccess The chunk that is saved.
+     * @param level The level the chunk is in.
+     * @param data  The data.
+     */
+    public static void onSaveEvent(ChunkAccess chunkAccess, ServerLevel level, SerializableChunkData data) {
+        ChunkEvent.SAVE_DATA.invoker().save(chunkAccess, level, data);
+    }
+}
