@@ -11,7 +11,6 @@ import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.io.IOException;
@@ -23,12 +22,15 @@ import java.util.stream.Stream;
 @Mixin(PersistentEntitySectionManager.class)
 abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
     @Mutable @Final @Shadow EntitySectionStorage<T> sectionStorage;
+    @Mutable @Shadow @Final private LevelEntityGetter<T> entityGetter;
+
     @Inject(
         method = "<init>",
         at = @At("RETURN")
     )
     private void destroyFields(final CallbackInfo ci) {
         this.sectionStorage = null;
+        this.entityGetter = null;
     }
     @Inject(
         method = "addNewEntity",
