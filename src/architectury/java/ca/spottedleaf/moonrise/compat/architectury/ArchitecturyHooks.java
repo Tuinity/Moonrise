@@ -19,6 +19,13 @@ public final class ArchitecturyHooks {
         ChunkEvent.SAVE_DATA.invoker().save(chunkAccess, level, data);
     }
 
+    /**
+     * Invokes Architectury's EntityEvent.ADD event.
+     *
+     * @param entity The entity that is added.
+     * @param level  The level the entity is in.
+     * @return Whether the entity should be added.
+     */
     public static boolean onEntityAdd(Entity entity, ServerLevel level) {
         return !EntityEvent.ADD.invoker().add(entity, level).isFalse();
     }
