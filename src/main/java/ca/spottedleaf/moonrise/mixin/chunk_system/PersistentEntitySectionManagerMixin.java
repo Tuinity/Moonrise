@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.FullChunkStatus;
@@ -13,16 +14,26 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import java.io.IOException;
+
 import java.io.Writer;
+import java.util.Queue;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Mixin(PersistentEntitySectionManager.class)
 abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
-    @Mutable @Final @Shadow EntitySectionStorage<T> sectionStorage;
+    @Mutable @Shadow @Final EntitySectionStorage<T> sectionStorage;
     @Mutable @Shadow @Final private LevelEntityGetter<T> entityGetter;
+    @Mutable @Shadow @Final LevelCallback<T> callbacks;
+    @Mutable @Shadow @Final private EntityPersistentStorage<T> permanentStorage;
+    @Mutable @Shadow @Final Set<UUID> knownUuids;
+    @Mutable @Shadow @Final private Long2ObjectMap<Visibility> chunkVisibility;
+    @Mutable @Shadow @Final private Long2ObjectMap<?> chunkLoadStatuses;
+    @Mutable @Shadow @Final private LongSet chunksToUnload;
+    @Mutable @Shadow @Final private Queue<ChunkEntities<T>> loadingInbox;
+    @Mutable @Shadow @Final private EntityLookup<T> visibleEntityStorage;
 
     @Inject(
         method = "<init>",
@@ -31,6 +42,14 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
     private void destroyFields(final CallbackInfo ci) {
         this.sectionStorage = null;
         this.entityGetter = null;
+        this.callbacks = null;
+        this.permanentStorage = null;
+        this.knownUuids = null;
+        this.chunkVisibility = null;
+        this.chunkLoadStatuses = null;
+        this.chunksToUnload = null;
+        this.loadingInbox = null;
+        this.visibleEntityStorage = null;
     }
     @Inject(
         method = "addNewEntity",
@@ -284,7 +303,7 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
         method = "dumpSections",
         at = @At("HEAD")
     )
-    public void dumpSections(Writer writer, CallbackInfo ci) throws IOException {
+    public void dumpSections(Writer writer, CallbackInfo ci) {
         throw new UnsupportedOperationException();
     }
 
