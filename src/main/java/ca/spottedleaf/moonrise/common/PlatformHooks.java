@@ -62,8 +62,6 @@ public interface PlatformHooks extends ChunkSystemHooks {
     public void addToGetEntities(final Level world, final Entity entity, final AABB boundingBox, final Predicate<? super Entity> predicate,
                                  final List<Entity> into);
 
-    public boolean onAddEntity(final ServerLevel world, final Entity entity);
-
     public <T extends Entity> void addToGetEntities(final Level world, final EntityTypeTest<Entity, T> entityTypeTest,
                                                     final AABB boundingBox, final Predicate<? super T> predicate,
                                                     final List<? super T> into, final int maxCount);
