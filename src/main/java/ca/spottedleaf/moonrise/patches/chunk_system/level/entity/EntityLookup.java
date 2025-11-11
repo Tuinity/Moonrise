@@ -438,12 +438,6 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
             return false;
         }
 
-        if (this.world instanceof ServerLevel serverLevel) {
-            if (!PlatformHooks.get().onAddEntity(serverLevel, entity)) {
-                return false;
-            }
-        }
-
         ((ChunkSystemEntity)entity).moonrise$setSectionX(sectionX);
         ((ChunkSystemEntity)entity).moonrise$setSectionY(sectionY);
         ((ChunkSystemEntity)entity).moonrise$setSectionZ(sectionZ);
