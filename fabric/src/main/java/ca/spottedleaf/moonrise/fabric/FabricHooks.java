@@ -145,14 +145,6 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
     }
 
     @Override
-    public boolean onAddEntity(final ServerLevel world, final Entity entity) {
-        if (HAS_ARCHITECTURY) {
-            return ArchitecturyHooks.onEntityAdd(entity, world);
-        }
-        return true;
-    }
-
-    @Override
     public <T extends Entity> void addToGetEntities(final Level world, final EntityTypeTest<Entity, T> entityTypeTest, final AABB boundingBox,
                                                     final Predicate<? super T> predicate, final List<? super T> into, final int maxCount) {
         if (into.size() >= maxCount) {
@@ -186,6 +178,9 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
 
     @Override
     public boolean screenEntity(final ServerLevel world, final Entity entity, final boolean fromDisk, final boolean event) {
+        if (HAS_ARCHITECTURY) {
+            return ArchitecturyHooks.onEntityAdd(entity, world);
+        }
         return true;
     }
 
