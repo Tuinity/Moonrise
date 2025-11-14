@@ -2,7 +2,7 @@
 
 [versions]
 # https://maven.shedaniel.me/me/shedaniel/cloth/
-cloth = "20.0.148"
+cloth = "20.0.149"
 fabricLoader = "0.17.2"
 minecraft = "1.21.10"
 # https://projects.neoforged.net/neoforged/neoforge
@@ -20,7 +20,7 @@ fabricLoader = { module = "net.fabricmc:fabric-loader", version.ref = "fabricLoa
 fabricLoader-junit = { module = "net.fabricmc:fabric-loader-junit", version.ref = "fabricLoader" }
 fabricMinecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
 
-concurrentutil = "ca.spottedleaf:concurrentutil:0.0.5"
+concurrentutil = "ca.spottedleaf:concurrentutil:0.0.6"
 
 yamlconfig = "ca.spottedleaf:yamlconfig:1.1.0"
 snakeyaml = "org.yaml:snakeyaml:2.5"
