@@ -24,13 +24,11 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Arrays;
 import java.util.List;
@@ -348,8 +346,14 @@ abstract class ServerExplosionMixin {
      * @reason Rewrite ray casting for performance
      * @author Spottedleaf
      */
-    @Overwrite
-    public List<BlockPos> calculateExplodedPositions() {
+    @Inject(
+        method = "calculateExplodedPositions",
+        at = @At(
+            value = "HEAD"
+        ),
+        cancellable = true
+    )
+    public void calculateExplodedPositions(CallbackInfoReturnable<List<BlockPos>> cir) {
         final ObjectArrayList<BlockPos> ret = new ObjectArrayList<>();
 
         final Vec3 center = this.center;
@@ -432,7 +436,7 @@ abstract class ServerExplosionMixin {
             } while (power > 0.0f);
         }
 
-        return ret;
+        cir.setReturnValue(ret);
     }
 
     /**
