@@ -24,8 +24,10 @@ dependencies {
 
     runtimeOnly(rootProject.sourceSets.main.get().output)
     runtimeOnly(rootProject.sourceSets.getByName("lithium").output)
+    runtimeOnly(rootProject.sourceSets.getByName("architectury").output)
     shadow(project(":"))
     shadow(rootProject.sourceSets.getByName("lithium").output)
+    shadow(rootProject.sourceSets.getByName("architectury").output)
     compileOnly(project(":"))
 
     libs(libs.concurrentutil) { isTransitive = false }
@@ -111,6 +113,7 @@ loom {
             sourceSet("main")
             sourceSet("main", project.rootProject)
             sourceSet("lithium", project.rootProject)
+            sourceSet("architectury", project.rootProject)
         }
     }
 }

@@ -2,12 +2,14 @@ package ca.spottedleaf.moonrise.patches.chunk_system.level.entity;
 
 import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
 import ca.spottedleaf.concurrentutil.map.SWMRLong2ObjectHashTable;
+import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.list.EntityList;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.FullChunkStatus;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;

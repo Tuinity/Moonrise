@@ -3,6 +3,7 @@
   "package": "ca.spottedleaf.moonrise.neoforge.mixin",
   "mixins": [
     "chunk_system.NeoForgeMinecraftServerMixin",
+    "chunk_system.NeoForgePersistentEntitySectionManagerMixin",
     "chunk_system.NeoForgeServerLevelMixin",
     "chunk_system.NeoForgeTicketStorageMixin",
     "collisions.EntityMixin",

@@ -14,12 +14,14 @@ val aw2at = Aw2AtTask.configureDefault(
 )
 
 sourceSets.create("lithium")
+sourceSets.create("architectury")
 
 neoForge {
     neoFormVersion = libs.versions.neoform.get()
     validateAccessTransformers = true
     accessTransformers.files.setFrom(aw2at.flatMap { t -> t.outputFile })
     addModdingDependenciesTo(sourceSets.getByName("lithium"))
+    addModdingDependenciesTo(sourceSets.getByName("architectury"))
 }
 
 dependencies {
@@ -36,6 +38,7 @@ dependencies {
     compileOnly(libs.clothConfig.neoforge)
 
     "lithiumCompileOnly"("maven.modrinth:lithium:${rootProject.property("neo_lithium_version")}")
+    "architecturyCompileOnly"("maven.modrinth:architectury-api:${rootProject.property("neo_architectury_version")}")
     compileOnly(sourceSets.getByName("lithium").output)
 }
 

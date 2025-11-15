@@ -23,6 +23,7 @@ neoForge {
             sourceSet(sourceSets.main.get())
             sourceSet(rootProject.sourceSets.main.get())
             sourceSet(rootProject.sourceSets.getByName("lithium"))
+            sourceSet(rootProject.sourceSets.getByName("architectury"))
         }
     }
     runs {
@@ -44,8 +45,10 @@ val gui = rootProject.property("enable_gui").toString() == "true"
 dependencies {
     runtimeOnly(rootProject.sourceSets.main.get().output)
     runtimeOnly(rootProject.sourceSets.getByName("lithium").output)
+    runtimeOnly(rootProject.sourceSets.getByName("architectury").output)
     shadow(project(":"))
     shadow(rootProject.sourceSets.getByName("lithium").output)
+    shadow(rootProject.sourceSets.getByName("architectury").output)
     compileOnly(project(":"))
 
     libs(libs.concurrentutil) { isTransitive = false }
