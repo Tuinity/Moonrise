@@ -24,9 +24,9 @@ pluginManagement {
 
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-    id("quiet-fabric-loom") version "1.11.325"
+    id("quiet-fabric-loom") version "1.12.326"
     // https://projects.neoforged.net/neoforged/moddevgradle
-    id("net.neoforged.moddev.repositories") version "2.0.110"
+    id("net.neoforged.moddev.repositories") version "2.0.119"
 }
 
 dependencyResolutionManagement {
@@ -44,6 +44,15 @@ dependencyResolutionManagement {
         }
         maven("https://maven.shedaniel.me/")
         maven("https://maven.terraformersmc.com/releases/")
+        // TODO - remove on NeoForge release
+        maven {
+            name = "Maven for PR #2815" // https://github.com/neoforged/NeoForge/pull/2815
+            url = uri("https://prmaven.neoforged.net/NeoForge/pr2815")
+            content {
+                includeModule("net.neoforged", "neoforge")
+                includeModule("net.neoforged", "testframework")
+            }
+        }
     }
     versionCatalogs {
         create("fabricApiLibs") {

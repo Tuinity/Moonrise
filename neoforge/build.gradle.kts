@@ -51,7 +51,6 @@ dependencies {
     libs(libs.concurrentutil) { isTransitive = false }
     libs(libs.yamlconfig) { isTransitive = false }
     libs(libs.snakeyaml)
-    "additionalRuntimeClasspath"(libs.snakeyaml)
 
     if (gui) {
         implementation(libs.clothConfig.neoforge)

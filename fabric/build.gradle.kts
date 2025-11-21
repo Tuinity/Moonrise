@@ -114,7 +114,7 @@ loom {
         }
     }
 }
-
+/*
 tasks.test {
     val classPathGroups = SourceSetHelper.getClasspath(loom.mods.named("main").get(), project)
         .map(File::getAbsolutePath)
@@ -122,6 +122,7 @@ tasks.test {
 
     systemProperty("fabric.classPathGroups", classPathGroups)
 }
+ */
 
 loom.runs.configureEach {
     runConfigCommon.systemProperties.get().forEach {
