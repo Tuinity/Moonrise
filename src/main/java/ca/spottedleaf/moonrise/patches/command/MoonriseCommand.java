@@ -22,6 +22,7 @@ import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.Commands;
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
@@ -55,7 +56,7 @@ public final class MoonriseCommand {
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             literal("moonrise").requires((final CommandSourceStack src) -> {
-                return src.hasPermission(src.getServer().operatorUserPermissionLevel()) || !(src.getServer() instanceof DedicatedServer);
+                return Commands.hasPermission(Commands.LEVEL_ADMINS).test(src) || !(src.getServer() instanceof DedicatedServer);
             }).then(literal("holderinfo")
                 .executes(MoonriseCommand::holderInfo)
             ).then(literal("chunkinfo")
