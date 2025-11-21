@@ -24,7 +24,7 @@
         "chunk_system.ChunkPyramidMixin",
         "chunk_system.ChunkStatusMixin",
         "chunk_system.ChunkStepMixin",
-        "chunk_system.ChunkStorageMixin",
+        "chunk_system.SimpleRegionStorageMixin",
         "chunk_system.DedicatedServerMixin",
         "chunk_system.DistanceManagerMixin",
         "chunk_system.DynamicGameEventListenerMixin",

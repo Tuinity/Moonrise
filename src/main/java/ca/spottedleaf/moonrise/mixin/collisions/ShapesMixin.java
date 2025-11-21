@@ -59,7 +59,7 @@ abstract class ShapesMixin {
             method = "<clinit>",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/Util;make(Ljava/util/function/Supplier;)Ljava/lang/Object;"
+                    target = "Lnet/minecraft/util/Util;make(Ljava/util/function/Supplier;)Ljava/lang/Object;"
             )
     )
     private static Object forceArrayVoxelShape(final Supplier<VoxelShape> supplier) {

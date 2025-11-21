@@ -100,29 +100,17 @@ publishMods {
 
 loom {
     accessWidenerPath.set(rootProject.file("src/main/resources/moonrise.accesswidener"))
-    mixin {
-        useLegacyMixinAp = false
-    }
     runs.configureEach {
         ideConfigGenerated(true)
     }
     mods {
         create("main") {
             sourceSet("main")
-            sourceSet("main", project.rootProject)
-            sourceSet("lithium", project.rootProject)
+            sourceSet("main", ":")
+            sourceSet("lithium", ":")
         }
     }
 }
-/*
-tasks.test {
-    val classPathGroups = SourceSetHelper.getClasspath(loom.mods.named("main").get(), project)
-        .map(File::getAbsolutePath)
-        .toList()
-
-    systemProperty("fabric.classPathGroups", classPathGroups)
-}
- */
 
 loom.runs.configureEach {
     runConfigCommon.systemProperties.get().forEach {

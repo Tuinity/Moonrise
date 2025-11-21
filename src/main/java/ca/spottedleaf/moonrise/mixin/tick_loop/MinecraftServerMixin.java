@@ -244,7 +244,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
      * @author Spottedleaf
      */
     @Inject(
-        method = "runServer",
+        method = "processPacketsAndTick",
         at = @At(
             value = "INVOKE",
             target = "Lcom/mojang/jtracy/DiscontinuousFrame;end()V",
@@ -370,7 +370,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
      * @author Spottedleaf
      */
     @Redirect(
-        method = "runServer",
+        method = "processPacketsAndTick",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/network/PacketProcessor;processQueuedPackets()V"
@@ -386,7 +386,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
      * @author Spottedleaf
      */
     @Inject(
-        method = "runServer",
+        method = "processPacketsAndTick",
         at = @At(
             value = "INVOKE",
             target = "Lcom/mojang/jtracy/DiscontinuousFrame;start()V",

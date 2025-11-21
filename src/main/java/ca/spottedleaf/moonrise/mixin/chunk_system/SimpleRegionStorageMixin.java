@@ -5,10 +5,11 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.ChunkScanAccess;
-import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import net.minecraft.world.level.chunk.storage.IOWorker;
+import net.minecraft.world.level.chunk.storage.LegacyTagFixer;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
+import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
 import net.minecraft.world.level.levelgen.structure.LegacyStructureDataHandler;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,8 +25,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-@Mixin(ChunkStorage.class)
-abstract class ChunkStorageMixin implements ChunkSystemChunkStorage, AutoCloseable {
+@Mixin(SimpleRegionStorage.class)
+abstract class SimpleRegionStorageMixin implements ChunkSystemChunkStorage, AutoCloseable {
 
     @Shadow
     public IOWorker worker;
@@ -41,7 +42,7 @@ abstract class ChunkStorageMixin implements ChunkSystemChunkStorage, AutoCloseab
      * @author Spottedleaf
      */
     @Inject(
-            method = "<init>",
+            method = "<init>(Lnet/minecraft/world/level/chunk/storage/RegionStorageInfo;Ljava/nio/file/Path;Lcom/mojang/datafixers/DataFixer;ZLnet/minecraft/util/datafix/DataFixTypes;Ljava/util/function/Supplier;)V",
             at = @At(
                     value = "RETURN"
             )
@@ -74,15 +75,15 @@ abstract class ChunkStorageMixin implements ChunkSystemChunkStorage, AutoCloseab
      * @author Spottedleaf
      */
     @Redirect(
-            method = "upgradeChunkTag",
+            method = "upgradeChunkTag(Lnet/minecraft/nbt/CompoundTag;ILnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/nbt/CompoundTag;",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/levelgen/structure/LegacyStructureDataHandler;updateFromLegacy(Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/nbt/CompoundTag;"
+                    target = "Lnet/minecraft/world/level/chunk/storage/LegacyTagFixer;applyFix(Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/nbt/CompoundTag;"
             )
     )
-    private CompoundTag synchroniseLegacyDataUpgrade(final LegacyStructureDataHandler instance, final CompoundTag compoundTag) {
+    private CompoundTag synchroniseLegacyDataUpgrade(LegacyTagFixer instance, CompoundTag compoundTag) {
         synchronized (instance) {
-            return instance.updateFromLegacy(compoundTag);
+            return instance.applyFix(compoundTag);
         }
     }
 
@@ -116,7 +117,7 @@ abstract class ChunkStorageMixin implements ChunkSystemChunkStorage, AutoCloseab
      * @author Spottedleaf
      */
     @Redirect(
-            method = "write",
+            method = "write(Lnet/minecraft/world/level/ChunkPos;Ljava/util/function/Supplier;)Ljava/util/concurrent/CompletableFuture;",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/chunk/storage/IOWorker;store(Lnet/minecraft/world/level/ChunkPos;Ljava/util/function/Supplier;)Ljava/util/concurrent/CompletableFuture;"
@@ -138,16 +139,15 @@ abstract class ChunkStorageMixin implements ChunkSystemChunkStorage, AutoCloseab
      * @author Spottedleaf
      */
     @Redirect(
-            method = "handleLegacyStructureIndex",
+            method = "markChunkDone",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/levelgen/structure/LegacyStructureDataHandler;removeIndex(J)V"
+                    target = "Lnet/minecraft/world/level/chunk/storage/LegacyTagFixer;markChunkDone(Lnet/minecraft/world/level/ChunkPos;)V"
             )
     )
-    private void synchroniseLegacyDataWrite(final LegacyStructureDataHandler instance,
-                                            final long pos) {
+    private void synchroniseLegacyDataWrite(final LegacyTagFixer instance, final ChunkPos chunkPos) {
         synchronized (instance) {
-            instance.removeIndex(pos);
+            instance.markChunkDone(chunkPos);
         }
     }
 
@@ -156,12 +156,13 @@ abstract class ChunkStorageMixin implements ChunkSystemChunkStorage, AutoCloseab
      * @author Spottedleaf
      */
     @Overwrite
-    public void flushWorker() {
+    public CompletableFuture<Void> synchronize(boolean flush) {
         try {
             this.storage.flush();
         } catch (final IOException ex) {
             LOGGER.error("Failed to flush chunk storage", ex);
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     /**

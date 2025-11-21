@@ -46,7 +46,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
         method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;J)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/Util;shuffle(Ljava/util/List;Lnet/minecraft/util/RandomSource;)V"
+            target = "Lnet/minecraft/util/Util;shuffle(Ljava/util/List;Lnet/minecraft/util/RandomSource;)V"
         )
     )
     private <T> void useBetterRandom(final List<T> list, final RandomSource randomSource) {

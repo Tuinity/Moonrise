@@ -6,6 +6,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import net.minecraft.client.multiplayer.ServerStatusPinger;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.network.EventLoopGroupHolder;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -22,17 +23,17 @@ abstract class ClientConnectionMixin extends SimpleChannelInboundHandler<Packet<
             method = "connectToServer",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/network/Connection;connect(Ljava/net/InetSocketAddress;ZLnet/minecraft/network/Connection;)Lio/netty/channel/ChannelFuture;"
+                    target = "Lnet/minecraft/network/Connection;connect(Ljava/net/InetSocketAddress;Lnet/minecraft/server/network/EventLoopGroupHolder;Lnet/minecraft/network/Connection;)Lio/netty/channel/ChannelFuture;"
             )
     )
-    private static ChannelFuture setReadTimeoutHook(final InetSocketAddress address, final boolean epoll,
-                                                    final Connection connection) {
+    private static ChannelFuture setReadTimeoutHook(
+        final InetSocketAddress address, final EventLoopGroupHolder eventLoopGroupHolder, final Connection connection) {
         if (StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).walk((s -> s.filter(f -> f.getDeclaringClass() == ServerStatusPinger.class).findAny())).isPresent()) {
             final int timeout = 5;
 
             // reduce timeout to 5s so that non-responding servers release the thread allocation fast
             ((ServerListConnection)connection).moonrise$setReadTimeout(timeout);
         }
-        return Connection.connect(address, epoll, connection);
+        return Connection.connect(address, eventLoopGroupHolder, connection);
     }
 }

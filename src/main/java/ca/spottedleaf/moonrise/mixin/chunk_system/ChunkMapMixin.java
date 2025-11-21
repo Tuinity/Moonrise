@@ -113,7 +113,7 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemC
     @Override
     public final void moonrise$writeFinishCallback(final ChunkPos pos) throws IOException {
         // see ChunkStorage#write
-        this.handleLegacyStructureIndex(pos);
+        this.markChunkDone(pos);
     }
 
     /**
@@ -577,7 +577,7 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemC
     @Redirect(
         method = {
             "method_67499",
-            "lambda$forEachBlockTickingChunk$36"
+            "lambda$forEachBlockTickingChunk$37"
         },
         at = @At(
             value = "INVOKE",
@@ -616,8 +616,9 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemC
     }
 
     @Override
-    public void flushWorker() {
+    public CompletableFuture<Void> synchronize(boolean flush) {
         MoonriseRegionFileIO.flush(this.level);
+        return CompletableFuture.completedFuture(null);
     }
 
     /**

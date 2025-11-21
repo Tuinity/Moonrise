@@ -181,7 +181,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
      * @author Spottedleaf
      */
     @Inject(
-            method = "runServer",
+            method = "processPacketsAndTick",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/server/MinecraftServer;tickServer(Ljava/util/function/BooleanSupplier;)V",
