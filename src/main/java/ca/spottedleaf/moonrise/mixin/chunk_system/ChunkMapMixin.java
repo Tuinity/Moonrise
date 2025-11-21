@@ -31,6 +31,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StaticCache2D;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.TicketStorage;
@@ -40,9 +41,9 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LightChunkGetter;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.status.ChunkStep;
-import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import net.minecraft.world.level.chunk.storage.IOWorker;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
+import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
 import net.minecraft.world.level.entity.ChunkStatusUpdateListener;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.storage.LevelStorageSource;
@@ -69,7 +70,7 @@ import java.util.function.IntSupplier;
 import java.util.stream.Stream;
 
 @Mixin(ChunkMap.class)
-abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap, ChunkHolder.PlayerProvider, GeneratingChunkMap {
+abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemChunkMap, ChunkHolder.PlayerProvider, GeneratingChunkMap {
 
     @Shadow
     @Final
@@ -105,8 +106,8 @@ abstract class ChunkMapMixin extends ChunkStorage implements ChunkSystemChunkMap
     @Shadow
     private AtomicInteger activeChunkWrites;
 
-    public ChunkMapMixin(RegionStorageInfo regionStorageInfo, Path path, DataFixer dataFixer, boolean bl) {
-        super(regionStorageInfo, path, dataFixer, bl);
+    public ChunkMapMixin(final RegionStorageInfo info, final Path folder, final DataFixer fixerUpper, final boolean sync, final DataFixTypes dataFixType) {
+        super(info, folder, fixerUpper, sync, dataFixType);
     }
 
     @Override

@@ -33,10 +33,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.server.network.PlayerChunkSender;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.levelgen.BelowZeroRetrogen;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayDeque;
@@ -554,7 +554,7 @@ public final class RegionizedPlayerChunkLoader {
         }
 
         private boolean canPlayerGenerateChunks() {
-            return !this.player.isSpectator() || this.world.getGameRules().getBoolean(GameRules.RULE_SPECTATORSGENERATECHUNKS);
+            return !this.player.isSpectator() || this.world.getGameRules().get(GameRules.SPECTATORS_GENERATE_CHUNKS);
         }
 
         private double getMaxChunkLoadRate() {

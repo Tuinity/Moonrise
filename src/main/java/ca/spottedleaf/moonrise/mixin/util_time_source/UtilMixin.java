@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.util_time_source;
 
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 

@@ -2,7 +2,7 @@ package ca.spottedleaf.moonrise.mixin.util_thread_counts;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.util.Mth;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;

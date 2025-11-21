@@ -4,7 +4,7 @@ import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.ArrayVoxelShape;

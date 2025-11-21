@@ -25,8 +25,7 @@ neoForge {
 dependencies {
     compileOnly(libs.mixin)
     compileOnly(libs.mixinExtras)
-    // work around minecraft (MDG) forcing ASM 9.3 which is incompatible with the above deps...
-    components.withModule("net.neoforged:minecraft-dependencies", RemoveAsmConstraint::class.java)
+    compileOnly(libs.asm)
 
     api(libs.concurrentutil) { isTransitive = false }
     api(libs.yamlconfig) { isTransitive = false }

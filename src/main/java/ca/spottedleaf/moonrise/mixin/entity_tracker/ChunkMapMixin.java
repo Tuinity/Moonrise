@@ -14,9 +14,10 @@ import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.GeneratingChunkMap;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
+import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -29,13 +30,13 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 @Mixin(ChunkMap.class)
-abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.PlayerProvider, GeneratingChunkMap {
+abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.PlayerProvider, GeneratingChunkMap {
     @Shadow
     @Final
     public ServerLevel level;
 
-    public ChunkMapMixin(RegionStorageInfo regionStorageInfo, Path path, DataFixer dataFixer, boolean bl) {
-        super(regionStorageInfo, path, dataFixer, bl);
+    public ChunkMapMixin(final RegionStorageInfo info, final Path folder, final DataFixer fixerUpper, final boolean sync, final DataFixTypes dataFixType) {
+        super(info, folder, fixerUpper, sync, dataFixType);
     }
 
     /**

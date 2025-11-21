@@ -3,10 +3,10 @@ package ca.spottedleaf.moonrise.patches.chunk_system.entity;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.animal.HappyGhast;
+import net.minecraft.world.entity.animal.happyghast.HappyGhast;
 import net.minecraft.world.entity.monster.Shulker;
-import net.minecraft.world.entity.vehicle.AbstractMinecart;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 
 public interface ChunkSystemEntity {
 

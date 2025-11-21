@@ -13,7 +13,7 @@ import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopMinecraftServer;
 import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopPacketProcessor;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.network.PacketProcessor;
 import net.minecraft.server.MinecraftServer;
@@ -417,7 +417,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
         }
         profiler.popPush("moonrise:run_all_chunk");
         for (final ServerLevel world : this.getAllLevels()) {
-            profiler.push(world.toString() + " " + world.dimension().location()); // keep same formatting from regular tick, see tickChildren
+            profiler.push(world.toString() + " " + world.dimension().identifier()); // keep same formatting from regular tick, see tickChildren
 
             // note: legacy tasks may expect a distance manager update
             profiler.push("moonrise:distance_manager_update");

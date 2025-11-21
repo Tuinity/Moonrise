@@ -28,3 +28,5 @@ snakeyaml = "org.yaml:snakeyaml:2.5"
 clothConfig-neoforge = { module = "me.shedaniel.cloth:cloth-config-neoforge", version.ref = "cloth" }
 clothConfig-fabric = { module = "me.shedaniel.cloth:cloth-config-fabric", version.ref = "cloth" }
 modmenu = "com.terraformersmc:modmenu:16.0.0-rc.1"
+
+asm = "org.ow2.asm:asm:9.8"

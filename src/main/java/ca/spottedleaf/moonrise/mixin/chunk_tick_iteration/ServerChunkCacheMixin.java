@@ -4,14 +4,14 @@ import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.gamerules.GameRules;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -67,7 +67,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
     )
     private void iterateTickingChunksFaster(final ChunkMap instance, final Consumer<LevelChunk> consumer) {
         final ServerLevel world = this.level;
-        final int randomTickSpeed = world.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
+        final int randomTickSpeed = world.getGameRules().get(GameRules.RANDOM_TICK_SPEED);
 
         // TODO check on update: impl of forEachBlockTickingChunk will only iterate ENTITY ticking chunks!
         // TODO check on update: consumer just runs tickChunk

@@ -6,7 +6,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemRegionFil
 import ca.spottedleaf.moonrise.patches.chunk_system.util.stream.ExternalChunkStreamMarker;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
-import net.minecraft.FileUtil;
+import net.minecraft.util.FileUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.StreamTagVisitor;
