@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
-import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemChunkStorage;
+import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemSimpleRegionStorage;
 import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
@@ -10,7 +10,6 @@ import net.minecraft.world.level.chunk.storage.LegacyTagFixer;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
 import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
-import net.minecraft.world.level.levelgen.structure.LegacyStructureDataHandler;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -26,7 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 @Mixin(SimpleRegionStorage.class)
-abstract class SimpleRegionStorageMixin implements ChunkSystemChunkStorage, AutoCloseable {
+abstract class SimpleRegionStorageMixin implements ChunkSystemSimpleRegionStorage, AutoCloseable {
 
     @Shadow
     public IOWorker worker;

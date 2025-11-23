@@ -1,13 +1,11 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.patches.chunk_system.level.storage.ChunkSystemSectionStorage;
-import net.minecraft.nbt.CompoundTag;
+import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemSimpleRegionStorage;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
 import net.minecraft.world.level.chunk.storage.SectionStorage;
 import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
-import org.slf4j.Logger;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -49,7 +47,7 @@ abstract class SectionStorageMixin<R, P> implements ChunkSystemSectionStorage, A
             )
     )
     private void initHook(final CallbackInfo ci) {
-        this.storage = this.simpleRegionStorage.worker.storage;
+        this.storage = ((ChunkSystemSimpleRegionStorage)this.simpleRegionStorage).moonrise$getRegionStorage();
         this.simpleRegionStorage = null;
     }
 

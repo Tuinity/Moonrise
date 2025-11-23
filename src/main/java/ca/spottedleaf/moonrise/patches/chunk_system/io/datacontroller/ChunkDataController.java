@@ -4,14 +4,12 @@ import ca.spottedleaf.moonrise.patches.chunk_system.io.ChunkSystemRegionFileStor
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemChunkMap;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
-import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemChunkStorage;
+import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemSimpleRegionStorage;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 public final class ChunkDataController extends MoonriseRegionFileIO.RegionDataController {
 
@@ -24,7 +22,7 @@ public final class ChunkDataController extends MoonriseRegionFileIO.RegionDataCo
 
     @Override
     public RegionFileStorage getCache() {
-        return ((ChunkSystemChunkStorage)this.world.getChunkSource().chunkMap).moonrise$getRegionStorage();
+        return ((ChunkSystemSimpleRegionStorage)this.world.getChunkSource().chunkMap).moonrise$getRegionStorage();
     }
 
     @Override
