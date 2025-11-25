@@ -158,10 +158,11 @@ abstract class SimpleRegionStorageMixin implements ChunkSystemSimpleRegionStorag
     public CompletableFuture<Void> synchronize(boolean flush) {
         try {
             this.storage.flush();
+            return CompletableFuture.completedFuture(null);
         } catch (final IOException ex) {
             LOGGER.error("Failed to flush chunk storage", ex);
+            return CompletableFuture.failedFuture(ex);
         }
-        return CompletableFuture.completedFuture(null);
     }
 
     /**
