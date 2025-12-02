@@ -616,9 +616,12 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemC
     }
 
     @Override
-    public CompletableFuture<Void> synchronize(boolean flush) {
+    public CompletableFuture<Void> synchronize(final boolean flush) {
         try {
             MoonriseRegionFileIO.flush(this.level);
+            if (flush) {
+                MoonriseRegionFileIO.flushRegionStorages(this.level);
+            }
             return CompletableFuture.completedFuture(null);
         } catch (final Exception ex) {
             return CompletableFuture.failedFuture(ex);
