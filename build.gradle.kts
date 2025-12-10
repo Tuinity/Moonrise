@@ -4,7 +4,7 @@ import me.modmuss50.mpp.ReleaseType
 plugins {
     id("common-conventions")
     id("net.neoforged.moddev")
-    id("me.modmuss50.mod-publish-plugin") version "0.8.4" apply false
+    id("me.modmuss50.mod-publish-plugin") version "1.1.0" apply false
 }
 
 val aw2at = Aw2AtTask.configureDefault(
