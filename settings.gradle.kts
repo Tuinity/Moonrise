@@ -24,7 +24,7 @@ pluginManagement {
 
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-    id("quiet-fabric-loom") version "1.13.328"
+    id("quiet-fabric-loom") version "1.11.325"
     // https://projects.neoforged.net/neoforged/moddevgradle
     id("net.neoforged.moddev.repositories") version "2.0.119"
 }
