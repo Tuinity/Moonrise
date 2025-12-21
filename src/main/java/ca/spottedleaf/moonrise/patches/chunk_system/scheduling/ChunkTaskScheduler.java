@@ -487,9 +487,9 @@ public final class ChunkTaskScheduler {
         final long chunkKey = CoordinateUtils.getChunkKey(chunkX, chunkZ);
         final int minLevel = ChunkTaskScheduler.getTicketLevel(toStatus);
         final List<ChunkProgressionTask> tasks = new ArrayList<>();
-        final ReentrantAreaLock.Node ticketLock = this.chunkHolderManager.ticketLockArea.lock(chunkX, chunkZ, accessRadius); // Folia - use area based lock to reduce contention
+        final ReentrantAreaLock.Node ticketLock = this.chunkHolderManager.ticketLockArea.lock(chunkX, chunkZ, accessRadius);
         try {
-            final ReentrantAreaLock.Node schedulingLock = this.schedulingLockArea.lock(chunkX, chunkZ, accessRadius); // Folia - use area based lock to reduce contention
+            final ReentrantAreaLock.Node schedulingLock = this.schedulingLockArea.lock(chunkX, chunkZ, accessRadius);
             try {
                 final NewChunkHolder chunkHolder = this.chunkHolderManager.getChunkHolder(chunkKey);
                 if (chunkHolder == null || chunkHolder.getTicketLevel() > minLevel) {

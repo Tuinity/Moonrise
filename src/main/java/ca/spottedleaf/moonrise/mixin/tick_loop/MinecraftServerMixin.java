@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.tick_loop;
 
-import ca.spottedleaf.concurrentutil.scheduler.SchedulerThreadPool;
+import ca.spottedleaf.concurrentutil.util.TimeUtil;
 import ca.spottedleaf.moonrise.common.config.moonrise.MoonriseConfig;
 import ca.spottedleaf.moonrise.common.time.TickData;
 import ca.spottedleaf.moonrise.common.time.TickTime;
@@ -168,7 +168,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
             interval = 0L;
         }
         this.tickSchedule.setNextPeriod(this.nextTickTimeNanos, interval);
-        this.lastTickStart = SchedulerThreadPool.DEADLINE_NOT_SET;
+        this.lastTickStart = TimeUtil.DEADLINE_NOT_SET;
         this.scheduledTickStart = this.tickSchedule.getDeadline(interval);
     }
 

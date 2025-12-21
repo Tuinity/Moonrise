@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.util_thread_counts;
 
+import ca.spottedleaf.concurrentutil.numa.OSNuma;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.util.Util;
@@ -21,7 +22,7 @@ abstract class UtilMixin {
 
     @Unique
     private static int getThreadCounts(final int min, final int max) {
-        final int cpus = Runtime.getRuntime().availableProcessors() / 2;
+        final int cpus = OSNuma.getNativeInstance().getTotalCores() / 2;
 
         final int value;
         if (cpus <= 4) {
