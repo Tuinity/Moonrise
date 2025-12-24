@@ -16,7 +16,8 @@
     "breaks": {
         "notenoughcrashes": "*",
         "starlight": "*",
-        "c2me": "*"
+        "c2me": "*",
+        "quilt_loader": "*"
     },
     "license": "GPL-3.0-only",
     "icon": "assets/moonrise/icon.png",
