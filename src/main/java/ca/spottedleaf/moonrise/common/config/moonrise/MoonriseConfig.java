@@ -147,12 +147,28 @@ public final class MoonriseConfig {
         public Duration autoSaveInterval = Duration.parse("5m");
 
         @Serializable(
-                comment = """
+            comment = """
                         The maximum number of chunks to incrementally autosave each tick. If
                         the value is <= 0, then no chunks will be incrementally saved.
                         """
         )
         public int maxAutoSaveChunksPerTick = 12;
+
+        @Serializable(
+            comment = """
+                        The minimum number of chunks to unload each tick.
+                        See maxUnloadChunksPerTickFactor for more.
+                        """
+        )
+        public int minUnloadChunksPerTick = 50;
+
+        @Serializable(
+            comment = """
+                        The factor to determine maximum unload chunks per tick. The final value is
+                        current pending unload chunks * maxUnloadChunksPerTickFactor .
+                        """
+        )
+        public double maxUnloadChunksPerTickFactor = 0.05;
     }
 
     @Serializable(

@@ -86,6 +86,10 @@ public interface PlatformHooks extends ChunkSystemHooks {
 
     public int configMaxAutoSavePerTick(final ServerLevel world);
 
+    public int configMinUnlockChunksPerTick(final ServerLevel world);
+
+    public double configMaxUnlockChunksPerTickFactor(final ServerLevel world);
+
     public boolean configFixMC159283();
 
     // support for CB chunk mustNotSave
