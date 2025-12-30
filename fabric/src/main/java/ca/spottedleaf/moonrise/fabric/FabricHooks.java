@@ -223,6 +223,16 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
     }
 
     @Override
+    public int configMinUnlockChunksPerTick(final ServerLevel world) {
+        return ConfigHolder.getConfig().chunkSaving.minUnloadChunksPerTick;
+    }
+
+    @Override
+    public double configMaxUnlockChunksPerTickFactor(final ServerLevel world) {
+        return ConfigHolder.getConfig().chunkSaving.maxUnloadChunksPerTickFactor;
+    }
+
+    @Override
     public boolean configFixMC159283() {
         return ConfigHolder.getConfig().bugFixes.fixMC159283;
     }

@@ -1155,7 +1155,10 @@ public final class ChunkHolderManager {
         // We do need to process updates here so that any addTicket that is synchronised before this call does not go missed.
         this.processTicketUpdates();
 
-        final int toUnloadCount = Math.max(50, (int)(unloadCountTentative * 0.05));
+        final int toUnloadCount = Math.max(
+            PlatformHooks.get().configMinUnlockChunksPerTick(this.world),
+            (int) (unloadCountTentative * PlatformHooks.get().configMaxUnlockChunksPerTickFactor(this.world))
+        );
         int processedCount = 0;
 
         for (final ChunkUnloadQueue.SectionToUnload sectionRef : unloadSectionsForRegion) {
