@@ -6,7 +6,7 @@ cloth = "21.11.153"
 fabricLoader = "0.18.1"
 minecraft = "1.21.11"
 # https://projects.neoforged.net/neoforged/neoforge
-neoforge= "21.11.13-beta"
+neoforge= "21.11.27-beta"
 # https://projects.neoforged.net/neoforged/neoform
 neoform = "1.21.11-20251209.172050"
 

@@ -5,6 +5,7 @@ plugins {
     id("common-conventions")
     id("net.neoforged.moddev")
     id("me.modmuss50.mod-publish-plugin") version "1.1.0" apply false
+    id("xyz.jpenilla.quiet-fabric-loom-companion")
 }
 
 val aw2at = Aw2AtTask.configureDefault(
