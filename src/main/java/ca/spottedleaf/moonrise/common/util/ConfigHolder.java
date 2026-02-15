@@ -31,7 +31,7 @@ public final class ConfigHolder {
             Below are the Moonrise startup flags. Note that startup flags must be placed in the JVM arguments, not
             program arguments.
             -D%1$s.ConfigFile=<file> - Override the config file location. Might be useful for multiple game versions.
-            -D%1$s.WorkerThreadCount=<number> - Override the auto configured worker thread counts (worker-threads).
+            -D%1$s.WorkerThreadCount=<number> - Override the autoconfigured worker thread counts (worker-threads).
             -D%1$s.MaxViewDistance=<number> - Overrides the maximum view distance, should only use for debugging purposes.
             -D%1$s.NumaScheduling=<true/false> - Enable NUMA aware scheduling if supported.
             """, PlatformHooks.get().getBrand());

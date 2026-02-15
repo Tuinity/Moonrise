@@ -214,22 +214,22 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
 
     @Override
     public long configAutoSaveInterval(final ServerLevel world) {
-        return ConfigHolder.getConfig().chunkSaving.autoSaveInterval.getTimeTicks();
+        return ConfigHolder.getConfig().chunkSaving.autoSaveInterval().getTimeTicks();
     }
 
     @Override
     public int configMaxAutoSavePerTick(final ServerLevel world) {
-        return ConfigHolder.getConfig().chunkSaving.maxAutoSaveChunksPerTick;
+        return ConfigHolder.getConfig().chunkSaving.maxAutoSaveChunksPerTick();
     }
 
     @Override
-    public int configMinUnlockChunksPerTick(final ServerLevel world) {
-        return ConfigHolder.getConfig().chunkSaving.minUnloadChunksPerTick;
+    public int configMinChunkUnloadCount(final ServerLevel world) {
+        return ConfigHolder.getConfig().chunkSaving.minChunkUnloadCount();
     }
 
     @Override
-    public double configMaxUnlockChunksPerTickFactor(final ServerLevel world) {
-        return ConfigHolder.getConfig().chunkSaving.maxUnloadChunksPerTickFactor;
+    public double configMinChunkUnloadFraction(final ServerLevel world) {
+        return ConfigHolder.getConfig().chunkSaving.minChunkUnloadFraction();
     }
 
     @Override

@@ -9,7 +9,9 @@ import ca.spottedleaf.yamlconfig.annotation.Serializable;
 import ca.spottedleaf.yamlconfig.type.DefaultedValue;
 import ca.spottedleaf.yamlconfig.type.Duration;
 
-@Adaptable
+@Adaptable(
+    useDeclarationOrder = true
+)
 public final class MoonriseConfig {
 
     private static final String BUG_FIX_SECTION = "category.moonrise.bugfixes";
@@ -25,7 +27,9 @@ public final class MoonriseConfig {
     @Serializable
     public ChunkLoading chunkLoading = new ChunkLoading();
 
-    @Adaptable
+    @Adaptable(
+        useDeclarationOrder = true
+    )
     public static final class ChunkLoading {
 
         @Serializable(
@@ -37,9 +41,12 @@ public final class MoonriseConfig {
         )
         public Basic basic = new Basic();
 
-
-        @Adaptable
+        @Adaptable(
+            useDeclarationOrder = true
+        )
         public static final class Basic implements InitialiseHook {
+            private static final Duration DEFAULT_PLAYER_CHUNK_UNLOAD_DELAY = Duration.parse("0t");
+
             @Serializable(
                 comment = """
                             The maximum rate of chunks to send to any given player, per second. If this value is <= 0,
@@ -77,15 +84,17 @@ public final class MoonriseConfig {
             @Serializable(
                 comment = """
                             The delay before chunks are unloaded around players once they leave their view distance.
-                            The Vanilla value is 0 ticks. Setting this value higher (i.e 5s) will allow pets to teleport
+                            The Vanilla value is 0 ticks. Setting this value higher (i.e. 5s) will allow pets to teleport
                             to their owners when they teleport.
+                            
+                            The default value ('0t') conforms to Vanilla (0 ticks).
                             """
             )
-            public Duration playerChunkUnloadDelay = Duration.parse("0t");
+            public DefaultedValue<Duration> playerChunkUnloadDelay = new DefaultedValue<>();
 
             @Override
             public void initialise() {
-                RegionizedPlayerChunkLoader.setUnloadDelay(this.playerChunkUnloadDelay.getTimeTicks());
+                RegionizedPlayerChunkLoader.setUnloadDelay(this.playerChunkUnloadDelay.getOrDefault(DEFAULT_PLAYER_CHUNK_UNLOAD_DELAY).getTimeTicks());
             }
         }
 
@@ -97,7 +106,9 @@ public final class MoonriseConfig {
         )
         public Advanced advanced = new Advanced();
 
-        @Adaptable
+        @Adaptable(
+            useDeclarationOrder = true
+        )
         public static final class Advanced {
 
             @Serializable(
@@ -135,49 +146,82 @@ public final class MoonriseConfig {
     @Serializable
     public ChunkSaving chunkSaving = new ChunkSaving();
 
-    @Adaptable
+    @Adaptable(
+        useDeclarationOrder = true
+    )
     public static final class ChunkSaving {
+
+        private static final Duration DEFAULT_AUTO_SAVE_INTERVAL = Duration.parse("5m");
+        private static final Integer DEFAULT_MAX_AUTO_SAVE_CHUNKS_PER_TICK = Integer.valueOf(12);
+        private static final Integer DEFAULT_MIN_CHUNK_UNLOAD_COUNT = Integer.valueOf(50);
+        private static final Double DEFAULT_MIN_CHUNK_UNLOAD_FRACTION = Double.valueOf(0.05);
 
         @Serializable(
             comment = """
                         The interval at which chunks should be incrementally autosaved.
+                        
+                        The default interval is '5m', or 5 minutes.
                         """
         )
-        public Duration autoSaveInterval = Duration.parse("5m");
+        public DefaultedValue<Duration> autoSaveInterval = new DefaultedValue<>();
+
+        public Duration autoSaveInterval() {
+            return this.autoSaveInterval.getOrDefault(DEFAULT_AUTO_SAVE_INTERVAL);
+        }
 
         @Serializable(
             comment = """
                         The maximum number of chunks to incrementally autosave each tick. If
                         the value is <= 0, then no chunks will be incrementally saved.
+                        
+                        The default value is 12 chunks per tick.
                         """
         )
-        public int maxAutoSaveChunksPerTick = 12;
+        public DefaultedValue<Integer> maxAutoSaveChunksPerTick = new DefaultedValue<>();
+
+        public int maxAutoSaveChunksPerTick() {
+            return maxAutoSaveChunksPerTick.getOrDefault(DEFAULT_MAX_AUTO_SAVE_CHUNKS_PER_TICK).intValue();
+        }
 
         @Serializable(
             comment = """
                         The minimum number of chunks to unload each tick.
-                        See maxUnloadChunksPerTickFactor for more.
+                        
+                        The default value is 50, indicating that at least 50
+                        eligible chunks must be unloaded per tick.
                         """
         )
-        public int minUnloadChunksPerTick = 50;
+        public DefaultedValue<Integer> minChunkUnloadCount = new DefaultedValue<>();
+
+        public int minChunkUnloadCount() {
+            return this.minChunkUnloadCount.getOrDefault(DEFAULT_MIN_CHUNK_UNLOAD_COUNT).intValue();
+        }
 
         @Serializable(
             comment = """
-                        The factor to determine maximum unload chunks per tick. The final value is
-                        current pending unload chunks * maxUnloadChunksPerTickFactor .
+                        The minimum fraction of chunks to unload each tick.
+                        
+                        The default value is 0.05, indicating that at least 5%
+                        of eligible chunks must be unloaded per tick.
                         """
         )
-        public double maxUnloadChunksPerTickFactor = 0.05;
+        public DefaultedValue<Double> minChunkUnloadFraction = new DefaultedValue<>();
+
+        public double minChunkUnloadFraction() {
+            return this.minChunkUnloadFraction.getOrDefault(DEFAULT_MIN_CHUNK_UNLOAD_FRACTION).doubleValue();
+        }
     }
 
     @Serializable(
         comment = """
-                    Configuration options which control the behavior of the common threadpool workers.
+                    Configuration options which control the behaviour of the common threadpool workers.
                     """
     )
     public WorkerPool workerPool = new WorkerPool();
 
-    @Adaptable
+    @Adaptable(
+        useDeclarationOrder = true
+    )
     public static final class WorkerPool implements InitialiseHook {
         @Serializable(
             comment = """
@@ -215,16 +259,11 @@ public final class MoonriseConfig {
     }
 
     @Serializable
-    public ChunkSystem chunkSystem = new ChunkSystem();
-
-    @Adaptable
-    public static final class ChunkSystem {
-    }
-
-    @Serializable
     public BugFixes bugFixes = new BugFixes();
 
-    @Adaptable
+    @Adaptable(
+        useDeclarationOrder = true
+    )
     public static final class BugFixes {
 
         @Serializable(
@@ -233,8 +272,8 @@ public final class MoonriseConfig {
                         Fixes https://bugs.mojang.com/browse/MC-224294. By avoiding double ticking lava blocks during
                         chunk random ticking, the cost of world random ticking is significantly reduced.
                         This configuration has two options:
-                        true    -> Does not double tick lava. This is different from Vanilla behavior.
-                        false   -> Does double tick lava. This is the same behavior as Vanilla.
+                        true    -> Does not double tick lava. This is different from Vanilla behaviour.
+                        false   -> Does double tick lava. This is the same behaviour as Vanilla.
                         """
         )
         @ClothConfig(
@@ -251,8 +290,8 @@ public final class MoonriseConfig {
                         not properly generating at far enough distances in the end. Note that toggling this config option
                         will not affect already generated areas.
                         This configuration has two options:
-                        true    -> Fixes the end islands generation. This is different from Vanilla behavior.
-                        false   -> Does not fix the end islands generation. This is the same behavior as Vanilla.
+                        true    -> Fixes the end islands generation. This is different from Vanilla behaviour.
+                        false   -> Does not fix the end islands generation. This is the same behaviour as Vanilla.
                         """
         )
         @ClothConfig(
@@ -264,16 +303,11 @@ public final class MoonriseConfig {
     }
 
     @Serializable
-    public Misc misc = new Misc();
-
-    @Adaptable
-    public static final class Misc {
-    }
-
-    @Serializable
     public TickLoop tickLoop = new TickLoop();
 
-    @Adaptable
+    @Adaptable(
+        useDeclarationOrder = true
+    )
     public static final class TickLoop {
 
         // update comment when changing

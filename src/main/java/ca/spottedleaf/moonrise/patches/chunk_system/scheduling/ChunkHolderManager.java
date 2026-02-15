@@ -19,7 +19,6 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkProgres
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.GenericDataLoadTask;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicket;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
-import ca.spottedleaf.moonrise.patches.chunk_system.util.ChunkSystemSortedArraySet;
 import ca.spottedleaf.moonrise.patches.chunk_system.util.stream.TicketSet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -39,7 +38,6 @@ import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.Ticket;
 import net.minecraft.server.level.TicketType;
-import net.minecraft.util.SortedArraySet;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -59,7 +57,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
-import java.util.function.Predicate;
 
 public final class ChunkHolderManager {
 
@@ -1156,8 +1153,8 @@ public final class ChunkHolderManager {
         this.processTicketUpdates();
 
         final int toUnloadCount = Math.max(
-            PlatformHooks.get().configMinUnlockChunksPerTick(this.world),
-            (int) (unloadCountTentative * PlatformHooks.get().configMaxUnlockChunksPerTickFactor(this.world))
+            PlatformHooks.get().configMinChunkUnloadCount(this.world),
+            (int)Math.round(unloadCountTentative * Math.clamp(PlatformHooks.get().configMinChunkUnloadFraction(this.world), 0.0, 1.0))
         );
         int processedCount = 0;
 
