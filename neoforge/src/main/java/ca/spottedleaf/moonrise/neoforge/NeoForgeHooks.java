@@ -137,7 +137,7 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
     @Override
     public void addToGetEntities(final Level world, final Entity entity, final AABB boundingBox, final Predicate<? super Entity> predicate,
                                  final List<Entity> into) {
-        final Collection<PartEntity<?>> parts = world.dragonParts();
+        final Collection<? extends PartEntity<?>> parts = world.dragonParts();
         if (parts.isEmpty()) {
             return;
         }
@@ -157,7 +157,7 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
             return;
         }
 
-        final Collection<PartEntity<?>> parts = world.dragonParts();
+        final Collection<? extends PartEntity<?>> parts = world.dragonParts();
         if (parts.isEmpty()) {
             return;
         }
