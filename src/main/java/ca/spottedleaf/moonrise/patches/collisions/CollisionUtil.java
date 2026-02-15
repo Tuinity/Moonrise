@@ -2014,8 +2014,17 @@ public final class CollisionUtil {
                                     AABB singleAABB = ((CollisionVoxelShape)blockCollision).moonrise$getSingleAABBRepresentation();
                                     if (singleAABB != null) {
                                         singleAABB = singleAABB.move((double)blockX, (double)blockY, (double)blockZ);
-                                        if (!voxelShapeIntersect(aabb, singleAABB)) {
-                                            continue;
+
+                                        // Not using the epsilon violates the collision rules but this is what Vanilla does.
+                                        // Check BlockCollisions.class
+                                        if (blockCollision == Shapes.block()) {
+                                            if (!aabb.intersects(singleAABB)) {
+                                                continue;
+                                            }
+                                        } else {
+                                            if (!voxelShapeIntersect(aabb, singleAABB)) {
+                                                continue;
+                                            }
                                         }
 
                                         if (predicate != null) {
