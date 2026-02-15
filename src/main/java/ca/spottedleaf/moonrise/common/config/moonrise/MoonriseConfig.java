@@ -3,7 +3,6 @@ package ca.spottedleaf.moonrise.common.config.moonrise;
 import ca.spottedleaf.moonrise.common.config.ui.ClothConfig;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
-import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.yamlconfig.InitialiseHook;
 import ca.spottedleaf.yamlconfig.annotation.Adaptable;
 import ca.spottedleaf.yamlconfig.annotation.Serializable;
@@ -17,7 +16,7 @@ public final class MoonriseConfig {
     private static final String CHUNK_SYSTEM_SECTION = "category.moonrise.chunksystem";
 
     @Serializable(
-            comment = """
+        comment = """
                     Do not change, used internally.
                     """
     )
@@ -30,7 +29,7 @@ public final class MoonriseConfig {
     public static final class ChunkLoading {
 
         @Serializable(
-                comment = """
+            comment = """
                         Chunk loading/generation/sending rate targets for the chunk system.  These values are the
                         maximum rates at which the player chunk loader will attempt to load/generate/send chunks to
                         players. Actual resulting rates will depend on hardware.
@@ -42,7 +41,7 @@ public final class MoonriseConfig {
         @Adaptable
         public static final class Basic implements InitialiseHook {
             @Serializable(
-                    comment = """
+                comment = """
                             The maximum rate of chunks to send to any given player, per second. If this value is <= 0,
                             then there is no rate limit.
                             """
@@ -50,28 +49,28 @@ public final class MoonriseConfig {
             public double playerMaxSendRate = -1.0;
 
             @Serializable(
-                    comment = """
+                comment = """
                             The maximum rate of chunks to load from disk for any given player, per second. If this value is <= 0,
                             then there is no rate limit.
                             """
             )
             @ClothConfig(
-                    tooltip = "tooltip.moonrise.loadrate",
-                    fieldKeyName = "option.moonrise.loadrate",
-                    section = CHUNK_SYSTEM_SECTION
+                tooltip = "tooltip.moonrise.loadrate",
+                fieldKeyName = "option.moonrise.loadrate",
+                section = CHUNK_SYSTEM_SECTION
             )
             public double playerMaxLoadRate = -1.0;
 
             @Serializable(
-                    comment = """
+                comment = """
                             The maximum rate of chunks to generate for given player, per second. If this value is <= 0,
                             then there is no rate limit.
                             """
             )
             @ClothConfig(
-                    tooltip = "tooltip.moonrise.genrate",
-                    fieldKeyName = "option.moonrise.genrate",
-                    section = CHUNK_SYSTEM_SECTION
+                tooltip = "tooltip.moonrise.genrate",
+                fieldKeyName = "option.moonrise.genrate",
+                section = CHUNK_SYSTEM_SECTION
             )
             public double playerMaxGenRate = -1.0;
 
@@ -91,7 +90,7 @@ public final class MoonriseConfig {
         }
 
         @Serializable(
-                comment = """
+            comment = """
                         Advanced configuration options for player chunk loading. You shouldn't be touching these
                         unless you have a reason.
                         """
@@ -102,7 +101,7 @@ public final class MoonriseConfig {
         public static final class Advanced {
 
             @Serializable(
-                    comment = """
+                comment = """
                             Whether to avoid sending chunks to players who have a view distance
                             configured lower than the server's.
                             """
@@ -110,7 +109,7 @@ public final class MoonriseConfig {
             public boolean autoConfigSendDistance = true;
 
             @Serializable(
-                    comment = """
+                comment = """
                             The maximum amount of pending chunk loads per player. If
                             this value is 0, then the player chunk loader will automatically determine a value. If
                             this value is less-than 0, then there is no limit.
@@ -121,7 +120,7 @@ public final class MoonriseConfig {
             public int playerMaxConcurrentChunkLoads = 0;
 
             @Serializable(
-                    comment = """
+                comment = """
                             The maximum amount of pending chunk generations per player. If
                             this value is 0, then the player chunk loader will automatically determine a value. If
                             this value is less-than 0, then there is no limit.
@@ -140,7 +139,7 @@ public final class MoonriseConfig {
     public static final class ChunkSaving {
 
         @Serializable(
-                comment = """
+            comment = """
                         The interval at which chunks should be incrementally autosaved.
                         """
         )
@@ -172,7 +171,7 @@ public final class MoonriseConfig {
     }
 
     @Serializable(
-            comment = """
+        comment = """
                     Configuration options which control the behavior of the common threadpool workers.
                     """
     )
@@ -181,16 +180,16 @@ public final class MoonriseConfig {
     @Adaptable
     public static final class WorkerPool implements InitialiseHook {
         @Serializable(
-                comment = """
+            comment = """
                     Set the number of shared worker threads to be used by chunk rendering,
                     chunk loading, chunk generation. If the value is <= 0, then the number
                     of threads will automatically be determined.
                     """
         )
         @ClothConfig(
-                tooltip = "tooltip.moonrise.workerthreads",
-                fieldKeyName = "option.moonrise.workerthreads",
-                section = CHUNK_SYSTEM_SECTION
+            tooltip = "tooltip.moonrise.workerthreads",
+            fieldKeyName = "option.moonrise.workerthreads",
+            section = CHUNK_SYSTEM_SECTION
         )
         public int workerThreads = -1;
 
@@ -229,8 +228,8 @@ public final class MoonriseConfig {
     public static final class BugFixes {
 
         @Serializable(
-                serializedKey = "fix-MC-224294",
-                comment = """
+            serializedKey = "fix-MC-224294",
+            comment = """
                         Fixes https://bugs.mojang.com/browse/MC-224294. By avoiding double ticking lava blocks during
                         chunk random ticking, the cost of world random ticking is significantly reduced.
                         This configuration has two options:
@@ -239,9 +238,9 @@ public final class MoonriseConfig {
                         """
         )
         @ClothConfig(
-                tooltip = "tooltip.moonrise.fixMC224294",
-                fieldKeyName = "option.moonrise.fixMC224294",
-                section = BUG_FIX_SECTION
+            tooltip = "tooltip.moonrise.fixMC224294",
+            fieldKeyName = "option.moonrise.fixMC224294",
+            section = BUG_FIX_SECTION
         )
         public boolean fixMC224294 = false;
 
