@@ -18,8 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Minecraft.class)
 abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnable> implements WindowEventHandler, ProfilerMinecraft {
 
-    public MinecraftMixin(String string) {
-        super(string, true);
+    public MinecraftMixin(final String name, final boolean propagatesCrashes) {
+        super(name, propagatesCrashes);
     }
 
     @Unique
