@@ -30,6 +30,10 @@ import java.util.stream.Stream;
 @Mixin(MinecraftServer.class)
 abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements ChunkSystemMinecraftServer, ServerInfo, CommandSource, AutoCloseable {
 
+    public MinecraftServerMixin(final String name, final boolean propagatesCrashes) {
+        super(name, propagatesCrashes);
+    }
+
     @Shadow
     public abstract Iterable<ServerLevel> getAllLevels();
 
@@ -49,10 +53,6 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
 
     @Shadow
     public abstract PlayerList getPlayerList();
-
-    public MinecraftServerMixin(String string) {
-        super(string, true);
-    }
 
     @Unique
     private volatile Throwable chunkSystemCrash;

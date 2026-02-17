@@ -43,6 +43,10 @@ import java.util.concurrent.locks.LockSupport;
 @Mixin(MinecraftServer.class)
 abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements ServerInfo, CommandSource, ChunkIOErrorReporter, TickLoopMinecraftServer {
 
+    public MinecraftServerMixin(final String name, final boolean propagatesCrashes) {
+        super(name, propagatesCrashes);
+    }
+
     @Shadow
     @Final
     private PacketProcessor packetProcessor;
@@ -80,10 +84,6 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
 
     @Shadow
     private long idleTimeNanos;
-
-    public MinecraftServerMixin(final String name) {
-        super(name, true);
-    }
 
     // firstPeriod is set on init
     @Unique
