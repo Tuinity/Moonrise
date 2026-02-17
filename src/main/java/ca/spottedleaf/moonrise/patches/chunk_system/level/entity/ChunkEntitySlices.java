@@ -117,7 +117,7 @@ public final class ChunkEntitySlices {
 
         final ListTag entitiesTag = new ListTag();
         try (final ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(ChunkAccess.problemPath(chunkPos), LOGGER)) {
-            for (final Entity entity : PlatformHooks.get().modifySavedEntities(world, chunkPos.x, chunkPos.z, entities)) {
+            for (final Entity entity : PlatformHooks.get().modifySavedEntities(world, chunkPos.x(), chunkPos.z(), entities)) {
                 final TagValueOutput savedEntity = TagValueOutput.createWithContext(
                     scopedCollector.forChild(entity.problemPath()), entity.registryAccess()
                 );

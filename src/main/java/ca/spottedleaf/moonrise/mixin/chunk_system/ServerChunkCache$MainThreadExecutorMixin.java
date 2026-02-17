@@ -11,12 +11,12 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(ServerChunkCache.MainThreadExecutor.class)
 abstract class ServerChunkCache$MainThreadExecutorMixin extends BlockableEventLoop<Runnable> {
 
-    @Shadow(aliases = "this$0") // Neoforge
+    @Shadow
     @Final
-    ServerChunkCache field_18810; // Fabric
+    ServerChunkCache this$0;
 
     protected ServerChunkCache$MainThreadExecutorMixin(String string) {
-        super(string);
+        super(string, false);
     }
 
     /**
@@ -26,7 +26,7 @@ abstract class ServerChunkCache$MainThreadExecutorMixin extends BlockableEventLo
     @Override
     @Overwrite
     public boolean pollTask() {
-        final ServerChunkCache serverChunkCache = this.field_18810;
+        final ServerChunkCache serverChunkCache = this.this$0;
         if (serverChunkCache.runDistanceManagerUpdates()) {
             return true;
         } else {

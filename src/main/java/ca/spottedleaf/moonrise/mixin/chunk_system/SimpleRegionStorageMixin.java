@@ -6,7 +6,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.ChunkScanAccess;
 import net.minecraft.world.level.chunk.storage.IOWorker;
-import net.minecraft.world.level.chunk.storage.LegacyTagFixer;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
 import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
@@ -41,7 +40,7 @@ abstract class SimpleRegionStorageMixin implements ChunkSystemSimpleRegionStorag
      * @author Spottedleaf
      */
     @Inject(
-            method = "<init>(Lnet/minecraft/world/level/chunk/storage/RegionStorageInfo;Ljava/nio/file/Path;Lcom/mojang/datafixers/DataFixer;ZLnet/minecraft/util/datafix/DataFixTypes;Ljava/util/function/Supplier;)V",
+            method = "<init>(Lnet/minecraft/world/level/chunk/storage/RegionStorageInfo;Ljava/nio/file/Path;Lcom/mojang/datafixers/DataFixer;ZLnet/minecraft/util/datafix/DataFixTypes;)V",
             at = @At(
                     value = "RETURN"
             )
@@ -67,24 +66,6 @@ abstract class SimpleRegionStorageMixin implements ChunkSystemSimpleRegionStorag
         return true;
     }
 
-
-    /**
-     * @reason Legacy data is accessed by multiple threads, and so it should be synchronised correctly.
-     *         The initialisation code is oddly initialised correctly, but not the actual accesses after.
-     * @author Spottedleaf
-     */
-    @Redirect(
-            method = "upgradeChunkTag(Lnet/minecraft/nbt/CompoundTag;ILnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/nbt/CompoundTag;",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/chunk/storage/LegacyTagFixer;applyFix(Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/nbt/CompoundTag;"
-            )
-    )
-    private CompoundTag synchroniseLegacyDataUpgrade(LegacyTagFixer instance, CompoundTag compoundTag) {
-        synchronized (instance) {
-            return instance.applyFix(compoundTag);
-        }
-    }
 
     /**
      * @reason Redirect to use the raw storage. It is expected that {@link net.minecraft.server.level.ChunkMap}
@@ -129,24 +110,6 @@ abstract class SimpleRegionStorageMixin implements ChunkSystemSimpleRegionStorag
             return CompletableFuture.completedFuture(null);
         } catch (final Throwable throwable) {
             return CompletableFuture.failedFuture(throwable);
-        }
-    }
-
-    /**
-     * @reason Legacy data is accessed by multiple threads, and so it should be synchronised correctly.
-     *         The initialisation code is oddly initialised correctly, but not the actual accesses after.
-     * @author Spottedleaf
-     */
-    @Redirect(
-            method = "markChunkDone",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/chunk/storage/LegacyTagFixer;markChunkDone(Lnet/minecraft/world/level/ChunkPos;)V"
-            )
-    )
-    private void synchroniseLegacyDataWrite(final LegacyTagFixer instance, final ChunkPos chunkPos) {
-        synchronized (instance) {
-            instance.markChunkDone(chunkPos);
         }
     }
 

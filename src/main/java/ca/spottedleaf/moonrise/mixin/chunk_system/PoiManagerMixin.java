@@ -240,8 +240,8 @@ public abstract class PoiManagerMixin extends SectionStorage<Object, Object> imp
 
     @Override
     public final void moonrise$checkConsistency(final ChunkAccess chunk) {
-        final int chunkX = chunk.getPos().x;
-        final int chunkZ = chunk.getPos().z;
+        final int chunkX = chunk.getPos().x();
+        final int chunkZ = chunk.getPos().z();
 
         final int minY = WorldUtil.getMinSection(chunk);
         final int maxY = WorldUtil.getMaxSection(chunk);

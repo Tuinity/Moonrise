@@ -110,7 +110,7 @@ abstract class StructureCheckMixin {
                                   final boolean bl, final CallbackInfoReturnable<StructureCheckResult> cir) {
         final boolean ret = this.featureChecksSafe
                 .computeIfAbsent(structure, structure2 -> new SynchronisedLong2BooleanMap(PER_FEATURE_CHECK_LIMIT))
-                .getOrCompute(pos.toLong(), chunkPos -> this.canCreateStructure(pos, structure));
+                .getOrCompute(pos.pack(), chunkPos -> this.canCreateStructure(pos, structure));
         cir.setReturnValue(!ret ? StructureCheckResult.START_NOT_PRESENT : StructureCheckResult.CHUNK_LOAD_NEEDED);
     }
 
@@ -135,7 +135,7 @@ abstract class StructureCheckMixin {
      */
     @Overwrite
     public void incrementReference(final ChunkPos pos, final Structure structure) {
-        this.loadedChunksSafe.compute(pos.toLong(), (posx, referencesByStructure) -> { // Paper start - rewrite chunk system - synchronise this class
+        this.loadedChunksSafe.compute(pos.pack(), (posx, referencesByStructure) -> { // Paper start - rewrite chunk system - synchronise this class
             // make this COW so that we do not mutate state that may be currently in use
             if (referencesByStructure == null) {
                 referencesByStructure = new Object2IntOpenHashMap<>();

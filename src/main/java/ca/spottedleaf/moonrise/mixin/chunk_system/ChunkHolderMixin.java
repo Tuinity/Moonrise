@@ -111,7 +111,7 @@ abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSy
         final ServerPlayer[] raw = this.playersSentChunkTo.getRawDataUnchecked();
         for (int i = 0, len = this.playersSentChunkTo.size(); i < len; ++i) {
             final ServerPlayer player = raw[i];
-            if (onlyOnWatchDistanceEdge && !((ChunkSystemServerLevel)this.getChunkMap().level).moonrise$getPlayerChunkLoader().isChunkSent(player, this.pos.x, this.pos.z, onlyOnWatchDistanceEdge)) {
+            if (onlyOnWatchDistanceEdge && !((ChunkSystemServerLevel)this.getChunkMap().level).moonrise$getPlayerChunkLoader().isChunkSent(player, this.pos.x(), this.pos.z(), onlyOnWatchDistanceEdge)) {
                 continue;
             }
             ret.add(player);
@@ -201,8 +201,8 @@ abstract class ChunkHolderMixin extends GenerationChunkHolder implements ChunkSy
         final ChunkHolderManager manager = ((ChunkSystemServerLevel)this.getChunkMap().level).moonrise$getChunkTaskScheduler()
                 .chunkHolderManager;
         final ChunkPos pos = this.pos;
-        final int chunkX = pos.x;
-        final int chunkZ = pos.z;
+        final int chunkX = pos.x();
+        final int chunkZ = pos.z();
         for (int dz = -radius; dz <= radius; ++dz) {
             for (int dx = -radius; dx <= radius; ++dx) {
                 if ((dx | dz) == 0) {

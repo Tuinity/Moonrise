@@ -109,7 +109,7 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
         final ChunkPos pos = holder.getPos();
 
         EventHooks.fireChunkTicketLevelUpdated(
-            world, CoordinateUtils.getChunkKey(pos.x, pos.z),
+            world, CoordinateUtils.getChunkKey(pos.x(), pos.z()),
             oldLevel, newLevel, holder
         );
     }

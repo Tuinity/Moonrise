@@ -30,10 +30,10 @@ public final class MoonriseChunkLoadCounter extends ChunkLoadCounter {
         this.expected = (chunkRadius * 2 + 1) * (chunkRadius * 2 + 1);
         final CompletableFuture<?> ret = new CompletableFuture<>();
         ((ChunkSystemServerLevel) level).moonrise$loadChunksAsync(
-            chunkPos.x - chunkRadius,
-            chunkPos.x + chunkRadius,
-            chunkPos.z - chunkRadius,
-            chunkPos.z + chunkRadius,
+            chunkPos.x() - chunkRadius,
+            chunkPos.x() + chunkRadius,
+            chunkPos.z() - chunkRadius,
+            chunkPos.z() + chunkRadius,
             status,
             priority,
             (chunks) -> {

@@ -51,7 +51,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
     public abstract PlayerList getPlayerList();
 
     public MinecraftServerMixin(String string) {
-        super(string);
+        super(string, true);
     }
 
     @Unique

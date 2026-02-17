@@ -30,7 +30,6 @@ import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.RandomSequences;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.CustomSpawner;
@@ -136,20 +135,28 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
             value = "RETURN"
         )
     )
-    private void init(MinecraftServer minecraftServer, Executor executor,
-                      LevelStorageSource.LevelStorageAccess levelStorageAccess, ServerLevelData serverLevelData,
-                      ResourceKey<Level> resourceKey, LevelStem levelStem,
-                      boolean bl, long l, List<CustomSpawner> list, boolean bl2, RandomSequences randomSequences,
-                      CallbackInfo ci) {
+    private void init(
+        final MinecraftServer server,
+        final Executor executor,
+        final LevelStorageSource.LevelStorageAccess levelStorage,
+        final ServerLevelData levelData,
+        final ResourceKey dimension,
+        final LevelStem levelStem,
+        final boolean isDebug,
+        final long biomeZoomSeed,
+        final List customSpawners,
+        final boolean tickTime,
+        final CallbackInfo ci
+    ) {
         this.entityManager = null;
 
         this.moonrise$setEntityLookup(new ServerEntityLookup((ServerLevel)(Object)this, ((ServerLevel)(Object)this).new EntityCallbacks()));
         this.chunkTaskScheduler = new ChunkTaskScheduler((ServerLevel)(Object)this);
         this.entityDataController = new EntityDataController(
                 new EntityDataController.EntityRegionFileStorage(
-                        new RegionStorageInfo(levelStorageAccess.getLevelId(), resourceKey, "entities"),
-                        levelStorageAccess.getDimensionPath(resourceKey).resolve("entities"),
-                        minecraftServer.forceSynchronousWrites()
+                        new RegionStorageInfo(levelStorage.getLevelId(), dimension, "entities"),
+                        levelStorage.getDimensionPath(dimension).resolve("entities"),
+                        server.forceSynchronousWrites()
                 ),
                 this.chunkTaskScheduler
         );
@@ -415,7 +422,6 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
      */
     @Redirect(
             method = {
-                    "method_31420",
                     "*(Lnet/minecraft/world/TickRateManager;Lnet/minecraft/util/profiling/ProfilerFiller;Lnet/minecraft/world/entity/Entity;)V"
             },
             at = @At(
@@ -639,7 +645,7 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
         final List<ChunkPos> chunks = ChunkPos.rangeClosed(chunkPos, radius).toList();
         this.chunkSource.mainThreadProcessor.managedBlock(() -> {
             for (final ChunkPos chunkpos : chunks) {
-                if (!this.areEntitiesLoaded(chunkpos.toLong())) {
+                if (!this.areEntitiesLoaded(chunkpos.pack())) {
                     return false;
                 }
             }

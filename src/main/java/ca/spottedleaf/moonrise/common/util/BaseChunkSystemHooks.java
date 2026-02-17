@@ -89,7 +89,7 @@ public abstract class BaseChunkSystemHooks implements ChunkSystemHooks {
     @Override
     public void onChunkPreBorder(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerChunkCache)((ServerLevel)chunk.getLevel()).getChunkSource())
-            .moonrise$setFullChunk(chunk.getPos().x, chunk.getPos().z, chunk);
+            .moonrise$setFullChunk(chunk.getPos().x(), chunk.getPos().z(), chunk);
     }
 
     @Override
@@ -111,7 +111,7 @@ public abstract class BaseChunkSystemHooks implements ChunkSystemHooks {
     @Override
     public void onChunkPostNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
         ((ChunkSystemServerChunkCache)((ServerLevel)chunk.getLevel()).getChunkSource())
-            .moonrise$setFullChunk(chunk.getPos().x, chunk.getPos().z, null);
+            .moonrise$setFullChunk(chunk.getPos().x(), chunk.getPos().z(), null);
     }
 
     @Override

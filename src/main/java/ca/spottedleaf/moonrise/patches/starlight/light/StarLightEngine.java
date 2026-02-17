@@ -572,8 +572,8 @@ public abstract class StarLightEngine {
 
     protected void checkChunkEdges(final LightChunkGetter lightAccess, final ChunkAccess chunk, final ShortCollection sections) {
         final ChunkPos chunkPos = chunk.getPos();
-        final int chunkX = chunkPos.x;
-        final int chunkZ = chunkPos.z;
+        final int chunkX = chunkPos.x();
+        final int chunkZ = chunkPos.z();
 
         for (final ShortIterator iterator = sections.iterator(); iterator.hasNext();) {
             this.checkChunkEdge(lightAccess, chunk, chunkX, iterator.nextShort(), chunkZ);
@@ -589,8 +589,8 @@ public abstract class StarLightEngine {
     // This does not resolve skylight source problems.
     protected void checkChunkEdges(final LightChunkGetter lightAccess, final ChunkAccess chunk, final int fromSection, final int toSection) {
         final ChunkPos chunkPos = chunk.getPos();
-        final int chunkX = chunkPos.x;
-        final int chunkZ = chunkPos.z;
+        final int chunkX = chunkPos.x();
+        final int chunkZ = chunkPos.z();
 
         for (int currSectionY = toSection; currSectionY >= fromSection; --currSectionY) {
             this.checkChunkEdge(lightAccess, chunk, chunkX, currSectionY, chunkZ);
@@ -602,8 +602,8 @@ public abstract class StarLightEngine {
     // pulls light from neighbours, and adds them into the increase queue. does not actually propagate.
     protected final void propagateNeighbourLevels(final LightChunkGetter lightAccess, final ChunkAccess chunk, final int fromSection, final int toSection) {
         final ChunkPos chunkPos = chunk.getPos();
-        final int chunkX = chunkPos.x;
-        final int chunkZ = chunkPos.z;
+        final int chunkX = chunkPos.x();
+        final int chunkZ = chunkPos.z();
 
         for (int currSectionY = toSection; currSectionY >= fromSection; --currSectionY) {
             final SWMRNibbleArray currNibble = this.getNibbleFromCache(chunkX, currSectionY, chunkZ);
@@ -698,8 +698,8 @@ public abstract class StarLightEngine {
     }
 
     public final void forceHandleEmptySectionChanges(final LightChunkGetter lightAccess, final ChunkAccess chunk, final Boolean[] emptinessChanges) {
-        final int chunkX = chunk.getPos().x;
-        final int chunkZ = chunk.getPos().z;
+        final int chunkX = chunk.getPos().x();
+        final int chunkZ = chunk.getPos().z();
         this.setupCaches(lightAccess, chunkX * 16 + 7, 128, chunkZ * 16 + 7, true, true);
         try {
             // force current chunk into cache
@@ -748,8 +748,8 @@ public abstract class StarLightEngine {
     protected final boolean[] handleEmptySectionChanges(final LightChunkGetter lightAccess, final ChunkAccess chunk,
                                                         final Boolean[] emptinessChanges, final boolean unlit) {
         final Level world = (Level)lightAccess.getLevel();
-        final int chunkX = chunk.getPos().x;
-        final int chunkZ = chunk.getPos().z;
+        final int chunkX = chunk.getPos().x();
+        final int chunkZ = chunk.getPos().z();
 
         boolean[] chunkEmptinessMap = this.getEmptinessMap(chunkX, chunkZ);
         boolean[] ret = null;
@@ -899,8 +899,8 @@ public abstract class StarLightEngine {
     protected abstract void lightChunk(final LightChunkGetter lightAccess, final ChunkAccess chunk, final boolean needsEdgeChecks);
 
     public final void light(final LightChunkGetter lightAccess, final ChunkAccess chunk, final Boolean[] emptySections) {
-        final int chunkX = chunk.getPos().x;
-        final int chunkZ = chunk.getPos().z;
+        final int chunkX = chunk.getPos().x();
+        final int chunkZ = chunk.getPos().z();
         this.setupCaches(lightAccess, chunkX * 16 + 7, 128, chunkZ * 16 + 7, true, true);
 
         try {
@@ -949,8 +949,8 @@ public abstract class StarLightEngine {
         int lightCalls = 0;
 
         for (final ChunkPos chunkPos : chunks) {
-            final int chunkX = chunkPos.x;
-            final int chunkZ = chunkPos.z;
+            final int chunkX = chunkPos.x();
+            final int chunkZ = chunkPos.z();
             final ChunkAccess chunk = (ChunkAccess)lightAccess.getChunkForLighting(chunkX, chunkZ);
             if (chunk == null || !this.canUseChunk(chunk)) {
                 throw new IllegalStateException();

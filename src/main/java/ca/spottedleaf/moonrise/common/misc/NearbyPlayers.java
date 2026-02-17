@@ -82,7 +82,7 @@ public final class NearbyPlayers {
 
         for (int i = 0; i < TOTAL_MAP_TYPES; ++i) {
             // use 0 for default, will be updated by tickPlayer
-            (newTrackers[i] = new TrackedPlayer(player, MAP_TYPES[i])).add(chunk.x, chunk.z, 0);
+            (newTrackers[i] = new TrackedPlayer(player, MAP_TYPES[i])).add(chunk.x(), chunk.z(), 0);
         }
 
         // update view distances
@@ -118,12 +118,12 @@ public final class NearbyPlayers {
 
         final ChunkPos chunk = player.chunkPosition();
 
-        players[NearbyMapType.GENERAL.ordinal()].update(chunk.x, chunk.z, GENERAL_AREA_VIEW_DISTANCE);
-        players[NearbyMapType.GENERAL_SMALL.ordinal()].update(chunk.x, chunk.z, GENERAL_SMALL_VIEW_DISTANCE);
-        players[NearbyMapType.GENERAL_REALLY_SMALL.ordinal()].update(chunk.x, chunk.z, GENERAL_REALLY_SMALL_VIEW_DISTANCE);
-        players[NearbyMapType.TICK_VIEW_DISTANCE.ordinal()].update(chunk.x, chunk.z, PlatformHooks.get().getTickViewDistance(player));
-        players[NearbyMapType.VIEW_DISTANCE.ordinal()].update(chunk.x, chunk.z, PlatformHooks.get().getViewDistance(player));
-        players[NearbyMapType.SPAWN_RANGE.ordinal()].update(chunk.x, chunk.z, ChunkTickConstants.PLAYER_SPAWN_TRACK_RANGE); // Moonrise - chunk tick iteration
+        players[NearbyMapType.GENERAL.ordinal()].update(chunk.x(), chunk.z(), GENERAL_AREA_VIEW_DISTANCE);
+        players[NearbyMapType.GENERAL_SMALL.ordinal()].update(chunk.x(), chunk.z(), GENERAL_SMALL_VIEW_DISTANCE);
+        players[NearbyMapType.GENERAL_REALLY_SMALL.ordinal()].update(chunk.x(), chunk.z(), GENERAL_REALLY_SMALL_VIEW_DISTANCE);
+        players[NearbyMapType.TICK_VIEW_DISTANCE.ordinal()].update(chunk.x(), chunk.z(), PlatformHooks.get().getTickViewDistance(player));
+        players[NearbyMapType.VIEW_DISTANCE.ordinal()].update(chunk.x(), chunk.z(), PlatformHooks.get().getViewDistance(player));
+        players[NearbyMapType.SPAWN_RANGE.ordinal()].update(chunk.x(), chunk.z(), ChunkTickConstants.PLAYER_SPAWN_TRACK_RANGE); // Moonrise - chunk tick iteration
     }
 
     public TrackedChunk getChunk(final ChunkPos pos) {
@@ -255,7 +255,7 @@ public final class NearbyPlayers {
 
             final TrackedChunk chunk = NearbyPlayers.this.byChunk.get(chunkKey);
             if (chunk == null) {
-                throw new IllegalStateException("Chunk should exist at " + new ChunkPos(chunkKey));
+                throw new IllegalStateException("Chunk should exist at " + ChunkPos.unpack(chunkKey));
             }
 
             final NearbyMapType type = this.type;

@@ -101,7 +101,7 @@ abstract class ChunkMapMixin {
      */
     @Overwrite
     public boolean anyPlayerCloseEnoughForSpawning(final ChunkPos pos) {
-        if (((ChunkTickDistanceManager)this.distanceManager).moonrise$hasAnyNearbyNarrow(pos.x, pos.z)) {
+        if (((ChunkTickDistanceManager)this.distanceManager).moonrise$hasAnyNearbyNarrow(pos.x(), pos.z())) {
             return true;
         }
 
@@ -176,7 +176,7 @@ abstract class ChunkMapMixin {
             return false;
         }
 
-        if (((ChunkTickDistanceManager)this.distanceManager).moonrise$hasAnyNearbyNarrow(chunkPos.x, chunkPos.z)) {
+        if (((ChunkTickDistanceManager)this.distanceManager).moonrise$hasAnyNearbyNarrow(chunkPos.x(), chunkPos.z())) {
             return true;
         }
 

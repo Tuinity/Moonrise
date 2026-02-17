@@ -100,17 +100,17 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
 
     @Override
     public final boolean moonrise$doesRegionFileNotExistNoIO(final int chunkX, final int chunkZ) {
-        return !this.doesRegionFilePossiblyExist(ChunkPos.asLong(chunkX >> REGION_SHIFT, chunkZ >> REGION_SHIFT));
+        return !this.doesRegionFilePossiblyExist(ChunkPos.pack(chunkX >> REGION_SHIFT, chunkZ >> REGION_SHIFT));
     }
 
     @Override
     public synchronized final RegionFile moonrise$getRegionFileIfLoaded(final int chunkX, final int chunkZ) {
-        return this.regionCache.getAndMoveToFirst(ChunkPos.asLong(chunkX >> REGION_SHIFT, chunkZ >> REGION_SHIFT));
+        return this.regionCache.getAndMoveToFirst(ChunkPos.pack(chunkX >> REGION_SHIFT, chunkZ >> REGION_SHIFT));
     }
 
     @Override
     public synchronized final RegionFile moonrise$getRegionFileIfExists(final int chunkX, final int chunkZ) throws IOException {
-        final long key = ChunkPos.asLong(chunkX >> REGION_SHIFT, chunkZ >> REGION_SHIFT);
+        final long key = ChunkPos.pack(chunkX >> REGION_SHIFT, chunkZ >> REGION_SHIFT);
 
         RegionFile ret = this.regionCache.getAndMoveToFirst(key);
         if (ret != null) {
@@ -150,7 +150,7 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
     @Overwrite
     public final RegionFile getRegionFile(final ChunkPos chunkPos) throws IOException {
         synchronized (this) {
-            final long key = ChunkPos.asLong(chunkPos.x >> REGION_SHIFT, chunkPos.z >> REGION_SHIFT);
+            final long key = ChunkPos.pack(chunkPos.x() >> REGION_SHIFT, chunkPos.z() >> REGION_SHIFT);
 
             RegionFile ret = this.regionCache.getAndMoveToFirst(key);
             if (ret != null) {
@@ -161,7 +161,7 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
                 this.regionCache.removeLast().close();
             }
 
-            final Path regionPath = this.folder.resolve(getRegionFileName(chunkPos.x, chunkPos.z));
+            final Path regionPath = this.folder.resolve(getRegionFileName(chunkPos.x(), chunkPos.z()));
 
             this.createRegionFile(key);
 
@@ -319,7 +319,7 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
             )
     )
     private RegionFile avoidCreatingReadRegionFile(final RegionFileStorage instance, final ChunkPos chunkPos) throws IOException {
-        return ((RegionFileStorageMixin)(Object)instance).moonrise$getRegionFileIfExists(chunkPos.x, chunkPos.z);
+        return ((RegionFileStorageMixin)(Object)instance).moonrise$getRegionFileIfExists(chunkPos.x(), chunkPos.z());
     }
 
     /**
@@ -356,7 +356,7 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
             )
     )
     private RegionFile avoidCreatingScanRegionFile(final RegionFileStorage instance, final ChunkPos chunkPos) throws IOException {
-        return ((RegionFileStorageMixin)(Object)instance).moonrise$getRegionFileIfExists(chunkPos.x, chunkPos.z);
+        return ((RegionFileStorageMixin)(Object)instance).moonrise$getRegionFileIfExists(chunkPos.x(), chunkPos.z());
     }
 
     /**
@@ -393,7 +393,7 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
             )
     )
     private void avoidCreatingWriteRegionFile(final ChunkPos chunkPos, final CompoundTag compoundTag, final CallbackInfo ci) throws IOException {
-        if (compoundTag == null && this.moonrise$getRegionFileIfExists(chunkPos.x, chunkPos.z) == null) {
+        if (compoundTag == null && this.moonrise$getRegionFileIfExists(chunkPos.x(), chunkPos.z()) == null) {
             ci.cancel();
             return;
         }

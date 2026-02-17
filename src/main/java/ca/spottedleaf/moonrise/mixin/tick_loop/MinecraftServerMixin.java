@@ -82,7 +82,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
     private long idleTimeNanos;
 
     public MinecraftServerMixin(final String name) {
-        super(name);
+        super(name, true);
     }
 
     // firstPeriod is set on init

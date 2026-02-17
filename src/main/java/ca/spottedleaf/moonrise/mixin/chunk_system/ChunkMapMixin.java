@@ -112,8 +112,7 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemC
 
     @Override
     public final void moonrise$writeFinishCallback(final ChunkPos pos) throws IOException {
-        // see ChunkStorage#write
-        this.markChunkDone(pos);
+        // 26.1 removed legacy chunk-done tracking in SimpleRegionStorage.
     }
 
     /**
@@ -162,7 +161,7 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemC
             @Override
             public CompletableFuture<Optional<CompoundTag>> loadAsync(final ChunkPos chunkPos) {
                 final CompletableFuture<Optional<CompoundTag>> future = new CompletableFuture<>();
-                MoonriseRegionFileIO.loadDataAsync(ChunkMapMixin.this.level, chunkPos.x, chunkPos.z, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, (final CompoundTag tag, final Throwable throwable) -> {
+                MoonriseRegionFileIO.loadDataAsync(ChunkMapMixin.this.level, chunkPos.x(), chunkPos.z(), MoonriseRegionFileIO.RegionFileType.CHUNK_DATA, (final CompoundTag tag, final Throwable throwable) -> {
                     if (throwable != null) {
                         future.completeExceptionally(throwable);
                     } else {
@@ -576,8 +575,7 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemC
      */
     @Redirect(
         method = {
-            "method_67499",
-            "lambda$forEachBlockTickingChunk$37"
+            "lambda$forEachBlockTickingChunk$0"
         },
         at = @At(
             value = "INVOKE",
@@ -593,7 +591,7 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemC
         final CompletableFuture<Optional<CompoundTag>> ret = new CompletableFuture<>();
 
         MoonriseRegionFileIO.loadDataAsync(
-            this.level, pos.x, pos.z, MoonriseRegionFileIO.RegionFileType.CHUNK_DATA,
+            this.level, pos.x(), pos.z(), MoonriseRegionFileIO.RegionFileType.CHUNK_DATA,
             (final CompoundTag data, final Throwable thr) -> {
                 if (thr != null) {
                     ret.completeExceptionally(thr);
@@ -609,7 +607,7 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemC
     @Override
     public CompletableFuture<Void> write(final ChunkPos pos, final Supplier<CompoundTag> tag) {
         MoonriseRegionFileIO.scheduleSave(
-                this.level, pos.x, pos.z, tag.get(),
+                this.level, pos.x(), pos.z(), tag.get(),
                 MoonriseRegionFileIO.RegionFileType.CHUNK_DATA
         );
         return null;
@@ -725,7 +723,7 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemC
     @Override
     @Overwrite
     public List<ServerPlayer> getPlayers(final ChunkPos chunkPos, final boolean onlyOnWatchDistanceEdge) {
-        final ChunkHolder holder = this.getVisibleChunkIfPresent(chunkPos.toLong());
+        final ChunkHolder holder = this.getVisibleChunkIfPresent(chunkPos.pack());
         if (holder == null) {
             return new ArrayList<>();
         } else {

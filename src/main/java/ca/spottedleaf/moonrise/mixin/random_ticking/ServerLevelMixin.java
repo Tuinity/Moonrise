@@ -77,8 +77,8 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
         final boolean doubleTickFluids = !PlatformHooks.get().configFixMC224294();
 
         final ChunkPos cpos = chunk.getPos();
-        final int offsetX = cpos.x << 4;
-        final int offsetZ = cpos.z << 4;
+        final int offsetX = cpos.x() << 4;
+        final int offsetZ = cpos.z() << 4;
 
         for (int sectionIndex = 0, sectionsLen = sections.length; sectionIndex < sectionsLen; sectionIndex++) {
             final int offsetY = (sectionIndex + minSection) << 4;

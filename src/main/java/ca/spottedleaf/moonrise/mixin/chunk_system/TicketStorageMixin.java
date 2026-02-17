@@ -118,7 +118,7 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
             final long pos = entry.getLongKey();
             final Collection<Ticket> chunkTickets = entry.getValue();
 
-            final ChunkPos chunkPos = new ChunkPos(pos);
+            final ChunkPos chunkPos = ChunkPos.unpack(pos);
 
             for (final Ticket ticket : chunkTickets) {
                 consumer.accept(chunkPos, ticket);

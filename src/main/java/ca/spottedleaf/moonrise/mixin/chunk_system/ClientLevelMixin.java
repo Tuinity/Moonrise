@@ -168,7 +168,7 @@ abstract class ClientLevelMixin extends Level implements ChunkSystemLevel {
     )
     private <T extends EntityAccess> void chunkUnloadHook(final TransientEntitySectionManager<T> instance,
                                                           final ChunkPos pos) {
-        ((ClientEntityLookup)this.moonrise$getEntityLookup()).markNonTicking(pos.toLong());
+        ((ClientEntityLookup)this.moonrise$getEntityLookup()).markNonTicking(pos.pack());
     }
 
     /**
@@ -183,6 +183,6 @@ abstract class ClientLevelMixin extends Level implements ChunkSystemLevel {
             )
     )
     private <T extends EntityAccess> void chunkLoadHook(final TransientEntitySectionManager<T> instance, final ChunkPos pos) {
-        ((ClientEntityLookup)this.moonrise$getEntityLookup()).markTicking(pos.toLong());
+        ((ClientEntityLookup)this.moonrise$getEntityLookup()).markTicking(pos.pack());
     }
 }

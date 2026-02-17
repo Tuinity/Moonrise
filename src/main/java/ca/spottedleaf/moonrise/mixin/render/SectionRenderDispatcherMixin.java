@@ -3,14 +3,12 @@ package ca.spottedleaf.moonrise.mixin.render;
 import ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
+import net.minecraft.TracingExecutor;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.function.Supplier;
 
 @Mixin(SectionRenderDispatcher.class)
 abstract class SectionRenderDispatcherMixin {
@@ -25,18 +23,13 @@ abstract class SectionRenderDispatcherMixin {
      * @author Spottedleaf
      */
     @Redirect(
-            method = "runTask",
+            method = "schedule",
             at = @At(
                     value = "INVOKE",
-                    target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"
+                    target = "Lnet/minecraft/TracingExecutor;execute(Ljava/lang/Runnable;)V"
             )
     )
-    private <U> CompletableFuture<U> changeExecutor(final Supplier<U> supplier, final Executor executor) {
-        return CompletableFuture.supplyAsync(
-                supplier,
-                (final Runnable task) -> {
-                    RENDER_EXECUTOR.queueTask(task, Priority.NORMAL);
-                }
-        );
+    private void changeExecutor(final TracingExecutor executor, final Runnable task) {
+        RENDER_EXECUTOR.queueTask(TracingExecutorAccessor.moonrise$wrapUnnamed(task), Priority.NORMAL);
     }
 }

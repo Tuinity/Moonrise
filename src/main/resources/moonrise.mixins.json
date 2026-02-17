@@ -140,6 +140,7 @@
         "config.MinecraftMixin",
         "profiler.MinecraftMixin",
         "render.SectionRenderDispatcherMixin",
+        "render.TracingExecutorAccessor",
         "serverlist.ClientConnectionMixin",
         "serverlist.ServerAddressResolverMixin",
         "serverlist.ServerSelectionListMixin",

@@ -24,8 +24,7 @@ abstract class AcquirePoiMixin {
      */
     @Redirect(
             method = {
-                "lambda$create$8",
-                "method_46885"
+                "lambda$create$3"
             },
             at = @At(
                     target = "Lnet/minecraft/world/entity/ai/village/poi/PoiManager;findAllClosestFirstWithType(Ljava/util/function/Predicate;Ljava/util/function/Predicate;Lnet/minecraft/core/BlockPos;ILnet/minecraft/world/entity/ai/village/poi/PoiManager$Occupancy;)Ljava/util/stream/Stream;",

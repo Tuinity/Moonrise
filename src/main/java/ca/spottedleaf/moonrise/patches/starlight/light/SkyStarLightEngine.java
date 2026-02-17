@@ -247,8 +247,8 @@ public final class SkyStarLightEngine extends StarLightEngine {
                                    final int toSection) {
         Arrays.fill(this.nullPropagationCheckCache, false);
         this.rewriteNibbleCacheForSkylight(chunk);
-        final int chunkX = chunk.getPos().x;
-        final int chunkZ = chunk.getPos().z;
+        final int chunkX = chunk.getPos().x();
+        final int chunkZ = chunk.getPos().z();
         for (int y = toSection; y >= fromSection; --y) {
             this.checkNullSection(chunkX, y, chunkZ, true);
         }
@@ -260,8 +260,8 @@ public final class SkyStarLightEngine extends StarLightEngine {
     protected void checkChunkEdges(final LightChunkGetter lightAccess, final ChunkAccess chunk, final ShortCollection sections) {
         Arrays.fill(this.nullPropagationCheckCache, false);
         this.rewriteNibbleCacheForSkylight(chunk);
-        final int chunkX = chunk.getPos().x;
-        final int chunkZ = chunk.getPos().z;
+        final int chunkX = chunk.getPos().x();
+        final int chunkZ = chunk.getPos().z();
         for (final ShortIterator iterator = sections.iterator(); iterator.hasNext();) {
             final int y = (int)iterator.nextShort();
             this.checkNullSection(chunkX, y, chunkZ, true);
@@ -364,8 +364,8 @@ public final class SkyStarLightEngine extends StarLightEngine {
         Arrays.fill(this.nullPropagationCheckCache, false);
 
         final BlockGetter world = lightAccess.getLevel();
-        final int chunkX = atChunk.getPos().x;
-        final int chunkZ = atChunk.getPos().z;
+        final int chunkX = atChunk.getPos().x();
+        final int chunkZ = atChunk.getPos().z();
         final int heightMapOffset = chunkX * -16 + (chunkZ * (-16 * 16));
 
         // setup heightmap for changes
@@ -457,8 +457,8 @@ public final class SkyStarLightEngine extends StarLightEngine {
 
         final BlockGetter world = lightAccess.getLevel();
         final ChunkPos chunkPos = chunk.getPos();
-        final int chunkX = chunkPos.x;
-        final int chunkZ = chunkPos.z;
+        final int chunkX = chunkPos.x();
+        final int chunkZ = chunkPos.z();
 
         final LevelChunkSection[] sections = chunk.getSections();
 
@@ -534,10 +534,10 @@ public final class SkyStarLightEngine extends StarLightEngine {
 
         if (highestNonEmptySection >= this.minSection) {
             // fill out our other sources
-            final int minX = chunkPos.x << 4;
-            final int maxX = chunkPos.x << 4 | 15;
-            final int minZ = chunkPos.z << 4;
-            final int maxZ = chunkPos.z << 4 | 15;
+            final int minX = chunkPos.x() << 4;
+            final int maxX = chunkPos.x() << 4 | 15;
+            final int minZ = chunkPos.z() << 4;
+            final int maxZ = chunkPos.z() << 4 | 15;
             final int startY = highestNonEmptySection << 4 | 15;
             for (int currZ = minZ; currZ <= maxZ; ++currZ) {
                 for (int currX = minX; currX <= maxX; ++currX) {

@@ -391,7 +391,7 @@ abstract class ServerExplosionMixin {
 
             ray += 3;
 
-            float power = this.radius * (0.7F + this.level.random.nextFloat() * 0.6F);
+            float power = this.radius * (0.7F + this.level.getRandom().nextFloat() * 0.6F);
 
             do {
                 final int blockX = Mth.floor(currX);

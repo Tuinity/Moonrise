@@ -198,8 +198,8 @@ public final class BlockStarLightEngine extends StarLightEngine {
     protected List<BlockPos> getSources(final LightChunkGetter lightAccess, final ChunkAccess chunk) {
         final List<BlockPos> sources = new ArrayList<>();
 
-        final int offX = chunk.getPos().x << 4;
-        final int offZ = chunk.getPos().z << 4;
+        final int offX = chunk.getPos().x() << 4;
+        final int offZ = chunk.getPos().z() << 4;
 
         final PlatformHooks platformHooks = PlatformHooks.get();
 

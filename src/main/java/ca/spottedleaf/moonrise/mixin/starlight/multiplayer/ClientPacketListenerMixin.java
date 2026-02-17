@@ -91,7 +91,9 @@ abstract class ClientPacketListenerMixin implements ClientGamePacketListener {
             )
     )
     private void unloadLightDataHook(final ClientPacketListener instance, final ClientboundForgetLevelChunkPacket clientboundForgetLevelChunkPacket) {
-        ((StarLightLightingProvider)this.level.getChunkSource().getLightEngine()).starlight$clientRemoveLightData(new ChunkPos(clientboundForgetLevelChunkPacket.pos().x, clientboundForgetLevelChunkPacket.pos().z));
+        ((StarLightLightingProvider)this.level.getChunkSource().getLightEngine()).starlight$clientRemoveLightData(
+            new ChunkPos(clientboundForgetLevelChunkPacket.pos().x(), clientboundForgetLevelChunkPacket.pos().z())
+        );
     }
 
     /**

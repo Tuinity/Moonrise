@@ -12,9 +12,9 @@ import java.util.concurrent.Executor;
 @Mixin(ChunkMap.DistanceManager.class)
 abstract class ChunkMap$DistanceManagerMixin extends net.minecraft.server.level.DistanceManager implements ChunkSystemDistanceManager {
 
-    @Shadow(aliases = "this$0")
+    @Shadow
     @Final
-    ChunkMap field_17443;
+    ChunkMap this$0;
 
     protected ChunkMap$DistanceManagerMixin(final TicketStorage p_394060_, final Executor p_140774_, final Executor p_140775_) {
         super(p_394060_, p_140774_, p_140775_);
@@ -32,6 +32,6 @@ abstract class ChunkMap$DistanceManagerMixin extends net.minecraft.server.level.
 
     @Override
     public final ChunkMap moonrise$getChunkMap() {
-        return this.field_17443;
+        return this.this$0;
     }
 }

@@ -116,16 +116,16 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
         for (final Iterator<ChunkPos> iterator = chunks.iterator(); iterator.hasNext();) {
             final ChunkPos pos = iterator.next();
 
-            minX = Math.min(pos.x, minX);
-            minZ = Math.min(pos.z, minZ);
-            maxX = Math.max(pos.x, maxX);
-            maxZ = Math.max(pos.z, maxZ);
+            minX = Math.min(pos.x(), minX);
+            minZ = Math.min(pos.z(), minZ);
+            maxX = Math.max(pos.x(), maxX);
+            maxZ = Math.max(pos.z(), maxZ);
 
             final Long id = ChunkTaskScheduler.getNextChunkRelightId();
             ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAtLevel(ChunkTaskScheduler.CHUNK_RELIGHT, pos, StarLightInterface.LIGHT_TICKET_LEVEL, id);
             ticketIds.put(pos, id);
 
-            final ChunkAccess chunk = (ChunkAccess)world.getChunkSource().getChunkForLighting(pos.x, pos.z);
+            final ChunkAccess chunk = (ChunkAccess)world.getChunkSource().getChunkForLighting(pos.x(), pos.z());
             if (chunk == null || !chunk.isLightCorrect() || !chunk.getPersistedStatus().isOrAfter(ChunkStatus.LIGHT)) {
                 // cannot relight this chunk
                 iterator.remove();
@@ -143,9 +143,9 @@ abstract class ThreadedLevelLightEngineMixin extends LevelLightEngine implements
                             chunkLightCallback.accept(pos);
                         }
 
-                        ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().scheduleChunkTask(pos.x, pos.z, () -> {
+                        ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().scheduleChunkTask(pos.x(), pos.z(), () -> {
                             final NewChunkHolder chunkHolder = ((ChunkSystemServerLevel)world).moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(
-                                    pos.x, pos.z
+                                    pos.x(), pos.z()
                             );
 
                             if (chunkHolder == null) {

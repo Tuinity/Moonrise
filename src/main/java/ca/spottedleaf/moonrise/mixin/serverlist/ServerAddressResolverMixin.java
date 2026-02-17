@@ -19,7 +19,6 @@ interface ServerAddressResolverMixin {
      */
     @Redirect(
         method = {
-            "method_36903",
             "lambda$static$0"
         },
         at = @At(

@@ -86,8 +86,9 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
     @Override
     public void chunkFullStatusComplete(final LevelChunk newChunk, final ProtoChunk original) {
         if (HAS_FABRIC_LIFECYCLE_EVENTS) {
-            ServerChunkEvents.CHUNK_LOAD.invoker().onChunkLoad((ServerLevel)newChunk.getLevel(), newChunk);
-            if (!(original instanceof ImposterProtoChunk)) {
+            final boolean generated = !(original instanceof ImposterProtoChunk);
+            ServerChunkEvents.CHUNK_LOAD.invoker().onChunkLoad((ServerLevel)newChunk.getLevel(), newChunk, generated);
+            if (generated) {
                 ServerChunkEvents.CHUNK_GENERATE.invoker().onChunkGenerate((ServerLevel)newChunk.getLevel(), newChunk);
             }
         }

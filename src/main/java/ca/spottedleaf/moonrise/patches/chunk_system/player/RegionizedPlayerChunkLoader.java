@@ -854,8 +854,8 @@ public final class RegionizedPlayerChunkLoader {
             }
             final ViewDistances playerDistances = ((ChunkSystemServerPlayer)this.player).moonrise$getViewDistanceHolder().getViewDistances();
             final ViewDistances worldDistances = ((ChunkSystemServerLevel)this.world).moonrise$getViewDistanceHolder().getViewDistances();
-            final int chunkX = this.player.chunkPosition().x;
-            final int chunkZ = this.player.chunkPosition().z;
+            final int chunkX = this.player.chunkPosition().x();
+            final int chunkZ = this.player.chunkPosition().z();
 
             final int tickViewDistance = getTickDistance(
                     playerDistances.tickViewDistance, worldDistances.tickViewDistance,
@@ -922,8 +922,8 @@ public final class RegionizedPlayerChunkLoader {
 
             final ChunkPos playerPos = this.player.chunkPosition();
             final boolean canGenerateChunks = this.canPlayerGenerateChunks();
-            final int currentChunkX = playerPos.x;
-            final int currentChunkZ = playerPos.z;
+            final int currentChunkX = playerPos.x();
+            final int currentChunkZ = playerPos.z();
 
             final int prevChunkX = this.lastChunkX;
             final int prevChunkZ = this.lastChunkZ;

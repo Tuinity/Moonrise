@@ -25,7 +25,7 @@ import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LightChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.minecraft.world.level.storage.SavedDataStorage;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -54,7 +54,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
 
     @Shadow
     @Final
-    private DimensionDataStorage dataStorage;
+    private SavedDataStorage savedDataStorage;
 
     @Unique
     private final ConcurrentLong2ReferenceChainedHashTable<LevelChunk> fullChunks = new ConcurrentLong2ReferenceChainedHashTable<>();
@@ -270,7 +270,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
     @Override
     @Overwrite
     public void close() throws IOException {
-        this.dataStorage.close();
+        this.savedDataStorage.close();
         ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.close(true, true);
     }
 
