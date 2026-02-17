@@ -3,12 +3,12 @@
 [versions]
 # https://maven.shedaniel.me/me/shedaniel/cloth/
 cloth = "21.11.153"
-fabricLoader = "0.18.1"
-minecraft = "1.21.11"
+fabricLoader = "0.18.4"
+minecraft = "26.1-snapshot-8"
 # https://projects.neoforged.net/neoforged/neoforge
-neoforge= "21.11.38-beta"
+neoforge= "26.1.0.0-alpha.8+snapshot-4"
 # https://projects.neoforged.net/neoforged/neoform
-neoform = "1.21.11-20251209.172050"
+neoform = "26.1-snapshot-8-1"
 
 [plugins]
 

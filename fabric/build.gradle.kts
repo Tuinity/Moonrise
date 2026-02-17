@@ -2,7 +2,7 @@ import net.fabricmc.loom.task.RunGameTask
 import net.fabricmc.loom.util.gradle.SourceSetHelper
 
 plugins {
-    id("quiet-fabric-loom")
+    id("xyz.jpenilla.quiet-fabric-loom")
     `maven-publish`
     id("platform-conventions")
 }
@@ -15,11 +15,7 @@ if (gui) {
 
 dependencies {
     minecraft(libs.fabricMinecraft)
-    mappings(loom.layered {
-        officialMojangMappings()
-        parchment(rootProject.property("neoForge.parchment.parchmentArtifact").toString())
-    })
-    modImplementation(libs.fabricLoader)
+    implementation(libs.fabricLoader)
     testImplementation(libs.fabricLoader.junit)
 
     runtimeOnly(rootProject.sourceSets.main.get().output)
@@ -37,15 +33,15 @@ dependencies {
         runtimeOnly(sourceSets.named("gui").get().output)
         shadow(sourceSets.named("gui").get().output)
         add("modGuiImplementation", libs.clothConfig.fabric)
-        modRuntimeOnly(libs.clothConfig.fabric)
+        runtimeOnly(libs.clothConfig.fabric)
         include(libs.clothConfig.fabric)
         add("modGuiImplementation", libs.modmenu)
-        modRuntimeOnly(libs.modmenu)
+        runtimeOnly(libs.modmenu)
     }
 
-    modImplementation(platform(fabricApiLibs.bom))
-    modImplementation(fabricApiLibs.command.api.v2)
-    modImplementation(fabricApiLibs.lifecycle.events.v1)
+    implementation(platform(fabricApiLibs.bom))
+    implementation(fabricApiLibs.command.api.v2)
+    implementation(fabricApiLibs.lifecycle.events.v1)
     include(fabricApiLibs.command.api.v2)
     include(fabricApiLibs.base)
 }
@@ -71,7 +67,7 @@ tasks.processResources {
 }
 
 tasks.shadowJar {
-    archiveClassifier.set("dev-all")
+    archiveClassifier.set("")
     configurations = listOf(project.configurations.getByName("shadow"))
     relocate("ca.spottedleaf.concurrentutil", "ca.spottedleaf.moonrise.libs.ca.spottedleaf.concurrentutil")
     relocate("ca.spottedleaf.yamlconfig", "ca.spottedleaf.moonrise.libs.ca.spottedleaf.yamlconfig")
@@ -79,7 +75,7 @@ tasks.shadowJar {
 }
 
 publishMods {
-    file = tasks.remapJar.flatMap { it.archiveFile }
+    file = tasks.shadowJar.flatMap { it.archiveFile }
     modLoaders = listOf("fabric")
 
     modrinth {
@@ -124,14 +120,13 @@ loom.runs.configureEach {
 // Setup a run with lithium for compatibility testing
 sourceSets.create("lithium")
 loom {
-    createRemapConfigurations(sourceSets.getByName("lithium"))
     runs {
         register("lithiumClient") {
             client()
         }
     }
 }
-configurations.named("modLithiumRuntimeOnly") {
+configurations.named("lithiumRuntimeOnly") {
     extendsFrom(configurations.getByName("lithium"))
 }
 tasks.named("runLithiumClient", RunGameTask::class.java) {
