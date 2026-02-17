@@ -56,8 +56,8 @@ rootProject.name = "Moonrise"
 
 include("fabric")
 findProject(":fabric")!!.name = "Moonrise-Fabric"
-//include("neoforge")
-//findProject(":neoforge")!!.name = "Moonrise-NeoForge"
+include("neoforge")
+findProject(":neoforge")!!.name = "Moonrise-NeoForge"
 
 // includeBuild("../YamlConfig") // Uncomment to use local YamlConfig
 // includeBuild("../ConcurrentUtil") // Uncomment to use local ConcurrentUtil
