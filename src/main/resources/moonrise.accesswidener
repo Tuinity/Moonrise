@@ -311,3 +311,7 @@ accessible class net/minecraft/server/network/config/PrepareSpawnTask$Preparing
 accessible class net/minecraft/network/PacketProcessor$ListenerAndPacket
 # MDG requires we AT the constructor if we AT the class
 accessible method net/minecraft/network/PacketProcessor$ListenerAndPacket <init> (Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/protocol/Packet;)V
+
+
+# TracingExecutor
+accessible method net/minecraft/TracingExecutor wrapUnnamed (Ljava/lang/Runnable;)Ljava/lang/Runnable;

@@ -30,6 +30,6 @@ abstract class SectionRenderDispatcherMixin {
             )
     )
     private void changeExecutor(final TracingExecutor executor, final Runnable task) {
-        RENDER_EXECUTOR.queueTask(TracingExecutorAccessor.moonrise$wrapUnnamed(task), Priority.NORMAL);
+        RENDER_EXECUTOR.queueTask(TracingExecutor.wrapUnnamed(task), Priority.NORMAL);
     }
 }
