@@ -2,12 +2,10 @@ package ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller;
 
 import ca.spottedleaf.moonrise.patches.chunk_system.io.ChunkSystemRegionFileStorage;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
-import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemChunkMap;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemSimpleRegionStorage;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
 import java.io.IOException;
 
@@ -32,7 +30,6 @@ public final class ChunkDataController extends MoonriseRegionFileIO.RegionDataCo
 
     @Override
     public void finishWrite(final int chunkX, final int chunkZ, final WriteData writeData) throws IOException {
-        ((ChunkSystemChunkMap)this.world.getChunkSource().chunkMap).moonrise$writeFinishCallback(new ChunkPos(chunkX, chunkZ));
         ((ChunkSystemRegionFileStorage)this.getCache()).moonrise$finishWrite(chunkX, chunkZ, writeData);
     }
 

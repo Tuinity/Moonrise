@@ -3,7 +3,6 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
-import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemChunkMap;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
@@ -70,7 +69,7 @@ import java.util.function.IntSupplier;
 import java.util.stream.Stream;
 
 @Mixin(ChunkMap.class)
-abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemChunkMap, ChunkHolder.PlayerProvider, GeneratingChunkMap {
+abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.PlayerProvider, GeneratingChunkMap {
 
     @Shadow
     @Final
@@ -108,11 +107,6 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkSystemC
 
     public ChunkMapMixin(final RegionStorageInfo info, final Path folder, final DataFixer fixerUpper, final boolean sync, final DataFixTypes dataFixType) {
         super(info, folder, fixerUpper, sync, dataFixType);
-    }
-
-    @Override
-    public final void moonrise$writeFinishCallback(final ChunkPos pos) throws IOException {
-        // 26.1 removed legacy chunk-done tracking in SimpleRegionStorage.
     }
 
     /**
