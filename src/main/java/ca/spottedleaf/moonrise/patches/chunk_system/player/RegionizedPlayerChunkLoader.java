@@ -3,8 +3,8 @@ package ca.spottedleaf.moonrise.patches.chunk_system.player;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
-import ca.spottedleaf.moonrise.common.misc.AllocatingRateLimiter;
 import ca.spottedleaf.moonrise.common.misc.SingleUserAreaMap;
+import ca.spottedleaf.moonrise.common.misc.StaggeredRateLimiter;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.common.util.TickThread;
@@ -366,10 +366,21 @@ public final class RegionizedPlayerChunkLoader {
         }
 
         // rate limiting
-        private static final long ALLOCATION_GRANULARITY = TimeUnit.SECONDS.toNanos(1L);
-        private final AllocatingRateLimiter chunkSendLimiter = new AllocatingRateLimiter(ALLOCATION_GRANULARITY);
-        private final AllocatingRateLimiter chunkLoadTicketLimiter = new AllocatingRateLimiter(ALLOCATION_GRANULARITY);
-        private final AllocatingRateLimiter chunkGenerateTicketLimiter = new AllocatingRateLimiter(ALLOCATION_GRANULARITY);
+        private static final double INITIAL_ALLOCATION_FACTOR = 0.0;
+
+        private static StaggeredRateLimiter createChunkLimiter() {
+            // allow bursts over small intervals but keep it in check over the long interval
+            return StaggeredRateLimiter.builder()
+                .add(100L, TimeUnit.MILLISECONDS, 4.0)
+                .add(500L, TimeUnit.MILLISECONDS, 2.0)
+                .add(1_000L, TimeUnit.MILLISECONDS, 1.25)
+                .add(3_000L, TimeUnit.SECONDS, 1.0)
+                .build();
+        }
+
+        private final StaggeredRateLimiter chunkSendLimiter = createChunkLimiter();
+        private final StaggeredRateLimiter chunkLoadTicketLimiter = createChunkLimiter();
+        private final StaggeredRateLimiter chunkGenerateTicketLimiter = createChunkLimiter();
 
         // queues
         private final LongComparator queueComparator = (final long c1, final long c2) -> {
@@ -653,9 +664,9 @@ public final class RegionizedPlayerChunkLoader {
             final double genRate = this.getMaxChunkGenRate();
             final double sendRate = this.getMaxChunkSendRate();
 
-            this.chunkLoadTicketLimiter.tickAllocation(time, loadRate, loadRate);
-            this.chunkGenerateTicketLimiter.tickAllocation(time, genRate, genRate);
-            this.chunkSendLimiter.tickAllocation(time, sendRate, sendRate);
+            this.chunkLoadTicketLimiter.tick(time, loadRate, INITIAL_ALLOCATION_FACTOR);
+            this.chunkGenerateTicketLimiter.tick(time, genRate, INITIAL_ALLOCATION_FACTOR);
+            this.chunkSendLimiter.tick(time, sendRate, INITIAL_ALLOCATION_FACTOR);
 
             // try to progress chunk loads
             while (!this.loadingQueue.isEmpty()) {
@@ -683,7 +694,7 @@ public final class RegionizedPlayerChunkLoader {
 
             // try to push more chunk loads
             final long maxLoads = Math.max(0L, Math.min(MAX_RATE, Math.min(this.loadQueue.size(), this.getMaxChunkLoads())));
-            final int maxLoadsThisTick = (int)this.chunkLoadTicketLimiter.takeAllocation(time, loadRate, maxLoads);
+            final int maxLoadsThisTick = (int)this.chunkLoadTicketLimiter.takeAllocation(maxLoads);
             if (maxLoadsThisTick > 0) {
                 final LongArrayList chunks = new LongArrayList(maxLoadsThisTick);
                 for (int i = 0; i < maxLoadsThisTick; ++i) {
@@ -758,8 +769,7 @@ public final class RegionizedPlayerChunkLoader {
 
             // try to push more chunk generations
             final long maxGens = Math.max(0L, Math.min(MAX_RATE, Math.min(this.genQueue.size(), this.getMaxChunkGenerates())));
-            // preview the allocations, as we may not actually utilise all of them
-            final long maxGensThisTick = this.chunkGenerateTicketLimiter.previewAllocation(time, genRate, maxGens);
+            final long maxGensThisTick = this.chunkGenerateTicketLimiter.takeAllocation(maxGens);
             long ratedGensThisTick = 0L;
             while (!this.genQueue.isEmpty()) {
                 final long chunkKey = this.genQueue.firstLong();
@@ -790,7 +800,7 @@ public final class RegionizedPlayerChunkLoader {
                 this.generatingQueue.enqueue(chunkKey);
             }
             // take the allocations we actually used
-            this.chunkGenerateTicketLimiter.takeAllocation(time, genRate, ratedGensThisTick);
+            this.chunkGenerateTicketLimiter.returnUnused(maxGensThisTick - ratedGensThisTick);
 
             // try to pull ticking chunks
             while (!this.tickingQueue.isEmpty()) {
@@ -820,10 +830,10 @@ public final class RegionizedPlayerChunkLoader {
             }
 
             // try to pull sending chunks
-            final long maxSends = Math.max(0L, Math.min(MAX_RATE, Integer.MAX_VALUE)); // note: no logic to track concurrent sends
-            final int maxSendsThisTick = Math.min((int)this.chunkSendLimiter.takeAllocation(time, sendRate, maxSends), this.sendQueue.size());
+            final long maxSends = Math.max(0L, Math.min(MAX_RATE, Math.min(this.sendQueue.size(), Integer.MAX_VALUE))); // note: no logic to track concurrent sends
+            final long maxSendsThisTick = this.chunkSendLimiter.takeAllocation(maxSends);
             // we do not return sends that we took from the allocation back because we want to limit the max send rate, not target it
-            for (int i = 0; i < maxSendsThisTick; ++i) {
+            for (long i = 0; i < maxSendsThisTick; ++i) {
                 final long pendingSend = this.sendQueue.firstLong();
                 final int pendingSendX = CoordinateUtils.getChunkX(pendingSend);
                 final int pendingSendZ = CoordinateUtils.getChunkZ(pendingSend);
@@ -885,12 +895,6 @@ public final class RegionizedPlayerChunkLoader {
 
             // update chunk center
             this.player.connection.send(this.updateClientChunkCenter(chunkX, chunkZ));
-
-            // reset limiters, they will start at a zero allocation
-            final long time = System.nanoTime();
-            this.chunkLoadTicketLimiter.reset(time);
-            this.chunkGenerateTicketLimiter.reset(time);
-            this.chunkSendLimiter.reset(time);
 
             // now we can update
             this.update();
