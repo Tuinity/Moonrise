@@ -45,7 +45,7 @@ abstract class PacketProcessorMixin implements AutoCloseable, TickLoopPacketProc
      * @author Spottedleaf
      */
     @Redirect(
-        method = "scheduleIfPossible",
+        method = "scheduleIfPossible*",
         at = @At(
             value = "INVOKE",
             target = "Ljava/util/Queue;add(Ljava/lang/Object;)Z"

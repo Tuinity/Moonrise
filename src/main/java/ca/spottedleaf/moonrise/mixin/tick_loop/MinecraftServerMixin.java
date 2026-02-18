@@ -23,6 +23,7 @@ import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.chunk.storage.ChunkIOErrorReporter;
 import org.objectweb.asm.Opcodes;
@@ -32,13 +33,13 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Predicate;
 
 @Mixin(MinecraftServer.class)
 abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements ServerInfo, CommandSource, ChunkIOErrorReporter, TickLoopMinecraftServer {
@@ -84,6 +85,9 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
 
     @Shadow
     private long idleTimeNanos;
+
+    @Shadow
+    protected abstract boolean haveTime();
 
     // firstPeriod is set on init
     @Unique
@@ -221,7 +225,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
             );
 
             // adjust ticksBehind so that it is not greater-than catchup
-            if (ticksBehind > catchup) {
+            if (ticksBehind - catchup > 0L) {
                 final long difference = ticksBehind - catchup;
                 this.tickSchedule.advanceBy(difference, interval);
             }
@@ -306,7 +310,6 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
                 }
 
                 // execute tasks while there are tasks and there is time left
-                // note: we do not need to bypass the task execution check here (like managedBlock) since it checks time
                 while (this.pollTask() && (Util.getNanos() - deadline < 0L));
 
                 final long now = Util.getNanos();
@@ -348,19 +351,57 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
     private void dropNextTickTimeInc(final MinecraftServer instance, final long value) {}
 
     /**
-     * @reason Do not delay queued tasks up to 3 ticks. Instead, change the delay so that there is
-     *         at most 1 tick of processing delay. Combined with the mixin below, this ensures that
-     *         all tasks queued before a tick starts will be executed on that tick.
+     * The tickCount field is not incremented exactly where and when we want for our
+     * usage here.
+     * <p></p>
+     * There are two problems we need to fix:
+     * <ol>
+     *     <li>The tickCount field is not incremented when paused through integrated server.</li>
+     *     <li>The tickCount field is incremented after draining tasks (during server tick).</li>
+     * </ol>
+     * Our goal with the tick count here is to prevent executing tasks scheduled after the start
+     * of the current tick, which is marked by the task draining.
+     *
+     * @see #runAllTasksAtStart
+     */
+    @Unique
+    private final AtomicInteger tickTaskTickCount = new AtomicInteger();
+
+    /**
+     * @reason {@link #tickTaskTickCount}
      * @author Spottedleaf
      */
-    @ModifyConstant(
-        method = "shouldRun(Lnet/minecraft/server/TickTask;)Z",
-        constant = @Constant(
-            intValue = 3, ordinal = 0
+    @Redirect(
+        method = "wrapRunnable(Ljava/lang/Runnable;)Lnet/minecraft/server/TickTask;",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/server/MinecraftServer;tickCount:I",
+            opcode = Opcodes.GETFIELD
         )
     )
-    private int changeMaxTaskDelay(final int constant) {
-        return 1;
+    public int wrapRunnableUseCorrectTickCount(final MinecraftServer instance) {
+        return this.tickTaskTickCount.get();
+    }
+
+    /**
+     * @reason {@link #tickTaskTickCount}
+     * @author Spottedleaf
+     */
+    @Overwrite
+    protected boolean shouldRun(final TickTask task) {
+        // note: make this overflow safe as well
+        return this.tickTaskTickCount.getPlain() - task.getTick() > 0 ||
+            /*
+             * Ensure that we execute any task as long as we are waiting for the next tick.
+             * The Vanilla server will use managedBlock when awaiting the next tick, but
+             * we do not. The Vanilla managedBlock function will bypass task execution
+             * checks, and in order to ensure we execute tasks like Vanilla we need to also
+             * bypass task execution checks.
+             * This fixes {@link #recordTaskExecutionTimeWhileWaiting} not executing tasks
+             * that it should be executing.
+             */
+            this.waitingForNextTick ||
+            this.haveTime();
     }
 
     /**
@@ -402,8 +443,13 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
         profiler.push("moonrise:run_all_tasks");
 
         profiler.push("moonrise:run_all_server");
-        // avoid calling MinecraftServer#pollTask - we just want to execute queued tasks
-        while (super.pollTask()) {
+        // avoid calling pollTask - we just want to execute queued tasks
+        final int currentTick = this.tickTaskTickCount.incrementAndGet();
+        final Predicate<TickTask> taskPredicate = (final TickTask task) -> {
+            // only run tasks scheduled before the current tick - which we incremented above
+            return currentTick - task.getTick() > 0; // currentTick > tick accounting for overflow
+        };
+        while (((TickLoopBlockableEventLoop<TickTask>)this).moonrise$runTaskIf(taskPredicate)) {
             // execute small amounts of other tasks just in case the number of tasks we are
             // draining is large - chunk system and packet processing may be latency sensitive
 
@@ -475,5 +521,22 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
     )
     private boolean makePollExecutePacket(final MinecraftServer instance, final Operation<Boolean> original) {
         return ((TickLoopPacketProcessor)instance.packetProcessor()).moonrise$executeSinglePacket() | original.call(instance).booleanValue();
+    }
+
+    /**
+     * @reason Since remove the {@link BlockableEventLoop#runAllTasks()} call in
+     *         {@link #waitUntilNextTick}, we may not execute all queued tasks.
+     *         Note that this race condition still exists, we have just reduced it to
+     *         a time window that is no larger than Vanilla.
+     * @author Spottedleaf
+     */
+    @Inject(
+        method = "stopServer",
+        at = @At(
+            value = "HEAD"
+        )
+    )
+    private void executeTasksOnStop(final CallbackInfo ci) {
+        ((TickLoopBlockableEventLoop<TickTask>)this).moonrise$executeAllRecentInternalTasks();
     }
 }
