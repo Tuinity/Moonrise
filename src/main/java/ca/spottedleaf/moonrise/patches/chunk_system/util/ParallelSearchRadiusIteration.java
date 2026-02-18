@@ -4,6 +4,7 @@ import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongComparator;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -21,8 +22,46 @@ public final class ParallelSearchRadiusIteration {
             SEARCH_RADIUS_ITERATION_LIST[i] = generateBFSOrder(i);
         }
     }
+    private static final long[][] EUCLIDEAN_RADIUS_ITERATION_LIST = new long[SEARCH_RADIUS_ITERATION_LIST.length][];
+    static {
+        // we could iterate all the coordinates, but we already have them sort of sorted in SEARCH_RADIUS_ITERATION_LIST
+        final LongComparator comparator = (final long l1, final long l2) -> {
+            final int c1x = CoordinateUtils.getChunkX(l1);
+            final int c1z = CoordinateUtils.getChunkZ(l1);
+
+            final int c2x = CoordinateUtils.getChunkX(l2);
+            final int c2z = CoordinateUtils.getChunkZ(l2);
+
+            final int centerX = 0;
+            final int centerZ = 0;
+
+            // note: VD < 2^15, so we shouldn't worry about overflow
+            final int diff1X = c1x - centerX;
+            final int diff1Z = c1z - centerZ;
+
+            final int diff2X = c2x - centerX;
+            final int diff2Z = c2z - centerZ;
+
+            return Integer.compare(
+                (diff1X * diff1X) + (diff1Z * diff1Z),
+                (diff2X * diff2X) + (diff2Z * diff2Z)
+            );
+        };
+
+        for (int i = 0; i < EUCLIDEAN_RADIUS_ITERATION_LIST.length; ++i) {
+            final LongArrayList tmp = LongArrayList.wrap(SEARCH_RADIUS_ITERATION_LIST[i].clone());
+
+            tmp.sort(comparator);
+
+            EUCLIDEAN_RADIUS_ITERATION_LIST[i] = tmp.elements();
+        }
+    }
 
     public static long[] getSearchIteration(final int radius) {
+        return SEARCH_RADIUS_ITERATION_LIST[radius];
+    }
+
+    public static long[] getEuclideanIteration(final int radius) {
         return SEARCH_RADIUS_ITERATION_LIST[radius];
     }
 

@@ -372,7 +372,7 @@ public final class RegionizedPlayerChunkLoader {
         private final AllocatingRateLimiter chunkGenerateTicketLimiter = new AllocatingRateLimiter(ALLOCATION_GRANULARITY);
 
         // queues
-        private final LongComparator CLOSEST_MANHATTAN_DIST = (final long c1, final long c2) -> {
+        private final LongComparator queueComparator = (final long c1, final long c2) -> {
             final int c1x = CoordinateUtils.getChunkX(c1);
             final int c1z = CoordinateUtils.getChunkZ(c1);
 
@@ -382,17 +382,24 @@ public final class RegionizedPlayerChunkLoader {
             final int centerX = PlayerChunkLoaderData.this.lastChunkX;
             final int centerZ = PlayerChunkLoaderData.this.lastChunkZ;
 
+            // note: VD < 2^15, so we shouldn't worry about overflow
+            final int diff1X = c1x - centerX;
+            final int diff1Z = c1z - centerZ;
+
+            final int diff2X = c2x - centerX;
+            final int diff2Z = c2z - centerZ;
+
             return Integer.compare(
-                Math.abs(c1x - centerX) + Math.abs(c1z - centerZ),
-                Math.abs(c2x - centerX) + Math.abs(c2z - centerZ)
+                (diff1X * diff1X) + (diff1Z * diff1Z),
+                (diff2X * diff2X) + (diff2Z * diff2Z)
             );
         };
-        private final LongHeapPriorityQueue sendQueue = new LongHeapPriorityQueue(CLOSEST_MANHATTAN_DIST);
-        private final LongHeapPriorityQueue tickingQueue = new LongHeapPriorityQueue(CLOSEST_MANHATTAN_DIST);
-        private final LongHeapPriorityQueue generatingQueue = new LongHeapPriorityQueue(CLOSEST_MANHATTAN_DIST);
-        private final LongHeapPriorityQueue genQueue = new LongHeapPriorityQueue(CLOSEST_MANHATTAN_DIST);
-        private final LongHeapPriorityQueue loadingQueue = new LongHeapPriorityQueue(CLOSEST_MANHATTAN_DIST);
-        private final LongHeapPriorityQueue loadQueue = new LongHeapPriorityQueue(CLOSEST_MANHATTAN_DIST);
+        private final LongHeapPriorityQueue sendQueue = new LongHeapPriorityQueue(this.queueComparator);
+        private final LongHeapPriorityQueue tickingQueue = new LongHeapPriorityQueue(this.queueComparator);
+        private final LongHeapPriorityQueue generatingQueue = new LongHeapPriorityQueue(this.queueComparator);
+        private final LongHeapPriorityQueue genQueue = new LongHeapPriorityQueue(this.queueComparator);
+        private final LongHeapPriorityQueue loadingQueue = new LongHeapPriorityQueue(this.queueComparator);
+        private final LongHeapPriorityQueue loadQueue = new LongHeapPriorityQueue(this.queueComparator);
 
         private volatile boolean removed;
 
@@ -977,7 +984,7 @@ public final class RegionizedPlayerChunkLoader {
             this.canGenerateChunks = canGenerateChunks;
 
             // +1 since we need to load chunks +1 around the load view distance...
-            final long[] toIterate = ParallelSearchRadiusIteration.getSearchIteration(loadViewDistance + 1);
+            final long[] toIterate = ParallelSearchRadiusIteration.getEuclideanIteration(loadViewDistance + 1);
             // the iteration order is by increasing manhattan distance - so, we do NOT need to
             // sort anything in the queue!
             for (final long deltaChunk : toIterate) {
