@@ -39,6 +39,9 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     private short nonEmptyBlockCount;
 
     @Shadow
+    private short fluidCount;
+
+    @Shadow
     private short tickingBlockCount;
 
     @Shadow
@@ -125,21 +128,6 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     }
 
     /**
-     * @reason We should only adjust the fluid ticking count based on whether the fluid is TICKING, not whether it is EMPTY.
-     * @author Spottedleaf
-     */
-    @Redirect(
-        method = "setBlockState(IIILnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/level/material/FluidState;isEmpty()Z"
-        )
-    )
-    private boolean fixTickingFluidCount(final FluidState instance) {
-        return !instance.isRandomlyTicking();
-    }
-
-    /**
      * @reason Calculate block counts after deserialization.
      * @author Spottedleaf
      */
@@ -147,6 +135,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     public void recalcBlockCounts() {
         // reset, then recalculate
         this.nonEmptyBlockCount = (short)0;
+        this.fluidCount = (short)0;
         this.tickingBlockCount = (short)0;
         this.tickingFluidCount = (short)0;
         this.specialCollidingBlocks = (short)0;
@@ -200,7 +189,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                 final FluidState fluid = state.getFluidState();
 
                 if (!fluid.isEmpty()) {
-                    //this.nonEmptyBlockCount += count; // fix vanilla bug: make non-empty block count correct
+                    this.fluidCount += (short)paletteCount;
                     if (fluid.isRandomlyTicking()) {
                         this.tickingFluidCount += (short)paletteCount;
                     }
