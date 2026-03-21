@@ -135,7 +135,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
             return level;
         }
 
-        final int opacity = Math.max(1, centerState.getLightBlock());
+        final int opacity = Math.max(1, centerState.getLightDampening());
         if (opacity >= 15) {
             return level;
         }

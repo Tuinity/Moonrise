@@ -311,7 +311,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
         final BlockState centerState = this.getBlockState(worldX, worldY, worldZ);
 
         final BlockState conditionallyOpaqueState;
-        final int opacity = Math.max(1, centerState.getLightBlock());
+        final int opacity = Math.max(1, centerState.getLightDampening());
         if (((StarlightAbstractBlockState)centerState).starlight$isConditionallyFullOpaque()) {
             conditionallyOpaqueState = centerState;
         } else {
@@ -649,7 +649,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
                 flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
             }
 
-            final int opacity = current.getLightBlock();
+            final int opacity = current.getLightDampening();
             if (opacity > 0) {
                 // let the queued value (if any) handle it from here.
                 break;

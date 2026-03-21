@@ -1171,7 +1171,7 @@ public abstract class StarLightEngine {
                         flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
                     }
 
-                    final int opacity = blockState.getLightBlock();
+                    final int opacity = blockState.getLightDampening();
                     final int targetLevel = propagatedLightLevel - Math.max(1, opacity);
                     if (targetLevel <= currentLevel) {
                         continue;
@@ -1230,7 +1230,7 @@ public abstract class StarLightEngine {
                         flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
                     }
 
-                    final int opacity = blockState.getLightBlock();
+                    final int opacity = blockState.getLightDampening();
                     final int targetLevel = propagatedLightLevel - Math.max(1, opacity);
                     if (targetLevel <= currentLevel) {
                         continue;
@@ -1314,7 +1314,7 @@ public abstract class StarLightEngine {
                         flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
                     }
 
-                    final int opacity = blockState.getLightBlock();
+                    final int opacity = blockState.getLightDampening();
                     final int targetLevel = Math.max(0, propagatedLightLevel - Math.max(1, opacity));
                     if (lightLevel > targetLevel) {
                         // it looks like another source propagated here, so re-propagate it
@@ -1397,7 +1397,7 @@ public abstract class StarLightEngine {
                         flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
                     }
 
-                    final int opacity = blockState.getLightBlock();
+                    final int opacity = blockState.getLightDampening();
                     final int targetLevel = Math.max(0, propagatedLightLevel - Math.max(1, opacity));
                     if (lightLevel > targetLevel) {
                         // it looks like another source propagated here, so re-propagate it
