@@ -1,7 +1,6 @@
 accessWidener v1 official
 
 # BlockStateBase
-accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase lightBlock I
 accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase occlusionShape Lnet/minecraft/world/phys/shapes/VoxelShape;
 accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase occlusionShapesByFace [Lnet/minecraft/world/phys/shapes/VoxelShape;
 

@@ -19,8 +19,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(BlockBehaviour.BlockStateBase.class)
 abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implements StarlightAbstractBlockState {
 
-    protected BlockStateBaseMixin(Block object, Reference2ObjectArrayMap<Property<?>, Comparable<?>> reference2ObjectArrayMap, MapCodec<BlockState> mapCodec) {
-        super(object, reference2ObjectArrayMap, mapCodec);
+    protected BlockStateBaseMixin(final Block owner, final Property<?>[] propertyKeys, final Comparable<?>[] propertyValues) {
+        super(owner, propertyKeys, propertyValues);
     }
 
     @Shadow

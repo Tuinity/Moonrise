@@ -123,3 +123,4 @@ YamlConfig/
 .settings
 .eclipse/
 .project
+.kotlin/

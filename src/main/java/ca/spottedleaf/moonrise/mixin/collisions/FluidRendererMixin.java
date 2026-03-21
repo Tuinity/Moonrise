@@ -3,7 +3,7 @@ package ca.spottedleaf.moonrise.mixin.collisions;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import net.minecraft.client.renderer.block.LiquidBlockRenderer;
+import net.minecraft.client.renderer.block.FluidRenderer;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.ArrayVoxelShape;
@@ -13,8 +13,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-@Mixin(LiquidBlockRenderer.class)
-abstract class LiquidBlockRendererMixin {
+@Mixin(FluidRenderer.class)
+abstract class FluidRendererMixin {
 
     /**
      * @reason Eliminate uncached extrusion of the water block height shape

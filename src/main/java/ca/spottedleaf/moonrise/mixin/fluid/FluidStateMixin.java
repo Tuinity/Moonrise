@@ -19,8 +19,8 @@ abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> implements
     @Shadow
     public abstract Fluid getType();
 
-    protected FluidStateMixin(Fluid object, Reference2ObjectArrayMap<Property<?>, Comparable<?>> reference2ObjectArrayMap, MapCodec<FluidState> mapCodec) {
-        super(object, reference2ObjectArrayMap, mapCodec);
+    protected FluidStateMixin(final Fluid owner, final Property<?>[] propertyKeys, final Comparable<?>[] propertyValues) {
+        super(owner, propertyKeys, propertyValues);
     }
 
     @Unique

@@ -4,11 +4,11 @@
 # https://maven.shedaniel.me/me/shedaniel/cloth/
 cloth = "21.11.153"
 fabricLoader = "0.18.4"
-minecraft = "26.1-snapshot-8"
+minecraft = "26.1-rc-2"
 # https://projects.neoforged.net/neoforged/neoforge
-neoforge= "26.1.0.0-alpha.11+snapshot-7"
+neoforge= "26.1.0.0-alpha.15+pre-3"
 # https://projects.neoforged.net/neoforged/neoform
-neoform = "26.1-snapshot-8-1"
+neoform = "26.1-rc-2-1"
 
 [plugins]
 
@@ -27,6 +27,6 @@ snakeyaml = "org.yaml:snakeyaml:2.5"
 
 clothConfig-neoforge = { module = "me.shedaniel.cloth:cloth-config-neoforge", version.ref = "cloth" }
 clothConfig-fabric = { module = "me.shedaniel.cloth:cloth-config-fabric", version.ref = "cloth" }
-modmenu = "com.terraformersmc:modmenu:17.0.0-beta.2"
+modmenu = "com.terraformersmc:modmenu:18.0.0-alpha.6"
 
 asm = "org.ow2.asm:asm:9.8"

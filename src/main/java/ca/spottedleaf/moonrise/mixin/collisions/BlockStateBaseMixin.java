@@ -36,8 +36,8 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
     @Shadow
     public VoxelShape occlusionShape;
 
-    protected BlockStateBaseMixin(Block object, Reference2ObjectArrayMap<Property<?>, Comparable<?>> reference2ObjectArrayMap, MapCodec<BlockState> mapCodec) {
-        super(object, reference2ObjectArrayMap, mapCodec);
+    protected BlockStateBaseMixin(final Block owner, final Property<?>[] propertyKeys, final Comparable<?>[] propertyValues) {
+        super(owner, propertyKeys, propertyValues);
     }
 
     @Unique
