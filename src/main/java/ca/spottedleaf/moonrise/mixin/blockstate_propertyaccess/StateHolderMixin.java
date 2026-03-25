@@ -2,12 +2,10 @@ package ca.spottedleaf.moonrise.mixin.blockstate_propertyaccess;
 
 import ca.spottedleaf.moonrise.patches.blockstate_propertyaccess.PropertyAccessStateHolder;
 import ca.spottedleaf.moonrise.patches.blockstate_propertyaccess.util.ZeroCollidingReferenceStateTable;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.world.level.block.state.StateHolder;
 import net.minecraft.world.level.block.state.properties.Property;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -15,20 +13,28 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
+import java.util.stream.Stream;
 
 @Mixin(StateHolder.class)
-abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
+abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder<O, S> {
 
     @Shadow
     @Final
     protected O owner;
 
     @Shadow
-    @Mutable
-    @Final
-    private Reference2ObjectArrayMap<Property<?>, Comparable<?>> values;
+    public Property<?>[] propertyKeys;
+
+    @Shadow
+    public Comparable<?>[] propertyValues;
+
+    @Shadow
+    private S[][] neighbors;
+
+    @Shadow
+    private static <T extends Comparable<T>> Property.Value<T> createValue(final Property<T> propertyKey, final Comparable<?> propertyValue) {
+        throw new UnsupportedOperationException();
+    }
 
     @Unique
     protected ZeroCollidingReferenceStateTable<O, S> optimisedTable;
@@ -41,6 +47,19 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
         return this.tableIndex;
     }
 
+    @Override
+    public final void moonrise$init(final Collection<S> states) {
+        this.optimisedTable.loadInTable(states);
+
+        // de-duplicate the tables and remove values, properties, neighbours arrays
+        for (final S neighbour : states) {
+            ((StateHolderMixin<O, S>)(Object)(StateHolder<O, S>)neighbour).optimisedTable = this.optimisedTable;
+            ((StateHolderMixin<O, S>)(Object)(StateHolder<O, S>)neighbour).propertyKeys = null;
+            ((StateHolderMixin<O, S>)(Object)(StateHolder<O, S>)neighbour).propertyValues = null;
+            ((StateHolderMixin<O, S>)(Object)(StateHolder<O, S>)neighbour).neighbors = null;
+        }
+    }
+
     /**
      * @reason Hook into constructor to init fields
      * @author Spottedleaf
@@ -51,44 +70,38 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
                     value = "RETURN"
             )
     )
-    private void init(final CallbackInfo ci) {
-        this.optimisedTable = new ZeroCollidingReferenceStateTable<>(this.values.keySet());
-        this.tableIndex = this.optimisedTable.getIndex((StateHolder<O, S>)(Object)this);
+    private void init(final O owner, final Property<?>[] propertyKeys, final Comparable<?>[] propertyValues, final CallbackInfo ci) {
+        this.optimisedTable = new ZeroCollidingReferenceStateTable<>(propertyKeys);
+        this.tableIndex = this.optimisedTable.getIndex((StateHolder<O, S>)(Object)this, propertyKeys, propertyValues);
     }
 
     /**
-     * @reason Init table for ZCST
+     * @reason De-duplicate the property keys
      * @author Spottedleaf
      */
-    @Inject(
-            method = "populateNeighbours",
-            cancellable = true,
-            at = @At(
-                    value = "HEAD"
-            )
-    )
-    private void loadTable(final Map<Map<Property<?>, Comparable<?>>, S> map, final CallbackInfo ci) {
-        // Uses #entrySet() instead of #values() for ModernFix compat (until when/if they implement #values() on their map) (also in ZCRST#loadInTable)
+    @Overwrite
+    public Collection<Property<?>> getProperties() {
+        return this.optimisedTable.getProperties();
+    }
 
-        if (this.optimisedTable.isLoaded()) {
-            ci.cancel();
-            return;
-        }
-        this.optimisedTable.loadInTable(map);
+    /**
+     * @reason De-duplicate the property keys
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public boolean isSingletonState() {
+        return this.optimisedTable.isSingletonState();
+    }
 
-        // de-duplicate the tables
-        for (final Map.Entry<Map<Property<?>, Comparable<?>>, S> entry : map.entrySet()) {
-            final S value = entry.getValue();
-            ((StateHolderMixin<O, S>)(Object)(StateHolder<O, S>)value).optimisedTable = this.optimisedTable;
-        }
-
-        // remove values arrays
-        for (final Map.Entry<Map<Property<?>, Comparable<?>>, S> entry : map.entrySet()) {
-            final S value = entry.getValue();
-            ((StateHolderMixin<O, S>)(Object)(StateHolder<O, S>)value).values = null;
-        }
-
-        ci.cancel();
+    /**
+     * @reason De-duplicate the property keys
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public Stream<Property.Value<?>> getValues() {
+        return this.optimisedTable.getProperties().stream().map((final Property<?> prop) -> {
+            return createValue(prop, StateHolderMixin.this.getValue(prop));
+        });
     }
 
     /**
@@ -149,25 +162,5 @@ abstract class StateHolderMixin<O, S> implements PropertyAccessStateHolder {
     @Overwrite
     public <T extends Comparable<T>> boolean hasProperty(final Property<T> property) {
         return property != null && this.optimisedTable.hasProperty(property);
-    }
-
-    /**
-     * @reason Replace with optimisedTable
-     * @author embeddedt
-     */
-    @Overwrite
-    public Collection<Property<?>> getProperties() {
-        return this.optimisedTable.getProperties();
-    }
-
-    /**
-     * @reason Replace with optimisedTable
-     * @author embeddedt
-     */
-    @Overwrite
-    public Map<Property<?>, Comparable<?>> getValues() {
-        final ZeroCollidingReferenceStateTable<O, S> table = this.optimisedTable;
-        // We have to use this.values until the table is loaded
-        return table.isLoaded() ? table.getMapView(this.tableIndex) : this.values;
     }
 }
