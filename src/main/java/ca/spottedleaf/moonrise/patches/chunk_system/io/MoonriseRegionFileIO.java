@@ -6,8 +6,7 @@ import ca.spottedleaf.concurrentutil.completable.Completable;
 import ca.spottedleaf.concurrentutil.executor.Cancellable;
 import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.executor.queue.AreaDependentQueue;
-import ca.spottedleaf.concurrentutil.function.BiLong1Function;
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
+import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2ReferenceHashTable;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
@@ -772,7 +771,7 @@ public final class MoonriseRegionFileIO {
         final ImmediateCallbackCompletion callbackInfo = new ImmediateCallbackCompletion();
 
         final long key = CoordinateUtils.getChunkKey(chunkX, chunkZ);
-        final BiLong1Function<ChunkIOTask, ChunkIOTask> compute = (final long keyInMap, final ChunkIOTask running) -> {
+        final ConcurrentChainedLong2ReferenceHashTable.BiLongObjectObjectFunction<ChunkIOTask, ChunkIOTask> compute = (final long keyInMap, final ChunkIOTask running) -> {
             if (running == null) {
                 // not scheduled
 
@@ -1420,7 +1419,7 @@ public final class MoonriseRegionFileIO {
 
         public final RegionFileType type;
         private final PrioritisedExecutor compressionExecutor;
-        private final ConcurrentLong2ReferenceChainedHashTable<ChunkIOTask> chunkTasks = new ConcurrentLong2ReferenceChainedHashTable<>();
+        private final ConcurrentChainedLong2ReferenceHashTable<ChunkIOTask> chunkTasks = new ConcurrentChainedLong2ReferenceHashTable<>();
         private final AreaDependentQueue regionIoQueue;
 
         private final AtomicLong inProgressTasks = new AtomicLong();

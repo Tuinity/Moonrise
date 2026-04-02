@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
+import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2ReferenceHashTable;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
@@ -36,7 +36,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.IOException;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -57,7 +56,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
     private SavedDataStorage savedDataStorage;
 
     @Unique
-    private final ConcurrentLong2ReferenceChainedHashTable<LevelChunk> fullChunks = new ConcurrentLong2ReferenceChainedHashTable<>();
+    private final ConcurrentChainedLong2ReferenceHashTable<LevelChunk> fullChunks = new ConcurrentChainedLong2ReferenceHashTable<>();
 
     @Override
     public final void moonrise$setFullChunk(final int chunkX, final int chunkZ, final LevelChunk chunk) {

@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.queue;
 
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
+import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2ReferenceHashTable;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -16,7 +16,7 @@ public final class ChunkUnloadQueue {
 
     public final int coordinateShift;
     private final AtomicLong orderGenerator = new AtomicLong();
-    private final ConcurrentLong2ReferenceChainedHashTable<UnloadSection> unloadSections = new ConcurrentLong2ReferenceChainedHashTable<>();
+    private final ConcurrentChainedLong2ReferenceHashTable<UnloadSection> unloadSections = new ConcurrentChainedLong2ReferenceHashTable<>();
 
     /*
      * Note: write operations do not occur in parallel for any given section.
@@ -32,8 +32,8 @@ public final class ChunkUnloadQueue {
     public List<SectionToUnload> retrieveForAllRegions() {
         final List<SectionToUnload> ret = new ArrayList<>();
 
-        for (final Iterator<ConcurrentLong2ReferenceChainedHashTable.TableEntry<UnloadSection>> iterator = this.unloadSections.entryIterator(); iterator.hasNext();) {
-            final ConcurrentLong2ReferenceChainedHashTable.TableEntry<UnloadSection> entry = iterator.next();
+        for (final Iterator<ConcurrentChainedLong2ReferenceHashTable.TableEntry<UnloadSection>> iterator = this.unloadSections.entryIterator(); iterator.hasNext();) {
+            final ConcurrentChainedLong2ReferenceHashTable.TableEntry<UnloadSection> entry = iterator.next();
             final long key = entry.getKey();
             final UnloadSection section = entry.getValue();
             final int sectionX = CoordinateUtils.getChunkX(key);

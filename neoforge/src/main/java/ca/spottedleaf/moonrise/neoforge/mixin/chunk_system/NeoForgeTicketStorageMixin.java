@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.neoforge.mixin.chunk_system;
 
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2LongChainedHashTable;
+import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2LongHashTable;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketStorage;
@@ -57,7 +57,7 @@ abstract class NeoForgeTicketStorageMixin implements ChunkSystemTicketStorage {
      */
     @Overwrite
     public boolean shouldForceNaturalSpawning(final ChunkPos pos) {
-        final ConcurrentLong2LongChainedHashTable counters = ((ChunkSystemServerLevel)this.moonrise$getChunkMap().level).moonrise$getChunkTaskScheduler()
+        final ConcurrentChainedLong2LongHashTable counters = ((ChunkSystemServerLevel)this.moonrise$getChunkMap().level).moonrise$getChunkTaskScheduler()
             .chunkHolderManager.getTicketCounters(ChunkSystemTicketType.COUNTER_TYPER_NATURAL_SPAWNING_FORCED);
 
         if (counters == null || counters.isEmpty()) {

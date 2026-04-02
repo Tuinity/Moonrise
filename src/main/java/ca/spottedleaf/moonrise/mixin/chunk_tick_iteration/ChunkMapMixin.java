@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_tick_iteration;
 
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2LongChainedHashTable;
+import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2LongHashTable;
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
@@ -13,12 +13,9 @@ import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType
 import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickDistanceManager;
 import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel;
 import com.llamalad7.mixinextras.sugar.Local;
-import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ChunkMap;
-import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
@@ -216,7 +213,7 @@ abstract class ChunkMapMixin {
     public void collectSpawningChunks(final List<LevelChunk> list, final CallbackInfo ci) {
         final ReferenceList<LevelChunk> tickingChunks = ((ChunkTickServerLevel)this.level).moonrise$getPlayerTickingChunks();
 
-        final ConcurrentLong2LongChainedHashTable forceSpawningChunks = ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler()
+        final ConcurrentChainedLong2LongHashTable forceSpawningChunks = ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler()
             .chunkHolderManager.getTicketCounters(ChunkSystemTicketType.COUNTER_TYPER_NATURAL_SPAWNING_FORCED);
 
         final LevelChunk[] raw = tickingChunks.getRawDataUnchecked();

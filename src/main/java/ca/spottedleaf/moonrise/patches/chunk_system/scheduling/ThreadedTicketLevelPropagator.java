@@ -2,7 +2,7 @@ package ca.spottedleaf.moonrise.patches.chunk_system.scheduling;
 
 import ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
+import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2ReferenceHashTable;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkProgressionTask;
@@ -34,11 +34,11 @@ public abstract class ThreadedTicketLevelPropagator {
     }
 
     private final UpdateQueue updateQueue;
-    private final ConcurrentLong2ReferenceChainedHashTable<Section> sections;
+    private final ConcurrentChainedLong2ReferenceHashTable<Section> sections;
 
     public ThreadedTicketLevelPropagator() {
         this.updateQueue = new UpdateQueue();
-        this.sections = new ConcurrentLong2ReferenceChainedHashTable<>();
+        this.sections = new ConcurrentChainedLong2ReferenceHashTable<>();
     }
 
     // must hold ticket lock for:

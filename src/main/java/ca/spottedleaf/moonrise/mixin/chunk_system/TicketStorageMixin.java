@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2LongChainedHashTable;
+import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2LongHashTable;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicket;
@@ -13,7 +13,6 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.Ticket;
 import net.minecraft.server.level.TicketType;
-import net.minecraft.util.SortedArraySet;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.TicketStorage;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -132,7 +131,7 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
      */
     @Overwrite
     public boolean shouldKeepDimensionActive() {
-        final ConcurrentLong2LongChainedHashTable ticketCounters = ((ChunkSystemServerLevel)this.chunkMap.level).moonrise$getChunkTaskScheduler().chunkHolderManager
+        final ConcurrentChainedLong2LongHashTable ticketCounters = ((ChunkSystemServerLevel)this.chunkMap.level).moonrise$getChunkTaskScheduler().chunkHolderManager
             .getTicketCounters(ChunkSystemTicketType.COUNTER_TYPE_KEEP_DIMENSION_ACTIVE);
         return ticketCounters != null && !ticketCounters.isEmpty();
     }
@@ -251,7 +250,7 @@ abstract class TicketStorageMixin extends SavedData implements ChunkSystemTicket
      */
     @Overwrite
     public LongSet getForceLoadedChunks() {
-        final ConcurrentLong2LongChainedHashTable forced = ((ChunkSystemServerLevel)this.chunkMap.level).moonrise$getChunkTaskScheduler()
+        final ConcurrentChainedLong2LongHashTable forced = ((ChunkSystemServerLevel)this.chunkMap.level).moonrise$getChunkTaskScheduler()
             .chunkHolderManager.getTicketCounters(ChunkSystemTicketType.COUNTER_TYPE_FORCED);
 
         if (forced == null) {

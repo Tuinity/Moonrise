@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
+import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2ReferenceHashTable;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData;
@@ -11,7 +11,6 @@ import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemEntityGette
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.util.profiling.Profiler;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
@@ -49,7 +48,7 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
     private EntityLookup entityLookup;
 
     @Unique
-    private final ConcurrentLong2ReferenceChainedHashTable<ChunkData> chunkData = new ConcurrentLong2ReferenceChainedHashTable<>();
+    private final ConcurrentChainedLong2ReferenceHashTable<ChunkData> chunkData = new ConcurrentChainedLong2ReferenceHashTable<>();
 
     @Override
     public final EntityLookup moonrise$getEntityLookup() {

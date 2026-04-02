@@ -2,7 +2,7 @@ package ca.spottedleaf.moonrise.patches.starlight.light;
 
 import ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue;
 import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
+import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2ReferenceHashTable;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
@@ -745,7 +745,7 @@ public final class StarLightInterface {
 
     public static final class ServerLightQueue extends LightQueue {
 
-        private final ConcurrentLong2ReferenceChainedHashTable<ServerChunkTasks> chunkTasks = new ConcurrentLong2ReferenceChainedHashTable<>();
+        private final ConcurrentChainedLong2ReferenceHashTable<ServerChunkTasks> chunkTasks = new ConcurrentChainedLong2ReferenceHashTable<>();
 
         public ServerLightQueue(final StarLightInterface lightInterface) {
             super(lightInterface);

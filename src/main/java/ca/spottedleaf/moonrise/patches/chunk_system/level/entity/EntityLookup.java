@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.level.entity;
 
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
 import ca.spottedleaf.concurrentutil.map.SWMRLong2ObjectHashTable;
+import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2ReferenceHashTable;
 import ca.spottedleaf.moonrise.common.list.EntityList;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
@@ -48,7 +48,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
 
     protected final LevelCallback<Entity> worldCallback;
 
-    protected final ConcurrentLong2ReferenceChainedHashTable<Entity> entityById = new ConcurrentLong2ReferenceChainedHashTable<>();
+    protected final ConcurrentChainedLong2ReferenceHashTable<Entity> entityById = new ConcurrentChainedLong2ReferenceHashTable<>();
     protected final ConcurrentHashMap<UUID, Entity> entityByUUID = new ConcurrentHashMap<>();
     protected final EntityList accessibleEntities = new EntityList();
 

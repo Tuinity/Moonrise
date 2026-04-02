@@ -2,8 +2,8 @@ package ca.spottedleaf.moonrise.patches.chunk_system.scheduling;
 
 import ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2LongChainedHashTable;
-import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
+import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2LongHashTable;
+import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2ReferenceHashTable;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
@@ -72,11 +72,11 @@ public final class ChunkHolderManager {
     private static final long NO_TIMEOUT_MARKER = Long.MIN_VALUE;
     public final ReentrantAreaLock ticketLockArea;
 
-    private final ConcurrentLong2ReferenceChainedHashTable<TicketSet> tickets = new ConcurrentLong2ReferenceChainedHashTable<>();
-    private final ConcurrentLong2ReferenceChainedHashTable<Long2IntOpenHashMap> sectionToChunkToExpireCount = new ConcurrentLong2ReferenceChainedHashTable<>();
+    private final ConcurrentChainedLong2ReferenceHashTable<TicketSet> tickets = new ConcurrentChainedLong2ReferenceHashTable<>();
+    private final ConcurrentChainedLong2ReferenceHashTable<Long2IntOpenHashMap> sectionToChunkToExpireCount = new ConcurrentChainedLong2ReferenceHashTable<>();
     final ChunkUnloadQueue unloadQueue;
 
-    private final ConcurrentLong2ReferenceChainedHashTable<NewChunkHolder> chunkHolders = ConcurrentLong2ReferenceChainedHashTable.createWithCapacity(16384, 0.25f);
+    private final ConcurrentChainedLong2ReferenceHashTable<NewChunkHolder> chunkHolders = ConcurrentChainedLong2ReferenceHashTable.createWithCapacity(16384, 0.25f);
     private final ServerLevel world;
     private final ChunkTaskScheduler taskScheduler;
     private long currentTick;
@@ -105,7 +105,7 @@ public final class ChunkHolderManager {
     });
 
     // mapping of counter id -> (mapping of pos->count)
-    private final ConcurrentLong2ReferenceChainedHashTable<ConcurrentLong2LongChainedHashTable> ticketCounters = new ConcurrentLong2ReferenceChainedHashTable<>();
+    private final ConcurrentChainedLong2ReferenceHashTable<ConcurrentChainedLong2LongHashTable> ticketCounters = new ConcurrentChainedLong2ReferenceHashTable<>();
 
     public ChunkHolderManager(final ServerLevel world, final ChunkTaskScheduler taskScheduler) {
         this.world = world;
@@ -622,7 +622,7 @@ public final class ChunkHolderManager {
     private void addTicketCounter(final TicketType type, final long pos) {
         for (final long counterType : ((ChunkSystemTicketType<?>)(Object)type).moonrise$getCounterTypes()) {
             this.ticketCounters.computeIfAbsent(counterType, (final long counterId) -> {
-                return new ConcurrentLong2LongChainedHashTable();
+                return new ConcurrentChainedLong2LongHashTable();
             }).addTo(pos, 1L, 1L);
         }
     }
@@ -633,7 +633,7 @@ public final class ChunkHolderManager {
         }
     }
 
-    public ConcurrentLong2LongChainedHashTable getTicketCounters(final long counterType) {
+    public ConcurrentChainedLong2LongHashTable getTicketCounters(final long counterType) {
         return this.ticketCounters.get(counterType);
     }
 
@@ -1501,9 +1501,9 @@ public final class ChunkHolderManager {
         final JsonArray allTicketsJson = new JsonArray();
         ret.add("tickets", allTicketsJson);
 
-        for (final Iterator<ConcurrentLong2ReferenceChainedHashTable.TableEntry<TicketSet>> iterator = this.tickets.entryIterator();
+        for (final Iterator<ConcurrentChainedLong2ReferenceHashTable.TableEntry<TicketSet>> iterator = this.tickets.entryIterator();
             iterator.hasNext();) {
-            final ConcurrentLong2ReferenceChainedHashTable.TableEntry<TicketSet> coordinateTickets = iterator.next();
+            final ConcurrentChainedLong2ReferenceHashTable.TableEntry<TicketSet> coordinateTickets = iterator.next();
             final long coordinate = coordinateTickets.getKey();
             final TicketSet tickets = coordinateTickets.getValue();
 
