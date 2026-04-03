@@ -32,13 +32,13 @@ abstract class AcquirePoiMixin {
                     ordinal = 0
             )
     )
-    private static Stream<Pair<Holder<PoiType>, BlockPos>> useLimitedSearch(PoiManager poiManager, Predicate<Holder<PoiType>> predicate,
-                                                                            Predicate<BlockPos> predicate2, BlockPos blockPos, int i,
-                                                                            PoiManager.Occupancy occup) {
+    private static Stream<Pair<Holder<PoiType>, BlockPos>> useLimitedSearch(final PoiManager poiManager, final Predicate<Holder<PoiType>> predicate,
+                                                                            final Predicate<BlockPos> filter, final BlockPos center, final int radius,
+                                                                            final PoiManager.Occupancy occupancy) {
         final List<Pair<Holder<PoiType>, BlockPos>> ret = new ArrayList<>();
 
         PoiAccess.findNearestPoiPositions(
-                poiManager, predicate, predicate2, blockPos, i, Double.MAX_VALUE, occup, PoiAccess.LOAD_FOR_SEARCHING, 5, ret
+                poiManager, predicate, filter, center, radius, Double.MAX_VALUE, occupancy, PoiAccess.LOAD_FOR_SEARCHING, 5, ret
         );
 
         return ret.stream();
