@@ -315,6 +315,11 @@ accessible method net/minecraft/network/PacketProcessor$ListenerAndPacket <init>
 # TracingExecutor
 accessible method net/minecraft/TracingExecutor wrapUnnamed (Ljava/lang/Runnable;)Ljava/lang/Runnable;
 
+
 # StateHolder
 mutable field net/minecraft/world/level/block/state/StateHolder propertyKeys [Lnet/minecraft/world/level/block/state/properties/Property;
 mutable field net/minecraft/world/level/block/state/StateHolder propertyValues [Ljava/lang/Comparable;
+
+
+# ClientCommonPacketListenerImpl
+accessible field net/minecraft/client/multiplayer/ClientCommonPacketListenerImpl minecraft Lnet/minecraft/client/Minecraft;

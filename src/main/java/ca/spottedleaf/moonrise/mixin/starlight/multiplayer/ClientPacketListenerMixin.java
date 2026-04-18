@@ -1,6 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.starlight.multiplayer;
 
 import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
+import net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.core.SectionPos;
@@ -40,11 +41,11 @@ abstract class ClientPacketListenerMixin implements ClientGamePacketListener {
      */
 
     @Shadow
-    protected abstract void applyLightData(final int chunkX, final int chunkZ, final ClientboundLightUpdatePacketData clientboundLightUpdatePacketData,
-                                           final boolean markDirty);
+    protected abstract void applyLightData(final int x, final int z, final ClientboundLightUpdatePacketData lightData,
+                                           final boolean scheduleRebuild);
 
     @Shadow
-    protected abstract void enableChunkLight(final LevelChunk levelChunk, final int chunkX, final int chunkZ);
+    protected abstract void enableChunkLight(final LevelChunk chunk, final int x, final int z);
 
     /**
      * Call the runnable immediately to prevent desync
@@ -135,5 +136,6 @@ abstract class ClientPacketListenerMixin implements ClientGamePacketListener {
 
         // we need this for the update chunk status call, so that it can tell starlight what sections are empty and such
         this.enableChunkLight(chunk, chunkX, chunkZ);
+        ((ClientCommonPacketListenerImpl)(ClientPacketListener)(Object)this).minecraft.levelRenderer.onChunkReadyToRender(chunk.getPos());
     }
 }
