@@ -72,11 +72,11 @@ tasks.processResources {
 }
 
 tasks.jar {
-    archiveClassifier = "dev"
+    archiveClassifier = "slim"
 }
 
 tasks.shadowJar {
-    archiveClassifier = "dev-all"
+    archiveClassifier = "all"
     destinationDirectory = layout.buildDirectory.dir("libs")
     configurations = listOf(project.configurations.getByName("shadow"))
     relocate("ca.spottedleaf.concurrentutil", "ca.spottedleaf.moonrise.libs.ca.spottedleaf.concurrentutil")

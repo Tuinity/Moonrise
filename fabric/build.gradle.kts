@@ -65,6 +65,10 @@ tasks.processResources {
     }
 }
 
+tasks.jar {
+    archiveClassifier = "slim"
+}
+
 tasks.shadowJar {
     archiveClassifier.set("")
     configurations = listOf(project.configurations.getByName("shadow"))
