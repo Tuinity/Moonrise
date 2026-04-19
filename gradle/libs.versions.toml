@@ -3,10 +3,10 @@
 [versions]
 # https://maven.shedaniel.me/me/shedaniel/cloth/
 cloth = "26.1.154"
-fabricLoader = "0.18.6"
+fabricLoader = "0.19.2"
 minecraft = "26.1.2"
 # https://projects.neoforged.net/neoforged/neoforge
-neoforge = "26.1.2.15-beta"
+neoforge = "26.1.2.20-beta"
 # https://projects.neoforged.net/neoforged/neoform
 neoform = "26.1.2-1"
 

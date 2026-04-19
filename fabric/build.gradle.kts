@@ -129,5 +129,5 @@ configurations.named("lithiumRuntimeOnly") {
     extendsFrom(configurations.getByName("lithium"))
 }
 tasks.named("runLithiumClient", RunGameTask::class.java) {
-    (classpath as ConfigurableFileCollection).from(configurations.named("modRuntimeClasspathLithiumMapped"))
+    (classpath as ConfigurableFileCollection).from(configurations.named("lithiumRuntimeClasspath"))
 }
