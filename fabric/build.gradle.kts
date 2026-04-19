@@ -10,7 +10,6 @@ plugins {
 val gui = rootProject.property("enable_gui").toString() == "true"
 if (gui) {
     sourceSets.create("gui")
-    loom.createRemapConfigurations(sourceSets.getByName("gui"))
 }
 
 dependencies {
@@ -32,10 +31,10 @@ dependencies {
         add("guiCompileOnly", project(":"))
         runtimeOnly(sourceSets.named("gui").get().output)
         shadow(sourceSets.named("gui").get().output)
-        add("modGuiImplementation", libs.clothConfig.fabric)
+        add("guiImplementation", libs.clothConfig.fabric)
         runtimeOnly(libs.clothConfig.fabric)
         include(libs.clothConfig.fabric)
-        add("modGuiImplementation", libs.modmenu)
+        add("guiImplementation", libs.modmenu)
         runtimeOnly(libs.modmenu)
     }
 
