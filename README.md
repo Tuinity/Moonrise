@@ -7,18 +7,31 @@ Moonrise
 
 Fabric/NeoForge mod for optimising performance of the integrated (singleplayer/LAN) and dedicated server.
 
+This mod works on both the client and server, but primarily benefits the server.
 
 ## Purpose
-Moonrise aims to optimise the game *without changing Vanilla behavior*. If you find that there are changes to Vanilla behavior,
-please open an issue.
+Moonrise aims to optimise the game *without changing Vanilla behaviour*.
+If you use Moonrise on the client, most of the affected areas only affect
+the integrated server or small parts of the client tick. This means that 
+improvements client side would behave similar to 
+[Lithium](https://modrinth.com/mod/lithium). 
 
-Moonrise is an official port of several important [Paper](https://github.com/PaperMC/Paper/)
-patches. Listed below are notable patches:
- - [Starlight](https://github.com/PaperMC/Starlight/)
- - Chunk system rewrite
- - Collision optimisations
- - Entity tracker optimisations
- - Random ticking optimisations
+Effectively all of Moonrise's changes are included in [Paper](https://papermc.io/),
+however Moonrise does not use changes from Paper that intentionally change gameplay.
+
+### The areas Moonrise optimises
+- Entity movement/collisions/physics/tracking
+- Chunk ticking/loading/generation/saving
+- Block/Entity retrieval (which systems like pathfinding and entity AI use frequently)
+
+The changes listed above result in measurably lower tick times on servers, as well
+as improved chunk loading and generation. 
+
+### Changes which improve responsiveness
+- Improve/fix the server list server ping UI response times (client install only)
+- Handle packets sent while the integrated/dedicated server is waiting for next tick (lowering perceived latency)
+- Lower worker thread count by default for low core systems (improving stability on them at cost of chunk loading speed)
+- Reduce TPS catchup by default (stops the server from speeding up when it momentarily lags)
 
 ## Known Compatibility Issues
 | Mod         | Status                                                                                                                                                                                                                                                                                                   |
@@ -28,7 +41,7 @@ patches. Listed below are notable patches:
 | C2ME        | <details><summary>❌ incompatible</summary>C2ME is based around modifications to the chunk system, which Moonrise replaces wholesale. This makes them fundamentally incompatible.</details>                                                                                                               |
 
 ## Configuration
-Moonrise provides documented configuration options for tuning the chunk system and enabling bugfixes in the config file `$mcdir$/config/moonrise.yml`.
+Moonrise provides documented configuration options (the config itself contains the documentation) for tuning the chunk system and enabling bugfixes in the config file `$mcdir$/config/moonrise.yml`.
 Important configuration options may be configured from the mods menu as well.
 
 ## Contact
