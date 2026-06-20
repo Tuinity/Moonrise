@@ -27,6 +27,6 @@ abstract class DedicatedServerMixin {
         if (!(task instanceof ServerWatchdog)) {
             throw new IllegalStateException("Wrong injection point!");
         }
-        return new TickThread(task, "Server Watchdog"); // name is set later anyways
+        return new TickThread(task, name);
     }
 }

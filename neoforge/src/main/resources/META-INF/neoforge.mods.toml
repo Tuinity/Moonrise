@@ -28,7 +28,7 @@ side = "BOTH"
 [[dependencies.moonrise]]
 modId = "minecraft"
 type = "required"
-versionRange = "(26.1,26.3)"
+versionRange = "(26.1.2,26.3)"
 ordering = "NONE"
 side = "BOTH"
 
