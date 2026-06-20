@@ -1,16 +1,20 @@
 package ca.spottedleaf.moonrise.mixin.tick_loop;
 
-import ca.spottedleaf.concurrentutil.util.TimeUtil;
+import ca.spottedleaf.common.util.TimeUtil;
 import ca.spottedleaf.moonrise.common.config.moonrise.MoonriseConfig;
-import ca.spottedleaf.moonrise.common.time.TickData;
-import ca.spottedleaf.moonrise.common.time.TickTime;
+import ca.spottedleaf.common.time.TickData;
+import ca.spottedleaf.common.time.TickTime;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
-import ca.spottedleaf.moonrise.common.time.Schedule;
+import ca.spottedleaf.common.time.Schedule;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer;
+import ca.spottedleaf.moonrise.patches.sampler.ServerSkipTicksEvent;
+import ca.spottedleaf.moonrise.patches.sampler.ServerTickEndEvent;
+import ca.spottedleaf.moonrise.patches.sampler.ServerTickStartEvent;
 import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopBlockableEventLoop;
 import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopMinecraftServer;
 import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopPacketProcessor;
+import ca.spottedleaf.sampler.SamplerInstance;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.util.Util;
@@ -228,6 +232,7 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
             if (ticksBehind - catchup > 0L) {
                 final long difference = ticksBehind - catchup;
                 this.tickSchedule.advanceBy(difference, interval);
+                SamplerInstance.pushEvent(ServerSkipTicksEvent.EVENT, new ServerSkipTicksEvent(difference));
             }
 
             // start next tick
@@ -239,6 +244,8 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
         this.lastOverloadWarningNanos = this.nextTickTimeNanos;
 
         this.currentTickStart = now;
+
+        SamplerInstance.pushEvent(ServerTickStartEvent.EVENT, new ServerTickStartEvent());
 
         return interval;
     }
@@ -279,6 +286,8 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
         this.taskExecutionTime = 0L;
 
         this.addTickTime(time);
+
+        SamplerInstance.pushEvent(ServerTickEndEvent.EVENT, new ServerTickEndEvent());
     }
 
     /**

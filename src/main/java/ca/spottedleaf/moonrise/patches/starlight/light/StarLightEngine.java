@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.patches.starlight.light;
 
-import ca.spottedleaf.concurrentutil.util.IntegerUtil;
+import ca.spottedleaf.common.util.IntegerUtil;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;

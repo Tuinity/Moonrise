@@ -136,6 +136,5 @@ abstract class ClientPacketListenerMixin implements ClientGamePacketListener {
 
         // we need this for the update chunk status call, so that it can tell starlight what sections are empty and such
         this.enableChunkLight(chunk, chunkX, chunkZ);
-        ((ClientCommonPacketListenerImpl)(ClientPacketListener)(Object)this).minecraft.levelRenderer.onChunkReadyToRender(chunk.getPos());
     }
 }

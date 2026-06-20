@@ -16,7 +16,7 @@ abstract class OptionsMixin {
     @ModifyConstant(
             method = "<init>",
             constant = @Constant(
-                    intValue = 32, ordinal = 1
+                    intValue = 32, ordinal = 2
             )
     )
     private int replaceViewDistanceConstant(final int constant) {
@@ -30,7 +30,7 @@ abstract class OptionsMixin {
     @ModifyConstant(
             method = "<init>",
             constant = @Constant(
-                    intValue = 32, ordinal = 2
+                    intValue = 32, ordinal = 3
             )
     )
     private int replaceSimulationDistanceConstant(final int constant) {

@@ -1,11 +1,12 @@
 package ca.spottedleaf.moonrise.patches.profiler.client;
 
+import ca.spottedleaf.common.time.TickTime;
+import ca.spottedleaf.common.util.TimeUtil;
 import ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool;
-import ca.spottedleaf.moonrise.patches.profiler.LProfileGraph;
-import ca.spottedleaf.moonrise.patches.profiler.LProfilerRegistry;
-import ca.spottedleaf.moonrise.patches.profiler.LeafProfiler;
-import ca.spottedleaf.moonrise.patches.profiler.TickTime;
 import ca.spottedleaf.moonrise.common.util.MoonriseCommon;
+import ca.spottedleaf.profiler.ProfileGraph;
+import ca.spottedleaf.profiler.Profiler;
+import ca.spottedleaf.profiler.ProfilerRegistry;
 import com.mojang.logging.LogUtils;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,17 +40,17 @@ public final class ClientProfilerInstance implements ProfilerFiller {
     private final Path root;
     private final BalancedPrioritisedThreadPool.OrderedStreamGroup.Queue dumpPool;
 
-    private final LProfilerRegistry registry = new LProfilerRegistry();
+    private final ProfilerRegistry registry = new ProfilerRegistry();
 
-    public final int clientFrame = this.registry.createType(LProfilerRegistry.ProfileType.TIMER, "Client Frame");
-    public final int clientTick = this.registry.createType(LProfilerRegistry.ProfileType.TIMER, "Client Tick");
+    public final int clientFrame = this.registry.createType(ProfilerRegistry.ProfileType.TIMER, "Client Frame");
+    public final int clientTick = this.registry.createType(ProfilerRegistry.ProfileType.TIMER, "Client Tick");
 
-    private long previousTickStart = TickTime.DEADLINE_NOT_SET;
-    private long tickStart = TickTime.DEADLINE_NOT_SET;
-    private long tickStartCPU = TickTime.DEADLINE_NOT_SET;
+    private long previousTickStart = TimeUtil.DEADLINE_NOT_SET;
+    private long tickStart = TimeUtil.DEADLINE_NOT_SET;
+    private long tickStartCPU = TimeUtil.DEADLINE_NOT_SET;
 
-    private LeafProfiler delayedFrameProfiler;
-    private LeafProfiler frameProfiler;
+    private Profiler delayedFrameProfiler;
+    private Profiler frameProfiler;
 
     private long tick;
 
@@ -62,7 +63,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
     private final List<RecordedTick> recordedTicks = new ArrayList<>();
 
     private static record RecordedTick(
-        TickTime tickTime, long tickNum, LeafProfiler.ProfilingData profilingData
+        TickTime tickTime, long tickNum, Profiler.ProfilingData profilingData
     ) {}
 
     public ClientProfilerInstance() {
@@ -71,9 +72,9 @@ public final class ClientProfilerInstance implements ProfilerFiller {
     }
 
     private void reset() {
-        this.previousTickStart = TickTime.DEADLINE_NOT_SET;
-        this.tickStart = TickTime.DEADLINE_NOT_SET;
-        this.tickStartCPU = TickTime.DEADLINE_NOT_SET;
+        this.previousTickStart = TimeUtil.DEADLINE_NOT_SET;
+        this.tickStart = TimeUtil.DEADLINE_NOT_SET;
+        this.tickStartCPU = TimeUtil.DEADLINE_NOT_SET;
         this.tick = 0L;
         this.delayedFrameProfiler = null;
         this.sessionPath = null;
@@ -91,7 +92,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
         this.sessionPath = this.root.resolve(sessionId);
         this.averageThreshold = averageThresholdNS < 0L ? Long.MAX_VALUE : averageThresholdNS;
         this.recordThreshold = recordThresholdNS < 0L ? Long.MAX_VALUE : recordThresholdNS;
-        this.delayedFrameProfiler = new LeafProfiler(this.registry, new LProfileGraph());
+        this.delayedFrameProfiler = new Profiler(this.registry, new ProfileGraph());
 
         LOGGER.info("Starting client profiler with avg_threshold=" + averageThresholdNS + "rec_threshold=" + recordThresholdNS + ",sessionId=" + sessionId);
 
@@ -132,7 +133,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
     private void writeAverages() {
         final Path path = this.sessionPath.resolve("averages.txt");
 
-        final LeafProfiler.ProfilingData profilingData = this.delayedFrameProfiler.copyAccumulated();
+        final Profiler.ProfilingData profilingData = this.delayedFrameProfiler.copyAccumulated();
 
         this.dumpPool.queueTask(() -> {
             try {
@@ -181,7 +182,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
         final long time = System.nanoTime();
 
         final TickTime tickTime = new TickTime(
-                this.previousTickStart, this.tickStart, this.tickStart, this.tickStartCPU, time, cpuTime, MEASURE_CPU_TIME
+                this.previousTickStart, this.tickStart, this.tickStart, this.tickStartCPU, time, cpuTime, 0L, 0L, MEASURE_CPU_TIME
         );
 
         if (this.frameProfiler != null) {
@@ -216,7 +217,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
 
     @Override
     public void push(final String string) {
-        final LeafProfiler frameProfiler = this.frameProfiler;
+        final Profiler frameProfiler = this.frameProfiler;
         if (frameProfiler == null) {
             return;
         }
@@ -229,7 +230,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
 
     @Override
     public void push(final Supplier<String> supplier) {
-        final LeafProfiler frameProfiler = this.frameProfiler;
+        final Profiler frameProfiler = this.frameProfiler;
         if (frameProfiler == null) {
             return;
         }
@@ -242,7 +243,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
 
     @Override
     public void pop() {
-        final LeafProfiler frameProfiler = this.frameProfiler;
+        final Profiler frameProfiler = this.frameProfiler;
         if (frameProfiler == null) {
             return;
         }
@@ -276,7 +277,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
 
     @Override
     public void incrementCounter(final String string, final int i) {
-        final LeafProfiler frameProfiler = this.frameProfiler;
+        final Profiler frameProfiler = this.frameProfiler;
         if (frameProfiler == null) {
             return;
         }
@@ -293,7 +294,7 @@ public final class ClientProfilerInstance implements ProfilerFiller {
 
     @Override
     public void incrementCounter(final Supplier<String> supplier, final int i) {
-        final LeafProfiler frameProfiler = this.frameProfiler;
+        final Profiler frameProfiler = this.frameProfiler;
         if (frameProfiler == null) {
             return;
         }

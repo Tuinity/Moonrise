@@ -5,11 +5,10 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.client.ClientEn
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.extract.LevelExtractor;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -29,7 +28,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import java.util.function.Supplier;
 
 @Mixin(ClientLevel.class)
 abstract class ClientLevelMixin extends Level implements ChunkSystemLevel {
@@ -55,8 +53,9 @@ abstract class ClientLevelMixin extends Level implements ChunkSystemLevel {
                     value = "RETURN"
             )
     )
-    private void init(ClientPacketListener clientPacketListener, ClientLevel.ClientLevelData clientLevelData, ResourceKey<Level> resourceKey,
-                      Holder<DimensionType> holder, int i, int j, LevelRenderer levelRenderer, boolean bl, long l, int k, CallbackInfo ci) {
+    private void init(ClientPacketListener connection, ClientLevel.ClientLevelData levelData, ResourceKey dimension, Holder dimensionType,
+                      int serverChunkRadius, int serverSimulationDistance, LevelExtractor levelExtractor, boolean isDebug,
+                      long biomeZoomSeed, int seaLevel, CallbackInfo ci) {
         this.entityStorage = null;
 
         this.moonrise$setEntityLookup(new ClientEntityLookup(this, ((ClientLevel)(Object)this).new EntityCallbacks()));

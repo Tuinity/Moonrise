@@ -14,5 +14,5 @@ repositories {
 dependencies {
     implementation("net.fabricmc:access-widener:2.1.0")
     implementation("dev.architectury:at:1.0.1")
-    implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.1.0")
+    implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.4.2")
 }

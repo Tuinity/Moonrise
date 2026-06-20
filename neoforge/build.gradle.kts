@@ -48,8 +48,8 @@ dependencies {
     shadow(rootProject.sourceSets.getByName("lithium").output)
     compileOnly(project(":"))
 
-    libs(libs.concurrentutil) { isTransitive = false }
-    libs(libs.yamlconfig) { isTransitive = false }
+    libs(libs.leafpile) { isTransitive = false }
+    libs(libs.zstdjni)
     libs(libs.snakeyaml)
 
     if (gui) {

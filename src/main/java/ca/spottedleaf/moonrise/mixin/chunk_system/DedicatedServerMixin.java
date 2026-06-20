@@ -19,11 +19,11 @@ abstract class DedicatedServerMixin {
         method = "initServer",
         at = @At(
             value = "NEW",
-            target = "(Ljava/lang/Runnable;)Ljava/lang/Thread;",
+            target = "(Ljava/lang/Runnable;Ljava/lang/String;)Ljava/lang/Thread;",
             ordinal = 0
         )
     )
-    private Thread redirectServerWatchdogThread(final Runnable task) {
+    private Thread redirectServerWatchdogThread(final Runnable task, final String name) {
         if (!(task instanceof ServerWatchdog)) {
             throw new IllegalStateException("Wrong injection point!");
         }
