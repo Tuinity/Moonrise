@@ -107,8 +107,12 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
         return maskNonAccessible(id == null ? null : this.entityByUUID.get(id));
     }
 
+    public boolean hasEntity(final int id) {
+        return this.entityById.containsKey((long)id);
+    }
+
     public boolean hasEntity(final UUID uuid) {
-        return this.get(uuid) != null;
+        return uuid != null && this.entityByUUID.containsKey(uuid);
     }
 
     public String getDebugInfo() {
