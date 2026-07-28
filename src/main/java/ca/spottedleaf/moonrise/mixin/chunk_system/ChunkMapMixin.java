@@ -6,6 +6,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.MoonriseChunkHolderMap;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import com.mojang.datafixers.DataFixer;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
@@ -125,9 +126,10 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
         LightChunkGetter p_214842_, ChunkGenerator p_214843_,
         ChunkStatusUpdateListener p_214845_, Supplier p_214846_, TicketStorage p_394462_, int p_214847_,
         boolean p_214848_, CallbackInfo ci) {
-        // intentionally destroy old chunk system hooks
-        this.updatingChunkMap = null;
-        this.visibleChunkMap = null;
+        // Expose loaded chunk holders for mod compatibility
+        final MoonriseChunkHolderMap chunkHolderMap = new MoonriseChunkHolderMap(p_214836_);
+        this.updatingChunkMap = chunkHolderMap;
+        this.visibleChunkMap = chunkHolderMap;
         this.pendingUnloads = null;
         this.worldgenTaskDispatcher = null;
         this.lightTaskDispatcher = null;
