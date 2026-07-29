@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.entity_tracker;
 
-import ca.spottedleaf.moonrise.common.list.ReferenceList;
+import ca.spottedleaf.moonrise.common.list.IteratorSafeOrderedReferenceSet;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
@@ -70,19 +70,22 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
     private boolean newTrackerTick(final Iterator<?> iterator) {
         final ServerEntityLookup entityLookup = (ServerEntityLookup)((ChunkSystemServerLevel)this.level).moonrise$getEntityLookup();;
 
-        final ReferenceList<Entity> trackerEntities = entityLookup.trackerEntities;
-        final Entity[] trackerEntitiesRaw = trackerEntities.getRawDataUnchecked();
-        for (int i = 0, len = trackerEntities.size(); i < len; ++i) {
-            final Entity entity = trackerEntitiesRaw[i];
-            final ChunkMap.TrackedEntity tracker = ((EntityTrackerEntity)entity).moonrise$getTrackedEntity();
-            if (tracker == null) {
-                continue;
+        final IteratorSafeOrderedReferenceSet.Iterator<Entity> trackerIterator = entityLookup.trackerEntities.iterator();
+        try {
+            while (trackerIterator.hasNext()) {
+                final Entity entity = trackerIterator.next();
+                final ChunkMap.TrackedEntity tracker = ((EntityTrackerEntity)entity).moonrise$getTrackedEntity();
+                if (tracker == null) {
+                    continue;
+                }
+                ((EntityTrackerTrackedEntity)tracker).moonrise$tick(((ChunkSystemEntity)entity).moonrise$getChunkData().nearbyPlayers);
+                if (((EntityTrackerTrackedEntity)tracker).moonrise$hasPlayers()
+                    || ((ChunkSystemEntity)entity).moonrise$getChunkStatus().isOrAfter(FullChunkStatus.ENTITY_TICKING)) {
+                    tracker.serverEntity.sendChanges();
+                }
             }
-            ((EntityTrackerTrackedEntity)tracker).moonrise$tick(((ChunkSystemEntity)entity).moonrise$getChunkData().nearbyPlayers);
-            if (((EntityTrackerTrackedEntity)tracker).moonrise$hasPlayers()
-                || ((ChunkSystemEntity)entity).moonrise$getChunkStatus().isOrAfter(FullChunkStatus.ENTITY_TICKING)) {
-                tracker.serverEntity.sendChanges();
-            }
+        } finally {
+            trackerIterator.finishedIterating();
         }
 
         return false;
