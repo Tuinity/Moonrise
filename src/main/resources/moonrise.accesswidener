@@ -321,5 +321,11 @@ mutable field net/minecraft/world/level/block/state/StateHolder propertyKeys [Ln
 mutable field net/minecraft/world/level/block/state/StateHolder propertyValues [Ljava/lang/Comparable;
 
 
+# Structure generation concurrency fix: open the private weight classes for the fix mixins to reference
+accessible class net/minecraft/world/level/levelgen/structure/structures/NetherFortressPieces$PieceWeight
+accessible class net/minecraft/world/level/levelgen/structure/structures/StrongholdPieces$PieceWeight
+accessible class net/minecraft/world/level/levelgen/structure/structures/StrongholdPieces$StrongholdPiece
+accessible field net/minecraft/world/level/levelgen/structure/structures/StrongholdPieces STRONGHOLD_PIECE_WEIGHTS [Lnet/minecraft/world/level/levelgen/structure/structures/StrongholdPieces$PieceWeight;
+
 # ClientCommonPacketListenerImpl
 accessible field net/minecraft/client/multiplayer/ClientCommonPacketListenerImpl minecraft Lnet/minecraft/client/Minecraft;
