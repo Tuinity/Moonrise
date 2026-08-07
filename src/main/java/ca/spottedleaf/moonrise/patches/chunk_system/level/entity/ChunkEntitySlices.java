@@ -514,8 +514,9 @@ public final class ChunkEntitySlices {
             final int minSection = this.slices.minSection;
             final int maxSection = this.slices.maxSection;
 
-            final int min = Mth.clamp(Mth.floor(box.minY - 2.0) >> 4, minSection, maxSection);
-            final int max = Mth.clamp(Mth.floor(box.maxY + 2.0) >> 4, minSection, maxSection);
+            // See EntitySectionStorage#forEachAccessibleNonEmptySection
+            final int min = Mth.clamp(Mth.floor(box.minY - 4.0) >> 4, minSection, maxSection);
+            final int max = Mth.clamp(Mth.floor(box.maxY + 0.0) >> 4, minSection, maxSection);
 
             final BasicEntityList<Entity>[] entitiesBySection = this.entitiesBySection;
 
@@ -553,8 +554,9 @@ public final class ChunkEntitySlices {
             final int minSection = this.slices.minSection;
             final int maxSection = this.slices.maxSection;
 
-            final int min = Mth.clamp(Mth.floor(box.minY - 2.0) >> 4, minSection, maxSection);
-            final int max = Mth.clamp(Mth.floor(box.maxY + 2.0) >> 4, minSection, maxSection);
+            // See EntitySectionStorage#forEachAccessibleNonEmptySection
+            final int min = Mth.clamp(Mth.floor(box.minY - 4.0) >> 4, minSection, maxSection);
+            final int max = Mth.clamp(Mth.floor(box.maxY + 0.0) >> 4, minSection, maxSection);
 
             final BasicEntityList<Entity>[] entitiesBySection = this.entitiesBySection;
 
