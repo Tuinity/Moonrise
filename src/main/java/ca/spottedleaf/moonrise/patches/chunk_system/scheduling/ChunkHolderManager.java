@@ -169,11 +169,11 @@ public final class ChunkHolderManager {
     }
 
     public Iterable<ChunkHolder> getOldChunkHoldersIterable() {
-        return new Iterable<ChunkHolder>() {
+        return new Iterable<>() {
             @Override
             public Iterator<ChunkHolder> iterator() {
                 final Iterator<NewChunkHolder> iterator = ChunkHolderManager.this.chunkHolders.valueIterator();
-                return new Iterator<ChunkHolder>() {
+                return new Iterator<>() {
                     @Override
                     public boolean hasNext() {
                         return iterator.hasNext();
