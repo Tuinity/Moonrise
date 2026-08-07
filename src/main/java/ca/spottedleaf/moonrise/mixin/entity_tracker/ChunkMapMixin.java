@@ -1,10 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.entity_tracker;
 
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
-import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity;
-import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
-import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.server.ServerEntityLookup;
 import ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerEntity;
 import ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerTrackedEntity;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -21,12 +18,12 @@ import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Iterator;
 
 @Mixin(ChunkMap.class)
@@ -37,6 +34,23 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
 
     public ChunkMapMixin(final RegionStorageInfo info, final Path folder, final DataFixer fixerUpper, final boolean sync, final DataFixTypes dataFixType) {
         super(info, folder, fixerUpper, sync, dataFixType);
+    }
+
+    @Unique
+    private static final Entity[] EMPTY_ENTITY_ARRAY = new Entity[0];
+    @Unique
+    private ReferenceList<Entity> trackerEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
+    @Unique
+    private boolean iteratingTrackerEntities = false;
+
+    @Unique
+    private void checkIteratingTrackerEntities() {
+        if (!this.iteratingTrackerEntities) {
+            return;
+        }
+
+        this.trackerEntities = this.trackerEntities.copy();
+        this.iteratingTrackerEntities = false;
     }
 
     /**
@@ -68,21 +82,24 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
             )
     )
     private boolean newTrackerTick(final Iterator<?> iterator) {
-        final ServerEntityLookup entityLookup = (ServerEntityLookup)((ChunkSystemServerLevel)this.level).moonrise$getEntityLookup();;
-
-        final ReferenceList<Entity> trackerEntities = entityLookup.trackerEntities;
-        final Entity[] trackerEntitiesRaw = trackerEntities.getRawDataUnchecked();
-        for (int i = 0, len = trackerEntities.size(); i < len; ++i) {
-            final Entity entity = trackerEntitiesRaw[i];
-            final ChunkMap.TrackedEntity tracker = ((EntityTrackerEntity)entity).moonrise$getTrackedEntity();
-            if (tracker == null) {
-                continue;
+        this.iteratingTrackerEntities = true;
+        try {
+            final ReferenceList<Entity> trackerEntities = this.trackerEntities;
+            final Entity[] trackerEntitiesRaw = trackerEntities.getRawDataUnchecked();
+            for (int i = 0, len = trackerEntities.size(); i < len; ++i) {
+                final Entity entity = trackerEntitiesRaw[i];
+                final ChunkMap.TrackedEntity tracker = ((EntityTrackerEntity)entity).moonrise$getTrackedEntity();
+                if (tracker == null) {
+                    continue;
+                }
+                ((EntityTrackerTrackedEntity)tracker).moonrise$tick(((ChunkSystemEntity)entity).moonrise$getChunkData().nearbyPlayers);
+                if (((EntityTrackerTrackedEntity)tracker).moonrise$hasPlayers()
+                    || ((ChunkSystemEntity)entity).moonrise$getChunkStatus().isOrAfter(FullChunkStatus.ENTITY_TICKING)) {
+                    tracker.serverEntity.sendChanges();
+                }
             }
-            ((EntityTrackerTrackedEntity)tracker).moonrise$tick(((ChunkSystemEntity)entity).moonrise$getChunkData().nearbyPlayers);
-            if (((EntityTrackerTrackedEntity)tracker).moonrise$hasPlayers()
-                || ((ChunkSystemEntity)entity).moonrise$getChunkStatus().isOrAfter(FullChunkStatus.ENTITY_TICKING)) {
-                tracker.serverEntity.sendChanges();
-            }
+        } finally {
+            this.iteratingTrackerEntities = false;
         }
 
         return false;
@@ -106,6 +123,8 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
             throw new IllegalStateException("Entity is already tracked");
         }
         ((EntityTrackerEntity)entity).moonrise$setTrackedEntity(trackedEntity);
+        // note: the tick loop is OK when adding entities
+        this.trackerEntities.add(entity);
     }
 
     /**
@@ -120,5 +139,7 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
     )
     private void removeEntityTrackerField(final Entity entity, final CallbackInfo ci) {
         ((EntityTrackerEntity)entity).moonrise$setTrackedEntity(null);
+        this.checkIteratingTrackerEntities();
+        this.trackerEntities.remove(entity);
     }
 }

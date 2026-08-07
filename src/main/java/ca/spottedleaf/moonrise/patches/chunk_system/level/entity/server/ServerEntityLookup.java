@@ -1,7 +1,6 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.level.entity.server;
 
 import ca.spottedleaf.moonrise.common.PlatformHooks;
-import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
@@ -19,10 +18,7 @@ import net.minecraft.world.level.entity.LevelCallback;
 
 public final class ServerEntityLookup extends EntityLookup {
 
-    private static final Entity[] EMPTY_ENTITY_ARRAY = new Entity[0];
-
     private final ServerLevel serverWorld;
-    public final ReferenceList<Entity> trackerEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY); // Moonrise - entity tracker
 
     // Vanilla does not increment ticket timeouts if the chunk is progressing in generation. They made this change in 1.21.6 so that the ender pearl
     // ticket does not expire if the chunk fails to generate before the timeout expires. Rather than blindly adjusting the entire system behavior
@@ -110,16 +106,12 @@ public final class ServerEntityLookup extends EntityLookup {
 
     @Override
     protected void entityStartLoaded(final Entity entity) {
-        // Moonrise start - entity tracker
-        this.trackerEntities.add(entity);
-        // Moonrise end - entity tracker
+
     }
 
     @Override
     protected void entityEndLoaded(final Entity entity) {
-        // Moonrise start - entity tracker
-        this.trackerEntities.remove(entity);
-        // Moonrise end - entity tracker
+
     }
 
     @Override
