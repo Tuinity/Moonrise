@@ -374,7 +374,7 @@ public final class RegionizedPlayerChunkLoader {
                 .add(100L, TimeUnit.MILLISECONDS, 4.0)
                 .add(500L, TimeUnit.MILLISECONDS, 2.0)
                 .add(1_000L, TimeUnit.MILLISECONDS, 1.25)
-                .add(3_000L, TimeUnit.SECONDS, 1.0)
+                .add(3_000L, TimeUnit.MILLISECONDS, 1.0)
                 .build();
         }
 
