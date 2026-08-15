@@ -112,6 +112,7 @@
         "random.LevelMixin",
         "random_ticking.BiomeManagerMixin",
         "random_ticking.BiomeMixin",
+        "random_ticking.LevelChunkMixin",
         "random_ticking.LevelMixin",
         "random_ticking.ServerLevelMixin",
         "serverlist.ConnectionMixin",

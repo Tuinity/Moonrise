@@ -5,6 +5,7 @@ import ca.spottedleaf.moonrise.common.list.ShortList;
 import ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
+import ca.spottedleaf.moonrise.patches.random_ticking.RandomTickLevelChunk;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -58,8 +59,10 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
 
     /**
      * @reason Optimise random ticking so that it will not retrieve BlockStates unnecessarily, as well as
-     *         optionally avoiding double ticking fluid blocks.
+     *         optionally avoiding double ticking fluid blocks. Skip sections with no randomly ticking
+     *         blocks in the outer loop when the chunk is sparse.
      * @author Spottedleaf
+     * @author HabsW
      */
     @Redirect(
             method = "tickChunk",
@@ -79,42 +82,81 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
         final ChunkPos cpos = chunk.getPos();
         final int offsetX = cpos.x() << 4;
         final int offsetZ = cpos.z() << 4;
+        final int sectionsLen = sections.length;
 
-        for (int sectionIndex = 0, sectionsLen = sections.length; sectionIndex < sectionsLen; sectionIndex++) {
-            final int offsetY = (sectionIndex + minSection) << 4;
-            final LevelChunkSection section = sections[sectionIndex];
-            final PalettedContainer<BlockState> states = section.states;
-            if (!section.isRandomlyTickingBlocks()) {
-                continue;
+        // Empty sections never consume random-tick RNG (the inner loop is behind tickingBlockCount > 0).
+        // Walk only those sections when sparse; dense chunks keep the original linear scan.
+        final RandomTickLevelChunk randomTickChunk = (RandomTickLevelChunk)chunk;
+        if (randomTickChunk.moonrise$randomTickSectionMask() == null) {
+            randomTickChunk.moonrise$bindRandomTickSections();
+        }
+        final int eligible = randomTickChunk.moonrise$randomTickEligibleCount();
+        if (eligible <= 0) {
+            return EMPTY_SECTION_ARRAY;
+        }
+        if (eligible * 2 >= sectionsLen) {
+            for (int sectionIndex = 0; sectionIndex < sectionsLen; sectionIndex++) {
+                this.randomTickSection(sections[sectionIndex], sectionIndex, minSection, offsetX, offsetZ, tickSpeed, simpleRandom, doubleTickFluids);
             }
-
-            final ShortList tickList = ((BlockCountingChunkSection)section).moonrise$getTickingBlockList();
-
-            for (int i = 0; i < tickSpeed; ++i) {
-                final int tickingBlocks = tickList.size();
-                final int index = simpleRandom.nextInt() & ((16 * 16 * 16) - 1);
-
-                if (index >= tickingBlocks) {
-                    // most of the time we fall here
+        } else {
+            final long[] mask = randomTickChunk.moonrise$randomTickSectionMask();
+            int from = 0;
+            while (from < sectionsLen) {
+                final int word = from >>> 6;
+                final long bits = mask[word] >>> (from & 63);
+                if (bits != 0L) {
+                    final int sectionIndex = from + Long.numberOfTrailingZeros(bits);
+                    if (sectionIndex >= sectionsLen) {
+                        break;
+                    }
+                    this.randomTickSection(sections[sectionIndex], sectionIndex, minSection, offsetX, offsetZ, tickSpeed, simpleRandom, doubleTickFluids);
+                    from = sectionIndex + 1;
                     continue;
                 }
-
-                final int location = (int)tickList.getRaw(index) & 0xFFFF;
-                final BlockState state = states.get(location);
-
-                // do not use a mutable pos, as some random tick implementations store the input without calling immutable()!
-                final BlockPos pos = new BlockPos((location & 15) | offsetX, ((location >>> (4 + 4)) & 15) | offsetY, ((location >>> 4) & 15) | offsetZ);
-
-                state.randomTick((ServerLevel)(Object)this, pos, simpleRandom);
-                if (doubleTickFluids) {
-                    final FluidState fluidState = state.getFluidState();
-                    if (fluidState.isRandomlyTicking()) {
-                        fluidState.randomTick((ServerLevel)(Object)this, pos, simpleRandom);
-                    }
-                }
+                from = (word + 1) << 6;
             }
         }
 
         return EMPTY_SECTION_ARRAY;
+    }
+
+    /**
+     * @reason Inner random-tick work for one section. Unchanged vs the original ShortList selection.
+     * @author HabsW
+     */
+    @Unique
+    private void randomTickSection(final LevelChunkSection section, final int sectionIndex, final int minSection,
+                                   final int offsetX, final int offsetZ, final int tickSpeed,
+                                   final SimpleThreadUnsafeRandom simpleRandom, final boolean doubleTickFluids) {
+        if (!section.isRandomlyTickingBlocks()) {
+            return;
+        }
+        final int offsetY = (sectionIndex + minSection) << 4;
+        final PalettedContainer<BlockState> states = section.states;
+        final ShortList tickList = ((BlockCountingChunkSection)section).moonrise$getTickingBlockList();
+
+        for (int i = 0; i < tickSpeed; ++i) {
+            final int tickingBlocks = tickList.size();
+            final int index = simpleRandom.nextInt() & ((16 * 16 * 16) - 1);
+
+            if (index >= tickingBlocks) {
+                // most of the time we fall here
+                continue;
+            }
+
+            final int location = (int)tickList.getRaw(index) & 0xFFFF;
+            final BlockState state = states.get(location);
+
+            // do not use a mutable pos, as some random tick implementations store the input without calling immutable()!
+            final BlockPos pos = new BlockPos((location & 15) | offsetX, ((location >>> (4 + 4)) & 15) | offsetY, ((location >>> 4) & 15) | offsetZ);
+
+            state.randomTick((ServerLevel)(Object)this, pos, simpleRandom);
+            if (doubleTickFluids) {
+                final FluidState fluidState = state.getFluidState();
+                if (fluidState.isRandomlyTicking()) {
+                    fluidState.randomTick((ServerLevel)(Object)this, pos, simpleRandom);
+                }
+            }
+        }
     }
 }
