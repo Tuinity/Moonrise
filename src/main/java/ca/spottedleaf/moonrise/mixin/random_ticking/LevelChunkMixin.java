@@ -34,6 +34,9 @@ abstract class LevelChunkMixin extends ChunkAccess implements RandomTickLevelChu
     @Unique
     private int moonrise$randomTickEligibleCount;
 
+    @Unique
+    private LevelChunkSection[] moonrise$boundSectionRefs;
+
     @Override
     public final void moonrise$noteRandomTickSection(final int index, final boolean ticking) {
         final long[] mask = this.moonrise$randomTickSectionMask;
@@ -58,9 +61,33 @@ abstract class LevelChunkMixin extends ChunkAccess implements RandomTickLevelChu
         }
     }
 
+    @Unique
+    private boolean moonrise$sectionRefsChanged(final LevelChunkSection[] sections) {
+        final LevelChunkSection[] bound = this.moonrise$boundSectionRefs;
+        if (bound == null || bound.length != sections.length) {
+            return true;
+        }
+        for (int i = 0; i < sections.length; i++) {
+            if (bound[i] != sections[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public final void moonrise$bindRandomTickSections() {
         final LevelChunkSection[] sections = this.getSections();
+        final LevelChunkSection[] oldRefs = this.moonrise$boundSectionRefs;
+        if (oldRefs != null) {
+            for (int i = 0; i < oldRefs.length; i++) {
+                final LevelChunkSection old = oldRefs[i];
+                if (old != null && (i >= sections.length || old != sections[i])) {
+                    ((RandomTickChunkSection)old).moonrise$unbindRandomTickChunk();
+                }
+            }
+        }
+
         final int words = (sections.length + 63) >> 6;
         if (this.moonrise$randomTickSectionMask == null || this.moonrise$randomTickSectionMask.length != words) {
             this.moonrise$randomTickSectionMask = new long[Math.max(words, 1)];
@@ -76,6 +103,15 @@ abstract class LevelChunkMixin extends ChunkAccess implements RandomTickLevelChu
                     this.moonrise$noteRandomTickSection(i, true);
                 }
             }
+        }
+        this.moonrise$boundSectionRefs = Arrays.copyOf(sections, sections.length);
+    }
+
+    @Override
+    public final void moonrise$ensureRandomTickSections() {
+        final LevelChunkSection[] sections = this.getSections();
+        if (this.moonrise$randomTickSectionMask == null || this.moonrise$sectionRefsChanged(sections)) {
+            this.moonrise$bindRandomTickSections();
         }
     }
 
@@ -103,6 +139,21 @@ abstract class LevelChunkMixin extends ChunkAccess implements RandomTickLevelChu
                                                             final long l, final LevelChunkSection[] levelChunkSections,
                                                             final LevelChunk.PostLoadProcessor postLoadProcessor,
                                                             final BlendingData blendingData, final CallbackInfo ci) {
+        if ((Object)this instanceof EmptyLevelChunk) {
+            return;
+        }
+        this.moonrise$bindRandomTickSections();
+    }
+
+    /**
+     * @reason Post-load processors may replace section objects after the constructor bind.
+     * @author HabsW
+     */
+    @Inject(
+            method = "runPostLoad",
+            at = @At("RETURN")
+    )
+    private void moonrise$bindRandomTickSectionsAfterPostLoad(final CallbackInfo ci) {
         if ((Object)this instanceof EmptyLevelChunk) {
             return;
         }

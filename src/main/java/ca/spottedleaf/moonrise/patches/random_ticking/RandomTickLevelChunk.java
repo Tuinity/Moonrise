@@ -6,6 +6,8 @@ public interface RandomTickLevelChunk {
 
     public void moonrise$bindRandomTickSections();
 
+    public void moonrise$ensureRandomTickSections();
+
     public int moonrise$randomTickEligibleCount();
 
     public long[] moonrise$randomTickSectionMask();

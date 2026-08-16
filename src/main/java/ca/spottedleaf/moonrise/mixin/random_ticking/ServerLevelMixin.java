@@ -87,9 +87,9 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
         // Empty sections never consume random-tick RNG (the inner loop is behind tickingBlockCount > 0).
         // Walk only those sections when sparse; dense chunks keep the original linear scan.
         final RandomTickLevelChunk randomTickChunk = (RandomTickLevelChunk)chunk;
-        if (randomTickChunk.moonrise$randomTickSectionMask() == null) {
-            randomTickChunk.moonrise$bindRandomTickSections();
-        }
+        // Rebuild if never bound, or if a caller replaced LevelChunkSection objects in getSections()
+        // (WorldEdit/FAWE-style). Vanilla has no setSection hook.
+        randomTickChunk.moonrise$ensureRandomTickSections();
         final int eligible = randomTickChunk.moonrise$randomTickEligibleCount();
         if (eligible <= 0) {
             return EMPTY_SECTION_ARRAY;

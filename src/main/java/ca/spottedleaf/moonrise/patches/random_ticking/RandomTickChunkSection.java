@@ -6,4 +6,6 @@ public interface RandomTickChunkSection {
 
     public void moonrise$bindRandomTickChunk(final LevelChunk chunk, final int index);
 
+    public void moonrise$unbindRandomTickChunk();
+
 }

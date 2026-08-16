@@ -85,6 +85,12 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection, Rand
         this.moonrise$randomTickIndex = index;
     }
 
+    @Override
+    public final void moonrise$unbindRandomTickChunk() {
+        this.moonrise$randomTickChunk = null;
+        this.moonrise$randomTickIndex = -1;
+    }
+
     @Unique
     private void moonrise$notifyRandomTickIndex(final boolean wasTicking) {
         final boolean nowTicking = this.tickingBlockCount > 0;
