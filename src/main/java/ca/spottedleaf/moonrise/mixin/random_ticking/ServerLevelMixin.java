@@ -74,7 +74,13 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
     )
     private LevelChunkSection[] optimiseRandomTick(final LevelChunk chunk,
                                                    @Local(ordinal = 0, argsOnly = true) final int tickSpeed) {
+        final RandomTickLevelChunk randomTickChunk = (RandomTickLevelChunk)chunk;
+        randomTickChunk.moonrise$beginRandomTickGetSections();
         final LevelChunkSection[] sections = chunk.getSections();
+        randomTickChunk.moonrise$endRandomTickGetSections();
+        if (randomTickChunk.moonrise$randomTickSectionMask() == null || randomTickChunk.moonrise$consumeSectionArrayBorrowed()) {
+            randomTickChunk.moonrise$ensureRandomTickSections();
+        }
         final int minSection = WorldUtil.getMinSection((ServerLevel)(Object)this);
         final SimpleThreadUnsafeRandom simpleRandom = this.simpleRandom;
         final boolean doubleTickFluids = !PlatformHooks.get().configFixMC224294();
@@ -86,10 +92,6 @@ abstract class ServerLevelMixin extends Level implements WorldGenLevel {
 
         // Empty sections never consume random-tick RNG (the inner loop is behind tickingBlockCount > 0).
         // Walk only those sections when sparse; dense chunks keep the original linear scan.
-        final RandomTickLevelChunk randomTickChunk = (RandomTickLevelChunk)chunk;
-        // Rebuild if never bound, or if a caller replaced LevelChunkSection objects in getSections()
-        // (WorldEdit/FAWE-style). Vanilla has no setSection hook.
-        randomTickChunk.moonrise$ensureRandomTickSections();
         final int eligible = randomTickChunk.moonrise$randomTickEligibleCount();
         if (eligible <= 0) {
             return EMPTY_SECTION_ARRAY;

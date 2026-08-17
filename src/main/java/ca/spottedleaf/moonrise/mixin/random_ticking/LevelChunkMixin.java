@@ -13,7 +13,9 @@ import net.minecraft.world.level.chunk.PalettedContainerFactory;
 import net.minecraft.world.level.chunk.UpgradeData;
 import net.minecraft.world.level.levelgen.blending.BlendingData;
 import net.minecraft.world.ticks.LevelChunkTicks;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -28,6 +30,10 @@ abstract class LevelChunkMixin extends ChunkAccess implements RandomTickLevelChu
         super(chunkPos, upgradeData, levelHeightAccessor, palettedContainerFactory, l, levelChunkSections, blendingData);
     }
 
+    @Shadow
+    @Final
+    protected LevelChunkSection[] sections;
+
     @Unique
     private long[] moonrise$randomTickSectionMask;
 
@@ -36,6 +42,12 @@ abstract class LevelChunkMixin extends ChunkAccess implements RandomTickLevelChu
 
     @Unique
     private LevelChunkSection[] moonrise$boundSectionRefs;
+
+    @Unique
+    private int moonrise$randomTickGetSectionsSuppress;
+
+    @Unique
+    private boolean moonrise$sectionArrayBorrowed;
 
     @Override
     public final void moonrise$noteRandomTickSection(final int index, final boolean ticking) {
@@ -77,7 +89,7 @@ abstract class LevelChunkMixin extends ChunkAccess implements RandomTickLevelChu
 
     @Override
     public final void moonrise$bindRandomTickSections() {
-        final LevelChunkSection[] sections = this.getSections();
+        final LevelChunkSection[] sections = this.sections;
         final LevelChunkSection[] oldRefs = this.moonrise$boundSectionRefs;
         if (oldRefs != null) {
             for (int i = 0; i < oldRefs.length; i++) {
@@ -109,10 +121,36 @@ abstract class LevelChunkMixin extends ChunkAccess implements RandomTickLevelChu
 
     @Override
     public final void moonrise$ensureRandomTickSections() {
-        final LevelChunkSection[] sections = this.getSections();
+        final LevelChunkSection[] sections = this.sections;
         if (this.moonrise$randomTickSectionMask == null || this.moonrise$sectionRefsChanged(sections)) {
             this.moonrise$bindRandomTickSections();
         }
+    }
+
+    @Override
+    public final void moonrise$beginRandomTickGetSections() {
+        this.moonrise$randomTickGetSectionsSuppress++;
+    }
+
+    @Override
+    public final void moonrise$endRandomTickGetSections() {
+        this.moonrise$randomTickGetSectionsSuppress--;
+    }
+
+    @Override
+    public final void moonrise$noteSectionArrayBorrowed() {
+        if (this.moonrise$randomTickGetSectionsSuppress == 0) {
+            this.moonrise$sectionArrayBorrowed = true;
+        }
+    }
+
+    @Override
+    public final boolean moonrise$consumeSectionArrayBorrowed() {
+        if (!this.moonrise$sectionArrayBorrowed) {
+            return false;
+        }
+        this.moonrise$sectionArrayBorrowed = false;
+        return true;
     }
 
     @Override
