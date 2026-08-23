@@ -2046,6 +2046,7 @@ public final class CollisionUtil {
                                         continue;
                                     }
 
+                                    // TODO perform intersection check using moved aabb instead of moved blockCollision so we can avoid the call?
                                     final VoxelShape blockCollisionOffset = blockCollision.move((double)blockX, (double)blockY, (double)blockZ);
 
                                     if (!voxelShapeIntersectNoEmpty(blockCollisionOffset, aabb)) {
