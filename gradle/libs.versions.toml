@@ -20,7 +20,7 @@ fabricLoader = { module = "net.fabricmc:fabric-loader", version.ref = "fabricLoa
 fabricLoader-junit = { module = "net.fabricmc:fabric-loader-junit", version.ref = "fabricLoader" }
 fabricMinecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
 
-leafpile = "ca.spottedleaf:leafpile:1.1.0"
+leafpile = "ca.spottedleaf:leafpile:1.2.0"
 
 snakeyaml = "org.yaml:snakeyaml:2.6"
 zstdjni = "com.github.luben:zstd-jni:1.5.7-15"
