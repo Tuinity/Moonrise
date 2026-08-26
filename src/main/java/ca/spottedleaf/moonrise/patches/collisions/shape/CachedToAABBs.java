@@ -1,16 +1,16 @@
 package ca.spottedleaf.moonrise.patches.collisions.shape;
 
 import net.minecraft.world.phys.AABB;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public record CachedToAABBs(
         List<AABB> aabbs,
-        boolean isOffset,
         double offX, double offY, double offZ
 ) {
 
-    public CachedToAABBs removeOffset() {
+    public List<AABB> removeOffset() {
         final List<AABB> toOffset = this.aabbs;
         final double offX = this.offX;
         final double offY = this.offY;
@@ -22,18 +22,19 @@ public record CachedToAABBs(
             ret.add(toOffset.get(i).move(offX, offY, offZ));
         }
 
-        return new CachedToAABBs(ret, false, 0.0, 0.0, 0.0);
+        return ret;
     }
 
-    public static CachedToAABBs offset(final CachedToAABBs cache, final double offX, final double offY, final double offZ) {
+    public CachedToAABBs offset(final double offX, final double offY, final double offZ) {
         if (offX == 0.0 && offY == 0.0 && offZ == 0.0) {
-            return cache;
+            return this;
         }
 
-        final double resX = cache.offX + offX;
-        final double resY = cache.offY + offY;
-        final double resZ = cache.offZ + offZ;
-
-        return new CachedToAABBs(cache.aabbs, true, resX, resY, resZ);
+        return new CachedToAABBs(
+            this.aabbs,
+            this.offX + offX,
+            this.offY + offY,
+            this.offZ + offZ
+        );
     }
 }
