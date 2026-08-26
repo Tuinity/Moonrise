@@ -4,12 +4,15 @@ import ca.spottedleaf.moonrise.common.list.ShortList;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingBitStorage;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
+import ca.spottedleaf.moonrise.patches.random_ticking.RandomTickChunkSection;
+import ca.spottedleaf.moonrise.patches.random_ticking.RandomTickLevelChunk;
 import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import net.minecraft.util.BitStorage;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.Palette;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -29,7 +32,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 @Mixin(LevelChunkSection.class)
-abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
+abstract class LevelChunkSectionMixin implements BlockCountingChunkSection, RandomTickChunkSection {
 
     @Shadow
     @Final
@@ -69,6 +72,32 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
 
     @Unique
     private final ShortList tickingBlocks = new ShortList();
+
+    @Unique
+    private RandomTickLevelChunk moonrise$randomTickChunk;
+
+    @Unique
+    private int moonrise$randomTickIndex = -1;
+
+    @Override
+    public final void moonrise$bindRandomTickChunk(final LevelChunk chunk, final int index) {
+        this.moonrise$randomTickChunk = (RandomTickLevelChunk)chunk;
+        this.moonrise$randomTickIndex = index;
+    }
+
+    @Override
+    public final void moonrise$unbindRandomTickChunk() {
+        this.moonrise$randomTickChunk = null;
+        this.moonrise$randomTickIndex = -1;
+    }
+
+    @Unique
+    private void moonrise$notifyRandomTickIndex(final boolean wasTicking) {
+        final boolean nowTicking = this.tickingBlockCount > 0;
+        if (wasTicking != nowTicking && this.moonrise$randomTickChunk != null) {
+            this.moonrise$randomTickChunk.moonrise$noteRandomTickSection(this.moonrise$randomTickIndex, nowTicking);
+        }
+    }
 
     @Override
     public final boolean moonrise$hasSpecialCollidingBlocks() {
@@ -125,6 +154,17 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                 tickingBlocks.add(position);
             }
         }
+
+        // tickingBlockCount is already updated by vanilla; recover the previous 0/non-zero state.
+        final boolean wasTicking;
+        if (oldTicking == newTicking) {
+            wasTicking = this.tickingBlockCount > 0;
+        } else if (newTicking) {
+            wasTicking = this.tickingBlockCount > 1;
+        } else {
+            wasTicking = true;
+        }
+        this.moonrise$notifyRandomTickIndex(wasTicking);
     }
 
     /**
@@ -134,6 +174,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
     @Overwrite
     public void recalcBlockCounts() {
         // reset, then recalculate
+        final boolean wasTicking = this.tickingBlockCount > 0;
         this.nonEmptyBlockCount = (short)0;
         this.fluidCount = (short)0;
         this.tickingBlockCount = (short)0;
@@ -196,6 +237,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                 }
             }
         }
+        this.moonrise$notifyRandomTickIndex(wasTicking);
     }
 
     /**
