@@ -1,9 +1,11 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
 import ca.spottedleaf.moonrise.common.util.FlatBitsetUtil;
+import ca.spottedleaf.moonrise.common.util.VoxelShapeInternPool;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CachedShapeData;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CachedToAABBs;
+import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionArrayVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionDiscreteVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import ca.spottedleaf.moonrise.patches.collisions.shape.MergedORCache;
@@ -26,6 +28,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -42,6 +45,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
     @Shadow
     @Final
+    @Mutable
     public DiscreteVoxelShape shape;
 
     @Unique
@@ -51,8 +55,6 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
     @Unique
     private double offsetZ;
     @Unique
-    private AABB singleAABBRepresentation;
-    @Unique
     private double[] rootCoordinatesX;
     @Unique
     private double[] rootCoordinatesY;
@@ -61,19 +63,32 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
     @Unique
     private CachedShapeData cachedShapeData;
-    @Unique
-    private boolean isEmpty;
 
+    // null = uncached, List<AABB> = materialized, CachedToAABBs = delayed offset
     @Unique
-    private CachedToAABBs cachedToAABBs;
+    private Object cachedToAABBs;
+    // Also stores the single-AABB representation when FLAG_SINGLE_AABB is set.
     @Unique
     private AABB cachedBounds;
 
+    // Pack small cache states into one field to reduce the per-shape footprint.
     @Unique
-    private Boolean isFullBlock;
+    private int cacheFlags;
 
     @Unique
-    private Boolean occludesFullBlock;
+    private static final int FLAG_EMPTY = 1;
+    @Unique
+    private static final int FLAG_SINGLE_AABB = 1 << 1;
+    @Unique
+    private static final int FLAG_FULL_BLOCK_KNOWN = 1 << 2;
+    @Unique
+    private static final int FLAG_FULL_BLOCK_VALUE = 1 << 3;
+    @Unique
+    private static final int FLAG_OCCLUDES_FULL_BLOCK_KNOWN = 1 << 4;
+    @Unique
+    private static final int FLAG_OCCLUDES_FULL_BLOCK_VALUE = 1 << 5;
+    @Unique
+    private static final int FLAG_RETAINED_GEOMETRY_INTERNED = 1 << 6;
 
     // must be power of two
     @Unique
@@ -99,7 +114,34 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
     @Override
     public final AABB moonrise$getSingleAABBRepresentation() {
-        return this.singleAABBRepresentation;
+        return (this.cacheFlags & FLAG_SINGLE_AABB) != 0 ? this.cachedBounds : null;
+    }
+
+    @Unique
+    private boolean moonrise$isEmptyCached() {
+        return (this.cacheFlags & FLAG_EMPTY) != 0;
+    }
+
+    @Unique
+    private void moonrise$setFullBlockCached(final boolean value) {
+        int flags = this.cacheFlags | FLAG_FULL_BLOCK_KNOWN;
+        if (value) {
+            flags |= FLAG_FULL_BLOCK_VALUE;
+        } else {
+            flags &= ~FLAG_FULL_BLOCK_VALUE;
+        }
+        this.cacheFlags = flags;
+    }
+
+    @Unique
+    private void moonrise$setOccludesFullBlockCached(final boolean value) {
+        int flags = this.cacheFlags | FLAG_OCCLUDES_FULL_BLOCK_KNOWN;
+        if (value) {
+            flags |= FLAG_OCCLUDES_FULL_BLOCK_VALUE;
+        } else {
+            flags &= ~FLAG_OCCLUDES_FULL_BLOCK_VALUE;
+        }
+        this.cacheFlags = flags;
     }
 
     @Override
@@ -122,20 +164,19 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
         if (list instanceof DoubleArrayList rawList) {
             final double[] raw = rawList.elements();
             final int expected = rawList.size();
-            if (raw.length == expected) {
-                return raw;
-            } else {
-                return Arrays.copyOf(raw, expected);
-            }
-        } else {
-            return list.toDoubleArray();
+            return raw.length == expected ? raw : Arrays.copyOf(raw, expected);
         }
+
+        return list.toDoubleArray();
     }
 
     @Override
     public final void moonrise$initCache() {
-        this.cachedShapeData = ((CollisionDiscreteVoxelShape)this.shape).moonrise$getOrCreateCachedShapeData();
-        this.isEmpty = this.cachedShapeData.isEmpty();
+        // Construction itself is not proof of retention.
+        this.cachedShapeData = ((CollisionDiscreteVoxelShape)(Object)this.shape).moonrise$getOrCreateCachedShapeData(false);
+        if (this.cachedShapeData.isEmpty()) {
+            this.cacheFlags |= FLAG_EMPTY;
+        }
 
         final DoubleList xList = this.getCoords(Direction.Axis.X);
         final DoubleList yList = this.getCoords(Direction.Axis.Y);
@@ -163,12 +204,67 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
         }
 
         if (this.cachedShapeData.hasSingleAABB()) {
-            this.singleAABBRepresentation = new AABB(
+            this.cacheFlags |= FLAG_SINGLE_AABB;
+            this.cachedBounds = new AABB(
                     this.rootCoordinatesX[0] + this.offsetX, this.rootCoordinatesY[0] + this.offsetY, this.rootCoordinatesZ[0] + this.offsetZ,
                     this.rootCoordinatesX[1] + this.offsetX, this.rootCoordinatesY[1] + this.offsetY, this.rootCoordinatesZ[1] + this.offsetZ
             );
-            this.cachedBounds = this.singleAABBRepresentation;
         }
+    }
+
+    @Override
+    public final void moonrise$promoteRetainedGeometry() {
+        if ((this.cacheFlags & FLAG_RETAINED_GEOMETRY_INTERNED) != 0) {
+            return;
+        }
+
+        // ArrayVoxelShape owns the retained DoubleList fields. Canonicalise those
+        // first, then refresh the raw coordinate references cached in VoxelShape.
+        if ((Object)this instanceof CollisionArrayVoxelShape arrayShape) {
+            arrayShape.moonrise$internRetainedCoordinates();
+
+            final DoubleList xList = this.getCoords(Direction.Axis.X);
+            final DoubleList yList = this.getCoords(Direction.Axis.Y);
+            final DoubleList zList = this.getCoords(Direction.Axis.Z);
+
+            if (xList instanceof OffsetDoubleList offsetDoubleList) {
+                this.offsetX = offsetDoubleList.offset;
+                this.rootCoordinatesX = extractRawArray(offsetDoubleList.delegate);
+            } else {
+                this.offsetX = 0.0;
+                this.rootCoordinatesX = extractRawArray(xList);
+            }
+
+            if (yList instanceof OffsetDoubleList offsetDoubleList) {
+                this.offsetY = offsetDoubleList.offset;
+                this.rootCoordinatesY = extractRawArray(offsetDoubleList.delegate);
+            } else {
+                this.offsetY = 0.0;
+                this.rootCoordinatesY = extractRawArray(yList);
+            }
+
+            if (zList instanceof OffsetDoubleList offsetDoubleList) {
+                this.offsetZ = offsetDoubleList.offset;
+                this.rootCoordinatesZ = extractRawArray(offsetDoubleList.delegate);
+            } else {
+                this.offsetZ = 0.0;
+                this.rootCoordinatesZ = extractRawArray(zList);
+            }
+        }
+
+        // Promote CachedShapeData before the identity-keyed DiscreteVoxelShape pool.
+        this.cachedShapeData =
+            ((CollisionDiscreteVoxelShape)(Object)this.shape).moonrise$getOrCreateCachedShapeData(true);
+        this.shape = VoxelShapeInternPool.internDiscreteShape(this.shape);
+        this.cachedShapeData =
+            ((CollisionDiscreteVoxelShape)(Object)this.shape).moonrise$getOrCreateCachedShapeData(true);
+
+        if (this.cachedBounds != null
+            && this.offsetX == 0.0 && this.offsetY == 0.0 && this.offsetZ == 0.0) {
+            this.cachedBounds = VoxelShapeInternPool.internAABB(this.cachedBounds);
+        }
+
+        this.cacheFlags |= FLAG_RETAINED_GEOMETRY_INTERNED;
     }
 
     @Override
@@ -181,7 +277,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
     @Override
     public final VoxelShape moonrise$getFaceShapeClamped(final Direction direction) {
-        if (this.isEmpty) {
+        if (this.moonrise$isEmptyCached()) {
             return (VoxelShape)(Object)this;
         }
         if ((VoxelShape)(Object)this == Shapes.block()) {
@@ -190,19 +286,17 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
         VoxelShape[] cache = this.faceShapeClampedCache;
         if (cache != null) {
-            final VoxelShape ret = cache[direction.ordinal()];
-            if (ret != null) {
-                return ret;
+            final VoxelShape cached = cache[direction.ordinal()];
+            if (cached != null) {
+                return cached;
             }
         }
-
 
         if (cache == null) {
             this.faceShapeClampedCache = cache = new VoxelShape[6];
         }
 
         final Direction.Axis axis = direction.getAxis();
-
         final VoxelShape ret;
 
         if (direction.getAxisDirection() == Direction.AxisDirection.POSITIVE) {
@@ -220,43 +314,42 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
         }
 
         cache[direction.ordinal()] = ret;
-
         return ret;
     }
 
     @Unique
     private boolean computeOccludesFullBlock() {
-        if (this.isEmpty) {
-            this.occludesFullBlock = Boolean.FALSE;
+        if (this.moonrise$isEmptyCached()) {
+            this.moonrise$setOccludesFullBlockCached(false);
             return false;
         }
 
         if (this.moonrise$isFullBlock()) {
-            this.occludesFullBlock = Boolean.TRUE;
+            this.moonrise$setOccludesFullBlockCached(true);
             return true;
         }
 
-        final AABB singleAABB = this.singleAABBRepresentation;
+        final AABB singleAABB = this.moonrise$getSingleAABBRepresentation();
         if (singleAABB != null) {
             // check if the bounding box encloses the full cube
             final boolean ret =
                     (singleAABB.minY <= CollisionUtil.COLLISION_EPSILON && singleAABB.maxY >= (1 - CollisionUtil.COLLISION_EPSILON)) &&
                     (singleAABB.minX <= CollisionUtil.COLLISION_EPSILON && singleAABB.maxX >= (1 - CollisionUtil.COLLISION_EPSILON)) &&
                     (singleAABB.minZ <= CollisionUtil.COLLISION_EPSILON && singleAABB.maxZ >= (1 - CollisionUtil.COLLISION_EPSILON));
-            this.occludesFullBlock = Boolean.valueOf(ret);
+            this.moonrise$setOccludesFullBlockCached(ret);
             return ret;
         }
 
         final boolean ret = !Shapes.joinIsNotEmpty(Shapes.block(), ((VoxelShape)(Object)this), BooleanOp.ONLY_FIRST);
-        this.occludesFullBlock = Boolean.valueOf(ret);
+        this.moonrise$setOccludesFullBlockCached(ret);
         return ret;
     }
 
     @Override
     public final boolean moonrise$occludesFullBlock() {
-        final Boolean ret = this.occludesFullBlock;
-        if (ret != null) {
-            return ret.booleanValue();
+        final int flags = this.cacheFlags;
+        if ((flags & FLAG_OCCLUDES_FULL_BLOCK_KNOWN) != 0) {
+            return (flags & FLAG_OCCLUDES_FULL_BLOCK_VALUE) != 0;
         }
 
         return this.computeOccludesFullBlock();
@@ -264,8 +357,9 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
     @Override
     public final boolean moonrise$occludesFullBlockIfCached() {
-        final Boolean ret = this.occludesFullBlock;
-        return ret != null ? ret.booleanValue() : false;
+        final int flags = this.cacheFlags;
+        return (flags & FLAG_OCCLUDES_FULL_BLOCK_KNOWN) != 0
+            && (flags & FLAG_OCCLUDES_FULL_BLOCK_VALUE) != 0;
     }
 
     @Unique
@@ -280,7 +374,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
             return other;
         }
 
-        if (this.isEmpty) {
+        if (this.moonrise$isEmptyCached()) {
             return other;
         }
 
@@ -331,7 +425,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
      */
     @Overwrite
     public boolean isEmpty() {
-        return this.isEmpty;
+        return this.moonrise$isEmptyCached();
     }
 
     /**
@@ -340,7 +434,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
      */
     @Overwrite
     public VoxelShape singleEncompassing() {
-        if (this.isEmpty) {
+        if (this.moonrise$isEmptyCached()) {
             return Shapes.empty();
         }
         return Shapes.create(this.bounds());
@@ -449,7 +543,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
      */
     @Overwrite
     public double collide(final Direction.Axis axis, final AABB source, final double source_move) {
-        if (this.isEmpty) {
+        if (this.moonrise$isEmptyCached()) {
             return source_move;
         }
         if (Math.abs(source_move) < CollisionUtil.COLLISION_EPSILON) {
@@ -486,7 +580,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
      */
     @Overwrite
     public VoxelShape move(final double x, final double y, final double z) {
-        if (this.isEmpty) {
+        if (this.moonrise$isEmptyCached()) {
             return Shapes.empty();
         }
 
@@ -497,9 +591,17 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
             offsetList(this.rootCoordinatesZ, this.offsetZ + z)
         );
 
-        final CachedToAABBs cachedToAABBs = this.cachedToAABBs;
-        if (cachedToAABBs != null) {
-            ((VoxelShapeMixin)(Object)ret).cachedToAABBs = CachedToAABBs.offset(cachedToAABBs, x, y, z);
+        final Object cached = this.cachedToAABBs;
+        if (cached instanceof CachedToAABBs offsetCache) {
+            ((VoxelShapeMixin)(Object)ret).cachedToAABBs = offsetCache.offset(x, y, z);
+        } else if (cached instanceof List<?> list) {
+            if (x == 0.0 && y == 0.0 && z == 0.0) {
+                ((VoxelShapeMixin)(Object)ret).cachedToAABBs = list;
+            } else {
+                @SuppressWarnings("unchecked")
+                final List<AABB> aabbs = (List<AABB>)list;
+                ((VoxelShapeMixin)(Object)ret).cachedToAABBs = new CachedToAABBs(aabbs, x, y, z);
+            }
         }
 
         return ret;
@@ -507,12 +609,15 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
     @Unique
     private List<AABB> toAabbsUncached() {
-        final List<AABB> ret;
-        if (this.singleAABBRepresentation != null) {
+        final ArrayList<AABB> ret;
+        final AABB singleAABB = this.moonrise$getSingleAABBRepresentation();
+
+        if (singleAABB != null) {
             ret = new ArrayList<>(1);
-            ret.add(this.singleAABBRepresentation);
+            ret.add(singleAABB);
         } else {
             ret = new ArrayList<>();
+
             final double[] coordsX = this.rootCoordinatesX;
             final double[] coordsY = this.rootCoordinatesY;
             final double[] coordsZ = this.rootCoordinatesZ;
@@ -520,24 +625,32 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
             final double offX = this.offsetX;
             final double offY = this.offsetY;
             final double offZ = this.offsetZ;
+            final boolean hasNoOffset = offX == 0.0 && offY == 0.0 && offZ == 0.0;
 
             this.shape.forAllBoxes((final int minX, final int minY, final int minZ,
                                     final int maxX, final int maxY, final int maxZ) -> {
-                ret.add(new AABB(
+                AABB box = new AABB(
                         coordsX[minX] + offX,
                         coordsY[minY] + offY,
                         coordsZ[minZ] + offZ,
 
-
                         coordsX[maxX] + offX,
                         coordsY[maxY] + offY,
                         coordsZ[maxZ] + offZ
-                ));
+                );
+
+                if (hasNoOffset) {
+                    box = VoxelShapeInternPool.internAABB(box);
+                }
+
+                ret.add(box);
             }, true);
+
+            // retained for the lifetime of the shape
+            ret.trimToSize();
         }
 
-        // cache result
-        this.cachedToAABBs = new CachedToAABBs(ret, false, 0.0, 0.0, 0.0);
+        this.cachedToAABBs = ret;
 
         return ret;
     }
@@ -548,33 +661,33 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
      */
     @Overwrite
     public List<AABB> toAabbs() {
-        CachedToAABBs cachedToAABBs = this.cachedToAABBs;
-        if (cachedToAABBs != null) {
-            if (!cachedToAABBs.isOffset()) {
-                return cachedToAABBs.aabbs();
-            }
+        final Object cached = this.cachedToAABBs;
 
-            // all we need to do is offset the cache
-            cachedToAABBs = cachedToAABBs.removeOffset();
-            // update cache
-            this.cachedToAABBs = cachedToAABBs;
-
-            return cachedToAABBs.aabbs();
+        if (cached instanceof List<?> list) {
+            @SuppressWarnings("unchecked")
+            final List<AABB> ret = (List<AABB>)list;
+            return ret;
         }
 
-        // make new cache
+        if (cached instanceof CachedToAABBs offsetCache) {
+            final List<AABB> ret = offsetCache.removeOffset();
+            this.cachedToAABBs = ret;
+            return ret;
+        }
+
         return this.toAabbsUncached();
     }
 
     @Unique
     private boolean computeFullBlock() {
-        Boolean ret;
-        if (this.isEmpty) {
-            ret = Boolean.FALSE;
+        boolean ret;
+
+        if (this.moonrise$isEmptyCached()) {
+            ret = false;
         } else if ((VoxelShape)(Object)this == Shapes.block()) {
-            ret = Boolean.TRUE;
+            ret = true;
         } else {
-            final AABB singleAABB = this.singleAABBRepresentation;
+            final AABB singleAABB = this.moonrise$getSingleAABBRepresentation();
             if (singleAABB == null) {
                 final CachedShapeData shapeData = this.cachedShapeData;
                 final int sMinX = shapeData.minFullX();
@@ -600,45 +713,43 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
 
                     final long[] bitset = shapeData.voxelSet();
 
-                    ret = Boolean.TRUE;
+                    ret = true;
 
                     check_full:
                     for (int x = sMinX; x < sMaxX; ++x) {
                         for (int y = sMinY; y < sMaxY; ++y) {
                             final int baseIndex = y*sizeZ + x*(sizeZ*sizeY);
                             if (!FlatBitsetUtil.isRangeSet(bitset, baseIndex + sMinZ, baseIndex + sMaxZ)) {
-                                ret = Boolean.FALSE;
+                                ret = false;
                                 break check_full;
                             }
                         }
                     }
                 } else {
-                    ret = Boolean.FALSE;
+                    ret = false;
                 }
             } else {
-                ret = Boolean.valueOf(
+                ret =
                         Math.abs(singleAABB.minX) <= CollisionUtil.COLLISION_EPSILON &&
-                           Math.abs(singleAABB.minY) <= CollisionUtil.COLLISION_EPSILON &&
-                           Math.abs(singleAABB.minZ) <= CollisionUtil.COLLISION_EPSILON &&
+                        Math.abs(singleAABB.minY) <= CollisionUtil.COLLISION_EPSILON &&
+                        Math.abs(singleAABB.minZ) <= CollisionUtil.COLLISION_EPSILON &&
 
-                           Math.abs(1.0 - singleAABB.maxX) <= CollisionUtil.COLLISION_EPSILON &&
-                           Math.abs(1.0 - singleAABB.maxY) <= CollisionUtil.COLLISION_EPSILON &&
-                           Math.abs(1.0 - singleAABB.maxZ) <= CollisionUtil.COLLISION_EPSILON
-                );
+                        Math.abs(1.0 - singleAABB.maxX) <= CollisionUtil.COLLISION_EPSILON &&
+                        Math.abs(1.0 - singleAABB.maxY) <= CollisionUtil.COLLISION_EPSILON &&
+                        Math.abs(1.0 - singleAABB.maxZ) <= CollisionUtil.COLLISION_EPSILON;
             }
         }
 
-        this.isFullBlock = ret;
-
-        return ret.booleanValue();
+        this.moonrise$setFullBlockCached(ret);
+        return ret;
     }
 
     @Override
     public final boolean moonrise$isFullBlock() {
-        final Boolean ret = this.isFullBlock;
+        final int flags = this.cacheFlags;
 
-        if (ret != null) {
-            return ret.booleanValue();
+        if ((flags & FLAG_FULL_BLOCK_KNOWN) != 0) {
+            return (flags & FLAG_FULL_BLOCK_VALUE) != 0;
         }
 
         return this.computeFullBlock();
@@ -670,7 +781,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
      */
     @Overwrite
     public BlockHitResult clip(final Vec3 from, final Vec3 to, final BlockPos offset) {
-        if (this.isEmpty) {
+        if (this.moonrise$isEmptyCached()) {
             return null;
         }
 
@@ -684,7 +795,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
         final double fromBehindOffsetY = fromBehind.y - (double)offset.getY();
         final double fromBehindOffsetZ = fromBehind.z - (double)offset.getZ();
 
-        final AABB singleAABB = this.singleAABBRepresentation;
+        final AABB singleAABB = this.moonrise$getSingleAABBRepresentation();
         if (singleAABB != null) {
             if (singleAABB.contains(fromBehindOffsetX, fromBehindOffsetY, fromBehindOffsetZ)) {
                 return new BlockHitResult(fromBehind, Direction.getApproximateNearest(directionOpposite.x, directionOpposite.y, directionOpposite.z).getOpposite(), offset, true);
@@ -705,7 +816,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
      */
     @Overwrite
     public AABB bounds() {
-        if (this.isEmpty) {
+        if (this.moonrise$isEmptyCached()) {
             throw Util.pauseInIde(new UnsupportedOperationException("No bounds for empty shape."));
         }
         AABB cached = this.cachedBounds;
@@ -733,6 +844,10 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
                 coordsY[shapeData.maxFullY()] + offY,
                 coordsZ[shapeData.maxFullZ()] + offZ
         );
+
+        if (offX == 0.0 && offY == 0.0 && offZ == 0.0) {
+            cached = VoxelShapeInternPool.internAABB(cached);
+        }
 
         this.cachedBounds = cached;
         return cached;
@@ -800,11 +915,11 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
      */
     @Overwrite
     public VoxelShape optimize() {
-        if (this.isEmpty) {
+        if (this.moonrise$isEmptyCached()) {
             return Shapes.empty();
         }
 
-        if (this.singleAABBRepresentation != null) {
+        if (this.moonrise$getSingleAABBRepresentation() != null) {
             // note: the isFullBlock() is fuzzy, and Shapes.create() is also fuzzy which would return block()
             return this.moonrise$isFullBlock() ? Shapes.block() : (VoxelShape)(Object)this;
         }
@@ -874,7 +989,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
      */
     @Overwrite
     public Optional<Vec3> closestPointTo(final Vec3 point) {
-        if (this.isEmpty) {
+        if (this.moonrise$isEmptyCached()) {
             return Optional.empty();
         }
 

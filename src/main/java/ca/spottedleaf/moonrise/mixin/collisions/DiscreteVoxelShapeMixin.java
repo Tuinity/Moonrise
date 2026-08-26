@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
+import ca.spottedleaf.moonrise.common.util.VoxelShapeInternPool;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CachedShapeData;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionDiscreteVoxelShape;
 import net.minecraft.core.Direction;
@@ -12,35 +13,50 @@ import java.util.Arrays;
 @Mixin(DiscreteVoxelShape.class)
 abstract class DiscreteVoxelShapeMixin implements CollisionDiscreteVoxelShape {
 
-    // ignore race conditions on field read/write: the shape is static, so it doesn't matter
+    // Benign race: the geometry is immutable, so concurrent initialisation produces equivalent data.
     @Unique
     private CachedShapeData cachedShapeData;
 
     @Override
     public final CachedShapeData moonrise$getOrCreateCachedShapeData() {
-        if (this.cachedShapeData != null) {
-            return this.cachedShapeData;
+        final CachedShapeData cached = this.cachedShapeData;
+        if (cached != null) {
+            return cached;
         }
+        return this.moonrise$createCachedShapeData(true);
+    }
 
+    @Override
+    public final CachedShapeData moonrise$getOrCreateCachedShapeData(final boolean internRetainedGeometry) {
+        final CachedShapeData cached = this.cachedShapeData;
+        if (cached != null) {
+            if (!internRetainedGeometry) {
+                return cached;
+            }
+            // A transient shape may later become retained. Promote its cached data to the
+            // shared pool once.
+            return this.cachedShapeData = VoxelShapeInternPool.internShapeData(cached);
+        }
+        return this.moonrise$createCachedShapeData(internRetainedGeometry);
+    }
+
+    @Unique
+    private CachedShapeData moonrise$createCachedShapeData(final boolean internRetainedGeometry) {
         final DiscreteVoxelShape discreteVoxelShape = (DiscreteVoxelShape)(Object)this;
 
         final int sizeX = discreteVoxelShape.getXSize();
         final int sizeY = discreteVoxelShape.getYSize();
         final int sizeZ = discreteVoxelShape.getZSize();
-
-        final int maxIndex = sizeX * sizeY * sizeZ; // exclusive
-
-        final int longsRequired = (maxIndex + (Long.SIZE - 1)) >>> 6;
-        long[] voxelSet;
+        final int voxelCount = sizeX * sizeY * sizeZ;
+        final int longsRequired = (voxelCount + (Long.SIZE - 1)) >>> 6;
 
         final boolean isEmpty = discreteVoxelShape.isEmpty();
+        final long[] voxelSet;
 
         if (discreteVoxelShape instanceof BitSetDiscreteVoxelShape bitsetShape) {
-            voxelSet = bitsetShape.storage.toLongArray();
-            if (voxelSet.length < longsRequired) {
-                // happens when the later long values are 0L, so we need to resize
-                voxelSet = Arrays.copyOf(voxelSet, longsRequired);
-            }
+            final long[] stored = bitsetShape.storage.toLongArray();
+            // BitSet#toLongArray omits trailing zero words.
+            voxelSet = stored.length < longsRequired ? Arrays.copyOf(stored, longsRequired) : stored;
         } else {
             voxelSet = new long[longsRequired];
             if (!isEmpty) {
@@ -49,9 +65,8 @@ abstract class DiscreteVoxelShapeMixin implements CollisionDiscreteVoxelShape {
                     for (int y = 0; y < sizeY; ++y) {
                         for (int z = 0; z < sizeZ; ++z) {
                             if (discreteVoxelShape.isFull(x, y, z)) {
-                                // index = z + y*size_z + x*(size_z*size_y)
+                                // index = z + y*sizeZ + x*(sizeZ*sizeY)
                                 final int index = z + y * sizeZ + x * mulX;
-
                                 voxelSet[index >>> 6] |= 1L << index;
                             }
                         }
@@ -70,11 +85,14 @@ abstract class DiscreteVoxelShapeMixin implements CollisionDiscreteVoxelShape {
         final int maxFullY = discreteVoxelShape.lastFull(Direction.Axis.Y);
         final int maxFullZ = discreteVoxelShape.lastFull(Direction.Axis.Z);
 
-        return this.cachedShapeData = new CachedShapeData(
+        final CachedShapeData data = new CachedShapeData(
                 sizeX, sizeY, sizeZ, voxelSet,
                 minFullX, minFullY, minFullZ,
                 maxFullX, maxFullY, maxFullZ,
                 isEmpty, hasSingleAABB
         );
+
+        final CachedShapeData result = internRetainedGeometry ? VoxelShapeInternPool.internShapeData(data) : data;
+        return this.cachedShapeData = result;
     }
 }

@@ -68,6 +68,8 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
 
     @Unique
     private static void initCaches(final VoxelShape shape, final boolean neighbours) {
+        // This shape is now owned by a long-lived BlockState cache.
+        ((CollisionVoxelShape)shape).moonrise$promoteRetainedGeometry();
         ((CollisionVoxelShape)shape).moonrise$isFullBlock();
         ((CollisionVoxelShape)shape).moonrise$occludesFullBlock();
         shape.toAabbs();
