@@ -116,6 +116,7 @@
         "random_ticking.ServerLevelMixin",
         "serverlist.ConnectionMixin",
         "starlight.blockstate.BlockStateBaseMixin",
+        "starlight.chunk.ChunkAccessAccessorMixin",
         "starlight.chunk.ChunkAccessMixin",
         "starlight.chunk.EmptyLevelChunkMixin",
         "starlight.chunk.ImposterProtoChunkMixin",

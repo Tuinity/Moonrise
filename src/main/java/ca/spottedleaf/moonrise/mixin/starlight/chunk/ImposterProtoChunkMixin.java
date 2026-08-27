@@ -8,6 +8,7 @@ import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainerFactory;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.UpgradeData;
@@ -16,6 +17,9 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ImposterProtoChunk.class)
 abstract class ImposterProtoChunkMixin extends ProtoChunk implements StarlightChunk {
@@ -26,6 +30,15 @@ abstract class ImposterProtoChunkMixin extends ProtoChunk implements StarlightCh
 
     public ImposterProtoChunkMixin(final ChunkPos chunkPos, final UpgradeData upgradeData, final LevelHeightAccessor levelHeightAccessor, final PalettedContainerFactory palettedContainerFactory, @Nullable final BlendingData blendingData) {
         super(chunkPos, upgradeData, levelHeightAccessor, palettedContainerFactory, blendingData);
+    }
+
+    @Inject(
+        method = "<init>",
+        at = @At("RETURN")
+    )
+    private void reuseWrappedSections(final CallbackInfo ci) {
+        final LevelChunkSection[] sections = ((ChunkAccessAccessorMixin)(Object)this).starlight$getSections();
+        System.arraycopy(this.wrapped.getSections(), 0, sections, 0, sections.length);
     }
 
     @Override
