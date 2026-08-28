@@ -503,20 +503,28 @@ public final class NewChunkHolder {
     /**
      * contains the neighbours that this chunk generation is blocking on
      */
-    private final ReferenceLinkedOpenHashSet<NewChunkHolder> neighboursBlockingGenTask = new ReferenceLinkedOpenHashSet<>(4);
+    private ReferenceLinkedOpenHashSet<NewChunkHolder> neighboursBlockingGenTask;
 
     /**
      * map of ChunkHolder -> Required Status for this chunk
      */
-    private final Reference2ObjectLinkedOpenHashMap<NewChunkHolder, ChunkStatus> neighboursWaitingForUs = new Reference2ObjectLinkedOpenHashMap<>();
+    private Reference2ObjectLinkedOpenHashMap<NewChunkHolder, ChunkStatus> neighboursWaitingForUs;
 
     public void addGenerationBlockingNeighbour(final NewChunkHolder neighbour) {
-        this.neighboursBlockingGenTask.add(neighbour);
+        ReferenceLinkedOpenHashSet<NewChunkHolder> neighbours = this.neighboursBlockingGenTask;
+        if (neighbours == null) {
+            this.neighboursBlockingGenTask = neighbours = new ReferenceLinkedOpenHashSet<>(4);
+        }
+        neighbours.add(neighbour);
     }
 
     public void addWaitingNeighbour(final NewChunkHolder neighbour, final ChunkStatus requiredStatus) {
-        final boolean wasEmpty = this.neighboursWaitingForUs.isEmpty();
-        this.neighboursWaitingForUs.put(neighbour, requiredStatus);
+        Reference2ObjectLinkedOpenHashMap<NewChunkHolder, ChunkStatus> neighbours = this.neighboursWaitingForUs;
+        final boolean wasEmpty = neighbours == null || neighbours.isEmpty();
+        if (neighbours == null) {
+            this.neighboursWaitingForUs = neighbours = new Reference2ObjectLinkedOpenHashMap<>();
+        }
+        neighbours.put(neighbour, requiredStatus);
         if (wasEmpty) {
             this.checkUnload();
         }
@@ -546,14 +554,15 @@ public final class NewChunkHolder {
     }
 
     private void recalculateNeighbourRequestedPriority() {
-        if (this.neighboursWaitingForUs.isEmpty()) {
+        final Reference2ObjectLinkedOpenHashMap<NewChunkHolder, ChunkStatus> neighbours = this.neighboursWaitingForUs;
+        if (neighbours == null) {
             this.neighbourRequestedPriority = null;
             return;
         }
 
         Priority max = null;
 
-        for (final NewChunkHolder holder : this.neighboursWaitingForUs.keySet()) {
+        for (final NewChunkHolder holder : neighbours.keySet()) {
             final Priority neighbourPriority = holder.getEffectivePriority(null);
             if (neighbourPriority != null && (max == null || neighbourPriority.isHigherPriority(max))) {
                 max = neighbourPriority;
@@ -578,7 +587,11 @@ public final class NewChunkHolder {
     }
 
     public void recalculateNeighbourPriorities() {
-        for (final NewChunkHolder holder : this.neighboursBlockingGenTask) {
+        final ReferenceLinkedOpenHashSet<NewChunkHolder> neighbours = this.neighboursBlockingGenTask;
+        if (neighbours == null) {
+            return;
+        }
+        for (final NewChunkHolder holder : neighbours) {
             holder.recalculateNeighbourRequestedPriority();
         }
     }
@@ -710,7 +723,8 @@ public final class NewChunkHolder {
         }
 
         // are we going to be used by another chunk for generation?
-        if (!this.neighboursWaitingForUs.isEmpty()) {
+        final Reference2ObjectLinkedOpenHashMap<NewChunkHolder, ChunkStatus> waitingNeighbours = this.neighboursWaitingForUs;
+        if (waitingNeighbours != null && !waitingNeighbours.isEmpty()) {
             return "neighbours_waiting";
         }
 
@@ -947,16 +961,21 @@ public final class NewChunkHolder {
             this.generationTask.cancel();
         } else {
             // otherwise, we are blocking on neighbours, so remove them
-            if (!this.neighboursBlockingGenTask.isEmpty()) {
-                for (final NewChunkHolder neighbour : this.neighboursBlockingGenTask) {
-                    if (neighbour.neighboursWaitingForUs.remove(this) == null) {
+            final ReferenceLinkedOpenHashSet<NewChunkHolder> blockingNeighbours = this.neighboursBlockingGenTask;
+            if (blockingNeighbours != null) {
+                for (final NewChunkHolder neighbour : blockingNeighbours) {
+                    final Reference2ObjectLinkedOpenHashMap<NewChunkHolder, ChunkStatus> waitingNeighbours = neighbour.neighboursWaitingForUs;
+                    if (waitingNeighbours == null || waitingNeighbours.remove(this) == null) {
                         throw new IllegalStateException("Corrupt state");
                     }
-                    if (neighbour.neighboursWaitingForUs.isEmpty()) {
+                    if (waitingNeighbours.isEmpty()) {
+                        if (neighbour.generationTask == null && neighbour.requestedGenStatus == null) {
+                            neighbour.neighboursWaitingForUs = null;
+                        }
                         neighbour.checkUnload();
                     }
                 }
-                this.neighboursBlockingGenTask.clear();
+                this.neighboursBlockingGenTask = null;
                 this.checkUnload();
             }
         }
@@ -1326,10 +1345,14 @@ public final class NewChunkHolder {
         return this.requestedGenStatus;
     }
 
-    private final Reference2ObjectOpenHashMap<ChunkStatus, List<Consumer<ChunkAccess>>> statusWaiters = new Reference2ObjectOpenHashMap<>();
+    private Reference2ObjectOpenHashMap<ChunkStatus, List<Consumer<ChunkAccess>>> statusWaiters;
 
     void addStatusConsumer(final ChunkStatus status, final Consumer<ChunkAccess> consumer) {
-        this.statusWaiters.computeIfAbsent(status, (final ChunkStatus keyInMap) -> {
+        Reference2ObjectOpenHashMap<ChunkStatus, List<Consumer<ChunkAccess>>> waiters = this.statusWaiters;
+        if (waiters == null) {
+            this.statusWaiters = waiters = new Reference2ObjectOpenHashMap<>();
+        }
+        waiters.computeIfAbsent(status, (final ChunkStatus keyInMap) -> {
             return new ArrayList<>(4);
         }).add(consumer);
     }
@@ -1342,8 +1365,12 @@ public final class NewChunkHolder {
     }
 
     private void completeStatusConsumers0(final ChunkStatus status, final ChunkAccess chunk) {
-        final List<Consumer<ChunkAccess>> consumers;
-        consumers = this.statusWaiters.remove(status);
+        final Reference2ObjectOpenHashMap<ChunkStatus, List<Consumer<ChunkAccess>>> waiters = this.statusWaiters;
+        if (waiters == null) {
+            return;
+        }
+
+        final List<Consumer<ChunkAccess>> consumers = waiters.remove(status);
 
         if (consumers == null) {
             return;
@@ -1361,17 +1388,25 @@ public final class NewChunkHolder {
         }, Priority.HIGHEST);
     }
 
-    private final Reference2ObjectOpenHashMap<FullChunkStatus, List<Consumer<LevelChunk>>> fullStatusWaiters = new Reference2ObjectOpenHashMap<>();
+    private Reference2ObjectOpenHashMap<FullChunkStatus, List<Consumer<LevelChunk>>> fullStatusWaiters;
 
     void addFullStatusConsumer(final FullChunkStatus status, final Consumer<LevelChunk> consumer) {
-        this.fullStatusWaiters.computeIfAbsent(status, (final FullChunkStatus keyInMap) -> {
+        Reference2ObjectOpenHashMap<FullChunkStatus, List<Consumer<LevelChunk>>> waiters = this.fullStatusWaiters;
+        if (waiters == null) {
+            this.fullStatusWaiters = waiters = new Reference2ObjectOpenHashMap<>();
+        }
+        waiters.computeIfAbsent(status, (final FullChunkStatus keyInMap) -> {
             return new ArrayList<>(4);
         }).add(consumer);
     }
 
     private void completeFullStatusConsumers(FullChunkStatus status, final LevelChunk chunk) {
-        final List<Consumer<LevelChunk>> consumers;
-        consumers = this.fullStatusWaiters.remove(status);
+        final Reference2ObjectOpenHashMap<FullChunkStatus, List<Consumer<LevelChunk>>> waiters = this.fullStatusWaiters;
+        if (waiters == null) {
+            return;
+        }
+
+        final List<Consumer<LevelChunk>> consumers = waiters.remove(status);
 
         if (consumers == null) {
             return;
@@ -1392,7 +1427,7 @@ public final class NewChunkHolder {
     // note: must hold scheduling lock
     private void onChunkGenComplete(final ChunkAccess newChunk, final ChunkStatus newStatus,
                                     final List<ChunkProgressionTask> scheduleList, final List<NewChunkHolder> changedLoadStatus) {
-        if (!this.neighboursBlockingGenTask.isEmpty()) {
+        if (this.neighboursBlockingGenTask != null && !this.neighboursBlockingGenTask.isEmpty()) {
             throw new IllegalStateException("Cannot have neighbours blocking this gen task");
         }
         if (newChunk != null || (this.requestedGenStatus == null || !this.requestedGenStatus.isOrAfter(newStatus))) {
@@ -1412,8 +1447,9 @@ public final class NewChunkHolder {
             this.requestedGenStatus = null;
             if (requestedGenStatus != null) {
                 // it looks like it has been requested, so we must reschedule
-                if (!this.neighboursWaitingForUs.isEmpty()) {
-                    for (final Iterator<Reference2ObjectMap.Entry<NewChunkHolder, ChunkStatus>> iterator = this.neighboursWaitingForUs.reference2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
+                final Reference2ObjectLinkedOpenHashMap<NewChunkHolder, ChunkStatus> waitingNeighbours = this.neighboursWaitingForUs;
+                if (waitingNeighbours != null) {
+                    for (final Iterator<Reference2ObjectMap.Entry<NewChunkHolder, ChunkStatus>> iterator = waitingNeighbours.reference2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
                         final Reference2ObjectMap.Entry<NewChunkHolder, ChunkStatus> entry = iterator.next();
 
                         final NewChunkHolder chunkHolder = entry.getKey();
@@ -1421,10 +1457,14 @@ public final class NewChunkHolder {
 
                         if (!requestedGenStatus.isOrAfter(toStatus)) {
                             // if we were cancelled, we are responsible for removing the waiter
-                            if (!chunkHolder.neighboursBlockingGenTask.remove(this)) {
+                            final ReferenceLinkedOpenHashSet<NewChunkHolder> blockingNeighbours = chunkHolder.neighboursBlockingGenTask;
+                            if (blockingNeighbours == null || !blockingNeighbours.remove(this)) {
                                 throw new IllegalStateException("Corrupt state");
                             }
-                            if (chunkHolder.neighboursBlockingGenTask.isEmpty()) {
+                            if (blockingNeighbours.isEmpty()) {
+                                if (chunkHolder.generationTask == null && chunkHolder.requestedGenStatus == null) {
+                                    chunkHolder.neighboursBlockingGenTask = null;
+                                }
                                 chunkHolder.checkUnload();
                             }
                             iterator.remove();
@@ -1442,17 +1482,23 @@ public final class NewChunkHolder {
                 return;
             }
 
-            if (!this.neighboursWaitingForUs.isEmpty()) {
-                for (final NewChunkHolder chunkHolder : this.neighboursWaitingForUs.keySet()) {
-                    if (!chunkHolder.neighboursBlockingGenTask.remove(this)) {
+            final Reference2ObjectLinkedOpenHashMap<NewChunkHolder, ChunkStatus> waitingNeighbours = this.neighboursWaitingForUs;
+            if (waitingNeighbours != null) {
+                for (final NewChunkHolder chunkHolder : waitingNeighbours.keySet()) {
+                    final ReferenceLinkedOpenHashSet<NewChunkHolder> blockingNeighbours = chunkHolder.neighboursBlockingGenTask;
+                    if (blockingNeighbours == null || !blockingNeighbours.remove(this)) {
                         throw new IllegalStateException("Corrupt state");
                     }
-                    if (chunkHolder.neighboursBlockingGenTask.isEmpty()) {
+                    if (blockingNeighbours.isEmpty()) {
+                        if (chunkHolder.generationTask == null && chunkHolder.requestedGenStatus == null) {
+                            chunkHolder.neighboursBlockingGenTask = null;
+                        }
                         chunkHolder.checkUnload();
                     }
                 }
-                this.neighboursWaitingForUs.clear();
+                this.neighboursWaitingForUs = null;
             }
+            this.neighboursBlockingGenTask = null;
             // reset priority, we have nothing left to generate to
             this.setPriority(null);
             this.checkUnload();
@@ -1469,47 +1515,56 @@ public final class NewChunkHolder {
 
         List<NewChunkHolder> needsScheduling = null;
         boolean recalculatePriority = false;
-        for (final Iterator<Reference2ObjectMap.Entry<NewChunkHolder, ChunkStatus>> iterator
-             = this.neighboursWaitingForUs.reference2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
-            final Reference2ObjectMap.Entry<NewChunkHolder, ChunkStatus> entry = iterator.next();
-            final NewChunkHolder neighbour = entry.getKey();
-            final ChunkStatus requiredStatus = entry.getValue();
+        final Reference2ObjectLinkedOpenHashMap<NewChunkHolder, ChunkStatus> waitingNeighbours = this.neighboursWaitingForUs;
+        if (waitingNeighbours != null) {
+            for (final Iterator<Reference2ObjectMap.Entry<NewChunkHolder, ChunkStatus>> iterator
+                 = waitingNeighbours.reference2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
+                final Reference2ObjectMap.Entry<NewChunkHolder, ChunkStatus> entry = iterator.next();
+                final NewChunkHolder neighbour = entry.getKey();
+                final ChunkStatus requiredStatus = entry.getValue();
 
-            if (!newStatus.isOrAfter(requiredStatus)) {
-                if (requestedGenStatus == null || !requestedGenStatus.isOrAfter(requiredStatus)) {
-                    // if we're cancelled, still need to clear this map
-                    if (!neighbour.neighboursBlockingGenTask.remove(this)) {
-                        throw new IllegalStateException("Neighbour is not waiting for us?");
+                if (!newStatus.isOrAfter(requiredStatus)) {
+                    if (requestedGenStatus == null || !requestedGenStatus.isOrAfter(requiredStatus)) {
+                        // if we're cancelled, still need to clear this map
+                        final ReferenceLinkedOpenHashSet<NewChunkHolder> blockingNeighbours = neighbour.neighboursBlockingGenTask;
+                        if (blockingNeighbours == null || !blockingNeighbours.remove(this)) {
+                            throw new IllegalStateException("Neighbour is not waiting for us?");
+                        }
+                        if (blockingNeighbours.isEmpty()) {
+                            if (neighbour.generationTask == null && neighbour.requestedGenStatus == null) {
+                                neighbour.neighboursBlockingGenTask = null;
+                            }
+                            neighbour.checkUnload();
+                        }
+
+                        iterator.remove();
                     }
-                    if (neighbour.neighboursBlockingGenTask.isEmpty()) {
+                    continue;
+                }
+
+                // doesn't matter what isCancelled is here, we need to schedule if we can
+
+                recalculatePriority = true;
+                final ReferenceLinkedOpenHashSet<NewChunkHolder> blockingNeighbours = neighbour.neighboursBlockingGenTask;
+                if (blockingNeighbours == null || !blockingNeighbours.remove(this)) {
+                    throw new IllegalStateException("Neighbour is not waiting for us?");
+                }
+
+                if (blockingNeighbours.isEmpty()) {
+                    if (neighbour.requestedGenStatus != null) {
+                        if (needsScheduling == null) {
+                            needsScheduling = new ArrayList<>();
+                        }
+                        needsScheduling.add(neighbour);
+                    } else {
+                        neighbour.neighboursBlockingGenTask = null;
                         neighbour.checkUnload();
                     }
-
-                    iterator.remove();
                 }
-                continue;
+
+                // remove last; access to entry will throw if removed
+                iterator.remove();
             }
-
-            // doesn't matter what isCancelled is here, we need to schedule if we can
-
-            recalculatePriority = true;
-            if (!neighbour.neighboursBlockingGenTask.remove(this)) {
-                throw new IllegalStateException("Neighbour is not waiting for us?");
-            }
-
-            if (neighbour.neighboursBlockingGenTask.isEmpty()) {
-                if (neighbour.requestedGenStatus != null) {
-                    if (needsScheduling == null) {
-                        needsScheduling = new ArrayList<>();
-                    }
-                    needsScheduling.add(neighbour);
-                } else {
-                    neighbour.checkUnload();
-                }
-            }
-
-            // remove last; access to entry will throw if removed
-            iterator.remove();
         }
 
         if (newStatus == ChunkStatus.FULL) {
@@ -1536,6 +1591,10 @@ public final class NewChunkHolder {
             if (requestedGenStatus != null) {
                 this.requestedGenStatus = null;
             }
+            if (waitingNeighbours != null && waitingNeighbours.isEmpty()) {
+                this.neighboursWaitingForUs = null;
+            }
+            this.neighboursBlockingGenTask = null;
             // reached final stage, so stop scheduling now
             this.setPriority(null);
             this.checkUnload();
@@ -1921,27 +1980,33 @@ public final class NewChunkHolder {
 
         final JsonArray blockingGenNeighbours = new JsonArray();
         neighbourWaitState.add("blocking_gen_task", blockingGenNeighbours);
-        for (final NewChunkHolder blockingGenNeighbour : this.neighboursBlockingGenTask) {
-            final JsonObject neighbour = new JsonObject();
-            blockingGenNeighbours.add(neighbour);
+        final ReferenceLinkedOpenHashSet<NewChunkHolder> blockingNeighbours = this.neighboursBlockingGenTask;
+        if (blockingNeighbours != null) {
+            for (final NewChunkHolder blockingGenNeighbour : blockingNeighbours) {
+                final JsonObject neighbour = new JsonObject();
+                blockingGenNeighbours.add(neighbour);
 
-            neighbour.addProperty("chunkX", Integer.valueOf(blockingGenNeighbour.chunkX));
-            neighbour.addProperty("chunkZ", Integer.valueOf(blockingGenNeighbour.chunkZ));
+                neighbour.addProperty("chunkX", Integer.valueOf(blockingGenNeighbour.chunkX));
+                neighbour.addProperty("chunkZ", Integer.valueOf(blockingGenNeighbour.chunkZ));
+            }
         }
 
         final JsonArray neighboursWaitingForUs = new JsonArray();
         neighbourWaitState.add("neighbours_waiting_on_us", neighboursWaitingForUs);
-        for (final Reference2ObjectMap.Entry<NewChunkHolder, ChunkStatus> entry : this.neighboursWaitingForUs.reference2ObjectEntrySet()) {
-            final NewChunkHolder holder = entry.getKey();
-            final ChunkStatus status = entry.getValue();
+        final Reference2ObjectLinkedOpenHashMap<NewChunkHolder, ChunkStatus> waitingNeighbours = this.neighboursWaitingForUs;
+        if (waitingNeighbours != null) {
+            for (final Reference2ObjectMap.Entry<NewChunkHolder, ChunkStatus> entry : waitingNeighbours.reference2ObjectEntrySet()) {
+                final NewChunkHolder holder = entry.getKey();
+                final ChunkStatus status = entry.getValue();
 
-            final JsonObject neighbour = new JsonObject();
-            neighboursWaitingForUs.add(neighbour);
+                final JsonObject neighbour = new JsonObject();
+                neighboursWaitingForUs.add(neighbour);
 
 
-            neighbour.addProperty("chunkX", Integer.valueOf(holder.chunkX));
-            neighbour.addProperty("chunkZ", Integer.valueOf(holder.chunkZ));
-            neighbour.addProperty("waiting_for", Objects.toString(status));
+                neighbour.addProperty("chunkX", Integer.valueOf(holder.chunkX));
+                neighbour.addProperty("chunkZ", Integer.valueOf(holder.chunkZ));
+                neighbour.addProperty("waiting_for", Objects.toString(status));
+            }
         }
 
         ret.addProperty("pending_chunk_full_status", Objects.toString(this.pendingFullChunkStatus));
