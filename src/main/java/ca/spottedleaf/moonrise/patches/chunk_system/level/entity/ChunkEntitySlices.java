@@ -47,11 +47,11 @@ public final class ChunkEntitySlices {
     public final int chunkZ;
     public final Level world;
 
-    private final EntityCollectionBySection allEntities;
-    private final EntityCollectionBySection hardCollidingEntities;
-    private final Reference2ObjectOpenHashMap<Class<? extends Entity>, EntityCollectionBySection> entitiesByClass;
-    private final Reference2ObjectOpenHashMap<EntityType<?>, EntityCollectionBySection> entitiesByType;
-    private final EntityList entities = new EntityList();
+    private EntityCollectionBySection allEntities;
+    private EntityCollectionBySection hardCollidingEntities;
+    private Reference2ObjectOpenHashMap<Class<? extends Entity>, EntityCollectionBySection> entitiesByClass;
+    private Reference2ObjectOpenHashMap<EntityType<?>, EntityCollectionBySection> entitiesByType;
+    private EntityList entities;
 
     public FullChunkStatus status;
     public final ChunkData chunkData;
@@ -73,11 +73,6 @@ public final class ChunkEntitySlices {
         this.chunkX = chunkX;
         this.chunkZ = chunkZ;
         this.world = world;
-
-        this.allEntities = new EntityCollectionBySection(this);
-        this.hardCollidingEntities = new EntityCollectionBySection(this);
-        this.entitiesByClass = new Reference2ObjectOpenHashMap<>();
-        this.entitiesByType = new Reference2ObjectOpenHashMap<>();
 
         this.status = status;
         this.chunkData = chunkData;
@@ -140,12 +135,17 @@ public final class ChunkEntitySlices {
     }
 
     public CompoundTag save() {
-        final int len = this.entities.size();
+        final EntityList entities = this.entities;
+        if (entities == null) {
+            return null;
+        }
+
+        final int len = entities.size();
         if (len == 0) {
             return null;
         }
 
-        final Entity[] rawData = this.entities.getRawData();
+        final Entity[] rawData = entities.getRawData();
         final List<Entity> collectedEntities = new ArrayList<>(len);
         for (int i = 0; i < len; ++i) {
             final Entity entity = rawData[i];
@@ -163,8 +163,13 @@ public final class ChunkEntitySlices {
 
     // returns true if this chunk has transient entities remaining
     public boolean unload() {
-        final int len = this.entities.size();
-        final Entity[] collectedEntities = Arrays.copyOf(this.entities.getRawData(), len);
+        final EntityList entities = this.entities;
+        if (entities == null) {
+            return false;
+        }
+
+        final int len = entities.size();
+        final Entity[] collectedEntities = Arrays.copyOf(entities.getRawData(), len);
 
         for (int i = 0; i < len; ++i) {
             final Entity entity = collectedEntities[i];
@@ -184,16 +189,21 @@ public final class ChunkEntitySlices {
             }
         }
 
-        return this.entities.size() != 0;
+        return entities.size() != 0;
     }
 
     public List<Entity> getAllEntities() {
-        final int len = this.entities.size();
+        final EntityList entities = this.entities;
+        if (entities == null) {
+            return new ArrayList<>();
+        }
+
+        final int len = entities.size();
         if (len == 0) {
             return new ArrayList<>();
         }
 
-        final Entity[] rawData = this.entities.getRawData();
+        final Entity[] rawData = entities.getRawData();
         final List<Entity> collectedEntities = new ArrayList<>(len);
         for (int i = 0; i < len; ++i) {
             collectedEntities.add(rawData[i]);
@@ -203,12 +213,18 @@ public final class ChunkEntitySlices {
     }
 
     public boolean isEmpty() {
-        return this.entities.size() == 0;
+        final EntityList entities = this.entities;
+        return entities == null || entities.size() == 0;
     }
 
     public void mergeInto(final ChunkEntitySlices slices) {
-        final Entity[] entities = this.entities.getRawData();
-        for (int i = 0, size = Math.min(entities.length, this.entities.size()); i < size; ++i) {
+        final EntityList entityList = this.entities;
+        if (entityList == null) {
+            return;
+        }
+
+        final Entity[] entities = entityList.getRawData();
+        for (int i = 0, size = Math.min(entities.length, entityList.size()); i < size; ++i) {
             final Entity entity = entities[i];
             slices.addEntity(entity, ((ChunkSystemEntity)entity).moonrise$getSectionY());
         }
@@ -232,9 +248,14 @@ public final class ChunkEntitySlices {
     public void updateStatus(final FullChunkStatus status, final EntityLookup lookup) {
         this.status = status;
 
-        final Entity[] entities = this.entities.getRawData();
+        final EntityList entityList = this.entities;
+        if (entityList == null) {
+            return;
+        }
 
-        for (int i = 0, size = this.entities.size(); i < size; ++i) {
+        final Entity[] entities = entityList.getRawData();
+
+        for (int i = 0, size = entityList.size(); i < size; ++i) {
             final Entity entity = entities[i];
 
             final Visibility oldVisibility = EntityLookup.getEntityStatus(entity);
@@ -246,21 +267,37 @@ public final class ChunkEntitySlices {
     }
 
     public boolean addEntity(final Entity entity, final int chunkSection) {
-        if (!this.entities.add(entity)) {
+        EntityList entities = this.entities;
+        if (entities == null) {
+            this.entities = entities = new EntityList();
+        }
+        if (!entities.add(entity)) {
             return false;
         }
         ((ChunkSystemEntity)entity).moonrise$setChunkStatus(this.status);
         ((ChunkSystemEntity)entity).moonrise$setChunkData(this.chunkData);
         final int sectionIndex = chunkSection - this.minSection;
 
-        this.allEntities.addEntity(entity, sectionIndex);
+        EntityCollectionBySection allEntities = this.allEntities;
+        if (allEntities == null) {
+            this.allEntities = allEntities = new EntityCollectionBySection(this);
+        }
+        allEntities.addEntity(entity, sectionIndex);
 
         if (((ChunkSystemEntity)entity).moonrise$isHardColliding()) {
-            this.hardCollidingEntities.addEntity(entity, sectionIndex);
+            EntityCollectionBySection hardCollidingEntities = this.hardCollidingEntities;
+            if (hardCollidingEntities == null) {
+                this.hardCollidingEntities = hardCollidingEntities = new EntityCollectionBySection(this);
+            }
+            hardCollidingEntities.addEntity(entity, sectionIndex);
         }
 
+        Reference2ObjectOpenHashMap<Class<? extends Entity>, EntityCollectionBySection> entitiesByClass = this.entitiesByClass;
+        if (entitiesByClass == null) {
+            this.entitiesByClass = entitiesByClass = new Reference2ObjectOpenHashMap<>();
+        }
         for (final Iterator<Reference2ObjectMap.Entry<Class<? extends Entity>, EntityCollectionBySection>> iterator =
-             this.entitiesByClass.reference2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
+             entitiesByClass.reference2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
             final Reference2ObjectMap.Entry<Class<? extends Entity>, EntityCollectionBySection> entry = iterator.next();
 
             if (entry.getKey().isInstance(entity)) {
@@ -268,11 +305,16 @@ public final class ChunkEntitySlices {
             }
         }
 
-        EntityCollectionBySection byType = this.entitiesByType.get(entity.getType());
+        Reference2ObjectOpenHashMap<EntityType<?>, EntityCollectionBySection> entitiesByType = this.entitiesByType;
+        if (entitiesByType == null) {
+            this.entitiesByType = entitiesByType = new Reference2ObjectOpenHashMap<>();
+        }
+
+        EntityCollectionBySection byType = entitiesByType.get(entity.getType());
         if (byType != null) {
             byType.addEntity(entity, sectionIndex);
         } else {
-            this.entitiesByType.put(entity.getType(), byType = new EntityCollectionBySection(this));
+            entitiesByType.put(entity.getType(), byType = new EntityCollectionBySection(this));
             byType.addEntity(entity, sectionIndex);
         }
 
@@ -280,7 +322,8 @@ public final class ChunkEntitySlices {
     }
 
     public boolean removeEntity(final Entity entity, final int chunkSection) {
-        if (!this.entities.remove(entity)) {
+        final EntityList entities = this.entities;
+        if (entities == null || !entities.remove(entity)) {
             return false;
         }
         ((ChunkSystemEntity)entity).moonrise$setChunkStatus(null);
@@ -293,12 +336,15 @@ public final class ChunkEntitySlices {
             this.hardCollidingEntities.removeEntity(entity, sectionIndex);
         }
 
-        for (final Iterator<Reference2ObjectMap.Entry<Class<? extends Entity>, EntityCollectionBySection>> iterator =
-             this.entitiesByClass.reference2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
-            final Reference2ObjectMap.Entry<Class<? extends Entity>, EntityCollectionBySection> entry = iterator.next();
+        final Reference2ObjectOpenHashMap<Class<? extends Entity>, EntityCollectionBySection> entitiesByClass = this.entitiesByClass;
+        if (entitiesByClass != null) {
+            for (final Iterator<Reference2ObjectMap.Entry<Class<? extends Entity>, EntityCollectionBySection>> iterator =
+                 entitiesByClass.reference2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
+                final Reference2ObjectMap.Entry<Class<? extends Entity>, EntityCollectionBySection> entry = iterator.next();
 
-            if (entry.getKey().isInstance(entity)) {
-                entry.getValue().removeEntity(entity, sectionIndex);
+                if (entry.getKey().isInstance(entity)) {
+                    entry.getValue().removeEntity(entity, sectionIndex);
+                }
             }
         }
 
@@ -309,22 +355,30 @@ public final class ChunkEntitySlices {
     }
 
     public void getHardCollidingEntities(final Entity except, final AABB box, final List<Entity> into, final Predicate<? super Entity> predicate) {
-        this.hardCollidingEntities.getEntities(except, box, into, predicate);
+        final EntityCollectionBySection entities = this.hardCollidingEntities;
+        if (entities != null) {
+            entities.getEntities(except, box, into, predicate);
+        }
     }
 
     public void getEntities(final Entity except, final AABB box, final List<Entity> into, final Predicate<? super Entity> predicate) {
-        this.allEntities.getEntities(except, box, into, predicate);
+        final EntityCollectionBySection entities = this.allEntities;
+        if (entities != null) {
+            entities.getEntities(except, box, into, predicate);
+        }
     }
 
 
     public boolean getEntities(final Entity except, final AABB box, final List<Entity> into, final Predicate<? super Entity> predicate,
                                final int maxCount) {
-        return this.allEntities.getEntitiesLimited(except, box, into, predicate, maxCount);
+        final EntityCollectionBySection entities = this.allEntities;
+        return entities != null && entities.getEntitiesLimited(except, box, into, predicate, maxCount);
     }
 
     public <T extends Entity> void getEntities(final EntityType<?> type, final AABB box, final List<? super T> into,
                                                final Predicate<? super T> predicate) {
-        final EntityCollectionBySection byType = this.entitiesByType.get(type);
+        final Reference2ObjectOpenHashMap<EntityType<?>, EntityCollectionBySection> entitiesByType = this.entitiesByType;
+        final EntityCollectionBySection byType = entitiesByType == null ? null : entitiesByType.get(type);
 
         if (byType != null) {
             byType.getEntities((Entity)null, box, (List)into, (Predicate) predicate);
@@ -333,7 +387,8 @@ public final class ChunkEntitySlices {
 
     public <T extends Entity> boolean getEntities(final EntityType<?> type, final AABB box, final List<? super T> into,
                                                   final Predicate<? super T> predicate, final int maxCount) {
-        final EntityCollectionBySection byType = this.entitiesByType.get(type);
+        final Reference2ObjectOpenHashMap<EntityType<?>, EntityCollectionBySection> entitiesByType = this.entitiesByType;
+        final EntityCollectionBySection byType = entitiesByType == null ? null : entitiesByType.get(type);
 
         if (byType != null) {
             return byType.getEntitiesLimited((Entity)null, box, (List)into, (Predicate)predicate, maxCount);
@@ -367,22 +422,32 @@ public final class ChunkEntitySlices {
 
     public <T extends Entity> void getEntities(final Class<? extends T> clazz, final Entity except, final AABB box, final List<? super T> into,
                                                final Predicate<? super T> predicate) {
-        EntityCollectionBySection collection = this.entitiesByClass.get(clazz);
+        final Reference2ObjectOpenHashMap<Class<? extends Entity>, EntityCollectionBySection> entitiesByClass = this.entitiesByClass;
+        if (entitiesByClass == null) {
+            return;
+        }
+
+        EntityCollectionBySection collection = entitiesByClass.get(clazz);
         if (collection != null) {
             collection.getEntities(except, box, (List)into, (Predicate)predicate);
         } else {
-            this.entitiesByClass.put(clazz, collection = this.initClass(clazz));
+            entitiesByClass.put(clazz, collection = this.initClass(clazz));
             collection.getEntities(except, box, (List)into, (Predicate)predicate);
         }
     }
 
     public <T extends Entity> boolean getEntities(final Class<? extends T> clazz, final Entity except, final AABB box, final List<? super T> into,
                                                   final Predicate<? super T> predicate, final int maxCount) {
-        EntityCollectionBySection collection = this.entitiesByClass.get(clazz);
+        final Reference2ObjectOpenHashMap<Class<? extends Entity>, EntityCollectionBySection> entitiesByClass = this.entitiesByClass;
+        if (entitiesByClass == null) {
+            return false;
+        }
+
+        EntityCollectionBySection collection = entitiesByClass.get(clazz);
         if (collection != null) {
             return collection.getEntitiesLimited(except, box, (List)into, (Predicate)predicate, maxCount);
         } else {
-            this.entitiesByClass.put(clazz, collection = this.initClass(clazz));
+            entitiesByClass.put(clazz, collection = this.initClass(clazz));
             return collection.getEntitiesLimited(except, box, (List)into, (Predicate)predicate, maxCount);
         }
     }
