@@ -184,32 +184,32 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
     }
 
     @Override
-    public boolean configAutoConfigSendDistance() {
+    public boolean configAutoConfigSendDistance(final ServerLevel world) {
         return ConfigHolder.getConfig().chunkLoading.advanced.autoConfigSendDistance;
     }
 
     @Override
-    public double configPlayerMaxLoadRate() {
+    public double configPlayerMaxLoadRate(final ServerLevel world) {
         return ConfigHolder.getConfig().chunkLoading.basic.playerMaxLoadRate;
     }
 
     @Override
-    public double configPlayerMaxGenRate() {
+    public double configPlayerMaxGenRate(final ServerLevel world) {
         return ConfigHolder.getConfig().chunkLoading.basic.playerMaxGenRate;
     }
 
     @Override
-    public double configPlayerMaxSendRate() {
+    public double configPlayerMaxSendRate(final ServerLevel world) {
         return ConfigHolder.getConfig().chunkLoading.basic.playerMaxSendRate;
     }
 
     @Override
-    public int configPlayerMaxConcurrentLoads() {
+    public int configPlayerMaxConcurrentLoads(final ServerLevel world) {
         return ConfigHolder.getConfig().chunkLoading.advanced.playerMaxConcurrentChunkLoads;
     }
 
     @Override
-    public int configPlayerMaxConcurrentGens() {
+    public int configPlayerMaxConcurrentGens(final ServerLevel world) {
         return ConfigHolder.getConfig().chunkLoading.advanced.playerMaxConcurrentChunkGenerates;
     }
 
