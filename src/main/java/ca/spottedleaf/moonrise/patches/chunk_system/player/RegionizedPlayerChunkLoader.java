@@ -267,7 +267,7 @@ public final class RegionizedPlayerChunkLoader {
         );
         final int loadDistance = PlayerChunkLoaderData.getLoadViewDistance(tickViewDistance, -1, distances.loadViewDistance);
         final int sendViewDistance = PlayerChunkLoaderData.getSendViewDistance(
-                loadDistance, -1, -1, distances.sendViewDistance
+                this.world, loadDistance, -1, -1, distances.sendViewDistance
         );
 
         return sendViewDistance;
@@ -547,11 +547,11 @@ public final class RegionizedPlayerChunkLoader {
             return Math.max(tickViewDistance + 1, playerLoadViewDistance < 0 ? worldLoadViewDistance : playerLoadViewDistance);
         }
 
-        private static int getSendViewDistance(final int loadViewDistance, final int clientViewDistance,
+        private static int getSendViewDistance(final ServerLevel world, final int loadViewDistance, final int clientViewDistance,
                                                final int playerSendViewDistance, final int worldSendViewDistance) {
             return Math.min(
                 loadViewDistance - 1,
-                playerSendViewDistance < 0 ? (!PlatformHooks.get().configAutoConfigSendDistance() || clientViewDistance < 0 ? (worldSendViewDistance < 0 ? (loadViewDistance - 1) : worldSendViewDistance) : clientViewDistance + 1) : playerSendViewDistance
+                playerSendViewDistance < 0 ? (!PlatformHooks.get().configAutoConfigSendDistance(world) || clientViewDistance < 0 ? (worldSendViewDistance < 0 ? (loadViewDistance - 1) : worldSendViewDistance) : clientViewDistance + 1) : playerSendViewDistance
             );
         }
 
@@ -576,26 +576,26 @@ public final class RegionizedPlayerChunkLoader {
         }
 
         private double getMaxChunkLoadRate() {
-            final double configRate = PlatformHooks.get().configPlayerMaxLoadRate();
+            final double configRate = PlatformHooks.get().configPlayerMaxLoadRate(this.world);
 
             return configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
         }
 
         private double getMaxChunkGenRate() {
-            final double configRate = PlatformHooks.get().configPlayerMaxGenRate();
+            final double configRate = PlatformHooks.get().configPlayerMaxGenRate(this.world);
 
             return configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
         }
 
         private double getMaxChunkSendRate() {
-            final double configRate = PlatformHooks.get().configPlayerMaxSendRate();
+            final double configRate = PlatformHooks.get().configPlayerMaxSendRate(this.world);
 
             return configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
         }
 
         private long getMaxChunkLoads() {
             final long radiusChunks = (2L * this.lastLoadDistance + 1L) * (2L * this.lastLoadDistance + 1L);
-            long configLimit = (long)PlatformHooks.get().configPlayerMaxConcurrentLoads();
+            long configLimit = (long)PlatformHooks.get().configPlayerMaxConcurrentLoads(this.world);
             if (configLimit == 0L) {
                 // by default, only allow 1/5th of the chunks in the view distance to be concurrently active
                 configLimit = Math.max(5L, radiusChunks / 5L);
@@ -609,7 +609,7 @@ public final class RegionizedPlayerChunkLoader {
 
         private long getMaxChunkGenerates() {
             final long radiusChunks = (2L * this.lastLoadDistance + 1L) * (2L * this.lastLoadDistance + 1L);
-            long configLimit = (long)PlatformHooks.get().configPlayerMaxConcurrentGens();
+            long configLimit = (long)PlatformHooks.get().configPlayerMaxConcurrentGens(this.world);
             if (configLimit == 0L) {
                 // by default, only allow 1/5th of the chunks in the view distance to be concurrently active
                 configLimit = Math.max(5L, radiusChunks / 5L);
@@ -882,7 +882,7 @@ public final class RegionizedPlayerChunkLoader {
             final int loadViewDistance = getLoadViewDistance(tickViewDistance, playerDistances.loadViewDistance, worldDistances.loadViewDistance);
             // send view cannot be greater-than load view
             final int clientViewDistance = getClientViewDistance(this.player);
-            final int sendViewDistance = getSendViewDistance(loadViewDistance, clientViewDistance, playerDistances.sendViewDistance, worldDistances.sendViewDistance);
+            final int sendViewDistance = getSendViewDistance(this.world, loadViewDistance, clientViewDistance, playerDistances.sendViewDistance, worldDistances.sendViewDistance);
 
             // send view distances
             this.player.connection.send(this.updateClientChunkRadius(sendViewDistance));
@@ -929,7 +929,7 @@ public final class RegionizedPlayerChunkLoader {
             final int loadViewDistance = getLoadViewDistance(tickViewDistance, playerDistances.loadViewDistance, worldDistances.loadViewDistance);
             // send view cannot be greater-than load view
             final int clientViewDistance = getClientViewDistance(this.player);
-            final int sendViewDistance = getSendViewDistance(loadViewDistance, clientViewDistance, playerDistances.sendViewDistance, worldDistances.sendViewDistance);
+            final int sendViewDistance = getSendViewDistance(this.world, loadViewDistance, clientViewDistance, playerDistances.sendViewDistance, worldDistances.sendViewDistance);
 
             final ChunkPos playerPos = this.player.chunkPosition();
             final boolean canGenerateChunks = this.canPlayerGenerateChunks();
