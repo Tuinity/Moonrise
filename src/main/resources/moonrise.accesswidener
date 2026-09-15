@@ -181,7 +181,7 @@ accessible method net/minecraft/world/level/chunk/status/ChunkStatusTasks light 
 
 
 # RegionFileStorage
-accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage getRegionFile (Lnet/minecraft/world/level/ChunkPos;)Lnet/minecraft/world/level/chunk/storage/RegionFile;
+accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage getRegionFile (Lnet/minecraft/world/level/ChunkPos;Z)Lnet/minecraft/world/level/chunk/storage/RegionFile;
 extendable class net/minecraft/world/level/chunk/storage/RegionFileStorage
 accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage <init> (Lnet/minecraft/world/level/chunk/storage/RegionStorageInfo;Ljava/nio/file/Path;Z)V
 accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage write (Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/nbt/CompoundTag;)V
@@ -275,10 +275,6 @@ accessible method net/minecraft/world/level/chunk/storage/RegionFile write (Lnet
 
 # RegionFile$ChunkBuffer
 accessible class net/minecraft/world/level/chunk/storage/RegionFile$ChunkBuffer
-
-
-# DensityFunctions$EndIslandDensityFunction
-accessible class net/minecraft/world/level/levelgen/DensityFunctions$EndIslandDensityFunction
 
 
 # LocalMobCapCalculator$MobCounts
