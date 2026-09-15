@@ -9,7 +9,6 @@ import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import net.minecraft.util.FileUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.StreamTagVisitor;
 import net.minecraft.util.ExceptionCollector;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.RegionFile;
@@ -22,21 +21,19 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 @Mixin(RegionFileStorage.class)
 abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, AutoCloseable {
 
     @Shadow
     @Final
-    private Long2ObjectLinkedOpenHashMap<RegionFile> regionCache;
+    private Long2ObjectLinkedOpenHashMap<Optional<RegionFile>> regionCache;
 
     @Shadow
     @Final
@@ -105,42 +102,13 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
 
     @Override
     public synchronized final RegionFile moonrise$getRegionFileIfLoaded(final int chunkX, final int chunkZ) {
-        return this.regionCache.getAndMoveToFirst(ChunkPos.pack(chunkX >> REGION_SHIFT, chunkZ >> REGION_SHIFT));
+        final Optional<RegionFile> ret = this.regionCache.getAndMoveToFirst(ChunkPos.pack(chunkX >> REGION_SHIFT, chunkZ >> REGION_SHIFT));
+        return ret == null || ret.isEmpty() ? null : ret.get();
     }
 
     @Override
     public synchronized final RegionFile moonrise$getRegionFileIfExists(final int chunkX, final int chunkZ) throws IOException {
-        final long key = ChunkPos.pack(chunkX >> REGION_SHIFT, chunkZ >> REGION_SHIFT);
-
-        RegionFile ret = this.regionCache.getAndMoveToFirst(key);
-        if (ret != null) {
-            return ret;
-        }
-
-        if (!this.doesRegionFilePossiblyExist(key)) {
-            return null;
-        }
-
-        if (this.regionCache.size() >= MAX_CACHE_SIZE) {
-            this.regionCache.removeLast().close();
-        }
-
-        final Path regionPath = this.folder.resolve(getRegionFileName(chunkX, chunkZ));
-
-        if (!Files.exists(regionPath)) {
-            this.markNonExisting(key);
-            return null;
-        }
-
-        this.createRegionFile(key);
-
-        FileUtil.createDirectoriesSafe(this.folder);
-
-        ret = new RegionFile(this.info, regionPath, this.folder, this.sync);
-
-        this.regionCache.putAndMoveToFirst(key, ret);
-
-        return ret;
+        return this.getRegionFile(new ChunkPos(chunkX, chunkZ), false);
     }
 
     /**
@@ -148,28 +116,48 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
      * @author Spottedleaf
      */
     @Overwrite
-    public final RegionFile getRegionFile(final ChunkPos chunkPos) throws IOException {
+    public RegionFile getRegionFile(final ChunkPos chunkPos, final boolean create) throws IOException {
         synchronized (this) {
             final long key = ChunkPos.pack(chunkPos.x() >> REGION_SHIFT, chunkPos.z() >> REGION_SHIFT);
 
-            RegionFile ret = this.regionCache.getAndMoveToFirst(key);
-            if (ret != null) {
-                return ret;
+            final Optional<RegionFile> cached = this.regionCache.getAndMoveToFirst(key);
+            if (cached != null) {
+                if (cached.isPresent()) {
+                    return cached.get();
+                }
+
+                if (!create) {
+                    return null;
+                }
+            }
+
+            if (!create && !this.doesRegionFilePossiblyExist(key)) {
+                return null;
             }
 
             if (this.regionCache.size() >= MAX_CACHE_SIZE) {
-                this.regionCache.removeLast().close();
+                final Optional<RegionFile> evicted = this.regionCache.removeLast();
+                if (evicted.isPresent()) {
+                    evicted.get().close();
+                }
             }
 
             final Path regionPath = this.folder.resolve(getRegionFileName(chunkPos.x(), chunkPos.z()));
+
+            if (!create && !Files.isRegularFile(regionPath)) {
+                // unlike vanilla, do not cache Optional.empty() here: missing regions are tracked in
+                // nonExistingRegionFiles so that a read miss cannot evict a live RegionFile from the cache
+                this.markNonExisting(key);
+                return null;
+            }
 
             this.createRegionFile(key);
 
             FileUtil.createDirectoriesSafe(this.folder);
 
-            ret = new RegionFile(this.info, regionPath, this.folder, this.sync);
+            final RegionFile ret = new RegionFile(this.info, regionPath, this.folder, this.sync);
 
-            this.regionCache.putAndMoveToFirst(key, ret);
+            this.regionCache.putAndMoveToFirst(key, Optional.of(ret));
 
             return ret;
         }
@@ -187,7 +175,7 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
         }
 
         final ChunkPos pos = new ChunkPos(chunkX, chunkZ);
-        final RegionFile regionFile = this.getRegionFile(pos);
+        final RegionFile regionFile = this.getRegionFile(pos, true);
 
         // note: not required to keep regionfile loaded after this call, as the write param takes a regionfile as input
         // (and, the regionfile parameter is unused for writing until the write call)
@@ -216,7 +204,7 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
             return;
         }
 
-        writeData.write().run(this.getRegionFile(pos));
+        writeData.write().run(this.getRegionFile(pos, true));
     }
 
     @Override
@@ -275,9 +263,12 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
     public void close() throws IOException {
         synchronized (this) {
             final ExceptionCollector<IOException> exceptionCollector = new ExceptionCollector<>();
-            for (final RegionFile regionFile : this.regionCache.values()) {
+            for (final Optional<RegionFile> entry : this.regionCache.values()) {
+                if (entry.isEmpty()) {
+                    continue;
+                }
                 try {
-                    regionFile.close();
+                    entry.get().close();
                 } catch (final IOException ex) {
                     exceptionCollector.add(ex);
                 }
@@ -295,89 +286,18 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
     public void flush() throws IOException {
         synchronized (this) {
             final ExceptionCollector<IOException> exceptionCollector = new ExceptionCollector<>();
-            for (final RegionFile regionFile : this.regionCache.values()) {
+            for (final Optional<RegionFile> entry : this.regionCache.values()) {
+                if (entry.isEmpty()) {
+                    continue;
+                }
                 try {
-                    regionFile.flush();
+                    entry.get().flush();
                 } catch (final IOException ex) {
                     exceptionCollector.add(ex);
                 }
             }
 
             exceptionCollector.throwIfPresent();
-        }
-    }
-
-    /**
-     * @reason Avoid creating RegionFiles on read when they do not exist
-     * @author Spottedleaf
-     */
-    @Redirect(
-            method = "read",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/chunk/storage/RegionFileStorage;getRegionFile(Lnet/minecraft/world/level/ChunkPos;)Lnet/minecraft/world/level/chunk/storage/RegionFile;"
-            )
-    )
-    private RegionFile avoidCreatingReadRegionFile(final RegionFileStorage instance, final ChunkPos chunkPos) throws IOException {
-        return ((RegionFileStorageMixin)(Object)instance).moonrise$getRegionFileIfExists(chunkPos.x(), chunkPos.z());
-    }
-
-    /**
-     * @reason Avoid creating RegionFiles on read when they do not exist, this hook is required to exit early when
-     *         the RegionFile does not exist.
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "read",
-            cancellable = true,
-            locals = LocalCapture.CAPTURE_FAILHARD,
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/chunk/storage/RegionFile;getChunkDataInputStream(Lnet/minecraft/world/level/ChunkPos;)Ljava/io/DataInputStream;"
-            )
-    )
-    private void avoidCreatingReadRegionFileExit(final ChunkPos chunkPos, final CallbackInfoReturnable<CompoundTag> cir,
-                                                 final RegionFile regionFile) {
-        if (regionFile == null) {
-            cir.setReturnValue(null);
-            return;
-        }
-    }
-
-    /**
-     * @reason Avoid creating RegionFiles on scan when they do not exist
-     * @author Spottedleaf
-     */
-    @Redirect(
-            method = "scanChunk",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/chunk/storage/RegionFileStorage;getRegionFile(Lnet/minecraft/world/level/ChunkPos;)Lnet/minecraft/world/level/chunk/storage/RegionFile;"
-            )
-    )
-    private RegionFile avoidCreatingScanRegionFile(final RegionFileStorage instance, final ChunkPos chunkPos) throws IOException {
-        return ((RegionFileStorageMixin)(Object)instance).moonrise$getRegionFileIfExists(chunkPos.x(), chunkPos.z());
-    }
-
-    /**
-     * @reason Avoid creating RegionFiles on scan when they do not exist, this hook is required to exit early when
-     *         the RegionFile does not exist.
-     * @author Spottedleaf
-     */
-    @Inject(
-            method = "scanChunk",
-            cancellable = true,
-            locals = LocalCapture.CAPTURE_FAILHARD,
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/chunk/storage/RegionFile;getChunkDataInputStream(Lnet/minecraft/world/level/ChunkPos;)Ljava/io/DataInputStream;"
-            )
-    )
-    private void avoidCreatingScanRegionFileExit(final ChunkPos chunkPos, final StreamTagVisitor streamTagVisitor,
-                                                 final CallbackInfo ci, final RegionFile regionFile) {
-        if (regionFile == null) {
-            ci.cancel();
-            return;
         }
     }
 

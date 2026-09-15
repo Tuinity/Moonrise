@@ -16,28 +16,13 @@ abstract class NoiseBasedChunkGeneratorMixin {
      * @author Spottedleaf
      */
     @Redirect(
-            method = "createBiomes",
+            method = "buildTerrain",
             at = @At(
                     value = "INVOKE",
                     target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"
             )
     )
-    private <U> CompletableFuture<U> redirectBiomesExecutor(final Supplier<U> supplier, final Executor badExecutor) {
-        return CompletableFuture.supplyAsync(supplier, Runnable::run);
-    }
-
-    /**
-     * @reason Use Runnable:run, as we schedule onto the moonrise common pool
-     * @author Spottedleaf
-     */
-    @Redirect(
-            method = "fillFromNoise",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"
-            )
-    )
-    private <U> CompletableFuture<U> redirectNoiseExecutor(final Supplier<U> supplier, final Executor badExecutor) {
+    private <U> CompletableFuture<U> redirectTerrainExecutor(final Supplier<U> supplier, final Executor badExecutor) {
         return CompletableFuture.supplyAsync(supplier, Runnable::run);
     }
 }

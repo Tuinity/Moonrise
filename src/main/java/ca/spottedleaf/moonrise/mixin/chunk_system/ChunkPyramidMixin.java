@@ -16,6 +16,8 @@ abstract class ChunkPyramidMixin {
      * @reason Starlight does not require loading neighbours for light data, as Starlight performs chunk edge checks on
      *         both light loading and light generation. As a result, we can skip loading the 8 neighbours for a basic
      *         chunk load - bringing the total access radius for a pure chunk load to 0.
+     *         Note: the ordinal is the position of the LOADING_PYRAMID LIGHT step in the ChunkPyramid initialiser, and
+     *         must be updated whenever a ChunkStatus is added to or removed from the status list.
      * @author Spottedleaf
      */
     @Redirect(
@@ -23,7 +25,7 @@ abstract class ChunkPyramidMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/chunk/status/ChunkPyramid$Builder;step(Lnet/minecraft/world/level/chunk/status/ChunkStatus;Ljava/util/function/UnaryOperator;)Lnet/minecraft/world/level/chunk/status/ChunkPyramid$Builder;",
-                    ordinal = 21
+                    ordinal = 17
             )
     )
     private static ChunkPyramid.Builder removeLoadLightDependency(final ChunkPyramid.Builder instance,

@@ -5,6 +5,7 @@ import ca.spottedleaf.moonrise.common.map.SynchronisedLong2ObjectMap;
 import com.mojang.datafixers.DataFixer;
 import it.unimi.dsi.fastutil.longs.Long2BooleanMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.core.RegistryAccess;
@@ -40,6 +41,9 @@ abstract class StructureCheckMixin {
 
     @Shadow
     private Map<Structure, Long2BooleanMap> featureChecks;
+
+    @Shadow
+    private LongSet chunksWithoutStartsInStorage;
 
     @Shadow
     protected abstract boolean canCreateStructure(ChunkPos chunkPos, Structure structure);
@@ -127,6 +131,7 @@ abstract class StructureCheckMixin {
         for (SynchronisedLong2BooleanMap value : this.featureChecksSafe.values()) {
             value.remove(pos);
         }
+        this.chunksWithoutStartsInStorage.remove(pos);
     }
 
     /**
@@ -147,5 +152,6 @@ abstract class StructureCheckMixin {
             referencesByStructure.computeInt(structure, (feature, references) -> references == null ? 1 : references + 1);
             return referencesByStructure;
         });
+        this.chunksWithoutStartsInStorage.remove(pos.pack());
     }
 }

@@ -43,7 +43,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
      * @author Spottedleaf
      */
     @Redirect(
-        method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;J)V",
+        method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;)V",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/util/Util;shuffle(Ljava/util/List;Lnet/minecraft/util/RandomSource;)V"
@@ -59,7 +59,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource {
      * @author Spottedleaf
      */
     @Redirect(
-        method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;J)V",
+        method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;)V",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ChunkMap;forEachBlockTickingChunk(Ljava/util/function/Consumer;)V"

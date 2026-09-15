@@ -127,8 +127,13 @@ abstract class EntityMixin {
         }
 
         final List<AABB> entityAABBs = new ArrayList<>();
+        // Vanilla expands the entity query by maxUpStep: the step logic below tests raised positions, so
+        // entities fully above this entity's hitbox must be fetched for those checks (MC-310289). When
+        // there is no horizontal movement the step logic cannot run, so keep the smaller query.
+        final AABB entityQueryBox = (xZero & zZero) ? initialCollisionBox
+            : initialCollisionBox.expandTowards(0.0, (double)this.maxUpStep(), 0.0);
         CollisionUtil.getEntityHardCollisions(
-            this.level, (Entity)(Object)this, initialCollisionBox, entityAABBs, 0, null
+            this.level, (Entity)(Object)this, entityQueryBox, entityAABBs, 0, null
         );
 
         CollisionUtil.getCollisionsForBlocksOrWorldBorder(

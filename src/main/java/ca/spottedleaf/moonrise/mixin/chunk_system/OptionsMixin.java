@@ -10,13 +10,14 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 abstract class OptionsMixin {
 
     /**
-     * @reason Allow higher view distances
+     * @reason Allow higher view distances. The ordinal is the position of the constant in the Options constructor and
+     *         must be updated whenever a `32` constant is added to or removed from it.
      * @author Spottedleaf
      */
     @ModifyConstant(
             method = "<init>",
             constant = @Constant(
-                    intValue = 32, ordinal = 2
+                    intValue = 32, ordinal = 3
             )
     )
     private int replaceViewDistanceConstant(final int constant) {
@@ -24,13 +25,14 @@ abstract class OptionsMixin {
     }
 
     /**
-     * @reason Allow higher view distances
+     * @reason Allow higher view distances. The ordinal is the position of the constant in the Options constructor and
+     *         must be updated whenever a `32` constant is added to or removed from it.
      * @author Spottedleaf
      */
     @ModifyConstant(
             method = "<init>",
             constant = @Constant(
-                    intValue = 32, ordinal = 3
+                    intValue = 32, ordinal = 4
             )
     )
     private int replaceSimulationDistanceConstant(final int constant) {

@@ -124,7 +124,7 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
         ServerLevel p_214836_, LevelStorageSource.LevelStorageAccess p_214837_, DataFixer p_214838_,
         StructureTemplateManager p_214839_, Executor p_214840_, BlockableEventLoop p_214841_,
         LightChunkGetter p_214842_, ChunkGenerator p_214843_,
-        ChunkStatusUpdateListener p_214845_, Supplier p_214846_, TicketStorage p_394462_, int p_214847_,
+        ChunkStatusUpdateListener p_214845_, TicketStorage p_394462_, int p_214847_,
         boolean p_214848_, CallbackInfo ci) {
         // Expose loaded chunk holders for mod compatibility
         final MoonriseChunkHolderMap chunkHolderMap = new MoonriseChunkHolderMap(p_214836_);
