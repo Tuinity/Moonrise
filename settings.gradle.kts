@@ -26,7 +26,7 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
     id("xyz.jpenilla.quiet-fabric-loom-repositories") version "1.17.342"
     // https://projects.neoforged.net/neoforged/moddevgradle
-    id("net.neoforged.moddev.repositories") version "2.0.143"
+    id("net.neoforged.moddev.repositories") version "2.0.147"
 }
 
 dependencyResolutionManagement {
@@ -56,8 +56,8 @@ rootProject.name = "Moonrise"
 
 include("fabric")
 findProject(":fabric")!!.name = "Moonrise-Fabric"
-include("neoforge")
-findProject(":neoforge")!!.name = "Moonrise-NeoForge"
+// include("neoforge")
+// findProject(":neoforge")!!.name = "Moonrise-NeoForge"
 
 // includeBuild("../YamlConfig") // Uncomment to use local YamlConfig
 // includeBuild("../ConcurrentUtil") // Uncomment to use local ConcurrentUtil
