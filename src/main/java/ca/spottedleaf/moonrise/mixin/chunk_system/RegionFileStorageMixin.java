@@ -135,13 +135,6 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
                 return null;
             }
 
-            if (this.regionCache.size() >= MAX_CACHE_SIZE) {
-                final Optional<RegionFile> evicted = this.regionCache.removeLast();
-                if (evicted.isPresent()) {
-                    evicted.get().close();
-                }
-            }
-
             final Path regionPath = this.folder.resolve(getRegionFileName(chunkPos.x(), chunkPos.z()));
 
             if (!create && !Files.isRegularFile(regionPath)) {
@@ -149,6 +142,13 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
                 // nonExistingRegionFiles so that a read miss cannot evict a live RegionFile from the cache
                 this.markNonExisting(key);
                 return null;
+            }
+
+            if (this.regionCache.size() >= MAX_CACHE_SIZE) {
+                final Optional<RegionFile> evicted = this.regionCache.removeLast();
+                if (evicted.isPresent()) {
+                    evicted.get().close();
+                }
             }
 
             this.createRegionFile(key);
