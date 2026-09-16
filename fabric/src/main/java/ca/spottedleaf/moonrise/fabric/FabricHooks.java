@@ -234,11 +234,6 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
     }
 
     @Override
-    public boolean configFixMC159283() {
-        return ConfigHolder.getConfig().bugFixes.fixMC159283;
-    }
-
-    @Override
     public boolean forceNoSave(final ChunkAccess chunk) {
         return false;
     }

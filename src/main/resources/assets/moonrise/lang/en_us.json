@@ -13,7 +13,5 @@
     "tooltip.moonrise.genrate": "Sets the maximum number of chunks to generate per second.",
     "option.moonrise.genrate": "Maximum Chunk Generate Rate",
     "tooltip.moonrise.loadrate": "Sets the maximum number of chunks to load per second.",
-    "option.moonrise.loadrate": "Maximum Chunk Load Rate",
-    "tooltip.moonrise.fixMC159283": "Fixes end islands not generating far away in the end. Does not affect already generated areas.",
-    "option.moonrise.fixMC159283": "Fix MC-159283"
+    "option.moonrise.loadrate": "Maximum Chunk Load Rate"
 }
