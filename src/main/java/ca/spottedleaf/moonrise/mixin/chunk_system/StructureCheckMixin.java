@@ -6,6 +6,7 @@ import com.mojang.datafixers.DataFixer;
 import it.unimi.dsi.fastutil.longs.Long2BooleanMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.core.RegistryAccess;
@@ -13,9 +14,11 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.storage.ChunkScanAccess;
 import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureCheck;
 import net.minecraft.world.level.levelgen.structure.StructureCheckResult;
@@ -63,6 +66,8 @@ abstract class StructureCheckMixin {
     private final SynchronisedLong2ObjectMap<Object2IntMap<Structure>> loadedChunksSafe = new SynchronisedLong2ObjectMap<>(CHUNK_TOTAL_LIMIT);
     @Unique
     private final ConcurrentHashMap<Structure, SynchronisedLong2BooleanMap> featureChecksSafe = new ConcurrentHashMap<>();
+    @Unique
+    private ThreadLocal<Climate.Sampler> moonrise$climateSampler;
 
     /**
      * @reason Initialise fields and destroy old state
@@ -80,6 +85,25 @@ abstract class StructureCheckMixin {
                           BiomeSource biomeSource, long l, DataFixer dataFixer, CallbackInfo ci) {
         this.loadedChunks = null;
         this.featureChecks = null;
+        // The size/clear/add sequence only enforces an approximate cache bound; individual operations must be safe.
+        this.chunksWithoutStartsInStorage = LongSets.synchronize(this.chunksWithoutStartsInStorage);
+        this.moonrise$climateSampler = ThreadLocal.withInitial(() ->
+            randomState.createClimateSampler(SamplerContext.builder().enableCaches().build())
+        );
+    }
+
+    /**
+     * @reason Reuse sampling caches per thread without sharing mutable scratch state between concurrent predictions.
+     */
+    @Redirect(
+            method = "canCreateStructure",
+            at = @At(
+                    value = "FIELD",
+                    target = "Lnet/minecraft/world/level/levelgen/structure/StructureCheck;climateSampler:Lnet/minecraft/world/level/biome/Climate$Sampler;"
+            )
+    )
+    private Climate.Sampler moonrise$getClimateSampler(final StructureCheck instance) {
+        return this.moonrise$climateSampler.get();
     }
 
     /**
