@@ -31,5 +31,8 @@ dependencies {
 }
 
 tasks.shadowJar {
+    filesMatching("META-INF/services/**") {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
     mergeServiceFiles()
 }
