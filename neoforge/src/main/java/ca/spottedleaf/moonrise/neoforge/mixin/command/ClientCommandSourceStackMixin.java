@@ -5,8 +5,6 @@ import java.util.function.Supplier;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec2;
@@ -17,8 +15,8 @@ import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(ClientCommandSourceStack.class)
 abstract class ClientCommandSourceStackMixin extends CommandSourceStack implements CommandClientCommandSource {
-    public ClientCommandSourceStackMixin(final CommandSource source, final Vec3 position, final Vec2 rotation, final ServerLevel level, final PermissionSet permissions, final MinecraftServer server, final Entity entity) {
-        super(source, position, rotation, level, permissions, server, entity);
+    public ClientCommandSourceStackMixin(CommandSource source, Vec3 position, Vec2 rotation, PermissionSet permissions, Entity executing) {
+        super(source, position, rotation, null, permissions, null, executing);
     }
 
     @Shadow
