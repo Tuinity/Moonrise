@@ -230,7 +230,7 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
      */
     @Override
     public boolean noCollision(final Entity entity, final AABB box) {
-        final int flags = entity == null ? (CollisionUtil.COLLISION_FLAG_CHECK_BORDER | CollisionUtil.COLLISION_FLAG_CHECK_ONLY) : CollisionUtil.COLLISION_FLAG_CHECK_ONLY;
+        final int flags = entity != null ? (CollisionUtil.COLLISION_FLAG_CHECK_BORDER | CollisionUtil.COLLISION_FLAG_CHECK_ONLY) : CollisionUtil.COLLISION_FLAG_CHECK_ONLY;
         if (CollisionUtil.getCollisionsForBlocksOrWorldBorder((Level)(Object)this, entity, box, null, null, flags, null)) {
             return false;
         }
