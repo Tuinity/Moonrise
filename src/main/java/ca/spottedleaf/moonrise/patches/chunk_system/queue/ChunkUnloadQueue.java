@@ -109,7 +109,7 @@ public final class ChunkUnloadQueue {
             ret.add(sectionJson);
 
             sectionJson.addProperty("sectionX", section.sectionX());
-            sectionJson.addProperty("sectionZ", section.sectionX());
+            sectionJson.addProperty("sectionZ", section.sectionZ());
             sectionJson.addProperty("order", section.order());
 
             final JsonArray coordinates = new JsonArray();
