@@ -62,7 +62,7 @@ public final class ParallelSearchRadiusIteration {
     }
 
     public static long[] getEuclideanIteration(final int radius) {
-        return SEARCH_RADIUS_ITERATION_LIST[radius];
+        return EUCLIDEAN_RADIUS_ITERATION_LIST[radius];
     }
 
     private static class CustomLongArray extends LongArrayList {
