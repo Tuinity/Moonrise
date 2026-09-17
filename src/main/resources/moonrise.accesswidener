@@ -238,6 +238,7 @@ mutable field net/minecraft/world/level/chunk/storage/SimpleRegionStorage worker
 # StructureCheck
 mutable field net/minecraft/world/level/levelgen/structure/StructureCheck loadedChunks Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;
 mutable field net/minecraft/world/level/levelgen/structure/StructureCheck featureChecks Ljava/util/Map;
+mutable field net/minecraft/world/level/levelgen/structure/StructureCheck chunksWithoutStartsInStorage Lit/unimi/dsi/fastutil/longs/LongSet;
 
 
 # ClientLevel
