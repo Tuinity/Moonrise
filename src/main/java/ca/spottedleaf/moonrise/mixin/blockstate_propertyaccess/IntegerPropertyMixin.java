@@ -31,7 +31,7 @@ abstract class IntegerPropertyMixin extends Property<Integer> implements Propert
         final int val = value.intValue();
         final int ret = val - this.min;
 
-        return ret | ((this.max - ret) >> 31);
+        return ret | ((this.max - this.min - ret) >> 31);
     }
 
     /**
