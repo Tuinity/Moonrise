@@ -4,6 +4,7 @@
     "package": "ca.spottedleaf.moonrise.mixin",
     "compatibilityLevel": "JAVA_25",
     "mixins": [
+        "bitstorage.PalettedContainerMixin",
         "bitstorage.SimpleBitStorageMixin",
         "bitstorage.ZeroBitStorageMixin",
         "block_counting.BitStorageMixin",
