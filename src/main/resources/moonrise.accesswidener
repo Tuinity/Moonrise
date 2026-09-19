@@ -323,3 +323,8 @@ mutable field net/minecraft/world/level/block/state/StateHolder propertyValues [
 
 # ClientCommonPacketListenerImpl
 accessible field net/minecraft/client/multiplayer/ClientCommonPacketListenerImpl minecraft Lnet/minecraft/client/Minecraft;
+
+
+# Strategy
+accessible method net/minecraft/world/level/chunk/Strategy getConfigurationForPaletteSize (I)Lnet/minecraft/world/level/chunk/Configuration;
+

@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.collisions;
 
-import ca.spottedleaf.moonrise.common.util.FlatBitsetUtil;
+import ca.spottedleaf.common.util.FlatBitsetUtil;
 import ca.spottedleaf.moonrise.common.util.MixinWorkarounds;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CachedShapeData;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionDiscreteVoxelShape;
