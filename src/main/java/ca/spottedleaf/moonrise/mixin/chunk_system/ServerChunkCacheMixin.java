@@ -36,6 +36,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -55,6 +56,11 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
     @Final
     private SavedDataStorage savedDataStorage;
 
+    @Shadow
+    @Final
+    private Set<ChunkHolder> chunkHoldersToBroadcast;
+
+
     @Unique
     private final ConcurrentChainedLong2ReferenceHashTable<LevelChunk> fullChunks = new ConcurrentChainedLong2ReferenceHashTable<>();
 
@@ -71,6 +77,11 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
     @Override
     public final LevelChunk moonrise$getFullChunkIfLoaded(final int chunkX, final int chunkZ) {
         return this.fullChunks.get(CoordinateUtils.getChunkKey(chunkX, chunkZ));
+    }
+
+    @Override
+    public final void moonrise$chunkHolderUnload(final NewChunkHolder chunkHolder) {
+        this.chunkHoldersToBroadcast.remove(chunkHolder.vanillaChunkHolder);
     }
 
     @Unique

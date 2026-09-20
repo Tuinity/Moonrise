@@ -20,6 +20,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.GenericDataL
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicket;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import ca.spottedleaf.moonrise.patches.chunk_system.util.stream.TicketSet;
+import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemServerChunkCache;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.longs.Long2ByteLinkedOpenHashMap;
@@ -1115,6 +1116,7 @@ public final class ChunkHolderManager {
     private void removeChunkHolder(final NewChunkHolder holder) {
         holder.onUnload();
         this.autoSaveQueue.remove(holder);
+        ((ChunkSystemServerChunkCache)this.world.getChunkSource()).moonrise$chunkHolderUnload(holder);
         PlatformHooks.get().onChunkHolderDelete(this.world, holder.vanillaChunkHolder);
         this.chunkHolders.remove(CoordinateUtils.getChunkKey(holder.chunkX, holder.chunkZ));
     }
