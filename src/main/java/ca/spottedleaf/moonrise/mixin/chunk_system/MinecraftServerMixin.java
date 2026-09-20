@@ -24,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -271,6 +272,24 @@ abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask
         LOGGER.info("All RegionFile I/O tasks to complete");
         if ((Object)this instanceof DedicatedServer) {
             MoonriseCommon.haltExecutors();
+        }
+    }
+
+    /**
+     * @reason Tick chunk system while the server is idle to process unloads
+     * @author Spottedleaf
+     */
+    @Inject(
+        method = "tickServer",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/MinecraftServer;tickConnection()V",
+            ordinal = 0
+        )
+    )
+    private void processUnloads(final BooleanSupplier haveTime, final CallbackInfo ci) {
+        for (final ServerLevel world : this.getAllLevels()) {
+            world.getChunkSource().tick(() -> true, false);
         }
     }
 }
