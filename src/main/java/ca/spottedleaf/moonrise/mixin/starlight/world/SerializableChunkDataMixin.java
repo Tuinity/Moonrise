@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.starlight.world;
 
 import ca.spottedleaf.moonrise.common.util.MixinWorkarounds;
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
 import ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk;
 import ca.spottedleaf.moonrise.patches.starlight.light.SWMRNibbleArray;
 import ca.spottedleaf.moonrise.patches.starlight.light.StarLightEngine;
@@ -183,6 +184,8 @@ abstract class SerializableChunkDataMixin {
         final int maxLightSection = WorldUtil.getMaxLightSection(world);
         final int minBlockSection = WorldUtil.getMinSection(world);
 
+        final boolean copy = !NewChunkHolder.DO_NOT_COPY_SAVED_DATA.get().booleanValue();
+
         final LevelChunkSection[] chunkSections = chunk.getSections();
         final SWMRNibbleArray[] blockNibbles = ((StarlightChunk)chunk).starlight$getBlockNibbles();
         final SWMRNibbleArray[] skyNibbles = ((StarlightChunk)chunk).starlight$getSkyNibbles();
@@ -191,7 +194,7 @@ abstract class SerializableChunkDataMixin {
             final int lightSectionIdx = lightSection - minLightSection;
             final int blockSectionIdx = lightSection - minBlockSection;
 
-            final LevelChunkSection chunkSection = (blockSectionIdx >= 0 && blockSectionIdx < chunkSections.length) ? chunkSections[blockSectionIdx].copy() : null;
+            final LevelChunkSection chunkSection = (blockSectionIdx >= 0 && blockSectionIdx < chunkSections.length) ? (copy ? chunkSections[blockSectionIdx].copy() : chunkSections[blockSectionIdx]) : null;
             final SWMRNibbleArray.SaveState blockNibble = blockNibbles[lightSectionIdx].getSaveState();
             final SWMRNibbleArray.SaveState skyNibble = skyNibbles[lightSectionIdx].getSaveState();
 

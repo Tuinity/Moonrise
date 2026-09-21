@@ -375,7 +375,7 @@ public final class ChunkTaskScheduler {
             throw new IllegalArgumentException("Cannot wait for INACCESSIBLE status");
         }
 
-        final int minLevel = 33 - (toStatus.ordinal() - 1);
+        final int minLevel = ChunkLevel.byStatus(toStatus);
         final Long chunkReference = addTicket ? getNextChunkLoadId() : null;
         final long chunkKey = CoordinateUtils.getChunkKey(chunkX, chunkZ);
 
