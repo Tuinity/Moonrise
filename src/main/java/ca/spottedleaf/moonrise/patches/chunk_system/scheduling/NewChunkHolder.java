@@ -1703,12 +1703,23 @@ public final class NewChunkHolder {
                 : null;
     }
 
+    public static final ThreadLocal<Boolean> DO_NOT_COPY_SAVED_DATA = ThreadLocal.withInitial(() -> {
+        return Boolean.FALSE;
+    });
+
     private boolean saveChunk(final ChunkAccess chunk, final boolean unloading, final Completable<CompoundTag>[] chunkSave) {
         if (!chunk.isUnsaved()) {
             return false;
         }
         try {
-            final SerializableChunkData chunkData = SerializableChunkData.copyOf(this.world, chunk);
+            final SerializableChunkData chunkData;
+
+            DO_NOT_COPY_SAVED_DATA.set(Boolean.valueOf(unloading));
+            try {
+                chunkData = SerializableChunkData.copyOf(this.world, chunk);
+            } finally {
+                DO_NOT_COPY_SAVED_DATA.set(Boolean.FALSE);
+            }
             PlatformHooks.get().chunkSyncSave(this.world, chunk, chunkData);
 
             chunk.tryMarkSaved();

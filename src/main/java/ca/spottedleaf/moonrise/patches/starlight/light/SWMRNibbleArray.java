@@ -132,6 +132,10 @@ public final class SWMRNibbleArray {
     }
 
     public SaveState getSaveState() {
+        return this.getSaveState(true);
+    }
+
+    public SaveState getSaveState(final boolean copy) {
         synchronized (this) {
             final int state = this.stateVisible;
             final byte[] data = this.storageVisible;
@@ -145,7 +149,7 @@ public final class SWMRNibbleArray {
             if (zero) {
                 return state == INIT_STATE_INIT ? new SaveState(null, INIT_STATE_UNINIT) : null;
             } else {
-                return new SaveState(data.clone(), state);
+                return new SaveState(copy ? data.clone() : data, state);
             }
         }
     }
