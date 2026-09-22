@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.mixin.bitstorage;
 
-import ca.spottedleaf.concurrentutil.util.IntegerUtil;
+import ca.spottedleaf.common.util.IntegerUtil;
 import net.minecraft.util.BitStorage;
 import net.minecraft.util.SimpleBitStorage;
 import org.spongepowered.asm.mixin.Final;

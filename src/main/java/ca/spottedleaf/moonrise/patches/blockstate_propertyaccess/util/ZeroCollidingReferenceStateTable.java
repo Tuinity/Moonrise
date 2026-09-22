@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.patches.blockstate_propertyaccess.util;
 
-import ca.spottedleaf.concurrentutil.util.IntegerUtil;
+import ca.spottedleaf.common.util.IntegerUtil;
 import ca.spottedleaf.moonrise.patches.blockstate_propertyaccess.PropertyAccess;
 import ca.spottedleaf.moonrise.patches.blockstate_propertyaccess.PropertyAccessStateHolder;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;

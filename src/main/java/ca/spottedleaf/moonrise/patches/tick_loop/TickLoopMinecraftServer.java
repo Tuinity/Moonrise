@@ -1,6 +1,6 @@
 package ca.spottedleaf.moonrise.patches.tick_loop;
 
-import ca.spottedleaf.moonrise.common.time.TickData;
+import ca.spottedleaf.common.time.TickData;
 
 public interface TickLoopMinecraftServer {
 

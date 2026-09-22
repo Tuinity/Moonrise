@@ -28,8 +28,8 @@ dependencies {
     compileOnly(libs.mixinExtras)
     compileOnly(libs.asm)
 
-    api(libs.concurrentutil) { isTransitive = false }
-    api(libs.yamlconfig) { isTransitive = false }
+    api(libs.leafpile) { isTransitive = false }
+    api(libs.zstdjni)
     api(libs.snakeyaml)
 
     // todo: does cloth publish a platform-agnostic jar in mojang mappings?
