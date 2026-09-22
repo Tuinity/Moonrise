@@ -4,7 +4,7 @@ import me.modmuss50.mpp.ReleaseType
 plugins {
     id("common-conventions")
     id("net.neoforged.moddev")
-    id("me.modmuss50.mod-publish-plugin") version "1.1.0" apply false
+    id("me.modmuss50.mod-publish-plugin") version "2.2.0" apply false
     id("xyz.jpenilla.quiet-fabric-loom-companion")
 }
 
@@ -56,12 +56,15 @@ subprojects {
             projectId = "KOHu7RCS"
             accessToken = providers.environmentVariable("MODRINTH_TOKEN")
             minecraftVersions = supportedMcVersions
+            environment = CLIENT_OR_SERVER_PREFERS_BOTH
         }
 
         curseforge {
             projectId = "1096335"
             accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
             minecraftVersions = supportedMcVersions
+            client = true
+            server = true
         }
     }
 }

@@ -100,7 +100,7 @@ publishMods {
 loom {
     accessWidenerPath.set(rootProject.file("src/main/resources/moonrise.accesswidener"))
     runs.configureEach {
-        ideConfigGenerated(true)
+        generateRunConfig = true
     }
     mods {
         create("main") {
@@ -112,11 +112,11 @@ loom {
 }
 
 loom.runs.configureEach {
-    runConfigCommon.systemProperties.get().forEach {
-        property(it.key, it.value)
+    runConfigCommon.systemProperties.get().forEach { (key, value) ->
+        systemProperties.put(key, value)
     }
     runConfigCommon.jvmArgs.get().forEach {
-        vmArgs.add(it)
+        jvmArguments.add(it)
     }
 }
 
