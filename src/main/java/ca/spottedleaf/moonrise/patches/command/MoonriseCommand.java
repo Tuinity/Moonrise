@@ -1,13 +1,17 @@
 package ca.spottedleaf.moonrise.patches.command;
 
 import ca.spottedleaf.common.time.TickData;
+import ca.spottedleaf.common.util.DecimalFormats;
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.JsonUtil;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
+import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import ca.spottedleaf.moonrise.patches.profiler.client.ProfilerMinecraft;
 import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider;
 import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopMinecraftServer;
@@ -23,6 +27,12 @@ import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.DimensionArgument;
+import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.server.level.ColumnPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
@@ -32,16 +42,30 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
+import javax.management.MBeanServer;
 import java.io.File;
+import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.PrimitiveIterator;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -52,6 +76,8 @@ public final class MoonriseCommand {
     private static final ThreadLocal<DecimalFormat> ONE_DECIMAL_PLACES = ThreadLocal.withInitial(() -> {
         return new DecimalFormat("#,##0.0");
     });
+
+    private static final TextColor LIGHT_RED = TextColor.fromRgb(0xFF8080);
 
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
@@ -78,6 +104,34 @@ public final class MoonriseCommand {
                 )
             ).then(literal("tps")
                 .executes(MoonriseCommand::tps)
+            ).then(literal("genarea")
+                .then(
+                    argument("world", DimensionArgument.dimension())
+                        .then(
+                            argument("center", ColumnPosArgument.columnPos())
+                                .then(
+                                    argument("radius", IntegerArgumentType.integer(0, Integer.MAX_VALUE))
+                                        .then(
+                                            argument("max_loaded", IntegerArgumentType.integer(4, Integer.MAX_VALUE))
+                                                .executes((final CommandContext<CommandSourceStack> ctx) -> {
+                                                    return MoonriseCommand.genArea(
+                                                        ctx,
+                                                        DimensionArgument.getDimension(ctx, "world"),
+                                                        ColumnPosArgument.getColumnPos(ctx, "center"),
+                                                        IntegerArgumentType.getInteger(ctx, "radius"),
+                                                        IntegerArgumentType.getInteger(ctx, "max_loaded")
+                                                    );
+                                                })
+                                        )
+                                )
+                        )
+                )
+            ).then(literal("vm")
+                .then(literal("gc")
+                    .executes(MoonriseCommand::gc)
+                ).then(literal("heap")
+                    .executes(MoonriseCommand::heap)
+                )
             )
         );
     }
@@ -98,6 +152,13 @@ public final class MoonriseCommand {
                     )
                     .then(LiteralArgumentBuilder.<CommandClientCommandSource>literal("stop")
                         .executes(MoonriseCommand::stopClientProfiler)
+                    )
+                )
+                .then(LiteralArgumentBuilder.<CommandClientCommandSource>literal("vm")
+                    .then(LiteralArgumentBuilder.<CommandClientCommandSource>literal("gc")
+                        .executes(MoonriseCommand::gcClient)
+                    ).then(LiteralArgumentBuilder.<CommandClientCommandSource>literal("heap")
+                        .executes(MoonriseCommand::heapClient)
                     )
                 )
         );
@@ -127,6 +188,359 @@ public final class MoonriseCommand {
         }
 
         ctx.getSource().moonrise$sendSuccess(Component.literal("Stopped client profiler").withStyle(ChatFormatting.BLUE));
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss.SSS");
+
+    private static String heapInternal() {
+        final Path path = Path.of(".", "heapdumps", DATE_TIME_FORMAT.format(LocalDateTime.now()));
+
+        try {
+            final Path parent = path.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+
+            final String nameSuggestion = path.getFileName().toString();
+
+            final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+
+            Path heapPath;
+
+            try {
+                final Class<?> hotSpotClass = Class.forName("com.sun.management.HotSpotDiagnosticMXBean");
+                final String selectedName = nameSuggestion.endsWith(".hprof") ? nameSuggestion : nameSuggestion.concat(".hprof");
+                hotSpotClass.getMethod("dumpHeap", String.class, boolean.class)
+                    .invoke(
+                        ManagementFactory.newPlatformMXBeanProxy(server, "com.sun.management:type=HotSpotDiagnostic", hotSpotClass),
+                        (heapPath = path.resolveSibling(selectedName)).toString(), true
+                    );
+            } catch (final ClassNotFoundException ex) {
+                final Class<?> j9Class = Class.forName("openj9.lang.management.OpenJ9DiagnosticsMXBean");
+                final String selectedName = nameSuggestion.endsWith(".phd") ? nameSuggestion : nameSuggestion.concat(".phd");
+                j9Class.getMethod("triggerDumpToFile", String.class, String.class)
+                    .invoke(
+                        ManagementFactory.newPlatformMXBeanProxy(server, "openj9.lang.management:type=OpenJ9Diagnostics", j9Class),
+                        "heap", (heapPath = path.resolveSibling(selectedName)).toString()
+                    );
+            }
+
+            return heapPath.toString();
+        } catch (final Throwable thr) {
+            LOGGER.error("Failed to create heap dump at '" + path.toAbsolutePath() + "': ", thr);
+            return null;
+        }
+    }
+
+    private static int heap(final CommandContext<CommandSourceStack> ctx) {
+        ctx.getSource().sendSuccess(() -> {
+            return Component.literal("Beginning VM heap dump...").withStyle(ChatFormatting.BLUE);
+        }, true);
+
+        final String heapFile = heapInternal();
+        if (heapFile != null) {
+            ctx.getSource().sendSuccess(() -> {
+                return Component.literal("Wrote VM heap dump to file '").withStyle(ChatFormatting.BLUE)
+                    .append(Component.literal(heapFile).withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal("'").withStyle(ChatFormatting.BLUE));
+            }, true);
+        } else {
+            ctx.getSource().sendFailure(Component.literal("Failed to create heap dump, see logs").withStyle(ChatFormatting.RED));
+        }
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int heapClient(final CommandContext<CommandClientCommandSource> ctx) {
+        ctx.getSource().moonrise$sendSuccess(
+            Component.literal("Beginning VM heap dump...").withStyle(ChatFormatting.BLUE)
+        );
+
+        final String heapFile = heapInternal();
+        if (heapFile != null) {
+            ctx.getSource().moonrise$sendSuccess(
+                Component.literal("Wrote VM heap dump to file '").withStyle(ChatFormatting.BLUE)
+                    .append(Component.literal(heapFile).withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal("'").withStyle(ChatFormatting.BLUE))
+            );
+        } else {
+            ctx.getSource().moonrise$sendFailure(Component.literal("Failed to create heap dump, see logs").withStyle(ChatFormatting.RED));
+        }
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int gc(final CommandContext<CommandSourceStack> ctx) {
+        ctx.getSource().sendSystemMessage(
+            Component.literal("Issuing").withStyle(ChatFormatting.BLUE)
+                .append(Component.literal(" System.gc() ").withStyle(ChatFormatting.AQUA))
+                .append(Component.literal("call...").withStyle(ChatFormatting.BLUE))
+        );
+        System.gc();
+        ctx.getSource().sendSystemMessage(
+            Component.literal("Issued").withStyle(ChatFormatting.BLUE)
+                .append(Component.literal(" System.gc() ").withStyle(ChatFormatting.AQUA))
+                .append(Component.literal("call").withStyle(ChatFormatting.BLUE))
+        );
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int gcClient(final CommandContext<CommandClientCommandSource> ctx) {
+        ctx.getSource().moonrise$sendSuccess(
+            Component.literal("Issuing").withStyle(ChatFormatting.BLUE)
+                .append(Component.literal(" System.gc() ").withStyle(ChatFormatting.AQUA))
+                .append(Component.literal("call...").withStyle(ChatFormatting.BLUE))
+        );
+        System.gc();
+        ctx.getSource().moonrise$sendSuccess(
+            Component.literal("Issued").withStyle(ChatFormatting.BLUE)
+                .append(Component.literal(" System.gc() ").withStyle(ChatFormatting.AQUA))
+                .append(Component.literal("call").withStyle(ChatFormatting.BLUE))
+        );
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static final AtomicLong GEN_AREA_ID_GENERATOR = new AtomicLong();
+    private static final TicketType GEN_AREA_TICKET = ChunkSystemTicketType.create("chunk_system:gen_area", Long::compareTo, TicketType.FLAG_LOADING);
+
+    private static final class SquareIterator implements PrimitiveIterator.OfLong {
+
+        private final int centerX;
+        private final int centerZ;
+        private final int radius;
+
+        private int dx;
+        private int dz;
+
+        public SquareIterator(final int centerX, final int centerZ, final int radius) {
+            this.centerX = centerX;
+            this.centerZ = centerZ;
+            this.radius = radius;
+            this.dx = -radius;
+            this.dz = -radius;
+        }
+
+
+        @Override
+        public long nextLong() {
+            if (!this.hasNext()) {
+                throw new NoSuchElementException();
+            }
+
+            final int dx = this.dx;
+            final int dz = this.dz;
+
+            if (++this.dx > this.radius) {
+                this.dx = -this.radius;
+                ++this.dz;
+            }
+
+            return CoordinateUtils.getChunkKey(dx + this.centerX, dz + this.centerZ);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return this.dz <= this.radius;
+        }
+    }
+
+    private static final class SquareDividedIterator implements PrimitiveIterator.OfLong {
+
+        private final int centerX;
+        private final int centerZ;
+        private final int radius;
+        private final int divisor;
+        private final int totalDivs;
+
+        private int dz;
+        private int div;
+        private int divStart;
+        private int divV;
+
+        public SquareDividedIterator(final int centerX, final int centerZ, final int radius, final int max) {
+            if (max < 2) {
+                throw new IllegalArgumentException("Max must be > 1");
+            }
+
+            this.centerX = centerX;
+            this.centerZ = centerZ;
+            this.radius = radius;
+            this.divisor = Math.min(2*radius+1, max);
+            this.totalDivs = (2*radius+1+(this.divisor - 1)) / this.divisor;
+
+            this.dz = -radius;
+            this.div = 0;
+            this.divStart = 0;
+            this.divV = 0;
+        }
+
+        @Override
+        public long nextLong() {
+            if (!this.hasNext()) {
+                throw new NoSuchElementException();
+            }
+
+            final int dz = this.dz;
+            final int dx = this.divV - this.radius;
+
+            if (++this.divV >= Math.min(this.divStart+this.divisor, 2*this.radius+1)) {
+                if (++this.dz > this.radius) {
+                    ++this.div;
+                    this.divStart += this.divisor;
+                    this.dz = -this.radius;
+                }
+                this.divV = this.divStart;
+            }
+
+
+            return CoordinateUtils.getChunkKey(dx + this.centerX, dz + this.centerZ);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return this.div < this.totalDivs;
+        }
+    }
+
+    private static final boolean USE_DIVIDED_STRAT = true;
+
+    private static final record AreaGenTask(
+        ServerLevel world, PrimitiveIterator.OfLong chunkIterator, Long ticketId,
+        long startNS, int maxWorking, LongOpenHashSet generating,
+        AtomicInteger generated, int total,
+        AtomicLong lastLog
+    ) {
+        private static final long LOG_INTERVAL = TimeUnit.SECONDS.toNanos(1L);
+
+        public void start() {
+            while (this.tryFetchNext());
+        }
+
+        private void tryLog(final int generated) {
+            final long now = System.nanoTime();
+            final long lastLog = this.lastLog.get();
+            if ((now - lastLog < LOG_INTERVAL && generated != this.total) || !this.lastLog.compareAndSet(lastLog, now)) {
+                return;
+            }
+
+            final double rate = (double)generated / ((double)(now - this.startNS) / (double)TimeUnit.SECONDS.toNanos(1L));
+            final double progress = 100.0 * ((double)generated / (double)(this.total));
+            final double timeS = (double)(now - this.startNS) / (double)TimeUnit.SECONDS.toNanos(1L);
+
+            this.world.getServer().sendSystemMessage(
+                Component.literal("Generated ").withStyle(ChatFormatting.BLUE)
+                    .append(Component.literal(DecimalFormats.NO_DECIMAL_PLACES.get().format((long)this.generated.get())).withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
+                    .append(Component.literal(DecimalFormats.NO_DECIMAL_PLACES.get().format((long)this.total)).withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal(", rate=").withStyle(ChatFormatting.BLUE))
+                    .append(Component.literal(DecimalFormats.ONE_DECIMAL_PLACES.get().format(rate)).withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal("chunks/s, progress=").withStyle(ChatFormatting.BLUE))
+                    .append(Component.literal(DecimalFormats.TWO_DECIMAL_PLACES.get().format(progress)).withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal("%, time=").withStyle(ChatFormatting.BLUE))
+                    .append(Component.literal(DecimalFormats.ONE_DECIMAL_PLACES.get().format(timeS)).withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal( "s").withStyle(ChatFormatting.BLUE))
+            );
+        }
+
+        public void finish(final int x, final int z) {
+            final int generated = this.generated.incrementAndGet();
+
+            synchronized (this) {
+                this.generating.remove(CoordinateUtils.getChunkKey(x, z));
+            }
+
+            this.tryLog(generated);
+
+            while (this.tryFetchNext());
+
+            ((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().chunkHolderManager
+                .removeTicketAtLevel(GEN_AREA_TICKET, x, z, ChunkHolderManager.FULL_LOADED_TICKET_LEVEL, this.ticketId);
+        }
+
+        private boolean tryFetchNext() {
+            final long toGen;
+            synchronized (this) {
+                if (this.generating.size() >= this.maxWorking) {
+                    return false;
+                }
+
+                if (!this.chunkIterator.hasNext()) {
+                    return false;
+                }
+
+                toGen = this.chunkIterator.next();
+
+                this.generating.add(toGen);
+            }
+
+            final int chunkX = CoordinateUtils.getChunkX(toGen);
+            final int chunkZ = CoordinateUtils.getChunkZ(toGen);
+
+            ((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().chunkHolderManager
+                .addTicketAtLevel(GEN_AREA_TICKET, chunkX, chunkZ, ChunkHolderManager.FULL_LOADED_TICKET_LEVEL, this.ticketId);
+
+            final Consumer<ChunkAccess> onComplete = (final ChunkAccess chunk) -> {
+                AreaGenTask.this.finish(chunkX, chunkZ);
+                AreaGenTask.this.world.getServer().emptyTicks = 0;
+            };
+
+            // avoid recursion for loaded chunks by scheduling a later chunk task (this also serves to batch ticket additions)
+            ((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler()
+                .scheduleChunkTask(chunkX, chunkZ, () -> {
+                    ((ChunkSystemServerLevel)AreaGenTask.this.world).moonrise$getChunkTaskScheduler()
+                        .scheduleChunkLoad(
+                            chunkX, chunkZ, ChunkStatus.FULL, true, Priority.NORMAL,
+                            onComplete
+                        );
+                }, Priority.NORMAL);
+
+            return true;
+        }
+    }
+
+    private static int genArea(final CommandContext<CommandSourceStack> ctx, final ServerLevel world, final ColumnPos center, final int radius, final int maxLoaded) {
+        final int centerX = center.x() >> 4;
+        final int centerZ = center.z() >> 4;
+
+        final long minBlockX = ((long)centerX << 4) - ((long)radius << 4);
+        final long maxBlockX = ((long)centerX << 4) + ((long)radius << 4) + 15L;
+        final long minBlockZ = ((long)centerZ << 4) - ((long)radius << 4);
+        final long maxBlockZ = ((long)centerZ << 4) + ((long)radius << 4) + 15L;
+
+        if (minBlockX <= -Level.MAX_LEVEL_SIZE || maxBlockX >= Level.MAX_LEVEL_SIZE
+            || minBlockZ <= -Level.MAX_LEVEL_SIZE || maxBlockZ >= Level.MAX_LEVEL_SIZE) {
+            ctx.getSource().sendFailure(
+                Component.literal("Generated area ").withStyle(ChatFormatting.RED)
+                        .append(Component.literal("[" + minBlockX + "," + minBlockZ + "]").withColor(LIGHT_RED))
+                        .append(Component.literal(" -> ").withStyle(ChatFormatting.RED))
+                        .append(Component.literal("[" + maxBlockX + "," + maxBlockZ + "]").withColor(LIGHT_RED))
+                        .append(Component.literal(" is out of world bounds").withStyle(ChatFormatting.RED))
+            );
+            return 0;
+        }
+
+        ctx.getSource().sendSuccess(() -> {
+            return Component.literal("Generating area ").withStyle(ChatFormatting.BLUE)
+                .append(Component.literal("[" + minBlockX + "," + minBlockZ + "]").withStyle(ChatFormatting.AQUA))
+                .append(Component.literal(" -> ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal("[" + maxBlockX + "," + maxBlockZ + "]").withStyle(ChatFormatting.AQUA))
+                .append(Component.literal(", check logs for progress").withStyle(ChatFormatting.BLUE));
+        }, true);
+
+        final Long id = Long.valueOf(GEN_AREA_ID_GENERATOR.getAndIncrement());
+
+        final PrimitiveIterator.OfLong iterator = USE_DIVIDED_STRAT ? new SquareDividedIterator(centerX, centerZ, radius, maxLoaded) : new SquareIterator(centerX, centerZ, radius);
+
+        final long start = System.nanoTime();
+        new AreaGenTask(
+            world, iterator, id, start, maxLoaded,
+            new LongOpenHashSet(maxLoaded), new AtomicInteger(), (2*radius+1)*(2*radius+1),
+            new AtomicLong(start)
+        ).start();
 
         return Command.SINGLE_SUCCESS;
     }
@@ -545,6 +959,6 @@ public final class MoonriseCommand {
                 .append(formatMSPTReport(report1m, tickIntervalNS));
         }, false);
 
-        return 0;
+        return Command.SINGLE_SUCCESS;
     }
 }
