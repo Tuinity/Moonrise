@@ -951,6 +951,29 @@ public final class ChunkHolderManager {
         return current;
     }
 
+    // note: only call from the ChunkFullTask
+    // this allows us to avoid checking if the entity NBT is loaded which avoids entering the ticket/scheduling lock
+    public ChunkEntitySlices fullTaskLoadEntityChunk(final int chunkX, final int chunkZ) {
+        TickThread.ensureTickThread(this.world, chunkX, chunkZ, "Cannot create entity chunk off-main");
+        ChunkEntitySlices ret;
+
+        NewChunkHolder current = this.getChunkHolder(chunkX, chunkZ);
+
+        if (current != null && (ret = current.getEntityChunk()) != null && !ret.isTransient()) {
+            LOGGER.error("Unexpected non-transient entity chunk at "  + new ChunkPos(chunkX, chunkZ));
+            return ret;
+        }
+
+        if (current == null || !current.isEntityChunkNBTLoaded()) {
+            LOGGER.error("NBT for entity chunk is unexpectedly not loaded at "  + new ChunkPos(chunkX, chunkZ));
+            return this.getOrCreateEntityChunk(chunkX, chunkZ, false);
+        }
+
+        ret = current.loadInEntityChunk(false);
+
+        return ret;
+    }
+
     public ChunkEntitySlices getOrCreateEntityChunk(final int chunkX, final int chunkZ, final boolean transientChunk) {
         TickThread.ensureTickThread(this.world, chunkX, chunkZ, "Cannot create entity chunk off-main");
         ChunkEntitySlices ret;
