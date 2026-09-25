@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
+import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
@@ -12,6 +13,7 @@ import com.mojang.datafixers.DataFixer;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
@@ -41,6 +43,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LightChunkGetter;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.status.ChunkStep;
+import net.minecraft.world.level.chunk.storage.ChunkScanAccess;
 import net.minecraft.world.level.chunk.storage.IOWorker;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
 import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
@@ -48,6 +51,7 @@ import net.minecraft.world.level.entity.ChunkStatusUpdateListener;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -105,6 +109,10 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
 
     @Shadow
     private AtomicInteger activeChunkWrites;
+
+    @Shadow
+    @Final
+    private static Logger LOGGER;
 
     public ChunkMapMixin(final RegionStorageInfo info, final Path folder, final DataFixer fixerUpper, final boolean sync, final DataFixTypes dataFixType) {
         super(info, folder, fixerUpper, sync, dataFixType);
@@ -755,5 +763,38 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
                 consumer.accept(chunkToSend);
             }
         }
+    }
+
+    @Override
+    public ChunkScanAccess chunkScanner() {
+        return (chunkPos, streamTagVisitor) -> {
+            final CompletableFuture<Void> ret = new CompletableFuture<>();
+
+            MoonriseRegionFileIO.loadDataAsync(
+                ChunkMapMixin.this.level, chunkPos.x(), chunkPos.z(), MoonriseRegionFileIO.RegionFileType.CHUNK_DATA,
+                (BiConsumer<CompoundTag, Throwable> & MoonriseRegionFileIO.NoCopyNBTData) (final CompoundTag data, final Throwable thr) -> {
+                    if (thr != null) {
+                        ret.completeExceptionally(thr);
+                        return;
+                    }
+
+                    if (data == null) {
+                        ret.complete(null);
+                        return;
+                    }
+
+                    try {
+                        data.acceptAsRoot(streamTagVisitor);
+
+                        ret.complete(null);
+                    } catch (final Throwable thr2) {
+                        ret.completeExceptionally(thr2);
+                        LOGGER.error("Error while scanning chunk " + chunkPos + " in world '" + WorldUtil.getWorldName(ChunkMapMixin.this.level) + "':", thr2);
+                    }
+                }, false
+            );
+
+            return ret;
+        };
     }
 }
