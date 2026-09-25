@@ -204,6 +204,40 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
     public CompletableFuture<ChunkResult<ChunkAccess>> getChunkFutureMainThread(final int chunkX, final int chunkZ,
                                                                                 final ChunkStatus toStatus,
                                                                                 final boolean create) {
+        return this.getChunkFutureInternal(chunkX, chunkZ, toStatus, create, false);
+    }
+
+    /**
+     * @reason Support new chunk system
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public CompletableFuture<ChunkResult<ChunkAccess>> getChunkFuture(final int chunkX, final int chunkZ,
+                                                                      final ChunkStatus toStatus,
+                                                                      final boolean create) {
+        if (TickThread.isTickThreadFor(this.level, chunkX, chunkZ)) {
+            final CompletableFuture<ChunkResult<ChunkAccess>> ret = this.getChunkFutureInternal(chunkX, chunkZ, toStatus, create, true);
+            this.mainThreadProcessor.managedBlock(ret::isDone);
+            return ret;
+        } else {
+            final CompletableFuture<ChunkResult<ChunkAccess>> ret = new CompletableFuture<>();
+            this.mainThreadProcessor.execute(() -> {
+                ServerChunkCacheMixin.this.getChunkFutureInternal(chunkX, chunkZ, toStatus, create, false).whenComplete((c, t) -> {
+                    if (t != null) {
+                        ret.completeExceptionally(t);
+                    } else {
+                        ret.complete(c);
+                    }
+                });
+            });
+            return ret;
+        }
+    }
+
+    @Unique
+    public CompletableFuture<ChunkResult<ChunkAccess>> getChunkFutureInternal(final int chunkX, final int chunkZ,
+                                                                              final ChunkStatus toStatus,
+                                                                              final boolean create, final boolean intendingToBlock) {
         TickThread.ensureTickThread(this.level, chunkX, chunkZ, "Scheduling chunk load off-main");
 
         final int minLevel = ChunkLevel.byStatus(toStatus);
@@ -229,7 +263,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
 
             ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().scheduleChunkLoad(
                 chunkX, chunkZ, toStatus, true,
-                Priority.HIGHER,
+                intendingToBlock ? Priority.BLOCKING : Priority.NORMAL,
                 complete
             );
 
