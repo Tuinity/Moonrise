@@ -19,6 +19,12 @@ configurations.named("implementation") {
 }
 
 tasks.shadowJar {
+    dependencies {
+        // Do not bundle these Minecraft-provided dependencies of LeafPile
+        exclude(dependency("it.unimi.dsi:fastutil:.*"))
+        exclude(dependency("org.slf4j:slf4j-api:.*"))
+        exclude(dependency("net.java.dev.jna:jna:.*"))
+    }
     filesMatching("META-INF/services/**") {
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
