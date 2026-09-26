@@ -6,12 +6,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 
 @Mixin(PersistentEntitySectionManager.class)
 abstract class NeoForgePersistentEntitySectionManagerMixin<T extends EntityAccess> {
     @Inject(
         method = "addNewEntityWithoutEvent",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void addNewEntityWithoutEvent(T entity, CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();
@@ -19,7 +21,8 @@ abstract class NeoForgePersistentEntitySectionManagerMixin<T extends EntityAcces
 
     @Inject(
         method = "addEntityWithoutEvent",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void addEntityWithoutEvent(T entity, boolean worldGenSpawned, CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();

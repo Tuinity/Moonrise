@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 
 import java.io.Writer;
 import java.util.Queue;
@@ -24,11 +25,11 @@ import java.util.stream.Stream;
 
 @Mixin(PersistentEntitySectionManager.class)
 abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
-    @Mutable @Shadow @Final EntitySectionStorage<T> sectionStorage;
+    @Mutable @Shadow @Final private EntitySectionStorage<T> sectionStorage;
     @Mutable @Shadow @Final private LevelEntityGetter<T> entityGetter;
-    @Mutable @Shadow @Final LevelCallback<T> callbacks;
+    @Mutable @Shadow @Final private LevelCallback<T> callbacks;
     @Mutable @Shadow @Final private EntityPersistentStorage<T> permanentStorage;
-    @Mutable @Shadow @Final Set<UUID> knownUuids;
+    @Mutable @Shadow @Final private Set<UUID> knownUuids;
     @Mutable @Shadow @Final private Long2ObjectMap<Visibility> chunkVisibility;
     @Mutable @Shadow @Final private Long2ObjectMap<?> chunkLoadStatuses;
     @Mutable @Shadow @Final private LongSet chunksToUnload;
@@ -53,7 +54,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
     }
     @Inject(
         method = "addNewEntity",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void addNewEntity(T access, CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();
@@ -61,7 +63,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "addEntity",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void addEntity(T access, boolean worldGenSpawned, CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();
@@ -69,7 +72,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "removeSectionIfEmpty",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void removeSectionIfEmpty(long sectionKey, EntitySection<T> section, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -77,7 +81,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "addEntityUuid",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void addEntityUuid(T access, CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();
@@ -85,7 +90,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "getEffectiveStatus",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private static <T extends EntityAccess> void getEffectiveStatus(T entity, Visibility visibility, CallbackInfoReturnable<Visibility> cir) {
         throw new UnsupportedOperationException();
@@ -93,7 +99,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "isTicking",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void isTicking(ChunkPos chunkPos, CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();
@@ -101,7 +108,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "addLegacyChunkEntities",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void addLegacyChunkEntities(Stream<T> entities, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -109,7 +117,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "addWorldGenChunkEntities",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void addWorldGenChunkEntities(Stream<T> entities, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -117,7 +126,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "startTicking",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void startTicking(T entity, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -125,7 +135,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "stopTicking",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void stopTicking(T entity, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -133,7 +144,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "startTracking",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void startTracking(T entity, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -141,7 +153,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "stopTracking",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void stopTracking(T entity, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -149,7 +162,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "updateChunkStatus(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/level/entity/Visibility;)V",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void updateChunkStatus(ChunkPos chunkPos, Visibility visibility, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -157,7 +171,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "updateChunkStatus(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/server/level/FullChunkStatus;)V",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void updateChunkStatus(ChunkPos chunkPos, FullChunkStatus status, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -165,7 +180,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "ensureChunkQueuedForLoad",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void ensureChunkQueuedForLoad(long chunkPosValue, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -173,7 +189,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "storeChunkSections",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void storeChunkSections(long chunkPosValue, Consumer<T> entityAction, CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();
@@ -181,7 +198,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "requestChunkLoad",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void requestChunkLoad(long chunkPosValue, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -189,7 +207,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "processChunkUnload",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void processChunkUnload(long chunkPosValue, CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();
@@ -197,7 +216,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "unloadEntity",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void unloadEntity(T entity, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -205,7 +225,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "processUnloads",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void processUnloads(CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -213,7 +234,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "processPendingLoads",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void processPendingLoads(CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -221,7 +243,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "tick",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void tick(CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -229,7 +252,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "getAllChunksToSave",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void getAllChunksToSave(CallbackInfoReturnable<LongSet> cir) {
         throw new UnsupportedOperationException();
@@ -237,7 +261,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "autoSave",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void autoSave(CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -245,7 +270,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "saveAll",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void saveAll(CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -253,7 +279,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "close",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void close(CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -261,7 +288,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "isLoaded",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     private void isLoaded(UUID uuid, CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();
@@ -269,7 +297,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "getEntityGetter",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     public void getEntityGetter(CallbackInfoReturnable<LevelEntityGetter<T>> cir) {
         throw new UnsupportedOperationException();
@@ -277,7 +306,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "canPositionTick(Lnet/minecraft/core/BlockPos;)Z",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     public void canPositionTick(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();
@@ -285,7 +315,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "canPositionTick(Lnet/minecraft/world/level/ChunkPos;)Z",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     public void canPositionTick(ChunkPos chunkPos, CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();
@@ -293,7 +324,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "areEntitiesLoaded(J)Z",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     public void areEntitiesLoaded(long chunkPos, CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();
@@ -301,7 +333,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "dumpSections",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     public void dumpSections(Writer writer, CallbackInfo ci) {
         throw new UnsupportedOperationException();
@@ -309,7 +342,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "gatherStats",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     public void gatherStats(CallbackInfoReturnable<String> cir) {
         throw new UnsupportedOperationException();
@@ -317,7 +351,8 @@ abstract class PersistentEntitySectionManagerMixin<T extends EntityAccess> {
 
     @Inject(
         method = "count",
-        at = @At("HEAD")
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
     )
     public void count(CallbackInfoReturnable<Integer> cir) {
         throw new UnsupportedOperationException();

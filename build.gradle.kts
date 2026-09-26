@@ -34,11 +34,10 @@ dependencies {
     api(libs.zstdjni)
     api(libs.snakeyaml)
 
-    // todo: does cloth publish a platform-agnostic jar in mojang mappings?
-    compileOnly(libs.clothConfig.neoforge)
+    compileOnly(libs.clothConfig.common)
 
-    "lithiumCompileOnly"("maven.modrinth:lithium:${rootProject.property("neo_lithium_version")}")
-    "architecturyCompileOnly"("maven.modrinth:architectury-api:${rootProject.property("neo_architectury_version")}")
+    "lithiumCompileOnly"(libs.lithium.neoforge)
+    "architecturyCompileOnly"(libs.architectury)
     compileOnly(sourceSets.getByName("lithium").output)
 }
 

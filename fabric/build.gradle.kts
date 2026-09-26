@@ -123,18 +123,27 @@ loom.runs.configureEach {
     }
 }
 
-// Setup a run with lithium for compatibility testing
-sourceSets.create("lithium")
-loom {
-    runs {
-        register("lithiumClient") {
-            client()
+// Compatibility-testing runs: each mod is only loaded in its dedicated client/server run.
+fun Project.compatRuns(name: String, dependency: Any) {
+    val mods = configurations.create(name)
+    dependencies.add(name, dependency)
+    val suffix = name.replaceFirstChar { it.uppercase() }
+    loom {
+        runs {
+            register("${name}Client") {
+                client()
+            }
+            register("${name}Server") {
+                server()
+            }
+        }
+    }
+    for (runName in listOf("run${suffix}Client", "run${suffix}Server")) {
+        tasks.named(runName, RunGameTask::class.java) {
+            (classpath as ConfigurableFileCollection).from(mods)
         }
     }
 }
-configurations.named("lithiumRuntimeOnly") {
-    extendsFrom(configurations.getByName("lithium"))
-}
-tasks.named("runLithiumClient", RunGameTask::class.java) {
-    (classpath as ConfigurableFileCollection).from(configurations.named("lithiumRuntimeClasspath"))
-}
+
+compatRuns("lithium", libs.lithium.fabric)
+compatRuns("architectury", libs.architectury.fabric)
