@@ -221,7 +221,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
             return ret;
         } else {
             final CompletableFuture<ChunkResult<ChunkAccess>> ret = new CompletableFuture<>();
-            this.mainThreadProcessor.execute(() -> {
+            ((ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().scheduleChunkTask(chunkX, chunkZ, () -> {
                 ServerChunkCacheMixin.this.getChunkFutureInternal(chunkX, chunkZ, toStatus, create, false).whenComplete((c, t) -> {
                     if (t != null) {
                         ret.completeExceptionally(t);
