@@ -6,6 +6,7 @@ architectury = "22.0.2"
 # https://maven.shedaniel.me/me/shedaniel/cloth/
 cloth = "26.3.158"
 fabricLoader = "0.19.5"
+leafpile = "1.2.3"
 # version ids from modrinth: https://modrinth.com/mod/lithium/versions
 lithiumFabric = "mc26.3-0.26.1-fabric"
 lithiumNeoforge = "mc26.3-0.26.1-neoforge"
@@ -31,10 +32,11 @@ fabricLoader = { module = "net.fabricmc:fabric-loader", version.ref = "fabricLoa
 fabricLoader-junit = { module = "net.fabricmc:fabric-loader-junit", version.ref = "fabricLoader" }
 fabricMinecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
 
-leafpile = "ca.spottedleaf:leafpile:1.2.2"
-
-snakeyaml = "org.yaml:snakeyaml:2.7"
-zstdjni = "com.github.luben:zstd-jni:1.5.7-16"
+leafpile-common = { module = "ca.spottedleaf.leafpile:common", version.ref = "leafpile" }
+leafpile-concurrentutil = { module = "ca.spottedleaf.leafpile:concurrentutil", version.ref = "leafpile" }
+leafpile-profiler = { module = "ca.spottedleaf.leafpile:profiler", version.ref = "leafpile" }
+leafpile-sampler = { module = "ca.spottedleaf.leafpile:sampler", version.ref = "leafpile" }
+leafpile-yamlconfig = { module = "ca.spottedleaf.leafpile:yamlconfig", version.ref = "leafpile" }
 
 clothConfig-common = { module = "me.shedaniel.cloth:cloth-config", version.ref = "cloth" }
 clothConfig-neoforge = { module = "me.shedaniel.cloth:cloth-config-neoforge", version.ref = "cloth" }

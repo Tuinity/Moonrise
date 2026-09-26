@@ -25,9 +25,9 @@ dependencies {
     shadow(rootProject.sourceSets.getByName("architectury").output)
     compileOnly(project(":"))
 
-    libs(libs.leafpile) { isTransitive = false }
-    libs(libs.zstdjni)
-    libs(libs.snakeyaml)
+    libs(libs.leafpile.profiler)
+    libs(libs.leafpile.sampler)
+    libs(libs.leafpile.yamlconfig)
 
     if (gui) {
         add("guiCompileOnly", project(":"))
