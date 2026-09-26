@@ -1,7 +1,3 @@
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
-import net.neoforged.moddevgradle.internal.RunGameTask
-
 plugins {
     id("net.neoforged.moddev")
     `maven-publish`
@@ -23,6 +19,7 @@ neoForge {
             sourceSet(sourceSets.main.get())
             sourceSet(rootProject.sourceSets.main.get())
             sourceSet(rootProject.sourceSets.getByName("lithium"))
+            sourceSet(rootProject.sourceSets.getByName("architectury"))
         }
     }
     runs {
@@ -44,8 +41,10 @@ val gui = rootProject.property("enable_gui").toString() == "true"
 dependencies {
     runtimeOnly(rootProject.sourceSets.main.get().output)
     runtimeOnly(rootProject.sourceSets.getByName("lithium").output)
+    runtimeOnly(rootProject.sourceSets.getByName("architectury").output)
     shadow(project(":"))
     shadow(rootProject.sourceSets.getByName("lithium").output)
+    shadow(rootProject.sourceSets.getByName("architectury").output)
     compileOnly(project(":"))
 
     libs(libs.leafpile) { isTransitive = false }
@@ -125,33 +124,28 @@ neoForge.runs.configureEach {
     }
 }
 
-// Setup a run with lithium for compatibility testing
-neoForge {
-    runs {
-        register("lithiumClient") {
-            client()
-            disableIdeRun()
+// Compatibility-testing runs: each mod is only loaded in its dedicated client/server run.
+fun Project.compatRuns(name: String, dependency: Any) {
+    val compatSourceSet = sourceSets.create("${name}Compat")
+    configurations.named(compatSourceSet.runtimeClasspathConfigurationName) {
+        extendsFrom(configurations.getByName(sourceSets.main.get().runtimeClasspathConfigurationName))
+    }
+    dependencies.add(compatSourceSet.runtimeOnlyConfigurationName, dependency)
+    neoForge {
+        runs {
+            register("${name}Client") {
+                client()
+                disableIdeRun()
+                sourceSet = compatSourceSet
+            }
+            register("${name}Server") {
+                server()
+                disableIdeRun()
+                sourceSet = compatSourceSet
+            }
         }
     }
 }
-tasks.withType<RunGameTask>().configureEach {
-    if (name == "runLithiumClient") {
-        return@configureEach
-    }
-    val out = gameDirectory.get().getAsFile().toPath().resolve("mods/lithium-tmp.jar")
-    doFirst {
-        Files.deleteIfExists(out)
-    }
-}
-val lithium = configurations.lithium
-tasks.named<RunGameTask>("runLithiumClient") {
-    val out = gameDirectory.get().getAsFile().toPath().resolve("mods/lithium-tmp.jar")
-    doFirst {
-        for (file in lithium.get().files) {
-            Files.copy(file.toPath(), out, StandardCopyOption.REPLACE_EXISTING)
-        }
-    }
-    doLast {
-        Files.deleteIfExists(out)
-    }
-}
+
+compatRuns("lithium", libs.lithium.neoforge)
+compatRuns("architectury", libs.architectury.neoforge)

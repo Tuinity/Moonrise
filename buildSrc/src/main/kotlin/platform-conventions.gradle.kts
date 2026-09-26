@@ -18,18 +18,6 @@ configurations.named("implementation") {
     extendsFrom(configurations.getByName("libs"))
 }
 
-// Setup a run with lithium for compatibility testing
-configurations.create("lithium")
-dependencies {
-    var coordinates = "maven.modrinth:lithium:"
-    if (project.name == "Moonrise-NeoForge") {
-        coordinates += rootProject.property("neo_lithium_version").toString()
-    } else {
-        coordinates += rootProject.property("fabric_lithium_version").toString()
-    }
-    add("lithium", coordinates)
-}
-
 tasks.shadowJar {
     filesMatching("META-INF/services/**") {
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
