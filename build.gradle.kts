@@ -30,9 +30,11 @@ dependencies {
     compileOnly(libs.mixinExtras)
     compileOnly(libs.asm)
 
-    api(libs.leafpile) { isTransitive = false }
-    api(libs.zstdjni)
-    api(libs.snakeyaml)
+    api(libs.leafpile.common)
+    api(libs.leafpile.concurrentutil)
+    api(libs.leafpile.profiler)
+    api(libs.leafpile.sampler)
+    api(libs.leafpile.yamlconfig)
 
     compileOnly(libs.clothConfig.common)
 
