@@ -6,7 +6,7 @@ architectury = "22.0.2"
 # https://maven.shedaniel.me/me/shedaniel/cloth/
 cloth = "26.3.158"
 fabricLoader = "0.19.5"
-leafpile = "1.2.3"
+leafpile = "1.2.4"
 # version ids from modrinth: https://modrinth.com/mod/lithium/versions
 lithiumFabric = "mc26.3-0.26.1-fabric"
 lithiumNeoforge = "mc26.3-0.26.1-neoforge"
