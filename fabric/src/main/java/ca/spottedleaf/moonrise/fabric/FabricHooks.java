@@ -3,6 +3,7 @@ package ca.spottedleaf.moonrise.fabric;
 import ca.spottedleaf.moonrise.common.util.BaseChunkSystemHooks;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.ConfigHolder;
+import ca.spottedleaf.moonrise.compat.architectury.ArchitecturyHooks;
 import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixer;
@@ -43,6 +44,7 @@ import java.util.function.Predicate;
 public final class FabricHooks extends BaseChunkSystemHooks implements PlatformHooks {
 
     private static final boolean HAS_FABRIC_LIFECYCLE_EVENTS = FabricLoader.getInstance().isModLoaded("fabric-lifecycle-events-v1");
+    private static final boolean HAS_ARCHITECTURY = FabricLoader.getInstance().isModLoaded("architectury");
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -113,7 +115,9 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
 
     @Override
     public void chunkSyncSave(final ServerLevel world, final ChunkAccess chunk, final SerializableChunkData data) {
-
+        if (HAS_ARCHITECTURY) {
+            ArchitecturyHooks.onSaveEvent(chunk, world, data);
+        }
     }
 
     @Override
@@ -175,6 +179,9 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
 
     @Override
     public boolean screenEntity(final ServerLevel world, final Entity entity, final boolean fromDisk, final boolean event) {
+        if (HAS_ARCHITECTURY && !ArchitecturyHooks.onEntityAdd(entity, world)) {
+            return false;
+        }
         return true;
     }
 

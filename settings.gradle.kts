@@ -44,6 +44,9 @@ dependencyResolutionManagement {
         }
         maven("https://maven.shedaniel.me/")
         maven("https://maven.terraformersmc.com/releases/")
+        maven("https://maven.architectury.dev/") {
+            name = "architectury"
+        }
     }
     versionCatalogs {
         create("fabricApiLibs") {

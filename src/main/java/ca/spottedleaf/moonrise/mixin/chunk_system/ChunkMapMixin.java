@@ -60,6 +60,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Path;
@@ -484,8 +486,12 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
      * @author Spottedleaf
      * @see NewChunkHolder#save(boolean)
      */
-    @Overwrite
-    public boolean save(final ChunkAccess chunk) {
+    @Inject(
+        method = "save",
+        at = @At("HEAD"),
+        order = InjectionInfo.InjectorOrder.EARLY
+    )
+    public void save(final ChunkAccess chunk, final CallbackInfoReturnable<Boolean> cir) {
         throw new UnsupportedOperationException();
     }
 
