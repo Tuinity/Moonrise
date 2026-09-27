@@ -704,19 +704,32 @@ public final class ChunkHolderManager {
     // atomic with respect to all add/remove/addandremove ticket calls for the given chunk
     public <T, V> void addAndRemoveTickets(final long chunk, final TicketType addType, final int addLevel, final T addIdentifier,
                                            final TicketType removeType, final int removeLevel, final V removeIdentifier) {
-        final ReentrantAreaLock.Node ticketLock = this.ticketLockArea.lock(CoordinateUtils.getChunkX(chunk), CoordinateUtils.getChunkZ(chunk));
+        this.addAndRemoveTickets(chunk, addType, addLevel, addIdentifier, removeType, removeLevel, removeIdentifier, true);
+    }
+
+    private <T, V> void addAndRemoveTickets(final long chunk, final TicketType addType, final int addLevel, final T addIdentifier,
+                                           final TicketType removeType, final int removeLevel, final V removeIdentifier, final boolean lock) {
+        final ReentrantAreaLock.Node ticketLock = !lock ? null : this.ticketLockArea.lock(CoordinateUtils.getChunkX(chunk), CoordinateUtils.getChunkZ(chunk));
         try {
             this.addTicketAtLevel(addType, chunk, addLevel, addIdentifier, false);
             this.removeTicketAtLevel(removeType, chunk, removeLevel, removeIdentifier, false);
         } finally {
-            this.ticketLockArea.unlock(ticketLock);
+            if (ticketLock != null) {
+                this.ticketLockArea.unlock(ticketLock);
+            }
         }
     }
 
     // atomic with respect to all add/remove/addandremove ticket calls for the given chunk
     public <T, V> boolean addIfRemovedTicket(final long chunk, final TicketType addType, final int addLevel, final T addIdentifier,
                                              final TicketType removeType, final int removeLevel, final V removeIdentifier) {
-        final ReentrantAreaLock.Node ticketLock = this.ticketLockArea.lock(CoordinateUtils.getChunkX(chunk), CoordinateUtils.getChunkZ(chunk));
+        return this.addIfRemovedTicket(chunk, addType, addLevel, addIdentifier, removeType, removeLevel, removeIdentifier, true);
+    }
+
+    private <T, V> boolean addIfRemovedTicket(final long chunk, final TicketType addType, final int addLevel, final T addIdentifier,
+                                              final TicketType removeType, final int removeLevel, final V removeIdentifier,
+                                              final boolean lock) {
+        final ReentrantAreaLock.Node ticketLock = !lock ? null : this.ticketLockArea.lock(CoordinateUtils.getChunkX(chunk), CoordinateUtils.getChunkZ(chunk));
         try {
             if (this.removeTicketAtLevel(removeType, chunk, removeLevel, removeIdentifier, false)) {
                 this.addTicketAtLevel(addType, chunk, addLevel, addIdentifier, false);
@@ -724,7 +737,9 @@ public final class ChunkHolderManager {
             }
             return false;
         } finally {
-            this.ticketLockArea.unlock(ticketLock);
+            if (ticketLock != null) {
+                this.ticketLockArea.unlock(ticketLock);
+            }
         }
     }
 
@@ -1358,42 +1373,67 @@ public final class ChunkHolderManager {
         }
     }
 
-    private <T, V> boolean processTicketOp(TicketOperation<T, V> operation) {
-        boolean ret = false;
+    private <T, V> boolean processTicketOp(final TicketOperation<T, V> operation, final boolean lock) {
         switch (operation.op) {
             case ADD: {
-                ret |= this.addTicketAtLevel(operation.ticketType, operation.chunkCoord, operation.ticketLevel, operation.identifier);
-                break;
+                return this.addTicketAtLevel(operation.ticketType, operation.chunkCoord, operation.ticketLevel, operation.identifier, lock);
             }
             case REMOVE: {
-                ret |= this.removeTicketAtLevel(operation.ticketType, operation.chunkCoord, operation.ticketLevel, operation.identifier);
-                break;
+                return this.removeTicketAtLevel(operation.ticketType, operation.chunkCoord, operation.ticketLevel, operation.identifier, lock);
             }
             case ADD_IF_REMOVED: {
-                ret |= this.addIfRemovedTicket(
+                return this.addIfRemovedTicket(
                     operation.chunkCoord,
                     operation.ticketType, operation.ticketLevel, operation.identifier,
-                    operation.ticketType2, operation.ticketLevel2, operation.identifier2
+                    operation.ticketType2, operation.ticketLevel2, operation.identifier2,
+                    lock
                 );
-                break;
             }
             case ADD_AND_REMOVE: {
-                ret = true;
                 this.addAndRemoveTickets(
                     operation.chunkCoord,
                     operation.ticketType, operation.ticketLevel, operation.identifier,
-                    operation.ticketType2, operation.ticketLevel2, operation.identifier2
+                    operation.ticketType2, operation.ticketLevel2, operation.identifier2,
+                    lock
                 );
-                break;
+                return true;
+            }
+            default: {
+                throw new IllegalStateException("Unknown operation: " + operation.op);
             }
         }
-
-        return ret;
     }
 
     public void performTicketUpdates(final Collection<TicketOperation<?, ?>> operations) {
+        final Long2ObjectOpenHashMap<List<TicketOperation<?, ?>>> operationsBySection = new Long2ObjectOpenHashMap<>();
+        final int sectionShift = this.ticketLockArea.coordinateShift;
+
         for (final TicketOperation<?, ?> operation : operations) {
-            this.processTicketOp(operation);
+            final int sectionX = CoordinateUtils.getChunkX(operation.chunkCoord) >> sectionShift;
+            final int sectionZ = CoordinateUtils.getChunkZ(operation.chunkCoord) >> sectionShift;
+
+            final long key = CoordinateUtils.getChunkKey(sectionX, sectionZ);
+
+            operationsBySection.computeIfAbsent(key, (k) -> new ArrayList<>())
+                .add(operation);
+        }
+
+        for (final Iterator<Long2ObjectMap.Entry<List<TicketOperation<?, ?>>>> iterator = operationsBySection.long2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
+            final Long2ObjectMap.Entry<List<TicketOperation<?, ?>>> entry = iterator.next();
+
+            final long key = entry.getLongKey();
+            final List<TicketOperation<?, ?>> sectionOps = entry.getValue();
+
+            final ReentrantAreaLock.Node ticketLock = this.ticketLockArea.lock(
+                CoordinateUtils.getChunkX(key) << sectionShift, CoordinateUtils.getChunkZ(key) << sectionShift
+            );
+            try {
+                for (final TicketOperation<?, ?> operation : sectionOps) {
+                    this.processTicketOp(operation, false);
+                }
+            } finally {
+                this.ticketLockArea.unlock(ticketLock);
+            }
         }
     }
 
