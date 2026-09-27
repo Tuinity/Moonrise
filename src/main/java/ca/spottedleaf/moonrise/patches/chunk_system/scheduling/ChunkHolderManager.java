@@ -1457,7 +1457,7 @@ public final class ChunkHolderManager {
         }
         final boolean isTickThread = TickThread.isTickThread();
 
-        if (!PlatformHooks.get().allowAsyncTicketUpdates() && isTickThread) {
+        if (!PlatformHooks.get().allowAsyncTicketUpdates() && !isTickThread) {
             TickThread.ensureTickThread("Cannot asynchronously process ticket updates");
         }
 
