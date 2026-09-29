@@ -125,6 +125,11 @@ abstract class LevelChunkMixin extends ChunkAccess implements GetBlockChunk {
         return this.defaultBlockState;
     }
 
+    @Override
+    public FluidState moonrise$getFluid(final int x, final int y, final int z) {
+        return this.getFluidState(x, y, z);
+    }
+
     /**
      * @reason Replace with more optimised version
      * @author Spottedleaf
