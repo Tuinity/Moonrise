@@ -99,8 +99,10 @@
         "fluid.FluidStateMixin",
         "fluid.MappedRegistryMixin",
         "getblock.ChunkAccessMixin",
+        "getblock.ImposterProtoChunkMixin",
         "getblock.LevelChunkMixin",
         "getblock.LevelMixin",
+        "getblock.ProtoChunkMixin",
         "keep_alive_client.ServerGamePacketListenerImplMixin",
         "mob_spawning.EntityTypeMixin",
         "mob_spawning.LocalMobCapCalculator$MobCountsMixin",
@@ -150,6 +152,7 @@
         "defaultRequire": 1
     },
     "overwrites": {
-        "conformVisibility": true
+        "conformVisibility": true,
+        "requireAnnotations": true
     }
 }

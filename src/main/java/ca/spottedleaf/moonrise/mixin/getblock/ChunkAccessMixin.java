@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.getblock;
 
 import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
@@ -57,8 +58,8 @@ abstract class ChunkAccessMixin implements BlockGetter, BiomeResolver, LightChun
     @Override
     @Overwrite
     public Holder<Biome> getNoiseBiome(final int biomeX, final int biomeY, final int biomeZ) {
-        int sectionY = (biomeY >> 2) - this.minSection;
-        int rel = biomeY & 3;
+        int sectionY = (biomeY >> QuartPos.BITS) - this.minSection;
+        int rel = biomeY & QuartPos.MASK;
 
         final LevelChunkSection[] sections = this.sections;
 
@@ -67,9 +68,9 @@ abstract class ChunkAccessMixin implements BlockGetter, BiomeResolver, LightChun
             rel = 0;
         } else if (sectionY >= sections.length) {
             sectionY = sections.length - 1;
-            rel = 3;
+            rel = QuartPos.MASK;
         }
 
-        return sections[sectionY].getNoiseBiome(biomeX & 3, rel, biomeZ & 3);
+        return sections[sectionY].getNoiseBiome(biomeX & QuartPos.MASK, rel, biomeZ & QuartPos.MASK);
     }
 }
