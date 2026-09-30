@@ -50,7 +50,7 @@ abstract class PortalForcerMixin {
 
                 final RetroGen retroGen;
                 if (!lowest.getPersistedStatus().isOrAfter(ChunkStatus.FULL)
-                    // check retrogen so that older worlds still load portals (JMP)
+                    // check below zero retrogen so that pre 1.17 worlds still load portals (JMP)
                     && ((retroGen = lowest.getRetroGen()) == null || !retroGen.targetStatus().isOrAfter(ChunkStatus.SPAWN))) {
                     // why would we generate the chunk?
                     return false;
