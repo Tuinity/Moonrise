@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 
 @Mixin(AllOfRuleTest.class)
-abstract class AllOfRuleTestMixin extends RuleTest {
+abstract class AllOfRuleTestMixin implements RuleTest {
 
     @Unique
     private RuleTest[] rulesArray;

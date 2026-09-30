@@ -18,17 +18,17 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
     public abstract ChunkAccess getChunk(int i, int j, ChunkStatus chunkStatus, boolean bl);
 
     @Override
-    public abstract Holder<Biome> getUncachedNoiseBiome(final int x, final int y, final int z);
+    public abstract Holder<Biome> getUncachedBiome(final int x, final int y, final int z);
 
     /**
-     * @reason Make getChunk and getUncachedNoiseBiome virtual calls instead of interface calls
+     * @reason Make getChunk and getUncachedBiome virtual calls instead of interface calls
      *         by implementing the superclass method in this class.
      * @author Spottedleaf
      */
     @Override
-    public Holder<Biome> getNoiseBiome(final int x, final int y, final int z) {
-        final ChunkAccess chunk = this.getChunk(x >> 2, z >> 2, ChunkStatus.BIOMES, false);
+    public Holder<Biome> getBiome(final int x, final int y, final int z) {
+        final ChunkAccess chunk = this.getChunk(x >> 4, z >> 4, ChunkStatus.BIOMES, false);
 
-        return chunk != null ? chunk.getNoiseBiome(x, y, z) : this.getUncachedNoiseBiome(x, y, z);
+        return chunk != null ? chunk.getBiome(x, y, z) : this.getUncachedBiome(x, y, z);
     }
 }

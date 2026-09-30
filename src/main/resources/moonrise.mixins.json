@@ -20,7 +20,6 @@
         "blockstate_propertyaccess.StateHolderMixin",
         "chunk_gen.AllOfRuleTestMixin",
         "chunk_gen.AnyOfRuleTestMixin",
-        "chunk_gen.ChunkGeneratorMixin",
         "chunk_gen.Climate$ParameterListMixin",
         "chunk_gen.Climate$RTree$NodeMixin",
         "chunk_gen.Climate$RTreeMixin",
