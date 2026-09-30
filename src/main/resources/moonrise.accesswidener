@@ -331,3 +331,15 @@ accessible method net/minecraft/world/level/chunk/Strategy getConfigurationForPa
 
 # MinecraftServer
 accessible field net/minecraft/server/MinecraftServer emptyTicks I
+
+
+# Climate
+accessible class net/minecraft/world/level/biome/Climate$RTree
+accessible class net/minecraft/world/level/biome/Climate$RTree$Node
+accessible class net/minecraft/world/level/biome/Climate$RTree$Leaf
+accessible class net/minecraft/world/level/biome/Climate$RTree$SubTree
+accessible class net/minecraft/world/level/biome/Climate$DistanceMetric
+accessible field net/minecraft/world/level/biome/Climate$RTree$SubTree children [Lnet/minecraft/world/level/biome/Climate$RTree$Node;
+accessible method net/minecraft/world/level/biome/Climate$TargetPoint toParameterArray ()[J
+accessible field net/minecraft/world/level/biome/Climate$RTree$Leaf value Ljava/lang/Object;
+accessible method net/minecraft/world/level/biome/Climate$RTree$Node distance ([J)J
