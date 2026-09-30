@@ -343,3 +343,7 @@ accessible field net/minecraft/world/level/biome/Climate$RTree$SubTree children 
 accessible method net/minecraft/world/level/biome/Climate$TargetPoint toParameterArray ()[J
 accessible field net/minecraft/world/level/biome/Climate$RTree$Leaf value Ljava/lang/Object;
 accessible method net/minecraft/world/level/biome/Climate$RTree$Node distance ([J)J
+
+
+# Identifier
+accessible method net/minecraft/resources/Identifier <init> (Ljava/lang/String;Ljava/lang/String;)V
