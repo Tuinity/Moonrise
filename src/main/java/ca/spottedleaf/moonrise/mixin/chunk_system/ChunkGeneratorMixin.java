@@ -20,13 +20,13 @@ abstract class ChunkGeneratorMixin {
      * @author Spottedleaf
      */
     @Redirect(
-            method = "createBiomes",
+            method = {"createNoiseBiomes", "createBiomes", "createStructures"},
             at = @At(
                     value = "INVOKE",
                     target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"
             )
     )
-    private <U> CompletableFuture<U> redirectBiomesExecutor(final Supplier<U> supplier, final Executor badExecutor) {
+    private <U> CompletableFuture<U> redirectGenerationExecutor(final Supplier<U> supplier, final Executor badExecutor) {
         return CompletableFuture.supplyAsync(supplier, Runnable::run);
     }
 
