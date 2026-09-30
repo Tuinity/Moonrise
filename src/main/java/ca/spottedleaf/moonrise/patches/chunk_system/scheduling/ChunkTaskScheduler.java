@@ -156,10 +156,10 @@ public final class ChunkTaskScheduler {
                 // will not change, even if executed in parallel.
                 ChunkStatus.STRUCTURE_REFERENCES,
 
-                // Creates noise biomes in the target chunk only.
+                // Safe. Mojang runs it in parallel as well. Only writes noise biome data to the target chunk.
                 ChunkStatus.NOISE_BIOMES,
 
-                // Upscales the target chunk's biomes using its neighbours' noise biomes.
+                // Safe. Mojang runs it in parallel as well. Only writes biome data to the target chunk.
                 ChunkStatus.BIOMES,
 
                 // Safe. Mojang runs it in parallel as well. Only modifies the target chunk: the noise fill and
