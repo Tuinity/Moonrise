@@ -1,5 +1,9 @@
 accessWidener v1 official
 
+# RetroGen
+accessible method net/minecraft/world/level/levelgen/RetroGen hasBelowZeroRetroGen ()Z
+
+
 # BlockStateBase
 accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase occlusionShape Lnet/minecraft/world/phys/shapes/VoxelShape;
 accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase occlusionShapesByFace [Lnet/minecraft/world/phys/shapes/VoxelShape;
