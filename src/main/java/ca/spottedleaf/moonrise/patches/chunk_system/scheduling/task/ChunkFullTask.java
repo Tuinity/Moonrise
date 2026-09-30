@@ -67,7 +67,7 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
                 chunk = new LevelChunk(this.world, protoChunk, (final LevelChunk unused) -> {
                     PlatformHooks.get().postLoadProtoChunk(world, protoChunk);
                 });
-                this.chunkHolder.replaceProtoChunk(new ImposterProtoChunk(chunk, false));
+                this.chunkHolder.replaceProtoChunk(new ImposterProtoChunk(chunk));
             }
 
             ((ChunkSystemLevelChunk)chunk).moonrise$setChunkHolder(this.chunkHolder);

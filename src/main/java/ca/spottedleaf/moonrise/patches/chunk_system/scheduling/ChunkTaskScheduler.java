@@ -122,6 +122,7 @@ public final class ChunkTaskScheduler {
         ((ChunkSystemChunkStatus)ChunkStatus.EMPTY).moonrise$setWriteRadius(0);
         ((ChunkSystemChunkStatus)ChunkStatus.STRUCTURE_STARTS).moonrise$setWriteRadius(0);
         ((ChunkSystemChunkStatus)ChunkStatus.STRUCTURE_REFERENCES).moonrise$setWriteRadius(0);
+        ((ChunkSystemChunkStatus)ChunkStatus.NOISE_BIOMES).moonrise$setWriteRadius(0);
         ((ChunkSystemChunkStatus)ChunkStatus.BIOMES).moonrise$setWriteRadius(0);
         ((ChunkSystemChunkStatus)ChunkStatus.TERRAIN).moonrise$setWriteRadius(0);
         ((ChunkSystemChunkStatus)ChunkStatus.FEATURES).moonrise$setWriteRadius(1);
@@ -132,6 +133,7 @@ public final class ChunkTaskScheduler {
 
         ((ChunkSystemChunkStatus)ChunkStatus.EMPTY).moonrise$setEmptyLoadStatus(true);
         ((ChunkSystemChunkStatus)ChunkStatus.STRUCTURE_REFERENCES).moonrise$setEmptyLoadStatus(true);
+        ((ChunkSystemChunkStatus)ChunkStatus.NOISE_BIOMES).moonrise$setEmptyLoadStatus(true);
         ((ChunkSystemChunkStatus)ChunkStatus.BIOMES).moonrise$setEmptyLoadStatus(true);
         ((ChunkSystemChunkStatus)ChunkStatus.TERRAIN).moonrise$setEmptyLoadStatus(true);
         ((ChunkSystemChunkStatus)ChunkStatus.FEATURES).moonrise$setEmptyLoadStatus(true);
@@ -155,7 +157,10 @@ public final class ChunkTaskScheduler {
                 // will not change, even if executed in parallel.
                 ChunkStatus.STRUCTURE_REFERENCES,
 
-                // Safe. Mojang runs it in parallel as well.
+                // Creates noise biomes in the target chunk only.
+                ChunkStatus.NOISE_BIOMES,
+
+                // Upscales the target chunk's biomes using its neighbours' noise biomes.
                 ChunkStatus.BIOMES,
 
                 // Safe. Mojang runs it in parallel as well. Only modifies the target chunk: the noise fill and
