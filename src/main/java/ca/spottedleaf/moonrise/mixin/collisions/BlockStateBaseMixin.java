@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateHolder;
@@ -67,6 +68,9 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
     private VoxelShape constantCollisionShape;
 
     @Unique
+    private boolean isSpecialCollidingBlock;
+
+    @Unique
     private static void initCaches(final VoxelShape shape, final boolean neighbours) {
         ((CollisionVoxelShape)shape).moonrise$isFullBlock();
         ((CollisionVoxelShape)shape).moonrise$occludesFullBlock();
@@ -82,6 +86,11 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
         }
     }
 
+    @Unique
+    private static boolean isSpecialCollidingBlock(final net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase block) {
+        return block.hasLargeCollisionShape() || block.getBlock() == Blocks.MOVING_PISTON;
+    }
+
     /**
      * @reason Init collision state only after cache is set up
      * @author Spottedleaf
@@ -93,6 +102,7 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
             )
     )
     private void initCollisionState(final CallbackInfo ci) {
+        this.isSpecialCollidingBlock = isSpecialCollidingBlock((BlockBehaviour.BlockStateBase)(Object)this);
         if (this.cache != null) {
             final VoxelShape collisionShape = this.cache.collisionShape;
             if (this.isAir()) {
@@ -158,5 +168,10 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
     @Override
     public final VoxelShape moonrise$getConstantContextCollisionShape() {
         return this.constantCollisionShape;
+    }
+
+    @Override
+    public final boolean moonrise$isSpecialCollidingBlock() {
+        return this.isSpecialCollidingBlock;
     }
 }
