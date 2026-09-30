@@ -39,8 +39,8 @@ abstract class ClientLevelMixin extends Level implements ChunkSystemLevel {
     @Final
     private ClientChunkCache chunkSource;
 
-    protected ClientLevelMixin(final WritableLevelData writableLevelData, final ResourceKey<Level> resourceKey, final RegistryAccess registryAccess, final Holder<DimensionType> holder, final boolean bl, final boolean bl2, final long l, final int i) {
-        super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, l, i);
+    protected ClientLevelMixin(final WritableLevelData writableLevelData, final ResourceKey<Level> resourceKey, final RegistryAccess registryAccess, final Holder<DimensionType> holder, final boolean bl, final boolean bl2, final int i) {
+        super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, i);
     }
 
     /**
@@ -55,7 +55,7 @@ abstract class ClientLevelMixin extends Level implements ChunkSystemLevel {
     )
     private void init(ClientPacketListener connection, ClientLevel.ClientLevelData levelData, ResourceKey dimension, Holder dimensionType,
                       int serverChunkRadius, int serverSimulationDistance, LevelExtractor levelExtractor, boolean isDebug,
-                      long biomeZoomSeed, int seaLevel, CallbackInfo ci) {
+                      int seaLevel, CallbackInfo ci) {
         this.entityStorage = null;
 
         this.moonrise$setEntityLookup(new ClientEntityLookup(this, ((ClientLevel)(Object)this).new EntityCallbacks()));
@@ -137,21 +137,6 @@ abstract class ClientLevelMixin extends Level implements ChunkSystemLevel {
     )
     private LevelEntityGetter<Entity> redirectGetEntities(final TransientEntitySectionManager<Entity> instance) {
         return this.moonrise$getEntityLookup();
-    }
-
-    /**
-     * @reason Redirect to new entity manager
-     * @author Spottedleaf
-     */
-    @Redirect(
-            method = "gatherChunkSourceStats",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/entity/TransientEntitySectionManager;gatherStats()Ljava/lang/String;"
-            )
-    )
-    private String redirectGatherChunkSourceStats(final TransientEntitySectionManager<Entity> instance) {
-        return this.moonrise$getEntityLookup().getDebugInfo();
     }
 
     /**

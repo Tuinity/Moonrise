@@ -32,7 +32,6 @@
         "chunk_gen.noise.PerlinNoiseMixin",
         "chunk_gen.noise.SmearedPerlinNoiseMixin",
         "chunk_gen.ore_feature.AbstractOreFeatureMixin",
-        "chunk_gen.use_biome_palette.ChunkGeneratorMixin",
         "chunk_gen.use_biome_palette.LevelChunkSectionMixin",
         "chunk_system.ChunkBufferMixin",
         "chunk_system.ChunkGeneratorMixin",

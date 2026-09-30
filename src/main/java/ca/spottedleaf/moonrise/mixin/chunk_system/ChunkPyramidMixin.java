@@ -25,7 +25,7 @@ abstract class ChunkPyramidMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/chunk/status/ChunkPyramid$Builder;step(Lnet/minecraft/world/level/chunk/status/ChunkStatus;Ljava/util/function/UnaryOperator;)Lnet/minecraft/world/level/chunk/status/ChunkPyramid$Builder;",
-                    ordinal = 17
+                    ordinal = 19
             )
     )
     private static ChunkPyramid.Builder removeLoadLightDependency(final ChunkPyramid.Builder instance,

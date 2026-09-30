@@ -37,7 +37,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.gamerules.GameRules;
-import net.minecraft.world.level.levelgen.BelowZeroRetrogen;
+import net.minecraft.world.level.levelgen.RetroGen;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayDeque;
 import java.util.concurrent.TimeUnit;
@@ -905,11 +905,11 @@ public final class RegionizedPlayerChunkLoader {
         }
 
         private boolean isLoadedChunkGeneratable(final ChunkAccess chunkAccess) {
-            final BelowZeroRetrogen belowZeroRetrogen;
+            final RetroGen retroGen;
             // see PortalForcer#findPortalAround
             return chunkAccess != null && (
                 chunkAccess.getPersistedStatus() == ChunkStatus.FULL ||
-                    ((belowZeroRetrogen = chunkAccess.getBelowZeroRetrogen()) != null && belowZeroRetrogen.targetStatus().isOrAfter(ChunkStatus.SPAWN))
+                    ((retroGen = chunkAccess.getRetroGen()) != null && retroGen.targetStatus().isOrAfter(ChunkStatus.SPAWN))
             );
         }
 

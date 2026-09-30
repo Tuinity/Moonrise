@@ -59,8 +59,9 @@ rootProject.name = "Moonrise"
 
 include("fabric")
 findProject(":fabric")!!.name = "Moonrise-Fabric"
-include("neoforge")
-findProject(":neoforge")!!.name = "Moonrise-NeoForge"
+// NeoForge has not published a 26.4 snapshot build yet.
+// include("neoforge")
+// findProject(":neoforge")!!.name = "Moonrise-NeoForge"
 
 // includeBuild("../YamlConfig") // Uncomment to use local YamlConfig
 // includeBuild("../ConcurrentUtil") // Uncomment to use local ConcurrentUtil
