@@ -55,9 +55,10 @@ jobs:
           path: fabric/build/libs/Moonrise-Fabric-${{ env.VERSION }}.jar
           archive: false
           if-no-files-found: error
-      - name: "upload NeoForge mod"
-        uses: actions/upload-artifact@v7
-        with:
-          path: neoforge/build/libs/Moonrise-NeoForge-${{ env.VERSION }}.jar
-          archive: false
-          if-no-files-found: error
+      # NeoForge has not published a 26.4 snapshot build yet.
+      # - name: "upload NeoForge mod"
+      #   uses: actions/upload-artifact@v7
+      #   with:
+      #     path: neoforge/build/libs/Moonrise-NeoForge-${{ env.VERSION }}.jar
+      #     archive: false
+      #     if-no-files-found: error
