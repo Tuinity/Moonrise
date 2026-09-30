@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +29,35 @@ abstract class PortalForcerMixin {
     @Shadow
     @Final
     private ServerLevel level;
+
+    @Unique
+    private static boolean isGeneratedChunk(final ChunkAccess chunk) {
+        if (chunk.getPersistedStatus().isOrAfter(ChunkStatus.FULL)) {
+            // Already fully generated; no retrogen exception is needed.
+            return true;
+        }
+
+        final RetroGen retroGen = chunk.getRetroGen();
+        if (retroGen == null) {
+            // An incomplete chunk without retrogen has not previously reached FULL.
+            return false;
+        }
+
+        if (retroGen.targetStatus().isOrAfter(ChunkStatus.FULL)) {
+            // Retrogen lowered the persisted status of a previously FULL chunk.
+            return true;
+        }
+
+        if (!retroGen.hasBelowZeroRetroGen()) {
+            // Only the legacy below-zero upgrade needs the SPAWN exception. Other upgrades of FULL chunks
+            // retain FULL as the target (last checked: 26.4-snapshot-2).
+            return false;
+        }
+
+        // pre-1.18 FULL chunks get a retrogen target of HEIGHTMAPS, later remapped to SPAWN
+        // there is no way to distinguish a true pre-1.18 SPAWN chunk from a pre-1.18 FULL chunk
+        return retroGen.targetStatus().isOrAfter(ChunkStatus.SPAWN);
+    }
 
     /**
      * @reason Route to use PoiAccess
@@ -48,10 +78,7 @@ abstract class PortalForcerMixin {
 
                 final ChunkAccess lowest = this.level.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.EMPTY);
 
-                final RetroGen retroGen;
-                if (!lowest.getPersistedStatus().isOrAfter(ChunkStatus.FULL)
-                    // check below zero retrogen so that pre 1.17 worlds still load portals (JMP)
-                    && ((retroGen = lowest.getRetroGen()) == null || !retroGen.targetStatus().isOrAfter(ChunkStatus.SPAWN))) {
+                if (!isGeneratedChunk(lowest)) {
                     // why would we generate the chunk?
                     return false;
                 }
