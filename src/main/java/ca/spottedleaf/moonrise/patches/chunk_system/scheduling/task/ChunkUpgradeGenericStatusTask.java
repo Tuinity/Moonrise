@@ -94,13 +94,7 @@ public final class ChunkUpgradeGenericStatusTask extends ChunkProgressionTask im
                     this.complete(chunk, null);
                     return;
                 }
-                completeFuture = ChunkPyramid.GENERATION_PYRAMID.getStepTo(this.toStatus).apply(ctx, this.neighbours, this.fromChunk)
-                        .whenComplete((final ChunkAccess either, final Throwable throwable) -> {
-                                    if (either instanceof ProtoChunk proto) {
-                                        proto.setPersistedStatus(ChunkUpgradeGenericStatusTask.this.toStatus);
-                                    }
-                                }
-                        );
+                completeFuture = ChunkPyramid.GENERATION_PYRAMID.getStepTo(this.toStatus).apply(ctx, this.neighbours, this.fromChunk);
             } else {
                 if (((ChunkSystemChunkStatus)this.toStatus).moonrise$isEmptyLoadStatus()) {
                     completing = true;
