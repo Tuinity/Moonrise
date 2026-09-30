@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.minecraft.world.level.levelgen.BelowZeroRetrogen;
+import net.minecraft.world.level.levelgen.RetroGen;
 import net.minecraft.world.level.portal.PortalForcer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -48,10 +48,10 @@ abstract class PortalForcerMixin {
 
                 final ChunkAccess lowest = this.level.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.EMPTY);
 
-                final BelowZeroRetrogen belowZeroRetrogen;
+                final RetroGen retroGen;
                 if (!lowest.getPersistedStatus().isOrAfter(ChunkStatus.FULL)
-                    // check below zero retrogen so that pre 1.17 worlds still load portals (JMP)
-                    && ((belowZeroRetrogen = lowest.getBelowZeroRetrogen()) == null || !belowZeroRetrogen.targetStatus().isOrAfter(ChunkStatus.SPAWN))) {
+                    // check retrogen so that older worlds still load portals (JMP)
+                    && ((retroGen = lowest.getRetroGen()) == null || !retroGen.targetStatus().isOrAfter(ChunkStatus.SPAWN))) {
                     // why would we generate the chunk?
                     return false;
                 }

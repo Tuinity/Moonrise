@@ -10,11 +10,11 @@ leafpile = "1.2.4"
 # version ids from modrinth: https://modrinth.com/mod/lithium/versions
 lithiumFabric = "mc26.3-0.26.1-fabric"
 lithiumNeoforge = "mc26.3-0.26.1-neoforge"
-minecraft = "26.3"
+minecraft = "26.4-snapshot-2"
 # https://projects.neoforged.net/neoforged/neoforge
 neoforge = "26.3.0.1-beta"
 # https://projects.neoforged.net/neoforged/neoform
-neoform = "26.3-1"
+neoform = "26.4-snapshot-2-1"
 
 [plugins]
 
