@@ -136,7 +136,6 @@ public final class ChunkTaskScheduler {
         ((ChunkSystemChunkStatus)ChunkStatus.NOISE_BIOMES).moonrise$setEmptyLoadStatus(true);
         ((ChunkSystemChunkStatus)ChunkStatus.BIOMES).moonrise$setEmptyLoadStatus(true);
         ((ChunkSystemChunkStatus)ChunkStatus.TERRAIN).moonrise$setEmptyLoadStatus(true);
-        ((ChunkSystemChunkStatus)ChunkStatus.FEATURES).moonrise$setEmptyLoadStatus(true);
         ((ChunkSystemChunkStatus)ChunkStatus.SPAWN).moonrise$setEmptyLoadStatus(true);
 
         /*
