@@ -1,8 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.fluid;
 
 import ca.spottedleaf.moonrise.patches.fluid.FluidFluidState;
-import com.mojang.serialization.MapCodec;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
+import net.minecraft.core.TypedInstance;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateHolder;
 import net.minecraft.world.level.block.state.properties.Property;
@@ -14,7 +13,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(FluidState.class)
-abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> implements FluidFluidState {
+abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> implements FluidFluidState, TypedInstance<Fluid> {
 
     @Shadow
     public abstract Fluid getType();
