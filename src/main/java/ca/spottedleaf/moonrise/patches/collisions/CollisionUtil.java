@@ -51,7 +51,7 @@ public final class CollisionUtil {
     public static final DoubleArrayList ZERO_ONE = DoubleArrayList.wrap(new double[] { 0.0, 1.0 });
 
     public static boolean isSpecialCollidingBlock(final net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase block) {
-        return block.hasLargeCollisionShape() || block.getBlock() == Blocks.MOVING_PISTON;
+        return ((CollisionBlockState)block).moonrise$isSpecialCollidingBlock();
     }
 
     public static boolean isEmpty(final AABB aabb) {
