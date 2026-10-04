@@ -24,6 +24,8 @@
         "chunk_gen.Climate$ParameterListMixin",
         "chunk_gen.Climate$RTree$NodeMixin",
         "chunk_gen.Climate$RTreeMixin",
+        "chunk_gen.PerlinNoiseMixin",
+        "chunk_gen.SmearedPerlinNoiseMixin",
         "chunk_gen.WorldGenRegionMixin",
         "chunk_system.ChunkBufferMixin",
         "chunk_system.ChunkGeneratorMixin",
