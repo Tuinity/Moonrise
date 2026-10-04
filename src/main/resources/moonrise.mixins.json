@@ -105,6 +105,7 @@
         "getblock.LevelChunkMixin",
         "getblock.LevelMixin",
         "getblock.ProtoChunkMixin",
+        "heightmap.HeightmapMixin",
         "keep_alive_client.ServerGamePacketListenerImplMixin",
         "mob_spawning.EntityTypeMixin",
         "mob_spawning.LocalMobCapCalculator$MobCountsMixin",
