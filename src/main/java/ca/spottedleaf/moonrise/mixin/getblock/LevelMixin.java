@@ -41,7 +41,8 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
     @Inject(
         method = "<init>",
         at = @At(
-            value = "CTOR_HEAD"
+            value = "CTOR_HEAD",
+            unsafe = true
         )
     )
     private void init(final CallbackInfo ci,
