@@ -112,7 +112,7 @@ public final class PoiAccess {
         final int upperZ = Mth.floor(sourcePosition.getZ() + range) >> 4;
 
         final int centerX = sourcePosition.getX() >> 4;
-        final int centerY = Mth.clamp(sourcePosition.getY() >> 4, lowerY, upperY);
+        final int centerY = Math.clamp(sourcePosition.getY() >> 4, lowerY, upperY);
         final int centerZ = sourcePosition.getZ() >> 4;
         final long centerKey = CoordinateUtils.getChunkSectionKey(centerX, centerY, centerZ);
 
@@ -355,7 +355,7 @@ public final class PoiAccess {
         final int upperZ = Mth.floor(sourcePosition.getZ() + range) >> 4;
 
         final int centerX = sourcePosition.getX() >> 4;
-        final int centerY = Mth.clamp(sourcePosition.getY() >> 4, lowerY, upperY);
+        final int centerY = Math.clamp(sourcePosition.getY() >> 4, lowerY, upperY);
         final int centerZ = sourcePosition.getZ() >> 4;
         final long centerKey = CoordinateUtils.getChunkSectionKey(centerX, centerY, centerZ);
 
