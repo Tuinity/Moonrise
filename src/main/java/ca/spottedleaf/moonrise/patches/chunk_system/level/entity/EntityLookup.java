@@ -410,7 +410,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
     protected boolean addEntity(final Entity entity, final boolean fromDisk, final boolean event) {
         final BlockPos pos = entity.blockPosition();
         final int sectionX = pos.getX() >> 4;
-        final int sectionY = Mth.clamp(pos.getY() >> 4, WorldUtil.getMinSection(this.world), WorldUtil.getMaxSection(this.world));
+        final int sectionY = Math.clamp(pos.getY() >> 4, WorldUtil.getMinSection(this.world), WorldUtil.getMaxSection(this.world));
         final int sectionZ = pos.getZ() >> 4;
         this.checkThread(sectionX, sectionZ, "Cannot add entity off-main thread");
 
@@ -529,7 +529,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
         final int sectionZ = ((ChunkSystemEntity)entity).moonrise$getSectionZ();
         final BlockPos newPos = entity.blockPosition();
         final int newSectionX = newPos.getX() >> 4;
-        final int newSectionY = Mth.clamp(newPos.getY() >> 4, WorldUtil.getMinSection(this.world), WorldUtil.getMaxSection(this.world));
+        final int newSectionY = Math.clamp(newPos.getY() >> 4, WorldUtil.getMinSection(this.world), WorldUtil.getMaxSection(this.world));
         final int newSectionZ = newPos.getZ() >> 4;
 
         if (newSectionX == sectionX && newSectionY == sectionY && newSectionZ == sectionZ) {

@@ -1,19 +1,19 @@
 package ca.spottedleaf.moonrise.mixin.chunk_system;
 
+import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
-import ca.spottedleaf.moonrise.common.util.WorldUtil;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder;
 import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.MoonriseChunkHolderMap;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
+import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkMapChunkScanAccess;
 import com.mojang.datafixers.DataFixer;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
@@ -31,7 +31,6 @@ import net.minecraft.server.level.GeneratingChunkMap;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.util.StaticCache2D;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.util.thread.BlockableEventLoop;
@@ -51,7 +50,6 @@ import net.minecraft.world.level.entity.ChunkStatusUpdateListener;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -111,10 +109,6 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
 
     @Shadow
     private AtomicInteger activeChunkWrites;
-
-    @Shadow
-    @Final
-    private static Logger LOGGER;
 
     public ChunkMapMixin(final RegionStorageInfo info, final Path folder, final DataFixer fixerUpper, final boolean sync, final DataFixTypes dataFixType) {
         super(info, folder, fixerUpper, sync, dataFixType);
@@ -510,7 +504,7 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
      */
     @Overwrite
     public void setServerViewDistance(final int watchDistance) {
-        final int clamped = Mth.clamp(watchDistance, 2, MoonriseConstants.MAX_VIEW_DISTANCE);
+        final int clamped = Math.clamp(watchDistance, 2, MoonriseConstants.MAX_VIEW_DISTANCE);
         if (clamped == this.serverViewDistance) {
             return;
         }
@@ -773,34 +767,6 @@ abstract class ChunkMapMixin extends SimpleRegionStorage implements ChunkHolder.
 
     @Override
     public ChunkScanAccess chunkScanner() {
-        return (chunkPos, streamTagVisitor) -> {
-            final CompletableFuture<Void> ret = new CompletableFuture<>();
-
-            MoonriseRegionFileIO.loadDataAsync(
-                ChunkMapMixin.this.level, chunkPos.x(), chunkPos.z(), MoonriseRegionFileIO.RegionFileType.CHUNK_DATA,
-                (BiConsumer<CompoundTag, Throwable> & MoonriseRegionFileIO.NoCopyNBTData) (final CompoundTag data, final Throwable thr) -> {
-                    if (thr != null) {
-                        ret.completeExceptionally(thr);
-                        return;
-                    }
-
-                    if (data == null) {
-                        ret.complete(null);
-                        return;
-                    }
-
-                    try {
-                        data.acceptAsRoot(streamTagVisitor);
-
-                        ret.complete(null);
-                    } catch (final Throwable thr2) {
-                        ret.completeExceptionally(thr2);
-                        LOGGER.error("Error while scanning chunk " + chunkPos + " in world '" + WorldUtil.getWorldName(ChunkMapMixin.this.level) + "':", thr2);
-                    }
-                }, false
-            );
-
-            return ret;
-        };
+        return new ChunkMapChunkScanAccess(this.level, Priority.NORMAL);
     }
 }

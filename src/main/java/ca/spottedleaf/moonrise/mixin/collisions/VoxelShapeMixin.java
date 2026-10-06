@@ -14,7 +14,6 @@ import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -884,9 +883,9 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
         final List<AABB> aabbs = this.toAabbs();
         for (int i = 0, len = aabbs.size(); i < len; ++i) {
             final AABB aabb = aabbs.get(i);
-            final double x = Mth.clamp(point.x, aabb.minX, aabb.maxX);
-            final double y = Mth.clamp(point.y, aabb.minY, aabb.maxY);
-            final double z = Mth.clamp(point.z, aabb.minZ, aabb.maxZ);
+            final double x = Math.clamp(point.x, aabb.minX, aabb.maxX);
+            final double y = Math.clamp(point.y, aabb.minY, aabb.maxY);
+            final double z = Math.clamp(point.z, aabb.minZ, aabb.maxZ);
 
             double dist = point.distanceToSqr(x, y, z);
             if (dist < retDistance) {

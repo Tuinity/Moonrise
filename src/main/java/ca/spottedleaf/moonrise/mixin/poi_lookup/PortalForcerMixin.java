@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
-import net.minecraft.world.entity.ai.village.poi.PoiTypes;
+import net.minecraft.world.entity.ai.village.poi.PoiTypeIds;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -70,7 +70,7 @@ abstract class PortalForcerMixin {
 
         final List<PoiRecord> records = new ArrayList<>();
         PoiAccess.findClosestPoiDataRecords(
-            poiManager, type -> type.is(PoiTypes.NETHER_PORTAL),
+            poiManager, type -> type.is(PoiTypeIds.NETHER_PORTAL),
             (final Holder<PoiType> type, final BlockPos pos) -> {
                 if (!worldBorder.isWithinBounds(pos)) {
                     return false;
