@@ -96,9 +96,8 @@ public abstract class PoiManagerMixin extends SectionStorage<Object, Object> imp
             )
     )
     private void initHook(RegionStorageInfo regionStorageInfo, Path path, DataFixer dataFixer, boolean bl,
-                          RegistryAccess registryAccess, ChunkIOErrorReporter chunkIOErrorReporter,
-                          LevelHeightAccessor levelHeightAccessor, CallbackInfo ci) {
-        this.world = (ServerLevel)levelHeightAccessor;
+                          RegistryAccess registryAccess, ServerLevel level, CallbackInfo ci) {
+        this.world = level;
     }
 
     /**
@@ -141,9 +140,8 @@ public abstract class PoiManagerMixin extends SectionStorage<Object, Object> imp
      * @reason Replace vanilla tracker
      * @author Spottedleaf
      */
-    @Override
     @Overwrite
-    public void onSectionLoad(final long pos) {
+    public void onSectionLoad(final PoiSection section, final long pos) {
         this.updateDistanceTracking(pos);
     }
 
@@ -233,7 +231,7 @@ public abstract class PoiManagerMixin extends SectionStorage<Object, Object> imp
         for (int sectionY = minY; sectionY <= maxY; ++sectionY) {
             final PoiSection section = poiChunk.getSection(sectionY);
             if (section != null && !((ChunkSystemPoiSection)section).moonrise$isEmpty()) {
-                this.onSectionLoad(SectionPos.asLong(chunkX, sectionY, chunkZ));
+                this.onSectionLoad(section, SectionPos.asLong(chunkX, sectionY, chunkZ));
             }
         }
     }

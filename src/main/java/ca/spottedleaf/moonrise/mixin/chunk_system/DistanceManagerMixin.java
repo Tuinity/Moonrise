@@ -17,7 +17,6 @@ import net.minecraft.server.level.LoadingChunkTracker;
 import net.minecraft.server.level.SimulationChunkTracker;
 import net.minecraft.server.level.ThrottlingChunkTaskDispatcher;
 import net.minecraft.server.level.Ticket;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.TicketStorage;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -247,7 +246,7 @@ abstract class DistanceManagerMixin implements ChunkSystemDistanceManager {
     @Overwrite
     public void updateSimulationDistance(final int simulationDistance) {
         // note: vanilla does not clamp to 0, but we do simply because we need a min of 0
-        final int clamped = Mth.clamp(simulationDistance, 0, MoonriseConstants.MAX_VIEW_DISTANCE);
+        final int clamped = Math.clamp(simulationDistance, 0, MoonriseConstants.MAX_VIEW_DISTANCE);
 
         ((ChunkSystemServerLevel)this.moonrise$getChunkMap().level).moonrise$getPlayerChunkLoader().setTickDistance(clamped);
     }

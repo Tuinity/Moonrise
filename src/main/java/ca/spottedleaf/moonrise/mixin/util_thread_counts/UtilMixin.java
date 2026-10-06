@@ -4,7 +4,6 @@ import ca.spottedleaf.concurrentutil.numa.OSNuma;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.util.Util;
-import net.minecraft.util.Mth;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -34,7 +33,7 @@ abstract class UtilMixin {
             value = (cpus - 4) / 2;
         }
 
-        return Mth.clamp(value, min, max);
+        return Math.clamp(value, min, max);
     }
 
     /**
