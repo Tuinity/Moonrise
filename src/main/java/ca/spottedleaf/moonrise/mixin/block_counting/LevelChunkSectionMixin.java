@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.block_counting;
 
 import ca.spottedleaf.moonrise.common.list.ShortList;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingBitStorage;
+import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingEntry;
 import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -24,7 +25,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -147,21 +150,18 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
             final int paletteSize = palette.getSize();
             final BitStorage storage = data.storage();
 
-            final Int2ObjectOpenHashMap<ShortArrayList> counts;
+            final List<BlockCountingEntry> counts;
             if (paletteSize == 1) {
-                counts = new Int2ObjectOpenHashMap<>(1);
-                counts.put(0, FULL_LIST);
+                counts = new ArrayList<>(1);
+                counts.add(new BlockCountingEntry(FULL_LIST.size(), palette.valueFor(0), FULL_LIST));
             } else {
-                counts = ((BlockCountingBitStorage)storage).moonrise$countEntries();
+                counts = ((BlockCountingBitStorage)storage).moonrise$countBlocks(palette);
             }
 
-            for (final Iterator<Int2ObjectMap.Entry<ShortArrayList>> iterator = counts.int2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
-                final Int2ObjectMap.Entry<ShortArrayList> entry = iterator.next();
-                final int paletteIdx = entry.getIntKey();
-                final ShortArrayList coordinates = entry.getValue();
-                final int paletteCount = coordinates.size();
-
-                final BlockState state = palette.valueFor(paletteIdx);
+            for (int i = 0, len = counts.size(); i < len; ++i) {
+                final BlockCountingEntry blockCountingEntry = counts.get(i);
+                final int paletteCount = blockCountingEntry.count;
+                final BlockState state = blockCountingEntry.state;
 
                 if (state.isAir()) {
                     continue;
@@ -172,6 +172,7 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                 }
                 this.nonEmptyBlockCount += (short)paletteCount;
                 if (state.isRandomlyTicking()) {
+                    final ShortArrayList coordinates = blockCountingEntry.coords;
                     this.tickingBlockCount += (short)paletteCount;
                     final short[] raw = coordinates.elements();
                     final int rawLen = raw.length;
@@ -181,8 +182,8 @@ abstract class LevelChunkSectionMixin implements BlockCountingChunkSection {
                     tickingBlocks.setMinCapacity(Math.min((rawLen + tickingBlocks.size()) * 3 / 2, 16*16*16));
 
                     Objects.checkFromToIndex(0, paletteCount, rawLen);
-                    for (int i = 0; i < paletteCount; ++i) {
-                        tickingBlocks.add(raw[i]);
+                    for (int k = 0; k < paletteCount; ++k) {
+                        tickingBlocks.add(raw[k]);
                     }
                 }
 

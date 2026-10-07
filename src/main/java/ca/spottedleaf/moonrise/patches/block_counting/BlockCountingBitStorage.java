@@ -1,10 +1,11 @@
 package ca.spottedleaf.moonrise.patches.block_counting;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.shorts.ShortArrayList;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.Palette;
+import java.util.List;
 
 public interface BlockCountingBitStorage {
 
-    public Int2ObjectOpenHashMap<ShortArrayList> moonrise$countEntries();
+    public List<BlockCountingEntry> moonrise$countBlocks(final Palette<BlockState> palette);
 
 }

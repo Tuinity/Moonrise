@@ -1,14 +1,19 @@
 package ca.spottedleaf.moonrise.mixin.block_counting;
 
 import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingBitStorage;
+import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingEntry;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import net.minecraft.util.BitStorage;
 import net.minecraft.util.SimpleBitStorage;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.Palette;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import java.util.ArrayList;
+import java.util.List;
 
 @Mixin(SimpleBitStorage.class)
 abstract class SimpleBitStorageMixin implements BitStorage, BlockCountingBitStorage {
@@ -30,15 +35,15 @@ abstract class SimpleBitStorageMixin implements BitStorage, BlockCountingBitStor
     private int size;
 
     @Override
-    public final Int2ObjectOpenHashMap<ShortArrayList> moonrise$countEntries() {
+    public final List<BlockCountingEntry> moonrise$countBlocks(final Palette<BlockState> palette) {
         final int valuesPerLong = this.valuesPerLong;
         final int bits = this.bits;
         final long mask = (1L << bits) - 1L;
         final int size = this.size;
 
         if (bits <= 6) {
-            final ShortArrayList[] byId = new ShortArrayList[1 << bits];
-            final Int2ObjectOpenHashMap<ShortArrayList> ret = new Int2ObjectOpenHashMap<>(1 << bits);
+            final BlockCountingEntry[] byPaletteId = new BlockCountingEntry[1 << bits];
+            final List<BlockCountingEntry> ret = new ArrayList<>(1 << bits);
 
             int index = 0;
 
@@ -49,23 +54,34 @@ abstract class SimpleBitStorageMixin implements BitStorage, BlockCountingBitStor
                     value >>= bits;
                     ++li;
 
-                    final ShortArrayList coords = byId[paletteIdx];
-                    if (coords != null) {
-                        coords.add((short)index++);
-                        continue;
+                    final BlockCountingEntry ifPresent = byPaletteId[paletteIdx];
+                    if (ifPresent != null) {
+                        ++ifPresent.count;
+                        if (ifPresent.coords != null) {
+                            ifPresent.coords.add((short)index);
+                        }
                     } else {
-                        final ShortArrayList newCoords = new ShortArrayList(64);
-                        byId[paletteIdx] = newCoords;
-                        newCoords.add((short)index++);
-                        ret.put(paletteIdx, newCoords);
-                        continue;
+                        final BlockState state = palette.valueFor(paletteIdx);
+                        final ShortArrayList coords;
+                        if (state.isRandomlyTicking()) {
+                            coords = new ShortArrayList(64);
+                            coords.add((short)index);
+                        } else {
+                            coords = null;
+                        }
+
+                        final BlockCountingEntry entry = new BlockCountingEntry(1, state, coords);
+                        byPaletteId[paletteIdx] = entry;
+                        ret.add(entry);
                     }
+                    ++index;
                 } while (li < valuesPerLong && index < size);
             }
 
             return ret;
         } else {
-            final Int2ObjectOpenHashMap<ShortArrayList> ret = new Int2ObjectOpenHashMap<>(
+            final List<BlockCountingEntry> ret = new ArrayList<>(1 << bits);
+            final Int2ObjectOpenHashMap<BlockCountingEntry> byPaletteId = new Int2ObjectOpenHashMap<>(
                 1 << 6
             );
 
@@ -78,9 +94,27 @@ abstract class SimpleBitStorageMixin implements BitStorage, BlockCountingBitStor
                     value >>= bits;
                     ++li;
 
-                    ret.computeIfAbsent(paletteIdx, (final int key) -> {
-                        return new ShortArrayList(64);
-                    }).add((short)index++);
+                    final BlockCountingEntry ifPresent = byPaletteId.get(paletteIdx);
+                    if (ifPresent != null) {
+                        ++ifPresent.count;
+                        if (ifPresent.coords != null) {
+                            ifPresent.coords.add((short)index);
+                        }
+                    } else {
+                        final BlockState state = palette.valueFor(paletteIdx);
+                        final ShortArrayList coords;
+                        if (state.isRandomlyTicking()) {
+                            coords = new ShortArrayList(64);
+                            coords.add((short)index);
+                        } else {
+                            coords = null;
+                        }
+
+                        final BlockCountingEntry entry = new BlockCountingEntry(1, state, coords);
+                        byPaletteId.put(paletteIdx, entry);
+                        ret.add(entry);
+                    }
+                    ++index;
                 } while (li < valuesPerLong && index < size);
             }
 
