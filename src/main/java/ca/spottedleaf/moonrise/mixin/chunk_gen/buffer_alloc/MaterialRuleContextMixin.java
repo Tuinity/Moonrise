@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.chunk_gen.buffer_alloc;
 
 import ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc.ChunkGenMaterialRuleContext;
-import ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc.ThreadLocalDensityBufferCache;
+import ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc.ThreadLocalFixedDensityBufferCache;
 import net.minecraft.world.level.levelgen.densityfunction.DensityBuffer;
 import net.minecraft.world.level.levelgen.material.MaterialRuleContext;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,16 +13,16 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 abstract class MaterialRuleContextMixin implements ChunkGenMaterialRuleContext {
 
     @Unique
-    private ThreadLocalDensityBufferCache allocator;
+    private ThreadLocalFixedDensityBufferCache allocator;
 
     @Override
-    public final void moonrise$setDensityBufferAllocator(final ThreadLocalDensityBufferCache allocator) {
+    public final void moonrise$setDensityBufferAllocator(final ThreadLocalFixedDensityBufferCache allocator) {
         this.allocator = allocator;
     }
 
     @Override
-    public final ThreadLocalDensityBufferCache moonrise$removeDensityBufferAllocator() {
-        final ThreadLocalDensityBufferCache ret = this.allocator;
+    public final ThreadLocalFixedDensityBufferCache moonrise$removeDensityBufferAllocator() {
+        final ThreadLocalFixedDensityBufferCache ret = this.allocator;
         this.allocator = null;
         return ret;
     }

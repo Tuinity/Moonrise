@@ -2,7 +2,7 @@ package ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc;
 
 public interface ChunkGenMaterialRuleContext {
 
-    public void moonrise$setDensityBufferAllocator(final ThreadLocalDensityBufferCache allocator);
+    public void moonrise$setDensityBufferAllocator(final ThreadLocalFixedDensityBufferCache allocator);
 
-    public ThreadLocalDensityBufferCache moonrise$removeDensityBufferAllocator();
+    public ThreadLocalFixedDensityBufferCache moonrise$removeDensityBufferAllocator();
 }

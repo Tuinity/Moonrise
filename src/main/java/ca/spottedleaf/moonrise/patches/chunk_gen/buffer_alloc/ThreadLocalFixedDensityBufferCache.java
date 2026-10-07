@@ -3,14 +3,14 @@ package ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc;
 import net.minecraft.world.level.levelgen.densityfunction.DensityBuffer;
 import java.util.ArrayDeque;
 
-public final class ThreadLocalDensityBufferCache {
+public final class ThreadLocalFixedDensityBufferCache {
 
     private final ArrayDeque<ThreadLocalDensityBuffer> buffersCached = new ArrayDeque<>();
     private final ArrayDeque<ThreadLocalDensityBuffer> buffersInUse = new ArrayDeque<>();
 
     private boolean inUse;
 
-    public ThreadLocalDensityBufferCache acquire() {
+    public ThreadLocalFixedDensityBufferCache acquire() {
         if (this.inUse) {
             throw new IllegalStateException();
         }

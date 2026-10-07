@@ -1,7 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.chunk_gen.buffer_alloc;
 
 import ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc.ChunkGenMaterialRuleContext;
-import ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc.ThreadLocalDensityBufferCache;
+import ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc.ThreadLocalFixedDensityBufferCache;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -28,13 +28,13 @@ import java.util.function.Function;
 abstract class MaterialSystemMixin {
 
     @Unique
-    private static final ThreadLocal<ThreadLocalDensityBufferCache> BUFFERS_FOR_BUILD_SURFACE = ThreadLocal.withInitial(() -> {
-        return new ThreadLocalDensityBufferCache();
+    private static final ThreadLocal<ThreadLocalFixedDensityBufferCache> BUFFERS_FOR_BUILD_SURFACE = ThreadLocal.withInitial(() -> {
+        return new ThreadLocalFixedDensityBufferCache();
     });
 
     @Unique
-    private static final ThreadLocal<ThreadLocalDensityBufferCache> BUFFERS_FOR_TOP_MATERIAL = ThreadLocal.withInitial(() -> {
-        return new ThreadLocalDensityBufferCache();
+    private static final ThreadLocal<ThreadLocalFixedDensityBufferCache> BUFFERS_FOR_TOP_MATERIAL = ThreadLocal.withInitial(() -> {
+        return new ThreadLocalFixedDensityBufferCache();
     });
 
     /**
@@ -109,8 +109,8 @@ abstract class MaterialSystemMixin {
         )
     )
     private void restoreAllocatorForTop(final CallbackInfoReturnable<Optional<BlockState>> cir,
-                                        final @Local(argsOnly = false, name = "context") MaterialRuleContext context) {
-        final ThreadLocalDensityBufferCache allocator = ((ChunkGenMaterialRuleContext)(Object)context).moonrise$removeDensityBufferAllocator();
+                                        final @Local(argsOnly = false, ordinal = 0) MaterialRuleContext context) {
+        final ThreadLocalFixedDensityBufferCache allocator = ((ChunkGenMaterialRuleContext)(Object)context).moonrise$removeDensityBufferAllocator();
         if (allocator != null) {
             allocator.release();
             BUFFERS_FOR_TOP_MATERIAL.set(allocator);
