@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.patches.chunk_gen;
+package ca.spottedleaf.moonrise.patches.chunk_gen.noise;
 
 import net.minecraft.world.level.levelgen.synth.GradientNoise;
 

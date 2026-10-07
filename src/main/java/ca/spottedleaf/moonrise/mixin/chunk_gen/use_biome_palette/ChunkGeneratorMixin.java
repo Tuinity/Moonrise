@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.mixin.chunk_gen;
+package ca.spottedleaf.moonrise.mixin.chunk_gen.use_biome_palette;
 
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.GlobalPalette;

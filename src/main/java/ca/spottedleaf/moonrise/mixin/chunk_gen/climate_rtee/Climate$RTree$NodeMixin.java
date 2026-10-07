@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.mixin.chunk_gen;
+package ca.spottedleaf.moonrise.mixin.chunk_gen.climate_rtee;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.biome.Climate;

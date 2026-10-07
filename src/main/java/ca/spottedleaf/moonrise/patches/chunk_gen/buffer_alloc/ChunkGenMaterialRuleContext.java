@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.patches.chunk_gen;
+package ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc;
 
 public interface ChunkGenMaterialRuleContext {
 

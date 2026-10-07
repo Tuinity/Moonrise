@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.mixin.chunk_gen;
+package ca.spottedleaf.moonrise.mixin.chunk_gen.chunk_access;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.WorldGenRegion;

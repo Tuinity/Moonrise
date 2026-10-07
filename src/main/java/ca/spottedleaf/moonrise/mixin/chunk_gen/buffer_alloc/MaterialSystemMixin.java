@@ -1,7 +1,7 @@
-package ca.spottedleaf.moonrise.mixin.chunk_gen;
+package ca.spottedleaf.moonrise.mixin.chunk_gen.buffer_alloc;
 
-import ca.spottedleaf.moonrise.patches.chunk_gen.ChunkGenMaterialRuleContext;
-import ca.spottedleaf.moonrise.patches.chunk_gen.ThreadLocalDensityBufferCache;
+import ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc.ChunkGenMaterialRuleContext;
+import ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc.ThreadLocalDensityBufferCache;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;

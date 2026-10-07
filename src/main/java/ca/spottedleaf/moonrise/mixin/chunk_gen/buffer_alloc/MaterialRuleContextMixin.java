@@ -1,7 +1,7 @@
-package ca.spottedleaf.moonrise.mixin.chunk_gen;
+package ca.spottedleaf.moonrise.mixin.chunk_gen.buffer_alloc;
 
-import ca.spottedleaf.moonrise.patches.chunk_gen.ChunkGenMaterialRuleContext;
-import ca.spottedleaf.moonrise.patches.chunk_gen.ThreadLocalDensityBufferCache;
+import ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc.ChunkGenMaterialRuleContext;
+import ca.spottedleaf.moonrise.patches.chunk_gen.buffer_alloc.ThreadLocalDensityBufferCache;
 import net.minecraft.world.level.levelgen.densityfunction.DensityBuffer;
 import net.minecraft.world.level.levelgen.material.MaterialRuleContext;
 import org.spongepowered.asm.mixin.Mixin;

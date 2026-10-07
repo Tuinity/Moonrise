@@ -1,7 +1,7 @@
-package ca.spottedleaf.moonrise.mixin.chunk_gen;
+package ca.spottedleaf.moonrise.mixin.chunk_gen.noise;
 
-import ca.spottedleaf.moonrise.patches.chunk_gen.ChunkGenPerlinNoise;
-import ca.spottedleaf.moonrise.patches.chunk_gen.NoiseGradients;
+import ca.spottedleaf.moonrise.patches.chunk_gen.noise.ChunkGenPerlinNoise;
+import ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.densityfunction.DensityBuffer;
@@ -16,10 +16,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Arrays;
 
-import static ca.spottedleaf.moonrise.patches.chunk_gen.NoiseGradients.DEBUG_NOISE;
-import static ca.spottedleaf.moonrise.patches.chunk_gen.NoiseGradients.PERM_MASK;
-import static ca.spottedleaf.moonrise.patches.chunk_gen.NoiseGradients.PERM_SIZE;
-import static ca.spottedleaf.moonrise.patches.chunk_gen.NoiseGradients.PERM_SHIFT;
+import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.DEBUG_NOISE;
+import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.PERM_MASK;
+import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.PERM_SIZE;
+import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.PERM_SHIFT;
 
 @Mixin(PerlinNoise.class)
 abstract class PerlinNoiseMixin extends GradientNoise implements ChunkGenPerlinNoise {

@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.mixin.chunk_gen;
+package ca.spottedleaf.moonrise.mixin.chunk_gen.list_itr;
 
 import net.minecraft.world.level.levelgen.Beardifier;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;

@@ -1,7 +1,7 @@
-package ca.spottedleaf.moonrise.mixin.chunk_gen;
+package ca.spottedleaf.moonrise.mixin.chunk_gen.climate_rtee;
 
-import ca.spottedleaf.moonrise.patches.chunk_gen.ChunkGenRTree;
-import ca.spottedleaf.moonrise.patches.chunk_gen.RTreeLeafDistance;
+import ca.spottedleaf.moonrise.patches.chunk_gen.climate_rtree.ChunkGenRTree;
+import ca.spottedleaf.moonrise.patches.chunk_gen.climate_rtree.RTreeLeafDistance;
 import net.minecraft.world.level.biome.Climate;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
