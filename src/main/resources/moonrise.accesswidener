@@ -345,8 +345,13 @@ accessible method net/minecraft/world/level/biome/Climate$RTree$Node distance ([
 # Identifier
 accessible method net/minecraft/resources/Identifier <init> (Ljava/lang/String;Ljava/lang/String;)V
 
+
 # GradientNoise
 accessible class net/minecraft/world/level/levelgen/synth/GradientNoise$Gradient
 accessible method net/minecraft/world/level/levelgen/synth/GradientNoise$Gradient <init> (III)V
 accessible field net/minecraft/world/level/levelgen/synth/GradientNoise GRADIENT [Lnet/minecraft/world/level/levelgen/synth/GradientNoise$Gradient;
 accessible field net/minecraft/world/level/levelgen/densityfunction/DensityBuffer values [F
+
+
+# MaterialRuleContext
+accessible method net/minecraft/world/level/levelgen/material/MaterialRuleContext <init> (Lnet/minecraft/world/level/levelgen/material/MaterialSystem;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/levelgen/densityfunction/DensityVolume;Lnet/minecraft/world/level/levelgen/densityfunction/DensitySamplerSet;Ljava/util/function/Function;Lnet/minecraft/world/level/levelgen/WorldGenerationContext;Ljava/util/Set;)V
