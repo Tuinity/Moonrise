@@ -1,4 +1,4 @@
-package ca.spottedleaf.moonrise.patches.chunk_gen;
+package ca.spottedleaf.moonrise.patches.chunk_gen.climate_rtree;
 
 import net.minecraft.world.level.biome.Climate;
 
