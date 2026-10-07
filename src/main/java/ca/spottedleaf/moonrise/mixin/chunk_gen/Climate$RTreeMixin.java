@@ -38,6 +38,17 @@ abstract class Climate$RTreeMixin<T> implements ChunkGenRTree<T> {
         }
     }
 
+    @Unique
+    private static void toParameterArray(final Climate.TargetPoint target, final long[] params) {
+        params[0] = target.temperature();
+        params[1] = target.humidity();
+        params[2] = target.continentalness();
+        params[3] = target.erosion();
+        params[4] = target.depth();
+        params[5] = target.weirdness();
+        params[6] = 0L;
+    }
+
     @Override
     public final T moonrise$findNearest(final Climate.TargetPoint target) {
         if (this.root == null) {
@@ -48,9 +59,9 @@ abstract class Climate$RTreeMixin<T> implements ChunkGenRTree<T> {
             return ret.value;
         }
 
-        final long[] params = target.toParameterArray();
-
         final RTreeLeafDistance<T> ret = this.lastReturned.get();
+        final long[] params = ret.parameterArray;
+        toParameterArray(target, params);
         if (ret.leaf != null) {
             ret.distance = ret.leaf.distance(params);
         }
