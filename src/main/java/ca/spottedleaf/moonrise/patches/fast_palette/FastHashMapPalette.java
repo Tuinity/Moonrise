@@ -131,9 +131,9 @@ public final class FastHashMapPalette<T> implements Palette<T> {
         final int nextId = this.size;
 
         if (nextId < this.idToValue.length) {
-            ++this.size;
             this.idToValue[nextId] = value;
             this.insertEntryIfAbsent(value, nextId);
+            ++this.size;
             return nextId;
         }
 
