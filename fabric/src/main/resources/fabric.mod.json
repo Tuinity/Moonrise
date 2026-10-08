@@ -47,6 +47,7 @@
             "mixin.block.flatten_states": false,
             "mixin.chunk.entity_class_groups": false,
             "mixin.chunk.no_validation": false,
+            "mixin.chunk.serialization": false,
             "mixin.collections.chunk_tickets": false,
             "mixin.collections.entity_ticking": false,
             "mixin.entity.collisions.intersection": false,
