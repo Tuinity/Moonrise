@@ -91,8 +91,9 @@ abstract class MaterialSystemMixin {
                                                    final Function<BlockPos, Holder<Biome>> biomeGetter, final WorldGenerationContext context,
                                                    final Set<Holder<Biome>> possibleBiomes) {
         final MaterialRuleContext ret = new MaterialRuleContext(system, randomState, expectedVolume, densitySamplers, biomeGetter, context, possibleBiomes);
+        final ThreadLocalFixedDensityBufferCache allocator = BUFFERS_FOR_TOP_MATERIAL.get();
 
-        ((ChunkGenMaterialRuleContext)(Object)ret).moonrise$setDensityBufferAllocator(BUFFERS_FOR_TOP_MATERIAL.get().acquire());
+        ((ChunkGenMaterialRuleContext)(Object)ret).moonrise$setDensityBufferAllocator(allocator == null ? null : allocator.acquire());
         BUFFERS_FOR_TOP_MATERIAL.set(null);
 
         return ret;
