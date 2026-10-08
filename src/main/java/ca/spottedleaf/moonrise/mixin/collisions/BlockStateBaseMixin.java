@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.piston.MovingPistonBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateHolder;
@@ -88,7 +89,7 @@ abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState> implem
 
     @Unique
     private static boolean isSpecialCollidingBlock(final net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase block) {
-        return block.hasLargeCollisionShape() || block.getBlock() == Blocks.MOVING_PISTON;
+        return block.hasLargeCollisionShape() || block.getBlock() instanceof MovingPistonBlock;
     }
 
     /**
