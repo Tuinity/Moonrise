@@ -30,7 +30,7 @@ abstract class AnyOfRuleTestMixin extends RuleTest {
         )
     )
     private void initArr(final List<RuleTest> rules, final CallbackInfo ci) {
-        this.rulesArray = rules.toArray(rules.toArray(new RuleTest[0]));
+        this.rulesArray = rules.toArray(new RuleTest[0]);
     }
 
     /**
