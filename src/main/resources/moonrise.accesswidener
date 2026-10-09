@@ -16,7 +16,9 @@ accessible field net/minecraft/world/level/chunk/LevelChunkSection states Lnet/m
 
 # PalettedContainer
 accessible method net/minecraft/world/level/chunk/PalettedContainer get (I)Ljava/lang/Object;
+accessible method net/minecraft/world/level/chunk/PalettedContainer set (ILjava/lang/Object;)V
 accessible field net/minecraft/world/level/chunk/PalettedContainer data Lnet/minecraft/world/level/chunk/PalettedContainer$Data;
+accessible field net/minecraft/world/level/chunk/PalettedContainer strategy Lnet/minecraft/world/level/chunk/Strategy;
 
 
 # PalettedContainer.Data
