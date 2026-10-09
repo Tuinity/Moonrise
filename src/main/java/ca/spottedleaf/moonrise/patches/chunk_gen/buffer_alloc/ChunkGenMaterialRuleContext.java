@@ -4,5 +4,7 @@ public interface ChunkGenMaterialRuleContext {
 
     public void moonrise$setDensityBufferAllocator(final ThreadLocalFixedDensityBufferCache allocator);
 
+    public ThreadLocalFixedDensityBufferCache moonrise$getDensityBufferAllocator();
+
     public ThreadLocalFixedDensityBufferCache moonrise$removeDensityBufferAllocator();
 }
