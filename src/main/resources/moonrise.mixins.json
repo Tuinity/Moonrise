@@ -23,6 +23,7 @@
         "chunk_gen.climate_rtee.Climate$RTree$NodeMixin",
         "chunk_gen.climate_rtee.Climate$RTreeMixin",
         "chunk_gen.use_biome_palette.ChunkGeneratorMixin",
+        "chunk_gen.use_biome_palette.LevelChunkSectionMixin",
         "chunk_system.ChunkBufferMixin",
         "chunk_system.ChunkGeneratorMixin",
         "chunk_system.ChunkHolderMixin",
