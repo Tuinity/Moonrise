@@ -357,10 +357,6 @@ accessible field net/minecraft/world/level/levelgen/synth/GradientNoise GRADIENT
 accessible field net/minecraft/world/level/levelgen/densityfunction/DensityBuffer values [F
 
 
-# MaterialRuleContext
-accessible method net/minecraft/world/level/levelgen/material/MaterialRuleContext <init> (Lnet/minecraft/world/level/levelgen/material/MaterialSystem;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/levelgen/densityfunction/DensityVolume;Lnet/minecraft/world/level/levelgen/densityfunction/DensitySamplerSet;Ljava/util/function/Function;Lnet/minecraft/world/level/levelgen/WorldGenerationContext;Ljava/util/Set;)V
-
-
 # ScopedDensityBuffer
 accessible method net/minecraft/world/level/levelgen/densityfunction/ScopedDensityBuffer <init> (Lnet/minecraft/world/level/levelgen/densityfunction/DensityBufferArena;II)V
 accessible method net/minecraft/world/level/levelgen/densityfunction/ScopedDensityBuffer restore (I)V

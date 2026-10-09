@@ -16,7 +16,7 @@ abstract class ChunkGeneratorMixin {
      * @author Spottedleaf
      */
     @Redirect(
-        method = "doCreateBiomes",
+        method = "doCreateNoiseBiomes",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/levelgen/RandomState;acquireDensityBufferPool()Lnet/minecraft/world/level/levelgen/densityfunction/DensityBufferPool;"
@@ -32,7 +32,7 @@ abstract class ChunkGeneratorMixin {
      * @author Spottedleaf
      */
     @Redirect(
-        method = "doCreateBiomes",
+        method = "doCreateNoiseBiomes",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/levelgen/RandomState;releaseDensityBufferPool(Lnet/minecraft/world/level/levelgen/densityfunction/DensityBufferPool;)V"
