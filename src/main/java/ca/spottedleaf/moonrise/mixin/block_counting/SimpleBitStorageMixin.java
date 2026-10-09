@@ -80,7 +80,7 @@ abstract class SimpleBitStorageMixin implements BitStorage, BlockCountingBitStor
 
             return ret;
         } else {
-            final List<BlockCountingEntry> ret = new ArrayList<>(1 << bits);
+            final List<BlockCountingEntry> ret = new ArrayList<>(1 << 6);
             final Int2ObjectOpenHashMap<BlockCountingEntry> byPaletteId = new Int2ObjectOpenHashMap<>(
                 1 << 6
             );
