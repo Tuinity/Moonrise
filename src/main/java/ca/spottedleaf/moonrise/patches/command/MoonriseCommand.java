@@ -7,6 +7,7 @@ import ca.spottedleaf.moonrise.common.util.ConfigHolder;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.JsonUtil;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
+import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
@@ -17,6 +18,7 @@ import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider
 import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopMinecraftServer;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -26,9 +28,12 @@ import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.ChatFormatting;
+import net.minecraft.SharedConstants;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.server.level.ServerLevel;
@@ -65,6 +70,7 @@ import java.util.PrimitiveIterator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static net.minecraft.commands.Commands.argument;
@@ -119,9 +125,23 @@ public final class MoonriseCommand {
                                                         DimensionArgument.getDimension(ctx, "world"),
                                                         ColumnPosArgument.getColumnPos(ctx, "center"),
                                                         IntegerArgumentType.getInteger(ctx, "radius"),
-                                                        IntegerArgumentType.getInteger(ctx, "max_loaded")
+                                                        IntegerArgumentType.getInteger(ctx, "max_loaded"),
+                                                        false
                                                     );
                                                 })
+                                                .then(
+                                                    argument("load_existing", BoolArgumentType.bool())
+                                                        .executes((final CommandContext<CommandSourceStack> ctx) -> {
+                                                            return MoonriseCommand.genArea(
+                                                                ctx,
+                                                                DimensionArgument.getDimension(ctx, "world"),
+                                                                ColumnPosArgument.getColumnPos(ctx, "center"),
+                                                                IntegerArgumentType.getInteger(ctx, "radius"),
+                                                                IntegerArgumentType.getInteger(ctx, "max_loaded"),
+                                                                BoolArgumentType.getBool(ctx, "load_existing")
+                                                            );
+                                                        })
+                                                )
                                         )
                                 )
                         )
@@ -410,7 +430,7 @@ public final class MoonriseCommand {
 
     private static final record AreaGenTask(
         ServerLevel world, PrimitiveIterator.OfLong chunkIterator, Long ticketId,
-        long startNS, int maxWorking, LongOpenHashSet generating,
+        long startNS, int maxWorking, boolean loadExisting, LongOpenHashSet generating,
         AtomicInteger generated, int total,
         AtomicLong lastLog
     ) {
@@ -446,7 +466,7 @@ public final class MoonriseCommand {
             );
         }
 
-        public void finish(final int x, final int z) {
+        public void finish(final int x, final int z, final boolean removeTicket) {
             final int generated = this.generated.incrementAndGet();
 
             synchronized (this) {
@@ -457,8 +477,10 @@ public final class MoonriseCommand {
 
             while (this.tryFetchNext());
 
-            ((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().chunkHolderManager
-                .removeTicketAtLevel(GEN_AREA_TICKET, x, z, ChunkHolderManager.FULL_LOADED_TICKET_LEVEL, this.ticketId);
+            if (removeTicket) {
+                ((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().chunkHolderManager
+                    .removeTicketAtLevel(GEN_AREA_TICKET, x, z, ChunkHolderManager.FULL_LOADED_TICKET_LEVEL, this.ticketId);
+            }
         }
 
         private boolean tryFetchNext() {
@@ -480,11 +502,57 @@ public final class MoonriseCommand {
             final int chunkX = CoordinateUtils.getChunkX(toGen);
             final int chunkZ = CoordinateUtils.getChunkZ(toGen);
 
+            if (this.loadExisting) {
+                this.genNext(chunkX, chunkZ);
+            } else {
+                MoonriseRegionFileIO.loadDataAsync(
+                    this.world,
+                    chunkX, chunkZ,
+                    MoonriseRegionFileIO.RegionFileType.CHUNK_DATA,
+                    (BiConsumer<CompoundTag, Throwable> & MoonriseRegionFileIO.NoCopyNBTData) (final CompoundTag data, final Throwable throwable) -> {
+                        ((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().loadExecutor
+                            .createTask(() -> {
+                                if (data != null && isGeneratedChunk(data)) {
+                                    // already upgraded and full, no retrogen needed
+                                    this.finish(chunkX, chunkZ, false);
+                                    this.world.getServer().emptyTicks = 0;
+                                } else {
+                                    this.genNext(chunkX, chunkZ);
+                                }
+                            }, Priority.NORMAL).queue();
+                    },
+                    false // not intending to block
+                );
+            }
+
+            return true;
+        }
+
+        private static boolean isGeneratedChunk(final CompoundTag data) {
+            if (NbtUtils.getDataVersion(data, -1) < SharedConstants.getCurrentVersion().dataVersion().version()) {
+                // needs upgrade
+                return false;
+            }
+            final String status = data.getStringOr("Status", "");
+            if ("minecraft:full".equals(status)) {
+                final CompoundTag retrogenTag = data.getCompound("below_zero_retrogen").orElse(null);
+                if (retrogenTag == null) {
+                    // already upgraded and full, no retrogen needed
+                    return true;
+                }
+                // full, needs retrogen
+                return false;
+            }
+            // not full
+            return false;
+        }
+
+        private void genNext(final int chunkX, final int chunkZ) {
             ((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().chunkHolderManager
                 .addTicketAtLevel(GEN_AREA_TICKET, chunkX, chunkZ, ChunkHolderManager.FULL_LOADED_TICKET_LEVEL, this.ticketId);
 
             final Consumer<ChunkAccess> onComplete = (final ChunkAccess chunk) -> {
-                AreaGenTask.this.finish(chunkX, chunkZ);
+                AreaGenTask.this.finish(chunkX, chunkZ, true);
                 AreaGenTask.this.world.getServer().emptyTicks = 0;
             };
 
@@ -497,12 +565,17 @@ public final class MoonriseCommand {
                             onComplete
                         );
                 }, Priority.NORMAL);
-
-            return true;
         }
     }
 
-    private static int genArea(final CommandContext<CommandSourceStack> ctx, final ServerLevel world, final ColumnPos center, final int radius, final int maxLoaded) {
+    private static int genArea(
+        final CommandContext<CommandSourceStack> ctx,
+        final ServerLevel world,
+        final ColumnPos center,
+        final int radius,
+        final int maxLoaded,
+        final boolean loadExisting
+    ) {
         final int centerX = center.x() >> 4;
         final int centerZ = center.z() >> 4;
 
@@ -537,7 +610,7 @@ public final class MoonriseCommand {
 
         final long start = System.nanoTime();
         new AreaGenTask(
-            world, iterator, id, start, maxLoaded,
+            world, iterator, id, start, maxLoaded, loadExisting,
             new LongOpenHashSet(maxLoaded), new AtomicInteger(), (2*radius+1)*(2*radius+1),
             new AtomicLong(start)
         ).start();
