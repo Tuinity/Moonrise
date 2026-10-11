@@ -53,6 +53,7 @@ import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import javax.management.MBeanServer;
@@ -512,7 +513,7 @@ public final class MoonriseCommand {
                     (BiConsumer<CompoundTag, Throwable> & MoonriseRegionFileIO.NoCopyNBTData) (final CompoundTag data, final Throwable throwable) -> {
                         ((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().loadExecutor
                             .createTask(() -> {
-                                if (data != null && isGeneratedChunk(data)) {
+                                if (data != null && isGeneratedChunk(data, chunkX, chunkZ)) {
                                     // already upgraded and full, no retrogen needed
                                     this.finish(chunkX, chunkZ, false);
                                     this.world.getServer().emptyTicks = 0;
@@ -528,9 +529,13 @@ public final class MoonriseCommand {
             return true;
         }
 
-        private static boolean isGeneratedChunk(final CompoundTag data) {
+        private static boolean isGeneratedChunk(final CompoundTag data, final int chunkX, final int chunkZ) {
             if (NbtUtils.getDataVersion(data, -1) < SharedConstants.getCurrentVersion().dataVersion().version()) {
                 // needs upgrade
+                return false;
+            }
+            if (data.getIntOr(SerializableChunkData.X_POS_TAG, 0) != chunkX || data.getIntOr(SerializableChunkData.Z_POS_TAG, 0) != chunkZ) {
+                // wrong location, needs relocation
                 return false;
             }
             final String status = data.getStringOr("Status", "");
