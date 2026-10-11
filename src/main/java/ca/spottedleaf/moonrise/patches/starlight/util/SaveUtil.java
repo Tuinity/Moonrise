@@ -12,6 +12,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import org.slf4j.Logger;
 
 // note: keep in-sync with SerializableChunkDataMixin
@@ -56,7 +57,7 @@ public final class SaveUtil {
             tag.putBoolean("isLightOn", false);
         }
         // diff end - store our tag for whether light data is init'd
-        ChunkStatus status = tag.read("Status", ChunkStatus.CODEC).orElse(ChunkStatus.EMPTY);
+        ChunkStatus status = tag.read(SerializableChunkData.STATUS_TAG, ChunkStatus.CODEC).orElse(ChunkStatus.EMPTY);
 
         CompoundTag[] sections = new CompoundTag[maxSection - minSection + 1];
 
@@ -152,7 +153,7 @@ public final class SaveUtil {
         // start copy from the original method
         boolean lit = tag.get("isLightOn") != null && tag.getIntOr(STARLIGHT_VERSION_TAG, -1) == STARLIGHT_LIGHT_VERSION;
         boolean canReadSky = world.dimensionType().hasSkyLight();
-        ChunkStatus status = tag.read("Status", ChunkStatus.CODEC).orElse(ChunkStatus.EMPTY);
+        ChunkStatus status = tag.read(SerializableChunkData.STATUS_TAG, ChunkStatus.CODEC).orElse(ChunkStatus.EMPTY);
         if (lit && status.isOrAfter(ChunkStatus.LIGHT)) { // diff - we add the status check here
             ListTag sections = tag.getListOrEmpty("sections");
 
