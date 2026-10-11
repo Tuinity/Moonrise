@@ -538,9 +538,9 @@ public final class MoonriseCommand {
                 // wrong location, needs relocation
                 return false;
             }
-            final String status = data.getStringOr("Status", "");
+            final String status = data.getStringOr(SerializableChunkData.STATUS_TAG, "");
             if ("minecraft:full".equals(status)) {
-                final CompoundTag retrogenTag = data.getCompound("below_zero_retrogen").orElse(null);
+                final CompoundTag retrogenTag = data.getCompound("retrogen").orElse(null);
                 if (retrogenTag == null) {
                     // already upgraded and full, no retrogen needed
                     return true;
