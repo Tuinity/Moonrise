@@ -1,5 +1,7 @@
 package ca.spottedleaf.moonrise.mixin.block_entity_remove;
 
+import ca.spottedleaf.moonrise.common.util.LoadedMods;
+import ca.spottedleaf.moonrise.compat.lithium.LithiumHooks;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
@@ -85,7 +87,7 @@ abstract class LevelMixin implements LevelAccessor, AutoCloseable {
                     continue;
                 }
 
-                if (doTick && this.shouldTickBlocksAt(tileEntity.getPos())) {
+                if (doTick && !(LoadedMods.LITHIUM && LithiumHooks.isSleeping(tileEntity)) && this.shouldTickBlocksAt(tileEntity.getPos())) {
                     tileEntity.tick();
                     // call mid-tick tasks for chunk system
                     if ((++tickedEntities & 7) == 0) {
