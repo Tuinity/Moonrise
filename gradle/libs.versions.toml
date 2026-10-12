@@ -4,12 +4,12 @@
 # https://maven.architectury.dev/dev/architectury/
 architectury = "22.0.2"
 # https://maven.shedaniel.me/me/shedaniel/cloth/
-cloth = "26.3.158"
+cloth = "26.3.159"
 fabricLoader = "0.19.5"
 leafpile = "1.2.4"
 # version ids from modrinth: https://modrinth.com/mod/lithium/versions
-lithiumFabric = "mc26.3-0.26.1-fabric"
-lithiumNeoforge = "mc26.3-0.26.1-neoforge"
+lithiumFabric = "mc26.3-0.26.2-fabric"
+lithiumNeoforge = "mc26.3-0.26.2-neoforge"
 minecraft = "26.3"
 # https://projects.neoforged.net/neoforged/neoforge
 neoforge = "26.3.0.1-beta"
