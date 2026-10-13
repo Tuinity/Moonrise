@@ -2,6 +2,7 @@ package ca.spottedleaf.moonrise.mixin.fluid;
 
 import ca.spottedleaf.moonrise.patches.fluid.FluidFluidState;
 import net.minecraft.core.TypedInstance;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateHolder;
 import net.minecraft.world.level.block.state.properties.Property;
@@ -32,6 +33,9 @@ abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> implements
     private boolean isSource;
 
     @Unique
+    private boolean isFalling;
+
+    @Unique
     private float ownHeight;
 
     @Unique
@@ -45,6 +49,7 @@ abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> implements
         this.amount = this.getType().getAmount((FluidState)(Object)this);
         this.isEmpty = this.getType().isEmpty();
         this.isSource = this.getType().isSource((FluidState)(Object)this);
+        this.isFalling = this.getType().isFalling((FluidState)(Object)this);
         this.ownHeight = this.getType().getOwnHeight((FluidState)(Object)this);
         this.isRandomlyTicking = this.getType().isRandomlyTicking();
     }
@@ -81,6 +86,15 @@ abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> implements
      * @author Spottedleaf
      */
     @Overwrite
+    public boolean isFalling() {
+        return this.isFalling;
+    }
+
+    /**
+     * @reason Use cached result, avoiding indirection
+     * @author Spottedleaf
+     */
+    @Overwrite
     public float getOwnHeight() {
         return this.ownHeight;
     }
@@ -92,6 +106,15 @@ abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> implements
     @Overwrite
     public boolean isSourceOfType(final Fluid other) {
         return this.isSource && this.owner == other;
+    }
+
+    /**
+     * @reason Use cached result, avoiding indirection
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public boolean isSourceOfType(final TagKey<Fluid> fluidTag) {
+        return this.isSource && this.owner.builtInRegistryHolder().is(fluidTag);
     }
 
     /**

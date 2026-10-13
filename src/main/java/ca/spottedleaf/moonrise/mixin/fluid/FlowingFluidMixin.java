@@ -24,33 +24,20 @@ import org.spongepowered.asm.mixin.Unique;
 abstract class FlowingFluidMixin extends Fluid {
 
     @Shadow
-    public abstract Fluid getSource();
-
-    @Shadow
     @Final
-    public static BooleanProperty FALLING;
+    public static BooleanProperty SOURCE;
 
     @Shadow
     @Final
     public static IntegerProperty LEVEL;
 
-    @Shadow
-    public abstract Fluid getFlowing();
-
-
     @Unique
-    private FluidState sourceFalling;
-
-    @Unique
-    private FluidState sourceNotFalling;
-
-    @Unique
-    private static final int TOTAL_FLOWING_STATES = FALLING.getPossibleValues().size() * LEVEL.getPossibleValues().size();
+    private static final int TOTAL_FLOWING_STATES = LEVEL.getPossibleValues().size();
 
     @Unique
     private static final int MIN_LEVEL = LEVEL.getPossibleValues().stream().sorted().findFirst().get().intValue();
 
-    // index = (falling ? 1 : 0) + level*2
+    // index = level - MIN_LEVEL
     @Unique
     private FluidState[] flowingLookUp;
 
@@ -67,18 +54,10 @@ abstract class FlowingFluidMixin extends Fluid {
                 return;
             }
             this.flowingLookUp = new FluidState[TOTAL_FLOWING_STATES];
-            final FluidState defaultFlowState = this.getFlowing().defaultFluidState();
+            final FluidState defaultFlowState = this.defaultFluidState().setValue(SOURCE, Boolean.FALSE);
             for (int i = 0; i < TOTAL_FLOWING_STATES; ++i) {
-                final int falling = i & 1;
-                final int level = (i >>> 1) + MIN_LEVEL;
-
-                this.flowingLookUp[i] = defaultFlowState.setValue(FALLING, falling == 1 ? Boolean.TRUE : Boolean.FALSE)
-                    .setValue(LEVEL, Integer.valueOf(level));
+                this.flowingLookUp[i] = defaultFlowState.setValue(LEVEL, Integer.valueOf(i + MIN_LEVEL));
             }
-
-            final FluidState defaultFallState = this.getSource().defaultFluidState();
-            this.sourceFalling = defaultFallState.setValue(FALLING, Boolean.TRUE);
-            this.sourceNotFalling = defaultFallState.setValue(FALLING, Boolean.FALSE);
 
             this.init = true;
         }
@@ -89,24 +68,11 @@ abstract class FlowingFluidMixin extends Fluid {
      * @author Spottedleaf
      */
     @Overwrite
-    public FluidState getSource(final boolean falling) {
+    public FluidState getFlowing(final int amount) {
         if (!this.init) {
             this.init();
         }
-        return falling ? this.sourceFalling : this.sourceNotFalling;
-    }
-
-    /**
-     * @reason Use cached result to avoid indirection
-     * @author Spottedleaf
-     */
-    @Overwrite
-    public FluidState getFlowing(final int amount, final boolean falling) {
-        if (!this.init) {
-            this.init();
-        }
-        final int index = (falling ? 1 : 0) | ((amount - MIN_LEVEL) << 1);
-        return this.flowingLookUp[index];
+        return this.flowingLookUp[amount - MIN_LEVEL];
     }
 
 
