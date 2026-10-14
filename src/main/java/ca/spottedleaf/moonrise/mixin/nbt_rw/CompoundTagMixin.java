@@ -56,7 +56,7 @@ abstract class CompoundTagMixin implements FastNBTWrite {
             return new CompoundTag();
         }
 
-        final HashMap<String, Tag> ret = new HashMap<>(this.tags.size());
+        final HashMap<String, Tag> ret = HashMap.newHashMap(this.tags.size());
 
         for (final Map.Entry<String, Tag> entry : this.tags.entrySet()) {
             ret.put(entry.getKey(), entry.getValue().copy());
