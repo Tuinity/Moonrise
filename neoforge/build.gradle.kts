@@ -50,6 +50,7 @@ dependencies {
     libs(libs.leafpile.profiler)
     libs(libs.leafpile.sampler)
     libs(libs.leafpile.yamlconfig)
+    libs(libs.leafpile.ioutil)
 
     if (gui) {
         implementation(libs.clothConfig.neoforge)
