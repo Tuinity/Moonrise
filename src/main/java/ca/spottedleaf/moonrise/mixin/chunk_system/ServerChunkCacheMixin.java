@@ -62,7 +62,7 @@ abstract class ServerChunkCacheMixin extends ChunkSource implements ChunkSystemS
 
 
     @Unique
-    private final ConcurrentChainedLong2ReferenceHashTable<LevelChunk> fullChunks = new ConcurrentChainedLong2ReferenceHashTable<>();
+    private final ConcurrentChainedLong2ReferenceHashTable<LevelChunk> fullChunks = ConcurrentChainedLong2ReferenceHashTable.createWithCapacity(ConcurrentChainedLong2ReferenceHashTable.defaultCapacity(), 0.25f);
 
     @Override
     public final void moonrise$setFullChunk(final int chunkX, final int chunkZ, final LevelChunk chunk) {

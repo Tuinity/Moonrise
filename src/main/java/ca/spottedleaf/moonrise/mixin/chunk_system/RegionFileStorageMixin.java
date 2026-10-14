@@ -4,6 +4,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.io.ChunkSystemRegionFileStor
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemRegionFile;
 import ca.spottedleaf.moonrise.patches.chunk_system.util.stream.ExternalChunkStreamMarker;
+import ca.spottedleaf.moonrise.patches.nbt_rw.FastNBTParser;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import net.minecraft.util.FileUtil;
@@ -248,7 +249,7 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
             final int chunkX, final int chunkZ, final MoonriseRegionFileIO.RegionDataController.ReadData readData
     ) throws IOException {
         try {
-            return NbtIo.read(readData.input());
+            return FastNBTParser.nbtIoRead(readData.input());
         } finally {
             readData.input().close();
         }

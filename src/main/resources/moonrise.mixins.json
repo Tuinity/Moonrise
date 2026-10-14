@@ -121,6 +121,23 @@
         "mob_spawning.LocalMobCapCalculator$MobCountsMixin",
         "mob_spawning.MobSpawnSettingsMixin",
         "mob_spawning.NaturalSpawnerMixin",
+        "nbt_rw.ByteArrayTagMixin",
+        "nbt_rw.ByteTagMixin",
+        "nbt_rw.CompoundTagMixin",
+        "nbt_rw.DoubleTagMixin",
+        "nbt_rw.EndTagMixin",
+        "nbt_rw.FloatTagMixin",
+        "nbt_rw.FriendlyByteBufMixin",
+        "nbt_rw.IntArrayTagMixin",
+        "nbt_rw.IntTagMixin",
+        "nbt_rw.ListTagMixin",
+        "nbt_rw.LongArrayTagMixin",
+        "nbt_rw.LongTagMixin",
+        "nbt_rw.NbtIoMixin",
+        "nbt_rw.RegionFileStorageMixin",
+        "nbt_rw.ShortTagMixin",
+        "nbt_rw.StringTagMixin",
+        "nbt_rw.TagMixin",
         "poi_lookup.AcquirePoiMixin",
         "poi_lookup.PoiManagerMixin",
         "poi_lookup.PortalForcerMixin",
@@ -171,5 +188,5 @@
     },
     "overwrites": {
         "conformVisibility": true
-    }
+  }
 }

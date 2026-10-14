@@ -367,3 +367,26 @@ accessible method net/minecraft/world/level/levelgen/densityfunction/ScopedDensi
 
 # DensityBufferPool
 accessible field net/minecraft/world/level/levelgen/densityfunction/DensityBufferPool maxAge I
+
+
+# Tag and friends
+accessible field net/minecraft/nbt/ByteTag SELF_SIZE_IN_BYTES I
+accessible field net/minecraft/nbt/ShortTag SELF_SIZE_IN_BYTES I
+accessible field net/minecraft/nbt/IntTag SELF_SIZE_IN_BYTES I
+accessible field net/minecraft/nbt/LongTag SELF_SIZE_IN_BYTES I
+accessible field net/minecraft/nbt/FloatTag SELF_SIZE_IN_BYTES I
+accessible field net/minecraft/nbt/DoubleTag SELF_SIZE_IN_BYTES I
+accessible field net/minecraft/nbt/ByteArrayTag SELF_SIZE_IN_BYTES I
+accessible field net/minecraft/nbt/IntArrayTag SELF_SIZE_IN_BYTES I
+accessible field net/minecraft/nbt/LongArrayTag SELF_SIZE_IN_BYTES I
+accessible field net/minecraft/nbt/StringTag SELF_SIZE_IN_BYTES I
+accessible field net/minecraft/nbt/ListTag SELF_SIZE_IN_BYTES I
+accessible field net/minecraft/nbt/CompoundTag SELF_SIZE_IN_BYTES I
+accessible field net/minecraft/nbt/CompoundTag MAP_ENTRY_SIZE_IN_BYTES I
+accessible method net/minecraft/nbt/ListTag tryUnwrap (Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/nbt/Tag;
+accessible method net/minecraft/nbt/ListTag <init> (Ljava/util/List;)V
+accessible method net/minecraft/nbt/CompoundTag <init> (Ljava/util/Map;)V
+
+
+# DelegateDataOutput
+accessible field net/minecraft/util/DelegateDataOutput parent Ljava/io/DataOutput;

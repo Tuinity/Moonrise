@@ -48,7 +48,7 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
     private EntityLookup entityLookup;
 
     @Unique
-    private final ConcurrentChainedLong2ReferenceHashTable<ChunkData> chunkData = new ConcurrentChainedLong2ReferenceHashTable<>();
+    private final ConcurrentChainedLong2ReferenceHashTable<ChunkData> chunkData = ConcurrentChainedLong2ReferenceHashTable.createWithCapacity(ConcurrentChainedLong2ReferenceHashTable.defaultCapacity(), 0.25f);
 
     @Override
     public final EntityLookup moonrise$getEntityLookup() {

@@ -35,6 +35,7 @@ dependencies {
     api(libs.leafpile.profiler)
     api(libs.leafpile.sampler)
     api(libs.leafpile.yamlconfig)
+    api(libs.leafpile.ioutil)
 
     compileOnly(libs.clothConfig.common)
 
