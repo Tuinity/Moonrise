@@ -179,7 +179,7 @@ public final class FastNBTParser {
             if (listType == 0 && listLen != 0) {
                 throw new NbtFormatException("Type cannot be END on list with non-zero count");
             }
-            ctx.accountBytes(Integer.SIZE, (long)listLen);
+            ctx.accountBytes(Integer.BYTES, (long)listLen);
 
             final ArrayList<Tag> ret = new ArrayList<>(listLen);
 
