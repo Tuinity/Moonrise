@@ -22,7 +22,7 @@ abstract class LevelChunkSectionMixin {
      * @reason Seed the palette with the biome at (0, 0, 0) and fill every other position once, so that
      *         every palette entry is present in the generated section. This also keeps uniform sections
      *         in a single-value palette instead of retaining an unused default biome.
-     *         Fill in Y/Z/X order, with X varying fastest, to write consecutive storage indices.
+     *         Sampling order must match Vanilla, as the RTree caches the last result (MC-241546).
      * @author jpenilla
      */
     @Overwrite
@@ -32,11 +32,11 @@ abstract class LevelChunkSectionMixin {
         final Strategy<Holder<Biome>> strategy = ((PalettedContainer<Holder<Biome>>)this.biomes).strategy;
         final PalettedContainer<Holder<Biome>> newBiomes = new PalettedContainer<>(first, strategy);
 
-        for (int y = 0; y < 4; ++y) {
-            for (int z = 0; z < 4; ++z) {
+        for (int x = 0; x < 4; ++x) {
+            for (int y = 0; y < 4; ++y) {
                 // Skip (0, 0, 0): the initial value already fills it, so do not sample it again.
-                final int startX = y == 0 && z == 0 ? 1 : 0;
-                for (int x = startX; x < 4; ++x) {
+                final int startZ = x == 0 && y == 0 ? 1 : 0;
+                for (int z = startZ; z < 4; ++z) {
                     // Avoid reading the old value.
                     newBiomes.set(
                         (y << 4) | (z << 2) | x,
