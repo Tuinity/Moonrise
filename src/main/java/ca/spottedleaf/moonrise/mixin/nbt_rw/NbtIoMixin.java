@@ -5,8 +5,11 @@ import ca.spottedleaf.ioutil.stream.AbstractBufferOutputStream;
 import ca.spottedleaf.ioutil.stream.wrapped.BufferedBufferOutputStream;
 import ca.spottedleaf.ioutil.stream.wrapped.SimpleBufferOutputStream;
 import ca.spottedleaf.moonrise.patches.nbt_rw.CopyingOutputStream;
+import ca.spottedleaf.moonrise.patches.nbt_rw.FastNBTParser;
 import ca.spottedleaf.moonrise.patches.nbt_rw.FastNBTSerialiser;
 import ca.spottedleaf.moonrise.patches.nbt_rw.NBTConstants;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,8 +19,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import static ca.spottedleaf.moonrise.patches.nbt_rw.NBTConstants.*;
 
@@ -52,6 +58,11 @@ abstract class NbtIoMixin {
             writeTagV(tag, output, name);
             return;
         }
+        writeTag(tag, stream, name, stringFallback);
+    }
+
+    @Unique
+    private static void writeTag(final Tag tag, final OutputStream stream, final String name, final boolean stringFallback) throws IOException {
         final AbstractBufferOutputStream toFlush;
         final boolean writeBuffer;
         final CopyingOutputStream copy;
@@ -128,5 +139,27 @@ abstract class NbtIoMixin {
     @Overwrite
     public static void writeUnnamedTag(final Tag tag, DataOutput output) throws IOException {
         writeTag(tag, output, "");
+    }
+
+    /**
+     * @reason Use faster NBT parsing, and avoid the redundant buffering of the decompressor stream
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public static CompoundTag readCompressed(final InputStream in, final NbtAccounter accounter) throws IOException {
+        try (final GZIPInputStream stream = new GZIPInputStream(in)) {
+            return FastNBTParser.nbtIoReadStream(stream, accounter);
+        }
+    }
+
+    /**
+     * @reason Use faster NBT serializing, and avoid the redundant buffering of the compressor stream
+     * @author Spottedleaf
+     */
+    @Overwrite
+    public static void writeCompressed(final CompoundTag tag, final OutputStream out) throws IOException {
+        try (final GZIPOutputStream stream = new GZIPOutputStream(out)) {
+            writeTag(tag, stream, "", true);
+        }
     }
 }

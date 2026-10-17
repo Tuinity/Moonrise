@@ -46,7 +46,10 @@ public final class FastNBTParser {
             // fallback to vanilla
             return NbtIo.read(dataIn);
         }
-        final NbtAccounter ctx = NbtAccounter.unlimitedHeap();
+        return nbtIoReadStream(stream, NbtAccounter.unlimitedHeap());
+    }
+
+    public static CompoundTag nbtIoReadStream(final InputStream stream, final NbtAccounter ctx) throws IOException {
         final Tag tag;
 
         final AbstractBufferInputStream toRead;

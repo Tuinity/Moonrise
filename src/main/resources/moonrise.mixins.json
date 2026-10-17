@@ -128,6 +128,7 @@
         "nbt_rw.LongTagMixin",
         "nbt_rw.NbtIoMixin",
         "nbt_rw.RegionFileStorageMixin",
+        "nbt_rw.SavedDataStorageMixin",
         "nbt_rw.ShortTagMixin",
         "nbt_rw.StringTagMixin",
         "nbt_rw.TagMixin",
