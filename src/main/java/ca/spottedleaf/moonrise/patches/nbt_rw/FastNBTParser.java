@@ -2,6 +2,8 @@ package ca.spottedleaf.moonrise.patches.nbt_rw;
 
 import ca.spottedleaf.ioutil.stream.AbstractBufferInputStream;
 import ca.spottedleaf.ioutil.stream.wrapped.BufferedBufferInputStream;
+import net.minecraft.CrashReport;
+import net.minecraft.CrashReportCategory;
 import net.minecraft.nbt.ByteArrayTag;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
@@ -16,6 +18,7 @@ import net.minecraft.nbt.LongTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtFormatException;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.ReportedNbtException;
 import net.minecraft.nbt.ShortTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -89,21 +92,44 @@ public final class FastNBTParser {
         throw new IOException("Root tag must be a named compound tag");
     }
 
-    public static Tag parseNamedTagVanilla(final AbstractBufferInputStream in, final NbtAccounter ctx) throws IOException {
-        final byte id = in.readByte();
-        if (id == NBT_TAG_END) {
-            return EndTag.INSTANCE;
-        }
-        skipUTF(in);
-        return parseVanilla(id, in, ctx);
+    // not a valid byte, used when the tag type has not been read yet
+    private static final int UNKNOWN_TAG_TYPE = Integer.MIN_VALUE;
+
+    // matches the crash report created by Vanilla's NbtIo#readTagSafe
+    private static ReportedNbtException wrapException(final IOException ex, final int type) {
+        final CrashReport report = CrashReport.forThrowable(ex, "Loading NBT data");
+        final CrashReportCategory category = report.addCategory("NBT Tag");
+        category.setDetail("Tag type", type == UNKNOWN_TAG_TYPE ? "<unknown>" : Byte.valueOf((byte)type));
+        return new ReportedNbtException(report);
     }
 
-    public static Tag parseTagNoNameVanilla(final AbstractBufferInputStream in, final NbtAccounter ctx) throws IOException {
-        final byte id = in.readByte();
-        if (id == NBT_TAG_END) {
-            return EndTag.INSTANCE;
+    public static Tag parseNamedTagVanilla(final AbstractBufferInputStream in, final NbtAccounter ctx) {
+        int type = UNKNOWN_TAG_TYPE;
+        try {
+            final byte id = in.readByte();
+            type = id;
+            if (id == NBT_TAG_END) {
+                return EndTag.INSTANCE;
+            }
+            skipUTF(in);
+            return parseVanilla(id, in, ctx);
+        } catch (final IOException ex) {
+            throw wrapException(ex, type);
         }
-        return parseVanilla(id, in, ctx);
+    }
+
+    public static Tag parseTagNoNameVanilla(final AbstractBufferInputStream in, final NbtAccounter ctx) {
+        int type = UNKNOWN_TAG_TYPE;
+        try {
+            final byte id = in.readByte();
+            type = id;
+            if (id == NBT_TAG_END) {
+                return EndTag.INSTANCE;
+            }
+            return parseVanilla(id, in, ctx);
+        } catch (final IOException ex) {
+            throw wrapException(ex, type);
+        }
     }
 
     private static ByteTag parseByteTag(final AbstractBufferInputStream in, final NbtAccounter ctx) throws IOException {
