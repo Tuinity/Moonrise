@@ -146,7 +146,7 @@ public final class ChunkTaskScheduler {
                 // No-op executor.
                 ChunkStatus.EMPTY,
 
-                // This is parallel capable, as CB has fixed the concurrency issue with stronghold generations.
+                // This is parallel capable, as we fix the concurrency issues with stronghold and nether fortress starts.
                 // Does not touch neighbour chunks.
                 ChunkStatus.STRUCTURE_STARTS,
 
