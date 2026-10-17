@@ -280,7 +280,7 @@ public final class FastNBTParser {
             }
 
             default: {
-                throw new UnsupportedOperationException();
+                throw new NbtFormatException("Invalid or unknown tag id: " + type);
             }
         }
     }
