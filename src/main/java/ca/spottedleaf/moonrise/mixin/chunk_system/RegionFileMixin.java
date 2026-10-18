@@ -196,6 +196,22 @@ abstract class RegionFileMixin implements ChunkSystemRegionFile {
         }
     }
 
+    /**
+     * @reason Vanilla computes the sector position as an int, which overflows for regionfiles larger than 2GiB
+     * @author jpenilla
+     */
+    @Redirect(
+            method = "doesChunkExist",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Ljava/nio/channels/FileChannel;read(Ljava/nio/ByteBuffer;J)I"
+            )
+    )
+    private int fixDoesChunkExistReadOverflow(final FileChannel instance, final ByteBuffer dst, final long position,
+                                              final ChunkPos pos) throws IOException {
+        return instance.read(dst, getSectorNumber(this.getOffset(pos)) * 4096L);
+    }
+
 
     @Override
     public final MoonriseRegionFileIO.RegionDataController.WriteData moonrise$startWrite(final CompoundTag data, final ChunkPos pos) throws IOException {
