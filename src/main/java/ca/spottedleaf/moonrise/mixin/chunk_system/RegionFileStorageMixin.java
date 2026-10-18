@@ -229,8 +229,8 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
             input = null;
         } else {
             synchronized (regionFile) {
-                recalculateCount = ((ChunkSystemRegionFile)regionFile).moonrise$getRecalculateCount();
                 input = regionFile.getChunkDataInputStream(new ChunkPos(chunkX, chunkZ));
+                recalculateCount = ((ChunkSystemRegionFile)regionFile).moonrise$getRecalculateCount();
             }
         }
 
