@@ -704,6 +704,15 @@ abstract class RegionFileMixin implements ChunkSystemRegionFile {
         this.setUsedSectors(allocated);
 
         if (!needsRecalc) {
+            // persist removed entries, otherwise every open of the regionfile would detect and back them up again
+            if (hasBackedUp) {
+                try {
+                    this.writeHeader();
+                    this.file.force(true);
+                } catch (final IOException ex) {
+                    LOGGER.error("Failed to write new header to disk for regionfile {}", this.path.toAbsolutePath(), ex);
+                }
+            }
             return;
         }
 
