@@ -6,7 +6,8 @@ import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemRegionFil
 import ca.spottedleaf.moonrise.patches.chunk_system.storage.RegionFileRecovery;
 import ca.spottedleaf.moonrise.patches.chunk_system.util.stream.ExternalChunkStreamMarker;
 import ca.spottedleaf.moonrise.patches.nbt_rw.FastNBTParser;
-import com.mojang.logging.LogUtils;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.profiling.jfr.JvmProfiler;
 import net.minecraft.world.level.ChunkPos;
@@ -143,7 +144,57 @@ abstract class RegionFileMixin implements ChunkSystemRegionFile {
     @Unique
     private final AtomicInteger recalculateCount = new AtomicInteger();
 
-    // TODO can't really add synchronized to methods, can we?
+    /**
+     * @reason Vanilla does not synchronize header modifications in clear, which may race with header recalculation
+     * @author jpenilla
+     */
+    @WrapMethod(
+            method = "clear"
+    )
+    private void synchronizeClear(final ChunkPos pos, final Operation<Void> original) {
+        synchronized (this) {
+            original.call(pos);
+        }
+    }
+
+    /**
+     * @reason Prevent closing the file during header recalculation
+     * @author jpenilla
+     */
+    @WrapMethod(
+            method = "close"
+    )
+    private void synchronizeClose(final Operation<Void> original) {
+        synchronized (this) {
+            original.call();
+        }
+    }
+
+    /**
+     * @reason Avoid reading the header during header recalculation
+     * @author jpenilla
+     */
+    @WrapMethod(
+            method = "doesChunkExist"
+    )
+    private boolean synchronizeDoesChunkExist(final ChunkPos pos, final Operation<Boolean> original) {
+        synchronized (this) {
+            return original.call(pos);
+        }
+    }
+
+    /**
+     * @reason Avoid reading the header during header recalculation
+     * @author jpenilla
+     */
+    @WrapMethod(
+            method = "hasChunk"
+    )
+    private boolean synchronizeHasChunk(final ChunkPos pos, final Operation<Boolean> original) {
+        synchronized (this) {
+            return original.call(pos);
+        }
+    }
 
 
     @Override
@@ -288,7 +339,7 @@ abstract class RegionFileMixin implements ChunkSystemRegionFile {
     }
 
     @Unique
-    private void backupRegionFile() {
+    private synchronized void backupRegionFile() {
         final Path backup = this.path.resolveSibling(this.path.getFileName() + "." + Long.toUnsignedString(ThreadLocalRandom.current().nextLong()) + ".backup");
         try {
             this.file.force(true);
