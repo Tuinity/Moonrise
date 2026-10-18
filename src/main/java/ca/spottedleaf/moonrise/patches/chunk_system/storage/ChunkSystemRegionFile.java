@@ -14,4 +14,6 @@ public interface ChunkSystemRegionFile {
     // returns false if the header cannot be recalculated for this regionfile
     public boolean moonrise$recalculateHeader() throws IOException;
 
+    public Boolean moonrise$tryRecalcHeader(final int expectedRecalcCount) throws IOException;
+
 }
