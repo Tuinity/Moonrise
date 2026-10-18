@@ -233,8 +233,17 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
         final RegionFile regionFile = this.moonrise$getRegionFileIfExists(chunkX, chunkZ);
 
         // retrieve the count before reading, so that any recalculation during or after the read is detected in finishRead
-        final int recalculateCount = regionFile == null ? 0 : ((ChunkSystemRegionFile)regionFile).moonrise$getRecalculateCount();
-        final DataInputStream input = regionFile == null ? null : regionFile.getChunkDataInputStream(new ChunkPos(chunkX, chunkZ));
+        final int recalculateCount;
+        final DataInputStream input;
+        if (regionFile == null) {
+            recalculateCount = 0;
+            input = null;
+        } else {
+            synchronized (regionFile) {
+                recalculateCount = ((ChunkSystemRegionFile)regionFile).moonrise$getRecalculateCount();
+                input = regionFile.getChunkDataInputStream(new ChunkPos(chunkX, chunkZ));
+            }
+        }
 
         if (input == null) {
             return new MoonriseRegionFileIO.RegionDataController.ReadData(
@@ -292,7 +301,9 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
         }
 
         LOGGER.error("Attempting to read chunk data at {} but got chunk data for {} instead! Attempting regionfile recalculation for regionfile {}", pos, storedPos, regionFile.getPath().toAbsolutePath());
-        if (((ChunkSystemRegionFile)regionFile).moonrise$recalculateHeader()) {
+        final Boolean recalc = ((ChunkSystemRegionFile)regionFile).moonrise$tryRecalcHeader(readData.recalculateCount());
+        if (recalc == null || recalc.booleanValue()) {
+            // some other thread re-calculated or we re-calculated
             return null;
         }
 

@@ -366,6 +366,21 @@ abstract class RegionFileMixin implements ChunkSystemRegionFile {
         return this.recalculateCount.get();
     }
 
+    @Override
+    public final Boolean moonrise$tryRecalcHeader(final int expectedRecalcCount) throws IOException {
+        if (!this.canRecalcHeader()) {
+            return Boolean.FALSE;
+        }
+
+        synchronized (this) {
+            if (this.recalculateCount.get() != expectedRecalcCount) {
+                return null;
+            }
+
+            return Boolean.valueOf(this.moonrise$recalculateHeader());
+        }
+    }
+
     /*
      * Instead of trying to relocate the chunk, which seems to never
      * be the correct choice, so we end up duplicating or swapping chunks,
