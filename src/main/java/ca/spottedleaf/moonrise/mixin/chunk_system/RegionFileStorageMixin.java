@@ -232,7 +232,7 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
     ) throws IOException {
         final RegionFile regionFile = this.moonrise$getRegionFileIfExists(chunkX, chunkZ);
 
-        // retrieve the count before reading, so that any recalculation during or after the read is detected in finishRead
+        // retrieve the count after reading under the regionfile lock, so that it matches the header the data was read with
         final int recalculateCount;
         final DataInputStream input;
         if (regionFile == null) {
