@@ -283,6 +283,10 @@ accessible class net/minecraft/world/level/chunk/storage/RegionFile$ChunkBuffer
 accessible class net/minecraft/world/level/levelgen/DensityFunctions$EndIslandDensityFunction
 
 
+# RegionFileVersion
+accessible field net/minecraft/world/level/chunk/storage/RegionFileVersion VERSIONS Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
+
+
 # LocalMobCapCalculator$MobCounts
 accessible class net/minecraft/world/level/LocalMobCapCalculator$MobCounts
 

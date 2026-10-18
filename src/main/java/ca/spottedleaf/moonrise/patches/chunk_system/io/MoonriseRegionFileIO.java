@@ -1539,7 +1539,9 @@ public final class MoonriseRegionFileIO {
 
         public abstract void finishWrite(final int chunkX, final int chunkZ, final WriteData writeData) throws IOException;
 
-        public static record ReadData(ReadResult result, DataInputStream input, CompoundTag syncRead) {
+        // recalculateCount is the regionfile's header recalculation count at the time of the read, used to detect
+        // whether the header was recalculated between readData() and finishRead()
+        public static record ReadData(ReadResult result, DataInputStream input, CompoundTag syncRead, int recalculateCount) {
             public static enum ReadResult {
                 NO_DATA,
                 HAS_DATA,
