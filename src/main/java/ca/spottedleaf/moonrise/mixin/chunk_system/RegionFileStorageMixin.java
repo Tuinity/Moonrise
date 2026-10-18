@@ -3,8 +3,10 @@ package ca.spottedleaf.moonrise.mixin.chunk_system;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.ChunkSystemRegionFileStorage;
 import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemRegionFile;
+import ca.spottedleaf.moonrise.patches.chunk_system.storage.RegionFileRecovery;
 import ca.spottedleaf.moonrise.patches.chunk_system.util.stream.ExternalChunkStreamMarker;
 import ca.spottedleaf.moonrise.patches.nbt_rw.FastNBTParser;
+import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import net.minecraft.util.FileUtil;
@@ -15,6 +17,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.RegionFile;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -23,6 +26,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,6 +56,9 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
     @Final
     private RegionStorageInfo info;
 
+
+    @Unique
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     @Unique
     private static final int REGION_SHIFT = 5;
@@ -214,16 +221,18 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
     ) throws IOException {
         final RegionFile regionFile = this.moonrise$getRegionFileIfExists(chunkX, chunkZ);
 
+        // retrieve the count before reading, so that any recalculation during or after the read is detected in finishRead
+        final int recalculateCount = regionFile == null ? 0 : ((ChunkSystemRegionFile)regionFile).moonrise$getRecalculateCount();
         final DataInputStream input = regionFile == null ? null : regionFile.getChunkDataInputStream(new ChunkPos(chunkX, chunkZ));
 
         if (input == null) {
             return new MoonriseRegionFileIO.RegionDataController.ReadData(
-                    MoonriseRegionFileIO.RegionDataController.ReadData.ReadResult.NO_DATA, null, null
+                    MoonriseRegionFileIO.RegionDataController.ReadData.ReadResult.NO_DATA, null, null, recalculateCount
             );
         }
 
         final MoonriseRegionFileIO.RegionDataController.ReadData ret = new MoonriseRegionFileIO.RegionDataController.ReadData(
-                MoonriseRegionFileIO.RegionDataController.ReadData.ReadResult.HAS_DATA, input, null
+                MoonriseRegionFileIO.RegionDataController.ReadData.ReadResult.HAS_DATA, input, null, recalculateCount
         );
 
         if (!(input instanceof ExternalChunkStreamMarker)) {
@@ -239,7 +248,7 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
         }
 
         return new MoonriseRegionFileIO.RegionDataController.ReadData(
-                MoonriseRegionFileIO.RegionDataController.ReadData.ReadResult.SYNC_READ, null, syncRead
+                MoonriseRegionFileIO.RegionDataController.ReadData.ReadResult.SYNC_READ, null, syncRead, recalculateCount
         );
     }
 
@@ -248,10 +257,74 @@ abstract class RegionFileStorageMixin implements ChunkSystemRegionFileStorage, A
     public final CompoundTag moonrise$finishRead(
             final int chunkX, final int chunkZ, final MoonriseRegionFileIO.RegionDataController.ReadData readData
     ) throws IOException {
+        final CompoundTag ret;
         try {
-            return FastNBTParser.nbtIoRead(readData.input());
+            ret = FastNBTParser.nbtIoRead(readData.input());
         } finally {
             readData.input().close();
+        }
+
+        if (!RegionFileRecovery.isChunkStorage(this.info)) {
+            return ret;
+        }
+
+        final RegionFile regionFile = this.moonrise$getRegionFileIfExists(chunkX, chunkZ);
+        if (regionFile == null || ((ChunkSystemRegionFile)regionFile).moonrise$getRecalculateCount() != readData.recalculateCount()) {
+            // header was recalculated (or the regionfile was removed), so the data may be stale
+            return null;
+        }
+
+        final ChunkPos pos = new ChunkPos(chunkX, chunkZ);
+        final ChunkPos storedPos = RegionFileRecovery.getChunkCoordinate(ret);
+        if (storedPos.equals(pos)) {
+            return ret;
+        }
+
+        LOGGER.error("Attempting to read chunk data at {} but got chunk data for {} instead! Attempting regionfile recalculation for regionfile {}", pos, storedPos, regionFile.getPath().toAbsolutePath());
+        if (((ChunkSystemRegionFile)regionFile).moonrise$recalculateHeader()) {
+            return null;
+        }
+
+        LOGGER.error("Can't recalculate regionfile header for regionfile {}", regionFile.getPath().toAbsolutePath());
+        return ret;
+    }
+
+    /**
+     * @reason Attempt to recalculate the regionfile header if the read chunk data does not belong to the requested position
+     * @author Spottedleaf
+     */
+    @Inject(
+            method = "read",
+            cancellable = true,
+            at = @At(
+                    value = "RETURN"
+            )
+    )
+    private void checkReadPosition(final ChunkPos pos, final CallbackInfoReturnable<CompoundTag> cir) throws IOException {
+        final CompoundTag read = cir.getReturnValue();
+        if (read == null || !RegionFileRecovery.isChunkStorage(this.info)) {
+            return;
+        }
+
+        final ChunkPos storedPos = RegionFileRecovery.getChunkCoordinate(read);
+        if (storedPos.equals(pos)) {
+            return;
+        }
+
+        final RegionFile regionFile = this.getRegionFile(pos, false);
+        if (regionFile == null) {
+            return;
+        }
+
+        LOGGER.error("Attempting to read chunk data at {} but got chunk data for {} instead! Attempting regionfile recalculation for regionfile {}", pos, storedPos, regionFile.getPath().toAbsolutePath());
+        if (!((ChunkSystemRegionFile)regionFile).moonrise$recalculateHeader()) {
+            LOGGER.error("Can't recalculate regionfile header for regionfile {}", regionFile.getPath().toAbsolutePath());
+            return;
+        }
+
+        // re-read directly, as the recalculated header only points to data at the correct position
+        try (final DataInputStream input = regionFile.getChunkDataInputStream(pos)) {
+            cir.setReturnValue(input == null ? null : FastNBTParser.nbtIoRead(input));
         }
     }
 
