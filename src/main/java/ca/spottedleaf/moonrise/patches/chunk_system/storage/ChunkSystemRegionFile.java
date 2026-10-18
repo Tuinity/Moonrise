@@ -9,4 +9,9 @@ public interface ChunkSystemRegionFile {
 
     public MoonriseRegionFileIO.RegionDataController.WriteData moonrise$startWrite(final CompoundTag data, final ChunkPos pos) throws IOException;
 
+    public int moonrise$getRecalculateCount();
+
+    // returns false if the header cannot be recalculated for this regionfile
+    public boolean moonrise$recalculateHeader() throws IOException;
+
 }

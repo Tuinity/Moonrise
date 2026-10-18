@@ -280,6 +280,10 @@ accessible method net/minecraft/world/level/chunk/storage/RegionFile write (Lnet
 accessible class net/minecraft/world/level/chunk/storage/RegionFile$ChunkBuffer
 
 
+# RegionFileVersion
+accessible field net/minecraft/world/level/chunk/storage/RegionFileVersion VERSIONS Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
+
+
 # LocalMobCapCalculator$MobCounts
 accessible class net/minecraft/world/level/LocalMobCapCalculator$MobCounts
 
