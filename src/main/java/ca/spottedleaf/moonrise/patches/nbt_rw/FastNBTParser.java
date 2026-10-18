@@ -92,44 +92,34 @@ public final class FastNBTParser {
         throw new IOException("Root tag must be a named compound tag");
     }
 
-    // not a valid byte, used when the tag type has not been read yet
-    private static final int UNKNOWN_TAG_TYPE = Integer.MIN_VALUE;
-
-    // matches the crash report created by Vanilla's NbtIo#readTagSafe
-    private static ReportedNbtException wrapException(final IOException ex, final int type) {
-        final CrashReport report = CrashReport.forThrowable(ex, "Loading NBT data");
-        final CrashReportCategory category = report.addCategory("NBT Tag");
-        category.setDetail("Tag type", type == UNKNOWN_TAG_TYPE ? "<unknown>" : Byte.valueOf((byte)type));
-        return new ReportedNbtException(report);
-    }
-
-    public static Tag parseNamedTagVanilla(final AbstractBufferInputStream in, final NbtAccounter ctx) {
-        int type = UNKNOWN_TAG_TYPE;
+    // matches Vanilla's NbtIo#readTagSafe: only IOExceptions thrown while reading the tag payload are wrapped,
+    // while those thrown reading the tag type or name propagate unchanged
+    private static Tag parseVanillaSafe(final byte id, final AbstractBufferInputStream in, final NbtAccounter ctx) {
         try {
-            final byte id = in.readByte();
-            type = id;
-            if (id == NBT_TAG_END) {
-                return EndTag.INSTANCE;
-            }
-            skipUTF(in);
             return parseVanilla(id, in, ctx);
         } catch (final IOException ex) {
-            throw wrapException(ex, type);
+            final CrashReport report = CrashReport.forThrowable(ex, "Loading NBT data");
+            final CrashReportCategory category = report.addCategory("NBT Tag");
+            category.setDetail("Tag type", id);
+            throw new ReportedNbtException(report);
         }
     }
 
-    public static Tag parseTagNoNameVanilla(final AbstractBufferInputStream in, final NbtAccounter ctx) {
-        int type = UNKNOWN_TAG_TYPE;
-        try {
-            final byte id = in.readByte();
-            type = id;
-            if (id == NBT_TAG_END) {
-                return EndTag.INSTANCE;
-            }
-            return parseVanilla(id, in, ctx);
-        } catch (final IOException ex) {
-            throw wrapException(ex, type);
+    public static Tag parseNamedTagVanilla(final AbstractBufferInputStream in, final NbtAccounter ctx) throws IOException {
+        final byte id = in.readByte();
+        if (id == NBT_TAG_END) {
+            return EndTag.INSTANCE;
         }
+        skipUTF(in);
+        return parseVanillaSafe(id, in, ctx);
+    }
+
+    public static Tag parseTagNoNameVanilla(final AbstractBufferInputStream in, final NbtAccounter ctx) throws IOException {
+        final byte id = in.readByte();
+        if (id == NBT_TAG_END) {
+            return EndTag.INSTANCE;
+        }
+        return parseVanillaSafe(id, in, ctx);
     }
 
     private static ByteTag parseByteTag(final AbstractBufferInputStream in, final NbtAccounter ctx) throws IOException {
@@ -309,7 +299,8 @@ public final class FastNBTParser {
             }
 
             default: {
-                throw new NbtFormatException("Invalid or unknown tag id: " + type);
+                // matches Vanilla's TagType#createInvalid
+                throw new IOException("Invalid tag id: " + type);
             }
         }
     }
