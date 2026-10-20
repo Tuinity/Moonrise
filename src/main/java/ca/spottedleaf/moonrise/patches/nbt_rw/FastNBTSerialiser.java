@@ -2,7 +2,7 @@ package ca.spottedleaf.moonrise.patches.nbt_rw;
 
 import ca.spottedleaf.ioutil.stream.AbstractBufferOutputStream;
 import net.minecraft.nbt.Tag;
-import net.minecraft.util.Util;
+import net.minecraft.util.DevUtil;
 import java.io.IOException;
 import java.io.UTFDataFormatException;
 
@@ -15,7 +15,7 @@ public final class FastNBTSerialiser {
             if (!stringFallback) {
                 throw ex;
             }
-            Util.logAndPauseIfInIde("Failed to write NBT String", ex);
+            DevUtil.logAndPauseIfInIde("Failed to write NBT String", ex);
             out.writeUTF("");
         }
     }
