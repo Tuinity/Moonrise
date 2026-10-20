@@ -4,7 +4,7 @@ import ca.spottedleaf.moonrise.patches.collisions.CollisionUtil;
 import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import net.minecraft.util.Util;
+import net.minecraft.util.DevUtil;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.ArrayVoxelShape;
@@ -182,7 +182,7 @@ abstract class ShapesMixin {
     @Unique
     private static VoxelShape joinUnoptimizedVanilla(final VoxelShape voxelShape, final VoxelShape voxelShape2, final BooleanOp booleanOp) {
         if (booleanOp.apply(false, false)) {
-            throw (IllegalArgumentException) Util.pauseInIde(new IllegalArgumentException());
+            throw (IllegalArgumentException) DevUtil.pauseInIde(new IllegalArgumentException());
         } else if (voxelShape == voxelShape2) {
             return booleanOp.apply(true, true) ? voxelShape : EMPTY;
         } else {
