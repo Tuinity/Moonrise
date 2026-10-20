@@ -11,7 +11,7 @@ import com.google.common.math.DoubleMath;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import net.minecraft.util.Util;
+import net.minecraft.util.DevUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
@@ -705,7 +705,7 @@ abstract class VoxelShapeMixin implements CollisionVoxelShape {
     @Overwrite
     public AABB bounds() {
         if (this.isEmpty) {
-            throw Util.pauseInIde(new UnsupportedOperationException("No bounds for empty shape."));
+            throw DevUtil.pauseInIde(new UnsupportedOperationException("No bounds for empty shape."));
         }
         AABB cached = this.cachedBounds;
         if (cached != null) {
