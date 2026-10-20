@@ -155,6 +155,7 @@ public final class MoonriseConfig {
         private static final Integer DEFAULT_MAX_AUTO_SAVE_CHUNKS_PER_TICK = Integer.valueOf(12);
         private static final Integer DEFAULT_MIN_CHUNK_UNLOAD_COUNT = Integer.valueOf(50);
         private static final Double DEFAULT_MIN_CHUNK_UNLOAD_FRACTION = Double.valueOf(0.05);
+        private static final Boolean DEFAULT_SYNC_CHUNK_WRITES = Boolean.FALSE;
 
         @Serializable(
             comment = """
@@ -209,6 +210,22 @@ public final class MoonriseConfig {
 
         public double minChunkUnloadFraction() {
             return this.minChunkUnloadFraction.getOrDefault(DEFAULT_MIN_CHUNK_UNLOAD_FRACTION).doubleValue();
+        }
+
+        @Serializable(
+            comment = """
+                        Whether region file writes should wait for the data to be written to disk.
+                        This replaces the vanilla sync-chunk-writes option, which is ignored.
+                        Moonrise's region file handling makes synchronous writes unnecessary, and
+                        enabling them significantly reduces chunk saving performance.
+
+                        The default value is false.
+                        """
+        )
+        public DefaultedValue<Boolean> syncChunkWrites = new DefaultedValue<>();
+
+        public boolean syncChunkWrites() {
+            return this.syncChunkWrites.getOrDefault(DEFAULT_SYNC_CHUNK_WRITES).booleanValue();
         }
     }
 

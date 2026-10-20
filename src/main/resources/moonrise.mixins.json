@@ -43,6 +43,7 @@
         "chunk_system.ChunkStatusMixin",
         "chunk_system.ChunkStepMixin",
         "chunk_system.DedicatedServerMixin",
+        "chunk_system.DedicatedServerPropertiesMixin",
         "chunk_system.DistanceManagerMixin",
         "chunk_system.DynamicGameEventListenerMixin",
         "chunk_system.EntityGetterMixin",
@@ -71,6 +72,7 @@
         "chunk_system.ServerLevelMixin",
         "chunk_system.ServerPlayerMixin",
         "chunk_system.ServerWatchdogMixin",
+        "chunk_system.SettingsMixin",
         "chunk_system.SimpleRegionStorageMixin",
         "chunk_system.SortedArraySetMixin",
         "chunk_system.StrongholdStructureMixin",
@@ -176,6 +178,7 @@
     ],
     "client": [
         "chunk_system.ClientLevelMixin",
+        "chunk_system.IntegratedServerMixin",
         "chunk_system.OptionsMixin",
         "collisions.ParticleMixin",
         "config.MinecraftMixin",
