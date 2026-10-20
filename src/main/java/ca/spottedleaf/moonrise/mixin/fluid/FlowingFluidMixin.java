@@ -23,6 +23,10 @@ import org.spongepowered.asm.mixin.Unique;
 @Mixin(FlowingFluid.class)
 abstract class FlowingFluidMixin extends Fluid {
 
+    protected FlowingFluidMixin(final Properties properties) {
+        super(properties);
+    }
+
     @Shadow
     @Final
     public static BooleanProperty SOURCE;

@@ -159,7 +159,6 @@ accessible method net/minecraft/world/level/material/Fluid isRandomlyTicking ()Z
 accessible method net/minecraft/world/level/material/EmptyFluid isEmpty ()Z
 accessible method net/minecraft/world/level/material/EmptyFluid createLegacyBlock (Lnet/minecraft/world/level/material/FluidState;)Lnet/minecraft/world/level/block/state/BlockState;
 accessible method net/minecraft/world/level/material/LavaFluid createLegacyBlock (Lnet/minecraft/world/level/material/FluidState;)Lnet/minecraft/world/level/block/state/BlockState;
-accessible method net/minecraft/world/level/material/LavaFluid isRandomlyTicking ()Z
 
 # VisibilitySet
 accessible field net/minecraft/client/renderer/chunk/VisibilitySet FACINGS I
