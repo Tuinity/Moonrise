@@ -160,7 +160,7 @@ abstract class SmearedPerlinNoiseMixin extends PerlinNoise implements ChunkGenPe
         for (int x = 0; x < sX; ++x, xv += xi) {
             final double val = wrap(xv * xzScale) + this.offsetX;
             final double floorD = Math.floor(val);
-            final int floor = (int)floorD;
+            final int floor = (int)(long)floorD;
             final float relative = (float)(val - floorD);
             final float alpha = Mth.smoothstep(relative);
 
@@ -175,7 +175,7 @@ abstract class SmearedPerlinNoiseMixin extends PerlinNoise implements ChunkGenPe
             final double original = yv * yScale;
             final double val = wrap(original) + this.offsetY;
             final double floorD = Math.floor(val);
-            final int floor = (int)floorD;
+            final int floor = (int)(long)floorD;
             final double relative = val - floorD;
             final float fudgedRelative = (float)(relative - this.computeFudgeY(original, relative));
             final float alpha = Mth.smoothstep((float)relative);
@@ -190,7 +190,7 @@ abstract class SmearedPerlinNoiseMixin extends PerlinNoise implements ChunkGenPe
         for (int z = 0; z < sZ; ++z, zv += zi) {
             final double val = wrap(zv * xzScale) + this.offsetZ;
             final double floorD = Math.floor(val);
-            final int floor = (int)floorD;
+            final int floor = (int)(long)floorD;
             final float relative = (float)(val - floorD);
             final float alpha = Mth.smoothstep(relative);
 
