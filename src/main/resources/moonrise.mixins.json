@@ -168,7 +168,6 @@
         "tick_loop.MinecraftServerMixin",
         "typed_instance.BlockStateBaseMixin",
         "typed_instance.FluidStateMixin",
-        "typed_instance.Holder$ReferenceMixin",
         "typed_instance.IdentifierMixin",
         "typed_instance.TagKeyMixin",
         "util_thread_counts.UtilMixin",
