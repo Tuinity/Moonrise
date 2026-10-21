@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Arrays;
 
 import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.DEBUG_NOISE;
+import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.USE_FMA;
 import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.PERM_MASK;
 import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.PERM_SIZE;
 import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.PERM_SHIFT;
@@ -256,7 +257,7 @@ abstract class PerlinNoiseMixin extends GradientNoise implements ChunkGenPerlinN
         for (int x = 0; x < sX; ++x, xv += xi) {
             final double val = wrap(xv * xzScale) + this.offsetX;
             final double floorD = Math.floor(val);
-            final int floor = (int)floorD;
+            final int floor = (int)(long)floorD;
             final float relative = (float)(val - floorD);
             final float alpha = Mth.smoothstep(relative);
 
@@ -270,7 +271,7 @@ abstract class PerlinNoiseMixin extends GradientNoise implements ChunkGenPerlinN
         for (int y = 0; y < sY; ++y, yv += yi) {
             final double val = wrap(yv * yScale) + this.offsetY;
             final double floorD = Math.floor(val);
-            final int floor = (int)floorD;
+            final int floor = (int)(long)floorD;
             final float relative = (float)(val - floorD);
             final float alpha = Mth.smoothstep(relative);
 
@@ -284,7 +285,7 @@ abstract class PerlinNoiseMixin extends GradientNoise implements ChunkGenPerlinN
         for (int z = 0; z < sZ; ++z, zv += zi) {
             final double val = wrap(zv * xzScale) + this.offsetZ;
             final double floorD = Math.floor(val);
-            final int floor = (int)floorD;
+            final int floor = (int)(long)floorD;
             final float relative = (float)(val - floorD);
             final float alpha = Mth.smoothstep(relative);
 
@@ -364,7 +365,21 @@ abstract class PerlinNoiseMixin extends GradientNoise implements ChunkGenPerlinN
                         g111y = NoiseGradients.gradY(g111);
                     }
 
-                    buffer.values[index++] += (amplitude * Mth.lerp3(alphaX, alphaY, alphaZ, d000xz + g000y * relativeY, d100xz + g100y * relativeY, d010xz + g010y * (relativeY - 1.0F), d110xz + g110y * (relativeY - 1.0F), d001xz + g001y * relativeY, d101xz + g101y * relativeY, d011xz + g011y * (relativeY - 1.0F), d111xz + g111y * (relativeY - 1.0F)));
+                    if (USE_FMA) {
+                        buffer.values[index++] += amplitude * Mth.lerp3(
+                            alphaX, alphaY, alphaZ,
+                            Math.fma(g000y, relativeY, d000xz), Math.fma(g100y, relativeY, d100xz), Math.fma(g010y, (relativeY - 1.0F), d010xz),
+                            Math.fma(g110y, (relativeY - 1.0F), d110xz), Math.fma(g001y, relativeY, d001xz), Math.fma(g101y, relativeY, d101xz),
+                            Math.fma(g011y, (relativeY - 1.0F), d011xz), Math.fma(g111y, (relativeY - 1.0F), d111xz)
+                        );
+                    } else {
+                        buffer.values[index++] += amplitude * Mth.lerp3(
+                            alphaX, alphaY, alphaZ,
+                            d000xz + g000y * relativeY, d100xz + g100y * relativeY, d010xz + g010y * (relativeY - 1.0F),
+                            d110xz + g110y * (relativeY - 1.0F), d001xz + g001y * relativeY, d101xz + g101y * relativeY,
+                            d011xz + g011y * (relativeY - 1.0F), d111xz + g111y * (relativeY - 1.0F)
+                        );
+                    }
                 }
             }
         }

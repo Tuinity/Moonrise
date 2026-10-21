@@ -37,6 +37,7 @@ public final class ConfigHolder {
             """, PlatformHooks.get().getBrand());
 
     static {
+        FMA.init();
         reloadConfig(true);
     }
 

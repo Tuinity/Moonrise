@@ -1,10 +1,13 @@
 package ca.spottedleaf.moonrise.patches.chunk_gen.noise;
 
+import ca.spottedleaf.moonrise.common.util.FMA;
 import net.minecraft.world.level.levelgen.synth.GradientNoise;
 
 public final class NoiseGradients {
 
     public static final boolean DEBUG_NOISE = false;
+
+    public static final boolean USE_FMA = FMA.isFMASupported();
 
     public static final int PERM_SHIFT = 8;
     public static final int PERM_SIZE = 1 << PERM_SHIFT;
@@ -55,7 +58,7 @@ public final class NoiseGradients {
         final float gz = GRADIENTF_FLAT[(hash << 2) + 2];
         final float gy = GRADIENTF_FLAT[(hash << 2) + 1];
         final float gx = GRADIENTF_FLAT[(hash << 2) + 0];
-        if (false) {
+        if (USE_FMA) {
             return Math.fma(gz, z, Math.fma(gy, y, gx * x));
         } else {
             return gx * x + gy * y + gz * z;
@@ -65,7 +68,7 @@ public final class NoiseGradients {
     public static float dotXz(final int hash, final float x, final float z) {
         final float gz = GRADIENTF_FLAT[(hash << 2) + 2];
         final float gx = GRADIENTF_FLAT[(hash << 2) + 0];
-        if (false) {
+        if (USE_FMA) {
             return Math.fma(gz, z, gx * x);
         } else {
             return gx * x + gz * z;
@@ -78,14 +81,14 @@ public final class NoiseGradients {
 
     public record GradientF(float x, float y, float z) {
         public float dot(final float x, final float y, final float z) {
-            if (false) {
+            if (USE_FMA) {
                 return Math.fma(this.z, z, Math.fma(this.y, y, this.x * x));
             } else {
                 return this.x * x + this.y * y + this.z * z;
             }
         }
         public float dotXz(final float x, final float z) {
-            if (false) {
+            if (USE_FMA) {
                 return Math.fma(this.z, z, this.x * x);
             } else {
                 return this.x * x + this.z * z;
@@ -111,7 +114,7 @@ public final class NoiseGradients {
 
     public record GradientD(double x, double y, double z) {
         public double dot(final double x, final double y, final double z) {
-            if (false) {
+            if (USE_FMA) {
                 return Math.fma(this.z, z, Math.fma(this.y, y, this.x * x));
             } else {
                 return this.x * x + this.y * y + this.z * z;

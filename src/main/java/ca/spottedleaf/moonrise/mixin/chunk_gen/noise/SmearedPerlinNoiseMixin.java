@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.Unique;
 import java.util.Arrays;
 
 import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.DEBUG_NOISE;
+import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.USE_FMA;
 import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.PERM_MASK;
 import static ca.spottedleaf.moonrise.patches.chunk_gen.noise.NoiseGradients.PERM_SHIFT;
 
@@ -269,7 +270,21 @@ abstract class SmearedPerlinNoiseMixin extends PerlinNoise implements ChunkGenPe
                         g111y = NoiseGradients.gradY(g111);
                     }
 
-                    buffer.values[index++] += (amplitude * Mth.lerp3(alphaX, alphaY, alphaZ, d000xz + g000y * relativeY, d100xz + g100y * relativeY, d010xz + g010y * (relativeY - 1.0F), d110xz + g110y * (relativeY - 1.0F), d001xz + g001y * relativeY, d101xz + g101y * relativeY, d011xz + g011y * (relativeY - 1.0F), d111xz + g111y * (relativeY - 1.0F)));
+                    if (USE_FMA) {
+                        buffer.values[index++] += amplitude * Mth.lerp3(
+                            alphaX, alphaY, alphaZ,
+                            Math.fma(g000y, relativeY, d000xz), Math.fma(g100y, relativeY, d100xz), Math.fma(g010y, (relativeY - 1.0F), d010xz),
+                            Math.fma(g110y, (relativeY - 1.0F), d110xz), Math.fma(g001y, relativeY, d001xz), Math.fma(g101y, relativeY, d101xz),
+                            Math.fma(g011y, (relativeY - 1.0F), d011xz), Math.fma(g111y, (relativeY - 1.0F), d111xz)
+                        );
+                    } else {
+                        buffer.values[index++] += amplitude * Mth.lerp3(
+                            alphaX, alphaY, alphaZ,
+                            d000xz + g000y * relativeY, d100xz + g100y * relativeY, d010xz + g010y * (relativeY - 1.0F),
+                            d110xz + g110y * (relativeY - 1.0F), d001xz + g001y * relativeY, d101xz + g101y * relativeY,
+                            d011xz + g011y * (relativeY - 1.0F), d111xz + g111y * (relativeY - 1.0F)
+                        );
+                    }
                 }
             }
         }
