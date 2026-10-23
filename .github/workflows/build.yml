@@ -44,7 +44,7 @@ jobs:
           fi
       - name: Publish (Pre-)Release to Modrinth & CurseForge
         if: "${{ env.STATUS == 'release' && github.event_name == 'release' }}"
-        run: ./gradlew :moonrise-fabric:publishMods :moonrise-neoforge:publishMods
+        run: ./gradlew publishMods
         env:
           MODRINTH_TOKEN: "${{ secrets.MODRINTH_TOKEN }}"
           CURSEFORGE_TOKEN: "${{ secrets.CURSEFORGE_TOKEN }}"
