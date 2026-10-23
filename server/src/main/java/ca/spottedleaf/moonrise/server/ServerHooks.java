@@ -17,6 +17,6 @@ public final class ServerHooks implements PlatformHooks {
 
 	@Override
 	public int getLightEmitted(final int blockId) {
-		return Block.LIGHT_LEVELS[blockId];
+		return Block.LIGHT[blockId];
 	}
 }

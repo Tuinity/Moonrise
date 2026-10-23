@@ -30,7 +30,7 @@ abstract class WorldChunkMixin implements StarlightChunk {
 	public ChunkNibbleStorage blockLight;
 
 	@Shadow
-	public byte[] blockIds;
+	public byte[] blocks;
 
 	@Shadow
 	public boolean dirty;
@@ -68,7 +68,7 @@ abstract class WorldChunkMixin implements StarlightChunk {
 
 	@Override
 	public final int starlight$getBlock(final int localX, final int localY, final int localZ) {
-		return (int)this.blockIds[localX << 11 | localZ << 7 | localY] & 255;
+		return (int)this.blocks[localX << 11 | localZ << 7 | localY] & 255;
 	}
 
 	@Override
@@ -112,7 +112,7 @@ abstract class WorldChunkMixin implements StarlightChunk {
 	 * @author Spottedleaf
 	 */
 	@Overwrite
-	public void populateSkylight() {
+	public void populateHeightMap() {
 		int lowestHeight = 127;
 
 		for (int x = 0; x < 16; ++x) {
@@ -120,7 +120,7 @@ abstract class WorldChunkMixin implements StarlightChunk {
 				int height = 127;
 
 				int idx;
-				for (idx = x << 11 | z << 7; height > 0 && Block.OPACITIES[(int)this.blockIds[idx + height - 1] & 255] == 0; --height);
+				for (idx = x << 11 | z << 7; height > 0 && Block.OPACITIES[(int)this.blocks[idx + height - 1] & 255] == 0; --height);
 
 				this.heightMap[z << 4 | x] = (byte)height;
 				lowestHeight = Math.min(height, lowestHeight);
@@ -142,14 +142,14 @@ abstract class WorldChunkMixin implements StarlightChunk {
 	 * @author Spottedleaf
 	 */
 	@Overwrite
-	private void resetLightAt(int localX, int y, int localZ) {
+	private void updateHeightMap(int localX, int y, int localZ) {
 		int currentHeight = this.heightMap[localZ << 4 | localX] & 255;
 		int newHeight = Math.max(y, currentHeight);
 
-		for (int idx = localX << 11 | localZ << 7; newHeight > 0 && Block.OPACITIES[this.blockIds[idx + newHeight - 1] & 255] == 0; --newHeight);
+		for (int idx = localX << 11 | localZ << 7; newHeight > 0 && Block.OPACITIES[this.blocks[idx + newHeight - 1] & 255] == 0; --newHeight);
 
 		if (newHeight != currentHeight) {
-			this.world.checkLight(localX, localZ, newHeight, currentHeight); // bad mapping: should be notifyChanged
+			this.world.onHeightMapChanged(localX, localZ, newHeight, currentHeight);
 			this.heightMap[localZ << 4 | localX] = (byte)newHeight;
 			if (newHeight < this.lowestHeight) {
 				this.lowestHeight = newHeight;
@@ -177,7 +177,7 @@ abstract class WorldChunkMixin implements StarlightChunk {
 		method = "setBlockWithMetadataAt",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/world/World;checkLight(Lnet/minecraft/world/LightType;IIIIII)V"
+			target = "Lnet/minecraft/world/World;updateLight(Lnet/minecraft/world/LightType;IIIIII)V"
 		)
 	)
 	private void voidMetadataUpdate(World instance, LightType type, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {}
@@ -190,7 +190,7 @@ abstract class WorldChunkMixin implements StarlightChunk {
 		method = "setBlockWithMetadataAt",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/world/chunk/WorldChunk;queueLightUpdate(II)V"
+			target = "Lnet/minecraft/world/chunk/WorldChunk;lightGaps(II)V"
 		)
 	)
 	private void invokeStarlightForMetadataUpdate(final WorldChunk instance,
@@ -207,7 +207,7 @@ abstract class WorldChunkMixin implements StarlightChunk {
 		method = "setBlockAt",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/world/World;checkLight(Lnet/minecraft/world/LightType;IIIIII)V"
+			target = "Lnet/minecraft/world/World;updateLight(Lnet/minecraft/world/LightType;IIIIII)V"
 		)
 	)
 	private void voidRegularUpdate(World instance, LightType type, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {}
@@ -220,7 +220,7 @@ abstract class WorldChunkMixin implements StarlightChunk {
 		method = "setBlockAt",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/world/chunk/WorldChunk;queueLightUpdate(II)V"
+			target = "Lnet/minecraft/world/chunk/WorldChunk;lightGaps(II)V"
 		)
 	)
 	private void invokeStarlightForRegularUpdate(final WorldChunk instance,
@@ -234,10 +234,7 @@ abstract class WorldChunkMixin implements StarlightChunk {
 	 * @author Spottedleaf
 	 */
 	@Inject(
-		method = {
-			"m_4003692", // server
-			"m_7782267" // client
-		},
+		method = "populateBlockLight",
 		at = @At(
 			value = "HEAD"
 		)

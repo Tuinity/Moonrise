@@ -3,7 +3,7 @@ package ca.spottedleaf.moonrise.server.mixin.skylands;
 import net.minecraft.world.chunk.storage.AlphaChunkStorage;
 import net.minecraft.world.chunk.storage.ChunkStorage;
 import net.minecraft.world.dimension.Dimension;
-import net.minecraft.world.dimension.TheEndDimension;
+import net.minecraft.world.dimension.SkyDimension;
 import net.minecraft.world.storage.AlphaWorldStorage;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -32,7 +32,7 @@ abstract class AlphaWorldStorageMixin {
 		)
 	)
 	private void createSkyStorage(final Dimension dimension, final CallbackInfoReturnable<ChunkStorage> cir) {
-		if (dimension instanceof TheEndDimension) { // bad mapping
+		if (dimension instanceof SkyDimension) {
 			final File dir = new File(this.dir, "DIM1");
 			dir.mkdirs();
 			cir.setReturnValue(new AlphaChunkStorage(dir, true));

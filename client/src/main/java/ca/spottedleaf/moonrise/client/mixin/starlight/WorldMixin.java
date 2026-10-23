@@ -47,11 +47,11 @@ abstract class WorldMixin implements WorldView, StarlightWorld {
 
 	@Override
 	public final boolean starlight$hasSkylight() {
-		return !this.dimension.isNether;
+		return !this.dimension.unnatural;
 	}
 
 	@Override
 	public final boolean starlight$hasGeneratedBlockLight() {
-		return this.dimension.isNether;
+		return this.dimension.unnatural;
 	}
 }
