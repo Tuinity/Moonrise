@@ -1,6 +1,4 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import net.ornithemc.ploceus.PloceusGradleExtension
-import net.ornithemc.ploceus.api.GameSide
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.compile.JavaCompile
@@ -40,10 +38,8 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 ploceus {
-	setIntermediaryGeneration(1)
+	setIntermediaryGeneration(2)
 }
-
-(ploceus as PloceusGradleExtension).side.set(GameSide.CLIENT)
 
 loom {
 	clientOnlyMinecraftJar()
@@ -81,14 +77,13 @@ dependencies {
 	implementation(libs.leafpile.concurrentutil)
 	implementation(libs.leafpile.yamlconfig)
 
-	modImplementation("net.ornithemc.osl:core:${libs.versions.core.get()}")
 	modImplementation(libs.fabric.loader)
 
 	testImplementation(libs.fabric.loader.junit)
 	testImplementation(libs.junit.jupiter)
 	testRuntimeOnly(libs.junit.platform.launcher)
 
-	ploceus.dependOsl(libs.versions.osl.get(), "client")
+	ploceus.dependOsl(libs.versions.osl.get())
 }
 
 tasks.test {

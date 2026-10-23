@@ -4,12 +4,10 @@ minecraft = "b1.7.3"
 # Fabric's normalized game version (used by fabric.mod.json dependency checks)
 game-version = "1.0.0-beta.7.3"
 fabric-loader = "0.20.1"
-osl = "0.16.3"
-# OSL core is version-independent, so Ploceus' per-side lookup misses it
-core = "0.6.0"
-entrypoints = "0.4.0"
+osl = "0.23.0-alpha.6"
+entrypoints = "0.6.1"
 
-feather = "26"
+feather = "2"
 raven = "2"
 sparrow = "2"
 nests-client = "7"

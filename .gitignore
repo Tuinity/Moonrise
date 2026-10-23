@@ -32,3 +32,6 @@ workspace/
 
 # macOS
 *.DS_Store
+
+client/logs
+server/logs

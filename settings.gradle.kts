@@ -14,7 +14,7 @@ pluginManagement {
 }
 
 plugins {
-	id("xyz.jpenilla.quiet-fabric-loom-remap") version "1.18.344" apply false
+	id("xyz.jpenilla.quiet-fabric-loom-remap") version "1.19.347" apply false
 	id("ploceus") version "1.18.2" apply false
 	id("com.gradleup.shadow") version "9.6.1" apply false
 	id("xyz.jpenilla.resource-factory-fabric-convention") version "1.3.1" apply false
