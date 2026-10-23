@@ -1,3 +1,4 @@
+import me.modmuss50.mpp.platforms.curseforge.Curseforge
 import net.fabricmc.loom.task.RunGameTask
 import net.fabricmc.loom.util.gradle.SourceSetHelper
 
@@ -92,7 +93,8 @@ publishMods {
             "c2me-fabric"
         )
     }
-    curseforge {
+    // only registered by the root project for full MC releases
+    platforms.withType<Curseforge>().configureEach {
         incompatible(
             "not-enough-crashes",
             "starlight",
