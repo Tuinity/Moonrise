@@ -48,14 +48,17 @@ subprojects {
     plugins.apply("me.modmuss50.mod-publish-plugin")
 
     configure<ModPublishExtension> {
-        if (project.version.toString().contains("-beta.")) {
-            type = ReleaseType.BETA
-        } else {
-            type = ReleaseType.STABLE
+        val version = project.version.toString()
+        type = when {
+            version.contains("-alpha.") -> ReleaseType.ALPHA
+            version.contains("-beta.") -> ReleaseType.BETA
+            else -> ReleaseType.STABLE
         }
         changelog = providers.environmentVariable("RELEASE_NOTES")
 
         val supportedMcVersions = rootProject.property("supported_minecraft_versions").toString().split(',')
+        // CurseForge does not list individual snapshot/pre-release versions, so only publish there for full releases
+        val allMcReleases = supportedMcVersions.all { it.matches(Regex("""\d+(\.\d+)+""")) }
 
         modrinth {
             projectId = "KOHu7RCS"
@@ -64,12 +67,14 @@ subprojects {
             environment = CLIENT_OR_SERVER_PREFERS_BOTH
         }
 
-        curseforge {
-            projectId = "1096335"
-            accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
-            minecraftVersions = supportedMcVersions
-            client = true
-            server = true
+        if (allMcReleases) {
+            curseforge {
+                projectId = "1096335"
+                accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
+                minecraftVersions = supportedMcVersions
+                client = true
+                server = true
+            }
         }
     }
 }

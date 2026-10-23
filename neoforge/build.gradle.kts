@@ -1,3 +1,5 @@
+import me.modmuss50.mpp.platforms.curseforge.Curseforge
+
 plugins {
     id("net.neoforged.moddev")
     `maven-publish`
@@ -109,7 +111,8 @@ publishMods {
             "c2me-neoforge"
         )
     }
-    curseforge {
+    // only registered by the root project for full MC releases
+    platforms.withType<Curseforge>().configureEach {
         incompatible(
             "not-enough-crashes-forge",
             "starlight-neoforge",
