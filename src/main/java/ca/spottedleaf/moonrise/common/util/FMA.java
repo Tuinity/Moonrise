@@ -3,7 +3,7 @@ package ca.spottedleaf.moonrise.common.util;
 import ca.spottedleaf.moonrise.common.PlatformHooks;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
-import oshi.SystemInfo;
+import oshi.spi.SystemInfoFactory;
 import java.util.Locale;
 
 public final class FMA {
@@ -54,7 +54,7 @@ public final class FMA {
             }
             if (System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("linux")) {
                 try {
-                    for (final String line : new SystemInfo().getHardware().getProcessor().getFeatureFlags()) {
+                    for (final String line : SystemInfoFactory.create().getHardware().getProcessor().getFeatureFlags()) {
                         if (line.toLowerCase(Locale.ROOT).matches("(?s).*\\bfma\\b.*")) {
                             LOGGER.info("FMA supported: " + true + " for Linux platform with feature flag: " + line);
                             return true;
