@@ -12,6 +12,15 @@ except those from Paper that intentionally change gameplay.
 
 Moonrise can run on either the client or server, but primarily benefits the server.
 
+## Version support
+
+| Minecraft version | Status |
+|---|---|
+| **26.3** | **Current** — recommended stable version |
+| **26.1.2** | **LTS** — maintenance and important bug fixes |
+| **26.4 snapshots** | **Alpha** — experimental support |
+| All other versions | **Unsupported** — no further updates planned |
+
 ## Purpose
 Moonrise aims to optimise the game *without changing Vanilla behaviour*.
 If you use Moonrise on the client, most of the affected areas only affect
