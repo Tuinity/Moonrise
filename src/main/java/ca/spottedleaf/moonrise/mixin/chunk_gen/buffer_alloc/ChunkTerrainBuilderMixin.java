@@ -12,7 +12,6 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.ChunkTerrainBuilder;
 import net.minecraft.world.level.levelgen.NoiseChunk;
 import net.minecraft.world.level.levelgen.RandomState;
-import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.densityfunction.DensitySamplerSet;
 import net.minecraft.world.level.levelgen.densityfunction.DensityVolume;
 import net.minecraft.world.level.levelgen.material.MaterialRuleContext;
@@ -46,14 +45,13 @@ abstract class ChunkTerrainBuilderMixin {
         method = "<init>",
         at = @At(
             value = "NEW",
-            target = "(Lnet/minecraft/world/level/levelgen/material/MaterialSystem;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/levelgen/densityfunction/DensityVolume;Lnet/minecraft/world/level/levelgen/densityfunction/DensitySamplerSet;Lnet/minecraft/world/level/biome/BiomeResolver;Lnet/minecraft/world/level/levelgen/VerticalAnchor$Context;Ljava/util/Set;)Lnet/minecraft/world/level/levelgen/material/MaterialRuleContext;"
+            target = "(Lnet/minecraft/world/level/levelgen/material/MaterialSystem;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/levelgen/densityfunction/DensityVolume;Lnet/minecraft/world/level/levelgen/densityfunction/DensitySamplerSet;Lnet/minecraft/world/level/biome/BiomeResolver;Ljava/util/Set;)Lnet/minecraft/world/level/levelgen/material/MaterialRuleContext;"
         )
     )
     private MaterialRuleContext setAllocator(final MaterialSystem system, final RandomState randomState,
                                              final DensityVolume expectedVolume, final DensitySamplerSet densitySamplers,
-                                             final BiomeResolver biomeGetter, final VerticalAnchor.Context verticalAnchorContext,
-                                             final Set<Holder<Biome>> possibleBiomes) {
-        final MaterialRuleContext ret = new MaterialRuleContext(system, randomState, expectedVolume, densitySamplers, biomeGetter, verticalAnchorContext, possibleBiomes);
+                                             final BiomeResolver biomeGetter, final Set<Holder<Biome>> possibleBiomes) {
+        final MaterialRuleContext ret = new MaterialRuleContext(system, randomState, expectedVolume, densitySamplers, biomeGetter, possibleBiomes);
         final ThreadLocalFixedDensityBufferCache allocator = BUFFERS.get();
 
         // note: a builder created while another is in use on this thread falls back to unpooled buffers
