@@ -1252,6 +1252,7 @@ public final class NewChunkHolder {
                         this.changeEntityChunkStatus(FullChunkStatus.FULL);
                         PlatformHooks.get().onChunkBorder(chunk, this.vanillaChunkHolder);
                         this.onFullChunkLoadChange(true, changedFullStatus);
+                        PlatformHooks.get().onFullChunkStatusChange(chunk, FullChunkStatus.INACCESSIBLE, FullChunkStatus.FULL);
                         this.completeFullStatusConsumers(FullChunkStatus.FULL, chunk);
                     }
 
@@ -1259,6 +1260,7 @@ public final class NewChunkHolder {
                         this.updateCurrentState(FullChunkStatus.BLOCK_TICKING);
                         this.changeEntityChunkStatus(FullChunkStatus.BLOCK_TICKING);
                         PlatformHooks.get().onChunkTicking(chunk, this.vanillaChunkHolder);
+                        PlatformHooks.get().onFullChunkStatusChange(chunk, FullChunkStatus.FULL, FullChunkStatus.BLOCK_TICKING);
                         this.completeFullStatusConsumers(FullChunkStatus.BLOCK_TICKING, chunk);
                     }
 
@@ -1266,22 +1268,26 @@ public final class NewChunkHolder {
                         this.updateCurrentState(FullChunkStatus.ENTITY_TICKING);
                         this.changeEntityChunkStatus(FullChunkStatus.ENTITY_TICKING);
                         PlatformHooks.get().onChunkEntityTicking(chunk, this.vanillaChunkHolder);
+                        PlatformHooks.get().onFullChunkStatusChange(chunk, FullChunkStatus.BLOCK_TICKING, FullChunkStatus.ENTITY_TICKING);
                         this.completeFullStatusConsumers(FullChunkStatus.ENTITY_TICKING, chunk);
                     }
                 } else {
                     if (current.isOrAfter(FullChunkStatus.ENTITY_TICKING) && !pending.isOrAfter(FullChunkStatus.ENTITY_TICKING)) {
+                        PlatformHooks.get().onFullChunkStatusChange(chunk, FullChunkStatus.ENTITY_TICKING, FullChunkStatus.BLOCK_TICKING);
                         this.changeEntityChunkStatus(FullChunkStatus.BLOCK_TICKING);
                         PlatformHooks.get().onChunkNotEntityTicking(chunk, this.vanillaChunkHolder);
                         this.updateCurrentState(FullChunkStatus.BLOCK_TICKING);
                     }
 
                     if (current.isOrAfter(FullChunkStatus.BLOCK_TICKING) && !pending.isOrAfter(FullChunkStatus.BLOCK_TICKING)) {
+                        PlatformHooks.get().onFullChunkStatusChange(chunk, FullChunkStatus.BLOCK_TICKING, FullChunkStatus.FULL);
                         this.changeEntityChunkStatus(FullChunkStatus.FULL);
                         PlatformHooks.get().onChunkNotTicking(chunk, this.vanillaChunkHolder);
                         this.updateCurrentState(FullChunkStatus.FULL);
                     }
 
                     if (current.isOrAfter(FullChunkStatus.FULL) && !pending.isOrAfter(FullChunkStatus.FULL)) {
+                        PlatformHooks.get().onFullChunkStatusChange(chunk, FullChunkStatus.FULL, FullChunkStatus.INACCESSIBLE);
                         this.onFullChunkLoadChange(false, changedFullStatus);
                         this.changeEntityChunkStatus(FullChunkStatus.INACCESSIBLE);
                         PlatformHooks.get().onChunkNotBorder(chunk, this.vanillaChunkHolder);

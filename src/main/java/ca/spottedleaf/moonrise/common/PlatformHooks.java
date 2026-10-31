@@ -6,6 +6,7 @@ import com.mojang.datafixers.DataFixer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ChunkHolder;
+import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -52,6 +53,8 @@ public interface PlatformHooks extends ChunkSystemHooks {
     public void onChunkHolderTicketChange(final ServerLevel world, final ChunkHolder holder, final int oldLevel, final int newLevel);
 
     public void chunkUnloadFromWorld(final LevelChunk chunk);
+
+    public void onFullChunkStatusChange(final LevelChunk chunk, final FullChunkStatus from, final FullChunkStatus to);
 
     public void chunkSyncSave(final ServerLevel world, final ChunkAccess chunk, final SerializableChunkData data);
 

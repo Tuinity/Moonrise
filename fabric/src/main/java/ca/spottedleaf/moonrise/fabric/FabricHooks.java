@@ -16,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ChunkHolder;
+import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -110,6 +111,13 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
     public void chunkUnloadFromWorld(final LevelChunk chunk) {
         if (HAS_FABRIC_LIFECYCLE_EVENTS) {
             ServerChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload((ServerLevel)chunk.getLevel(), chunk);
+        }
+    }
+
+    @Override
+    public void onFullChunkStatusChange(final LevelChunk chunk, final FullChunkStatus from, final FullChunkStatus to) {
+        if (HAS_FABRIC_LIFECYCLE_EVENTS) {
+            ServerChunkEvents.FULL_CHUNK_STATUS_CHANGE.invoker().onFullChunkStatusChange((ServerLevel)chunk.getLevel(), chunk, from, to);
         }
     }
 

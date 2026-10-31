@@ -15,6 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ChunkHolder;
+import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -117,6 +118,11 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
     @Override
     public void chunkUnloadFromWorld(final LevelChunk chunk) {
         NeoForge.EVENT_BUS.post(new ChunkEvent.Unload(chunk));
+    }
+
+    @Override
+    public void onFullChunkStatusChange(final LevelChunk chunk, final FullChunkStatus from, final FullChunkStatus to) {
+
     }
 
     @Override
