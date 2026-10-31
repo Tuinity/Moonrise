@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.Unique;
 import java.util.ArrayList;
 import java.util.List;
 
-@Mixin(Entity.class)
+@Mixin(value = Entity.class, priority = 999)
 abstract class EntityMixin {
 
     @Shadow
@@ -48,7 +48,7 @@ abstract class EntityMixin {
     public abstract Vec3 getEyePosition();
 
     @Shadow
-    private boolean onGround;
+    public abstract boolean onGround();
 
     @Unique
     private static float[] calculateStepHeights(final AABB box, final List<VoxelShape> voxels, final List<AABB> aabbs, final float stepHeight,
@@ -151,7 +151,7 @@ abstract class EntityMixin {
 
         final double stepHeight;
 
-        if ((!collidedDownwards && !this.onGround) || (!collidedX && !collidedZ) || (stepHeight = (double)this.maxUpStep()) <= 0.0) {
+        if ((!collidedDownwards && !this.onGround()) || (!collidedX && !collidedZ) || (stepHeight = (double)this.maxUpStep()) <= 0.0) {
             return collided;
         }
 
