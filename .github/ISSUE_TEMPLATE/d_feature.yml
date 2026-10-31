@@ -1,17 +1,10 @@
 name: Feature Request
 description: Request a new feature.
-title: '[Feature Request: <NeoForge/Fabric/NeoForge & Fabric>]: Short description'
+title: '[Feature Request]: '
 labels:
     - enhancement
     - needs-triage
 body:
-    - type: input
-      id: mc_ver
-      attributes:
-          label: Minecraft Version
-          placeholder: e.g. 1.21.1, 1.21.2
-      validations:
-          required: true
     - type: dropdown
       id: mod_loader
       attributes:

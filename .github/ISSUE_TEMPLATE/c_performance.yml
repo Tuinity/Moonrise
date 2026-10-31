@@ -1,32 +1,39 @@
 name: Performance Problem
 description: Report a performance problem that doesn't fall under the bug category.
-title: '[Performance: <NeoForge/Fabric/NeoForge & Fabric>]: Short description'
+title: '[Performance]: '
 labels:
     - performance
     - needs-triage
 body:
-    - type: input
+    - type: markdown
+      attributes:
+          value: >-
+              Only [supported Minecraft versions](https://github.com/Tuinity/Moonrise#version-support)
+              are accepted; reports for other versions will be closed. Please
+              [search existing issues](https://github.com/Tuinity/Moonrise/issues?q=is%3Aissue) first.
+    - type: dropdown
       id: mc_ver
       attributes:
           label: Minecraft Version
-          placeholder: e.g. 1.21.1, 1.21.2
+          options:
+              - '26.3'
+              - '26.1.2'
+              - 26.4 snapshot (name it under Additional Context)
       validations:
           required: true
     - type: input
       id: moonrise_ver
       attributes:
           label: Moonrise Version
-          placeholder: e.g. 0.1.0-beta.6 or Git commit hash
+          description: Use the latest Moonrise release for your Minecraft version before reporting.
+          placeholder: e.g. 1.2.1, or the jar file name
       validations:
           required: true
     - type: dropdown
       id: mod_loader
       attributes:
           label: Mod Loader
-          description: >-
-              The mod loader(s) this bug happens with. When selecting 'Both' it is
-              expected you have tested both as well. Be sure to update the issue
-              title.
+          description: When selecting 'Both', it is expected you have tested both.
           options:
               - NeoForge
               - Fabric
@@ -34,32 +41,26 @@ body:
       validations:
           required: true
     - type: textarea
-      id: logs_crashes
-      attributes:
-          label: Logs and Crash Reports
-          description: >-
-              Include links to all relevant logs and crash reports (prefer using
-              https://gist.github.com/ or https://mclo.gs/). In case this is not
-              applicable fill in 'N/A' (it is expected you will provide context
-              below).
-      validations:
-          required: true
-    - type: textarea
       id: profiler
       attributes:
           label: Profiler Data
           description: >-
-              Provide profiler data showing the problem, from Spark or other tools. In
+              Link to profiler data showing the problem, from Spark or other tools. In
               case this is not applicable fill in 'N/A' (it is expected you will
-              provide context below).
+              explain why below).
       validations:
           required: true
     - type: textarea
       id: context
       attributes:
-          label: Additional Context
+          label: Description
           description: >-
-              Provide any relevant context, including reproduction steps, world data,
-              videos, etc.
+              Describe the problem, how to reproduce it, and how it compares without
+              Moonrise. Include world data, videos, etc. if relevant.
       validations:
           required: true
+    - type: textarea
+      id: logs
+      attributes:
+          label: Logs (optional)
+          description: Links to relevant logs (https://gist.github.com/ or https://mclo.gs/).
