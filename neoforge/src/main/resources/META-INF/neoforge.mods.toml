@@ -41,6 +41,11 @@ modId = "starlight"
 type = "incompatible"
 
 [[dependencies.moonrise]]
+# Starlight fork
+modId = "scalablelux"
+type = "incompatible"
+
+[[dependencies.moonrise]]
 # unofficial lithium port
 modId = "canary"
 type = "incompatible"
