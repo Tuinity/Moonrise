@@ -39,6 +39,7 @@ and they improve chunk loading/generation.
 | Lithium     | <details><summary>✅ compatible</summary>Lithium optimises many of the same parts of the game as Moonrise, for example the chunk system. Moonrise will automatically disable conflicting parts of Lithium. This mechanism needs to be manually validated for each Moonrise and Lithium release.</details> |
 | FerriteCore | <details><summary>✅ compatible</summary>FerriteCore optimises some of the same parts of the game as Moonrise. Moonrise will automatically disable conflicting parts of FerriteCore. This mechanism needs to be manually validated for each Moonrise and FerriteCore release.</details>                   |
 | C2ME        | <details><summary>❌ incompatible</summary>C2ME is based around modifications to the chunk system, which Moonrise replaces wholesale. This makes them fundamentally incompatible.</details>                                                                                                               |
+| ScalableLux | <details><summary>❌ incompatible</summary>Moonrise contains the official continuation of Starlight, and ScalableLux is a fork of Starlight. Both replace the same lighting engine, so they cannot be used together.</details>                                                                            |
 
 ## Configuration
 Moonrise provides documented configuration options (the config itself contains the documentation) for tuning the chunk system and enabling bugfixes in the config file `$mcdir$/config/moonrise.yml`.

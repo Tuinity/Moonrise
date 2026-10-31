@@ -16,6 +16,7 @@
     "breaks": {
         "notenoughcrashes": "*",
         "starlight": "*",
+        "scalablelux": "*",
         "c2me": "*"
     },
     "license": "GPL-3.0-only",
