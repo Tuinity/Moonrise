@@ -59,7 +59,7 @@ body:
       id: mod_loader
       attributes:
           label: Mod Loader
-          description: When selecting 'Both', provide the error for both loaders.
+          description: When selecting 'Both', provide logs for both loaders.
           options:
               - NeoForge
               - Fabric
@@ -95,21 +95,16 @@ body:
       validations:
           required: true
     - type: textarea
-      id: error
-      attributes:
-          label: Error / Stack Trace
-          description: >-
-              Paste the first error from the log, or the crash report's stack trace
-              (including the "Caused by" lines). Log links expire, so the error must be
-              in the issue itself. Write 'N/A' only if nothing is logged.
-          render: shell
-      validations:
-          required: true
-    - type: textarea
       id: logs
       attributes:
-          label: Full Logs (optional)
-          description: Links to the full latest.log and crash report (https://gist.github.com/ or https://mclo.gs/).
+          label: Logs and Crash Reports
+          description: >-
+              The full latest.log, and the full crash report if there is one. Don't trim
+              them to the part you think is relevant. Attach the files here (drag and drop)
+              or link a https://gist.github.com/ (paste sites like mclo.gs can expire). Write 'N/A'
+              only if nothing is logged.
+      validations:
+          required: true
     - type: textarea
       id: context
       attributes:
