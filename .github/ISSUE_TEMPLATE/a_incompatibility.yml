@@ -22,9 +22,9 @@ body:
     - type: input
       id: mod_version
       attributes:
-          label: Conflicting Mod Version
-          description: The exact version or jar file name.
-          placeholder: e.g. examplemod-neoforge-1.2.3.jar
+          label: Conflicting Mod Version(s)
+          description: The exact version or jar file name, one per Minecraft version selected.
+          placeholder: e.g. examplemod-neoforge-1.2.3+26.3.jar, examplemod-neoforge-1.2.3+26.1.2.jar
       validations:
           required: true
     - type: input
@@ -50,9 +50,9 @@ body:
     - type: input
       id: moonrise_ver
       attributes:
-          label: Moonrise Version
-          description: Use the latest Moonrise release for your Minecraft version before reporting.
-          placeholder: e.g. 1.2.1, or the jar file name
+          label: Moonrise Version(s)
+          description: Use the latest Moonrise release for each Minecraft version selected, one per version.
+          placeholder: e.g. 1.2.1 (26.3), 1.2.0 (26.1.2), or the jar file names
       validations:
           required: true
     - type: dropdown
