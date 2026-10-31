@@ -176,7 +176,7 @@ abstract class LevelMixin implements ChunkSystemLevel, ChunkSystemEntityGetter, 
      * @author Spottedleaf
      */
     @Override
-    public final <T extends Entity> List<T> getEntitiesOfClass(final Class<T> entityClass, final AABB boundingBox, final Predicate<? super T> predicate) {
+    public <T extends Entity> List<T> getEntitiesOfClass(final Class<T> entityClass, final AABB boundingBox, final Predicate<? super T> predicate) {
         Profiler.get().incrementCounter("getEntities");
         final List<T> ret = new ArrayList<>();
 
