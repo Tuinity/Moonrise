@@ -38,7 +38,10 @@ abstract class Holder$ReferenceMixin<T> {
      */
     @Overwrite
     public boolean is(final TagKey<T> tag) {
-        // note: NPE acts as not bound check
-        return this.boundTags.contains(tag);
+        final HashSet<TagKey<?>> boundTags = this.boundTags;
+        if (boundTags == null) {
+            throw new IllegalStateException("Tags not bound");
+        }
+        return boundTags.contains(tag);
     }
 }
