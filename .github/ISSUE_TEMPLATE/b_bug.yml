@@ -1,55 +1,89 @@
 name: Bug Report
-description: Report a bug or Vanilla behavior parity issue.
-title: '[Bug: <NeoForge/Fabric/NeoForge & Fabric>]: Short description'
+description: Report a bug or Vanilla behaviour parity issue.
+title: '[Bug]: '
 labels:
     - bug
     - needs-triage
 body:
-    - type: input
+    - type: markdown
+      attributes:
+          value: >-
+              Only [supported Minecraft versions](https://github.com/Tuinity/Moonrise#version-support)
+              are accepted; reports for other versions will be closed. Please
+              [search existing issues](https://github.com/Tuinity/Moonrise/issues?q=is%3Aissue) first.
+              If the problem only happens together with another mod, use the Mod Incompatibility template instead.
+    - type: dropdown
       id: mc_ver
       attributes:
           label: Minecraft Version
-          placeholder: e.g. 1.21.1 or 1.21.2
+          options:
+              - '26.3'
+              - '26.1.2'
+              - 26.4 snapshot (name it under Additional Context)
       validations:
           required: true
     - type: input
       id: moonrise_ver
       attributes:
           label: Moonrise Version
-          placeholder: e.g. 0.1.0-beta.6 or Git commit hash
+          description: Use the latest Moonrise release for your Minecraft version before reporting.
+          placeholder: e.g. 1.2.1, or the jar file name
       validations:
           required: true
     - type: dropdown
       id: mod_loader
       attributes:
           label: Mod Loader
-          description: >-
-              The mod loader(s) this bug happens with. When selecting 'Both' it
-              is expected you will submit logs for both as well. Be sure to update the
-              issue title.
+          description: When selecting 'Both', provide the error for both loaders.
           options:
               - NeoForge
               - Fabric
               - Both (NeoForge and Fabric)
       validations:
           required: true
-    - type: textarea
-      id: logs_crashes
+    - type: checkboxes
+      id: checks
       attributes:
-          label: Logs and Crash Reports
-          description: >-
-              Include links to all relevant logs and crash reports (prefer using
-              https://gist.github.com/ or https://mclo.gs/). In case this is not
-              applicable fill in 'N/A' (it is expected you will provide context
-              below).
+          label: Checks
+          options:
+              - label: I can reproduce this with only Moonrise (and Fabric API on Fabric) installed.
+                required: true
+              - label: I am using the latest release of Moonrise for this Minecraft version.
+                required: true
+    - type: textarea
+      id: what_happens
+      attributes:
+          label: What Happens
+          description: Describe the expected vs. actual behaviour. For parity issues, describe what Vanilla does.
       validations:
           required: true
+    - type: textarea
+      id: steps
+      attributes:
+          label: Steps to Reproduce
+          placeholder: |
+              1. Start a server with Moonrise
+              2. ...
+              3. Crash / wrong behaviour
+      validations:
+          required: true
+    - type: textarea
+      id: error
+      attributes:
+          label: Error / Stack Trace
+          description: >-
+              Paste the first error from the log, or the crash report's stack trace
+              (including the "Caused by" lines). Log links expire, so the error must be
+              in the issue itself. Write 'N/A' only if nothing is logged.
+          render: shell
+      validations:
+          required: true
+    - type: textarea
+      id: logs
+      attributes:
+          label: Full Logs (optional)
+          description: Links to the full latest.log and crash report (https://gist.github.com/ or https://mclo.gs/).
     - type: textarea
       id: context
       attributes:
-          label: Additional Context
-          description: >-
-              Provide any relevant context, including expected vs. actual behavior,
-              and reproduction steps.
-      validations:
-          required: true
+          label: Additional Context (optional)

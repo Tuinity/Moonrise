@@ -1,53 +1,114 @@
 name: Mod Incompatibility
-description: Report an incompatibility with another mod.
-title: '[Incompatibility: <NeoForge/Fabric/NeoForge & Fabric>]: Mod Name'
+description: Report a crash or broken behaviour that only happens when Moonrise is installed alongside another mod.
+title: '[Incompatibility]: '
 labels:
     - mod-incompatibility
     - needs-triage
 body:
+    - type: markdown
+      attributes:
+          value: >-
+              Only [supported Minecraft versions](https://github.com/Tuinity/Moonrise#version-support)
+              are accepted; reports for other versions will be closed. Please
+              [search existing issues](https://github.com/Tuinity/Moonrise/issues?q=is%3Aissue) for the
+              mod first, and put the mod's name in the title.
     - type: input
+      id: mod_name
+      attributes:
+          label: Conflicting Mod
+          placeholder: e.g. Example Mod
+      validations:
+          required: true
+    - type: input
+      id: mod_version
+      attributes:
+          label: Conflicting Mod Version
+          description: The exact version or jar file name.
+          placeholder: e.g. examplemod-neoforge-1.2.3.jar
+      validations:
+          required: true
+    - type: input
+      id: mod_link
+      attributes:
+          label: Conflicting Mod Link
+          description: Modrinth, CurseForge, or source repository page.
+          placeholder: e.g. https://modrinth.com/mod/example-mod
+      validations:
+          required: true
+    - type: dropdown
       id: mc_ver
       attributes:
           label: Minecraft Version
-          placeholder: e.g. 1.21.1 or 1.21.2
+          options:
+              - '26.3'
+              - '26.1.2'
+              - 26.4 snapshot (name it under Additional Context)
       validations:
           required: true
     - type: input
       id: moonrise_ver
       attributes:
           label: Moonrise Version
-          placeholder: e.g. 0.1.0-beta.6 or Git commit hash
+          description: Use the latest Moonrise release for your Minecraft version before reporting.
+          placeholder: e.g. 1.2.1, or the jar file name
       validations:
           required: true
     - type: dropdown
       id: mod_loader
       attributes:
           label: Mod Loader
-          description: >-
-              The mod loader(s) this conflict happens with. When selecting 'Both' it
-              is expected you will submit logs for both as well. Be sure to update the
-              issue title.
+          description: When selecting 'Both', provide the error for both loaders.
           options:
               - NeoForge
               - Fabric
               - Both (NeoForge and Fabric)
       validations:
           required: true
-    - type: textarea
-      id: logs_crashes
+    - type: checkboxes
+      id: checks
       attributes:
-          label: Logs and Crash Reports
-          description: >-
-              Include links to all relevant logs and crash reports (prefer using
-              https://gist.github.com/ or https://mclo.gs/). In case this is not
-              applicable fill in 'N/A' (it is expected you will provide context
-              below).
+          label: Checks
+          options:
+              - label: I can reproduce this with only Moonrise, the conflicting mod, and that mod's required dependencies installed.
+                required: true
+              - label: The problem does not happen when Moonrise is removed and nothing else is changed.
+                required: true
+              - label: I am using the latest release of Moonrise and of the conflicting mod for this Minecraft version.
+                required: true
+    - type: textarea
+      id: what_happens
+      attributes:
+          label: What Happens
+          description: e.g. crash on startup, crash when doing something in game, wrong behaviour (describe expected vs. actual).
       validations:
           required: true
+    - type: textarea
+      id: steps
+      attributes:
+          label: Steps to Reproduce
+          placeholder: |
+              1. Start a server with Moonrise and <mod>
+              2. ...
+              3. Crash / wrong behaviour
+      validations:
+          required: true
+    - type: textarea
+      id: error
+      attributes:
+          label: Error / Stack Trace
+          description: >-
+              Paste the first error from the log, or the crash report's stack trace
+              (including the "Caused by" lines). Log links expire, so the error must be
+              in the issue itself. Write 'N/A' only if nothing is logged.
+          render: shell
+      validations:
+          required: true
+    - type: textarea
+      id: logs
+      attributes:
+          label: Full Logs (optional)
+          description: Links to the full latest.log and crash report (https://gist.github.com/ or https://mclo.gs/).
     - type: textarea
       id: context
       attributes:
-          label: Additional Context
-          description: Provide any relevant context, including version of the conflicting mod.
-      validations:
-          required: true
+          label: Additional Context (optional)
