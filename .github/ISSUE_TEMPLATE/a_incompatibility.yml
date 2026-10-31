@@ -39,6 +39,8 @@ body:
       id: mc_ver
       attributes:
           label: Minecraft Version
+          description: Select every version you reproduced this on.
+          multiple: true
           options:
               - '26.3'
               - '26.1.2'
