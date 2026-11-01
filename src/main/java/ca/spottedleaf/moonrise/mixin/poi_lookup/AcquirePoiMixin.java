@@ -38,7 +38,7 @@ abstract class AcquirePoiMixin {
         final List<Pair<Holder<PoiType>, BlockPos>> ret = new ArrayList<>();
 
         PoiAccess.findNearestPoiPositions(
-                poiManager, predicate, filter, center, radius, Double.MAX_VALUE, occupancy, PoiAccess.LOAD_FOR_SEARCHING, 5, ret
+                poiManager, predicate, filter, center, radius, (double)((long)radius * (long)radius), occupancy, PoiAccess.LOAD_FOR_SEARCHING, 5, ret
         );
 
         return ret.stream();
