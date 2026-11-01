@@ -320,10 +320,14 @@ public final class MoonriseConfig {
         @Serializable(
             serializedKey = "fix-MC-119599",
             comment = """
-                        Fixes https://mojira.dev/MC-119599. Snow layers blocks are placed on all
-                        leaves above ground, as well as the surface (if applicable) below the leaves.
-                        true    -> Changes world generation to fix snow layers not appearing above or below leaf blocks.
-                                   This is different from Vanilla behaviour.
+                        Fixes https://mojira.dev/MC-119599. Vanilla places snow on a chunk while generating
+                        that chunk's features, so tree parts that neighbouring chunks generate into it afterwards
+                        are left without snow. This causes snowless patches of leaves with straight edges at chunk
+                        borders. Vanilla also only places snow on the top block of each column, so lower leaf
+                        layers and the ground under leaves never get snow.
+                        true    -> Snow is placed again as neighbouring chunks generate their features, including on
+                                   lower leaf layers and the ground under leaves. This changes world generation and
+                                   only affects newly generated chunks.
                         false   -> Does not change world generation. This is the same behaviour as Vanilla.
                         """
         )
