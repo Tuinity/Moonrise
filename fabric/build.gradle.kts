@@ -88,6 +88,7 @@ publishMods {
         incompatible(
             "notenoughcrashes",
             "starlight",
+            "scalablelux",
             "c2me-fabric"
         )
     }
@@ -95,6 +96,7 @@ publishMods {
         incompatible(
             "not-enough-crashes",
             "starlight",
+            "scalablelux",
             "c2me"
         )
     }

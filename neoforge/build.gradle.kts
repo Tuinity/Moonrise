@@ -104,14 +104,18 @@ publishMods {
         incompatible(
             "notenoughcrashes",
             "starlight-neoforge",
-            "canary"
+            "scalablelux",
+            "canary",
+            "c2me-neoforge"
         )
     }
     curseforge {
         incompatible(
             "not-enough-crashes-forge",
             "starlight-neoforge",
-            "canary"
+            "scalablelux",
+            "canary",
+            "c2me"
         )
     }
 }
