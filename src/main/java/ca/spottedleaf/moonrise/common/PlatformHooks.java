@@ -73,6 +73,8 @@ public interface PlatformHooks extends ChunkSystemHooks {
 
     public boolean configFixMC224294();
 
+    public boolean configFixMC119599();
+
     public boolean configAutoConfigSendDistance();
 
     public double configPlayerMaxLoadRate();

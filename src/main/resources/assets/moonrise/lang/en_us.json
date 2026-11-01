@@ -3,6 +3,8 @@
     "category.moonrise.bugfixes": "Bug Fixes",
     "tooltip.moonrise.fixMC224294": "Fixes lava being double ticked during random block ticking.",
     "option.moonrise.fixMC224294": "Fix MC-224294",
+    "tooltip.moonrise.fixMC119599": "Fixes snow layers not appearing above or below leaves during world generation.",
+    "option.moonrise.fixMC119599": "Fix MC-119599",
     "category.moonrise.chunksystem": "Chunk System",
     "tooltip.moonrise.populatorparallelism": "Allows populators to run in parallel. May set to true if any worldgen affecting mods are safe to run populators in parallel.",
     "option.moonrise.populatorparallelism": "World Generation Populator Parallelism",
