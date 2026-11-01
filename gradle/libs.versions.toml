@@ -12,7 +12,7 @@ lithiumFabric = "mc26.1.2-0.24.2-fabric"
 lithiumNeoforge = "mc26.1.2-0.24.2-neoforge"
 minecraft = "26.1.2"
 # https://projects.neoforged.net/neoforged/neoforge
-neoforge = "26.1.2.109"
+neoforge = "26.1.2.125"
 # https://projects.neoforged.net/neoforged/neoform
 neoform = "26.1.2-1"
 
