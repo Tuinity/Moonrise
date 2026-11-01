@@ -202,7 +202,7 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
     }
 
     @Override
-    public boolean configFixMC119599() {
+    public boolean configFixMC119599(final ServerLevel world) {
         return ConfigHolder.getConfig().bugFixes.fixMC119599;
     }
 

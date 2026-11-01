@@ -43,7 +43,7 @@ abstract class ChunkGeneratorMixin {
         if (SharedConstants.debugVoidTerrain(centerPos)) {
             return;
         }
-        if (!PlatformHooks.get().configFixMC119599()) {
+        if (!PlatformHooks.get().configFixMC119599(level.getLevel())) {
             return;
         }
 
