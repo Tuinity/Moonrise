@@ -8,6 +8,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SnowyBlock;
@@ -50,6 +51,20 @@ abstract class ChunkGeneratorMixin {
 
         final int cx = centerPos.x();
         final int cz = centerPos.z();
+
+        // Biome lookups use the same zoom as Vanilla's level.getBiome, which reads noise biomes up to one chunk
+        // outside the chunk being processed, so up to 2 chunks from the center. The region only allows status
+        // checked access to its direct dependencies (TERRAIN within radius 1), so read the cached chunks directly:
+        // FEATURES requires TERRAIN at radius 1, which requires BIOMES at radius 1, so every chunk within
+        // radius 2 has completed BIOMES.
+        final BiomeManager biomeManager = new BiomeManager((final int quartX, final int quartY, final int quartZ) -> {
+            final int chunkX = QuartPos.toSection(quartX);
+            final int chunkZ = QuartPos.toSection(quartZ);
+            if (Math.max(Math.abs(chunkX - cx), Math.abs(chunkZ - cz)) > (FEATURES_RADIUS + 1)) {
+                throw new IllegalStateException("Biome lookup at chunk (" + chunkX + "," + chunkZ + ") is outside radius " + (FEATURES_RADIUS + 1) + " of (" + cx + "," + cz + ")");
+            }
+            return level.getChunk(chunkX, chunkZ).getNoiseBiome(quartX, quartY, quartZ);
+        }, BiomeManager.obfuscateSeed(level.getSeed()));
         for (int dz = -FEATURES_RADIUS; dz <= FEATURES_RADIUS; ++dz) {
             for (int dx = -FEATURES_RADIUS; dx <= FEATURES_RADIUS; ++dx) {
                 final int chunkX = dx + cx;
@@ -57,7 +72,7 @@ abstract class ChunkGeneratorMixin {
                 final ChunkAccess chunk = level.getChunk(chunkX, chunkZ);
 
                 if (!(chunk instanceof ProtoChunk protoChunk) || (protoChunk instanceof ImposterProtoChunk || protoChunk.isUpgrading())
-                    || protoChunk.getPersistedStatus().isBefore(ChunkStatus.FEATURES)) {
+                    || ((dx != 0 || dz != 0) && protoChunk.getPersistedStatus().isBefore(ChunkStatus.FEATURES))) {
                     continue;
                 }
 
@@ -72,7 +87,7 @@ abstract class ChunkGeneratorMixin {
 
                         pos.set(blockX, heightWithoutLeaves, blockZ);
 
-                        final Biome biome = protoChunk.getNoiseBiome(QuartPos.fromBlock(blockX), QuartPos.fromBlock(heightWithoutLeaves), QuartPos.fromBlock(blockZ)).value();
+                        final Biome biome = biomeManager.getBiome(pos).value();
 
                         if (biome.getPrecipitationAt(pos, seaLevel) != Biome.Precipitation.SNOW) {
                             continue;
