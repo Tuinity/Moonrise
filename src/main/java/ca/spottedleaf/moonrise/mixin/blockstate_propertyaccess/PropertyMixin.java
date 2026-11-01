@@ -4,10 +4,12 @@ import ca.spottedleaf.moonrise.patches.blockstate_propertyaccess.PropertyAccess;
 import net.minecraft.world.level.block.state.properties.Property;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Mixin(Property.class)
@@ -21,6 +23,15 @@ abstract class PropertyMixin<T extends Comparable<T>> implements PropertyAccess<
 
     @Unique
     private T[] byId;
+
+    @Unique
+    private volatile boolean byIdInitialised;
+
+    @Shadow
+    public abstract List<T> getPossibleValues();
+
+    @Shadow
+    public abstract int getInternalIndex(final T value);
 
     @Override
     public final int moonrise$getId() {
@@ -39,10 +50,37 @@ abstract class PropertyMixin<T extends Comparable<T>> implements PropertyAccess<
             throw new IllegalStateException();
         }
         this.byId = byId;
+        this.byIdInitialised = true;
     }
 
     @Override
-    public abstract int moonrise$getIdFor(final T value);
+    public final void moonrise$ensureById() {
+        if (this.byIdInitialised) {
+            return;
+        }
+        // properties without a specialised implementation (i.e. custom Property subclasses) build their table here,
+        // as subclass fields are not yet initialised when the Property constructor returns
+        synchronized (this) {
+            if (this.byIdInitialised) {
+                return;
+            }
+            final List<T> values = this.getPossibleValues();
+            final T[] byId = (T[])values.toArray(new Comparable[0]);
+            for (int i = 0; i < byId.length; ++i) {
+                final int id = this.moonrise$getIdFor(byId[i]);
+                if (id != i) {
+                    throw new IllegalStateException("Property " + this + " returned internal index " + id + " for value " + byId[i] + ", expected " + i);
+                }
+            }
+            this.moonrise$setById(byId);
+        }
+    }
+
+    @Override
+    public int moonrise$getIdFor(final T value) {
+        // fallback for properties without a specialised implementation (i.e. custom Property subclasses)
+        return this.getInternalIndex(value);
+    }
 
     /**
      * @reason Hook into constructor to init fields
