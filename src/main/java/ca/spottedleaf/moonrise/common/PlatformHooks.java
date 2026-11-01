@@ -73,7 +73,7 @@ public interface PlatformHooks extends ChunkSystemHooks {
 
     public boolean configFixMC224294();
 
-    public boolean configFixMC119599();
+    public boolean configFixMC119599(final ServerLevel world);
 
     public boolean configAutoConfigSendDistance();
 
