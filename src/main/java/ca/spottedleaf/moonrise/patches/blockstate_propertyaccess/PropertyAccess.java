@@ -9,4 +9,6 @@ public interface PropertyAccess<T> {
     public T moonrise$getById(final int id);
 
     public void moonrise$setById(final T[] values);
+
+    public void moonrise$ensureById();
 }
