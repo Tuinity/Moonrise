@@ -34,6 +34,7 @@ public final class ZeroCollidingReferenceStateTable<O, S> {
 
         int currentMultiple = 1;
         for (final Property<?> property : sortedProperties) {
+            ((PropertyAccess<?>)property).moonrise$ensureById();
             final int totalValues = property.getPossibleValues().size();
 
             this.propertyToIndexer.put(
