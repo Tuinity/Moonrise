@@ -199,6 +199,11 @@ public final class FabricHooks extends BaseChunkSystemHooks implements PlatformH
     }
 
     @Override
+    public boolean configFixMC119599() {
+        return ConfigHolder.getConfig().bugFixes.fixMC119599;
+    }
+
+    @Override
     public boolean configAutoConfigSendDistance() {
         return ConfigHolder.getConfig().chunkLoading.advanced.autoConfigSendDistance;
     }

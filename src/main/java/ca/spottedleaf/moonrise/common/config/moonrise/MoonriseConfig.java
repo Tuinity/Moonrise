@@ -286,7 +286,7 @@ public final class MoonriseConfig {
         @Serializable(
             serializedKey = "fix-MC-224294",
             comment = """
-                        Fixes https://bugs.mojang.com/browse/MC-224294. By avoiding double ticking lava blocks during
+                        Fixes https://mojira.dev/MC-224294. By avoiding double ticking lava blocks during
                         chunk random ticking, the cost of world random ticking is significantly reduced.
                         This configuration has two options:
                         true    -> Does not double tick lava. This is different from Vanilla behaviour.
@@ -299,6 +299,23 @@ public final class MoonriseConfig {
             section = BUG_FIX_SECTION
         )
         public boolean fixMC224294 = false;
+
+        @Serializable(
+            serializedKey = "fix-MC-119599",
+            comment = """
+                        Fixes https://mojira.dev/MC-119599. Snow layers blocks are placed on all
+                        leaves above ground, as well as the surface (if applicable) below the leaves.
+                        true    -> Changes world generation to fix snow layers not appearing above or below leaf blocks.
+                                   This is different from Vanilla behaviour.
+                        false   -> Does not change world generation. This is the same behaviour as Vanilla.
+                        """
+        )
+        @ClothConfig(
+            tooltip = "tooltip.moonrise.fixMC119599",
+            fieldKeyName = "option.moonrise.fixMC119599",
+            section = BUG_FIX_SECTION
+        )
+        public boolean fixMC119599 = false;
     }
 
     @Serializable

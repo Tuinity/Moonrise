@@ -202,6 +202,11 @@ public final class NeoForgeHooks extends BaseChunkSystemHooks implements Platfor
     }
 
     @Override
+    public boolean configFixMC119599() {
+        return ConfigHolder.getConfig().bugFixes.fixMC119599;
+    }
+
+    @Override
     public boolean configAutoConfigSendDistance() {
         return ConfigHolder.getConfig().chunkLoading.advanced.autoConfigSendDistance;
     }

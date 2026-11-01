@@ -153,6 +153,7 @@
         "random_ticking.LevelMixin",
         "random_ticking.ServerLevelMixin",
         "serverlist.ConnectionMixin",
+        "snow_generation.ChunkGeneratorMixin",
         "starlight.blockstate.BlockStateBaseMixin",
         "starlight.chunk.ChunkAccessMixin",
         "starlight.chunk.EmptyLevelChunkMixin",
