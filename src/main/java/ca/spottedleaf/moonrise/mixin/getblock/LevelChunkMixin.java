@@ -16,15 +16,12 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainerFactory;
 import net.minecraft.world.level.chunk.UpgradeData;
-import net.minecraft.world.level.levelgen.DebugLevelSource;
 import net.minecraft.world.level.levelgen.blending.BlendingData;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.ticks.LevelChunkTicks;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -32,11 +29,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelChunk.class)
 abstract class LevelChunkMixin extends ChunkAccess implements GetBlockChunk {
-
-    @Shadow
-    @Final
-    Level level;
-
 
     @Unique
     private static final BlockState AIR_BLOCKSTATE = Blocks.AIR.defaultBlockState();
@@ -50,9 +42,6 @@ abstract class LevelChunkMixin extends ChunkAccess implements GetBlockChunk {
 
     @Unique
     private int maxSection;
-
-    @Unique
-    private boolean debug;
 
     @Unique
     private BlockState defaultBlockState;
@@ -74,7 +63,6 @@ abstract class LevelChunkMixin extends ChunkAccess implements GetBlockChunk {
         this.maxSection = WorldUtil.getMaxSection(level);
 
         final boolean empty = ((Object)this instanceof EmptyLevelChunk);
-        this.debug = !empty && this.level.isDebug();
         this.defaultBlockState = empty ? VOID_AIR_BLOCKSTATE : AIR_BLOCKSTATE;
     }
 
@@ -88,26 +76,8 @@ abstract class LevelChunkMixin extends ChunkAccess implements GetBlockChunk {
         return this.moonrise$getBlock(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    @Unique
-    private BlockState getBlockDebug(final int x, final int y, final int z) {
-        if (y == 60) {
-            return Blocks.BARRIER.defaultBlockState();
-        }
-
-        if (y == 70) {
-            final BlockState ret = DebugLevelSource.getBlockStateFor(x, z);
-            return ret == null ? AIR_BLOCKSTATE : ret;
-        }
-
-        return AIR_BLOCKSTATE;
-    }
-
     @Override
     public final BlockState moonrise$getBlock(final int x, final int y, final int z) {
-        if (this.debug) {
-            return this.getBlockDebug(x, y, z);
-        }
-
         final int sectionY = (y >> 4) - this.minSection;
 
         final LevelChunkSection[] sections = this.sections;
