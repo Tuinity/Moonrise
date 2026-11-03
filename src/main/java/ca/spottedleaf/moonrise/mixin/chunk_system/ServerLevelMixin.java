@@ -82,8 +82,8 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
     @Final
     private ServerChunkCache chunkSource;
 
-    protected ServerLevelMixin(final WritableLevelData writableLevelData, final ResourceKey<Level> resourceKey, final RegistryAccess registryAccess, final Holder<DimensionType> holder, final boolean bl, final boolean bl2, final int i) {
-        super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, i);
+    protected ServerLevelMixin(final WritableLevelData writableLevelData, final ResourceKey<Level> resourceKey, final RegistryAccess registryAccess, final Holder<DimensionType> holder, final boolean bl, final int i) {
+        super(writableLevelData, resourceKey, registryAccess, holder, bl, i);
     }
 
     @Unique
@@ -145,7 +145,6 @@ abstract class ServerLevelMixin extends Level implements ChunkSystemServerLevel,
         final ServerLevelData levelData,
         final ResourceKey dimension,
         final LevelStem levelStem,
-        final boolean isDebug,
         final List customSpawners,
         final boolean tickTime,
         final CallbackInfo ci
