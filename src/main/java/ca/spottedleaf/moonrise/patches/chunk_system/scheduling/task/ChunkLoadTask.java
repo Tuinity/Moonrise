@@ -11,11 +11,13 @@ import ca.spottedleaf.moonrise.patches.chunk_system.io.MoonriseRegionFileIO;
 import ca.spottedleaf.moonrise.patches.chunk_system.level.poi.PoiChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.UpgradeData;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -339,6 +341,8 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
             }
 
             try {
+                final int storedVersion = data.getIntOr("DataVersion", -1);
+
                 // run converters
                 final CompoundTag converted = this.world.getChunkSource().chunkMap.upgradeChunkTag(data);
 
@@ -356,6 +360,15 @@ public final class ChunkLoadTask extends ChunkProgressionTask {
                     this.world, this.world.getPoiManager(), this.world.getChunkSource().chunkMap.storageInfo(),
                     new ChunkPos(this.chunkX, this.chunkZ)
                 );
+
+                // reading the chunk marks it unsaved, even when nothing changed
+                // clear that for up-to-date full chunks so they are not serialised and written again on unload or autosave
+                if (chunk instanceof ImposterProtoChunk imposter
+                    && storedVersion == SharedConstants.getCurrentVersion().dataVersion().version()
+                    && chunkData.lightCorrect() && imposter.getUpgradeData().isEmpty() && imposter.getBlendingData() == null
+                    && chunkData.heightmaps().keySet().containsAll(ChunkStatus.FULL.heightmapsAfter())) {
+                    imposter.getWrapped().tryMarkSaved();
+                }
 
                 return new TaskResult<>(new ReadChunk(chunk, chunkData), null);
             } catch (final Throwable thr2) {
