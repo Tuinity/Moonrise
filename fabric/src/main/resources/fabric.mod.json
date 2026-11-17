@@ -26,6 +26,9 @@
         "modmenu": [
             "ca.spottedleaf.moonrise.fabric.MoonriseModMenuHook"
         ],
+        "main": [
+            "ca.spottedleaf.moonrise.fabric.MoonriseFabric"
+        ],
         "client": [
             "ca.spottedleaf.moonrise.fabric.MoonriseFabricClient"
         ]

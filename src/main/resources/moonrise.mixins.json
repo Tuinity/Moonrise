@@ -102,7 +102,6 @@
         "collisions.ShapesMixin",
         "collisions.SliceShapeMixin",
         "collisions.VoxelShapeMixin",
-        "command.CommandsMixin",
         "config.MinecraftServerMixin",
         "entity_tracker.ChunkMapMixin",
         "entity_tracker.EntityMixin",
