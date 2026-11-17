@@ -815,14 +815,16 @@ public final class ChunkHolderManager {
 
             final int lowerChunkX = CoordinateUtils.getChunkX(sectionKey) << sectionShift;
             final int lowerChunkZ = CoordinateUtils.getChunkZ(sectionKey) << sectionShift;
+            final int upperChunkX = lowerChunkX + (1 << sectionShift) - 1;
+            final int upperChunkZ = lowerChunkZ + (1 << sectionShift) - 1;
 
             final int ticketShift = ThreadedTicketLevelPropagator.SECTION_SHIFT;
             final int ticketMask = (1 << ticketShift) - 1;
             final ReentrantAreaLock.Node ticketLock = this.ticketLockArea.lock(
                 ((lowerChunkX >> ticketShift) - 1) << ticketShift,
                 ((lowerChunkZ >> ticketShift) - 1) << ticketShift,
-                (((lowerChunkX >> ticketShift) + 1) << ticketShift) | ticketMask,
-                (((lowerChunkZ >> ticketShift) + 1) << ticketShift) | ticketMask
+                (((upperChunkX >> ticketShift) + 1) << ticketShift) | ticketMask,
+                (((upperChunkZ >> ticketShift) + 1) << ticketShift) | ticketMask
             );
 
             try {
