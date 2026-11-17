@@ -18,9 +18,6 @@ import ca.spottedleaf.moonrise.patches.starlight.light.StarLightLightingProvider
 import ca.spottedleaf.moonrise.patches.tick_loop.TickLoopMinecraftServer;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.BoolArgumentType;
-import com.mojang.brigadier.arguments.DoubleArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -31,7 +28,10 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandPermissionLevels;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.BooleanArgument;
 import net.minecraft.commands.arguments.DimensionArgument;
+import net.minecraft.commands.arguments.DoubleArgument;
+import net.minecraft.commands.arguments.IntegerArgument;
 import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -45,7 +45,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.permissions.PermissionProviderCheck;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -83,11 +83,13 @@ public final class MoonriseCommand {
 
     private static final TextColor LIGHT_RED = TextColor.fromRgb(0xFF8080);
 
-    public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
+    public static void register(final CommandDispatcher<CommandSourceStack> dispatcher, final Commands.CommandSelection commandSelection) {
+        // Requirements must be permission checks; open the command to everyone on integrated servers only
+        final PermissionProviderCheck<CommandSourceStack> requirement = commandSelection == Commands.CommandSelection.INTEGRATED
+            ? PermissionProviderCheck.ALWAYS_PASS.cast()
+            : Commands.hasPermission(CommandPermissionLevels.LEVEL_ADMINS);
         dispatcher.register(
-            literal("moonrise").requires((final CommandSourceStack src) -> {
-                return Commands.hasPermission(CommandPermissionLevels.LEVEL_ADMINS).test(src) || !(src.getServer() instanceof DedicatedServer);
-            }).then(literal("holderinfo")
+            literal("moonrise").requires(requirement).then(literal("holderinfo")
                 .executes(MoonriseCommand::holderInfo)
             ).then(literal("chunkinfo")
                 .executes(MoonriseCommand::chunkInfo)
@@ -97,9 +99,9 @@ public final class MoonriseCommand {
                 .executes((final CommandContext<CommandSourceStack> ctx) -> {
                     return MoonriseCommand.relight(ctx, 10);
                 })
-                .then(argument("radius", IntegerArgumentType.integer(0, MoonriseConstants.MAX_VIEW_DISTANCE))
+                .then(argument("radius", IntegerArgument.integer(0, MoonriseConstants.MAX_VIEW_DISTANCE))
                     .executes((final CommandContext<CommandSourceStack> ctx) -> {
-                        return MoonriseCommand.relight(ctx, IntegerArgumentType.getInteger(ctx, "radius"));
+                        return MoonriseCommand.relight(ctx, IntegerArgument.getInteger(ctx, "radius"));
                     })
                 )
             ).then(literal("debug")
@@ -114,29 +116,29 @@ public final class MoonriseCommand {
                         .then(
                             argument("center", ColumnPosArgument.columnPos())
                                 .then(
-                                    argument("radius", IntegerArgumentType.integer(0, Integer.MAX_VALUE))
+                                    argument("radius", IntegerArgument.integer(0, Integer.MAX_VALUE))
                                         .then(
-                                            argument("max_loaded", IntegerArgumentType.integer(4, Integer.MAX_VALUE))
+                                            argument("max_loaded", IntegerArgument.integer(4, Integer.MAX_VALUE))
                                                 .executes((final CommandContext<CommandSourceStack> ctx) -> {
                                                     return MoonriseCommand.genArea(
                                                         ctx,
                                                         DimensionArgument.getDimension(ctx, "world"),
                                                         ColumnPosArgument.getColumnPos(ctx, "center"),
-                                                        IntegerArgumentType.getInteger(ctx, "radius"),
-                                                        IntegerArgumentType.getInteger(ctx, "max_loaded"),
+                                                        IntegerArgument.getInteger(ctx, "radius"),
+                                                        IntegerArgument.getInteger(ctx, "max_loaded"),
                                                         false
                                                     );
                                                 })
                                                 .then(
-                                                    argument("load_existing", BoolArgumentType.bool())
+                                                    argument("load_existing", BooleanArgument.bool())
                                                         .executes((final CommandContext<CommandSourceStack> ctx) -> {
                                                             return MoonriseCommand.genArea(
                                                                 ctx,
                                                                 DimensionArgument.getDimension(ctx, "world"),
                                                                 ColumnPosArgument.getColumnPos(ctx, "center"),
-                                                                IntegerArgumentType.getInteger(ctx, "radius"),
-                                                                IntegerArgumentType.getInteger(ctx, "max_loaded"),
-                                                                BoolArgumentType.getBool(ctx, "load_existing")
+                                                                IntegerArgument.getInteger(ctx, "radius"),
+                                                                IntegerArgument.getInteger(ctx, "max_loaded"),
+                                                                BooleanArgument.getBool(ctx, "load_existing")
                                                             );
                                                         })
                                                 )
@@ -162,9 +164,9 @@ public final class MoonriseCommand {
                         .executes((final CommandContext<CommandClientCommandSource> ctx) -> {
                             return MoonriseCommand.startClientProfiler(ctx, -1.0);
                         })
-                        .then(RequiredArgumentBuilder.<CommandClientCommandSource, Double>argument("record_threshold", DoubleArgumentType.doubleArg(0.0, 10_000.0))
+                        .then(RequiredArgumentBuilder.<CommandClientCommandSource, Double>argument("record_threshold", DoubleArgument.doubleArg(0.0, 10_000.0))
                             .executes((final CommandContext<CommandClientCommandSource> ctx) -> {
-                                return MoonriseCommand.startClientProfiler(ctx, DoubleArgumentType.getDouble(ctx, "record_threshold"));
+                                return MoonriseCommand.startClientProfiler(ctx, DoubleArgument.getDouble(ctx, "record_threshold"));
                             })
                         )
                     )
