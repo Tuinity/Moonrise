@@ -5,7 +5,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderGetter;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 @Mixin(PoiManager.class)
 abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSection.Packed> {
 
-    public PoiManagerMixin(final SimpleRegionStorage simpleRegionStorage, final Codec<PoiSection.Packed> codec, final Function<PoiSection, PoiSection.Packed> function, final BiFunction<PoiSection.Packed, Runnable, PoiSection> biFunction, final Function<Runnable, PoiSection> function2, final RegistryAccess registryAccess, final ChunkIOErrorReporter chunkIOErrorReporter, final LevelHeightAccessor levelHeightAccessor) {
+    public PoiManagerMixin(final SimpleRegionStorage simpleRegionStorage, final Codec<PoiSection.Packed> codec, final Function<PoiSection, PoiSection.Packed> function, final BiFunction<PoiSection.Packed, Runnable, PoiSection> biFunction, final Function<Runnable, PoiSection> function2, final HolderGetter.Provider registryAccess, final ChunkIOErrorReporter chunkIOErrorReporter, final LevelHeightAccessor levelHeightAccessor) {
         super(simpleRegionStorage, codec, function, biFunction, function2, registryAccess, chunkIOErrorReporter, levelHeightAccessor);
     }
 

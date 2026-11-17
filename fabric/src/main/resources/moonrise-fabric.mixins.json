@@ -7,6 +7,6 @@
     "tick_loop.PacketProcessorMixin"
   ],
   "client": [
-    "command.ClientSuggestionProviderMixin"
+    "command.ClientSuggestionContextMixin"
   ]
 }

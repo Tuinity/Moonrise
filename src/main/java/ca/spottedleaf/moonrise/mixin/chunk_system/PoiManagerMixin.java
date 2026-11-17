@@ -12,7 +12,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.level.poi.PoiChunk;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import com.mojang.datafixers.DataFixer;
 import com.mojang.serialization.Codec;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderGetter;
 import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -49,7 +49,7 @@ public abstract class PoiManagerMixin extends SectionStorage<Object, Object> imp
 
     public PoiManagerMixin(final SimpleRegionStorage simpleRegionStorage, final Codec<Object> codec, final Function<Object, Object> function,
                            final BiFunction<Object, Runnable, Object> biFunction, final Function<Runnable, Object> function2,
-                           final RegistryAccess registryAccess, final ChunkIOErrorReporter chunkIOErrorReporter,
+                           final HolderGetter.Provider registryAccess, final ChunkIOErrorReporter chunkIOErrorReporter,
                            final LevelHeightAccessor levelHeightAccessor) {
         super(simpleRegionStorage, codec, function, biFunction, function2, registryAccess, chunkIOErrorReporter, levelHeightAccessor);
     }
@@ -96,7 +96,7 @@ public abstract class PoiManagerMixin extends SectionStorage<Object, Object> imp
             )
     )
     private void initHook(RegionStorageInfo regionStorageInfo, Path path, DataFixer dataFixer, boolean bl,
-                          RegistryAccess registryAccess, ServerLevel level, CallbackInfo ci) {
+                          HolderGetter.Provider registryAccess, ServerLevel level, CallbackInfo ci) {
         this.world = level;
     }
 

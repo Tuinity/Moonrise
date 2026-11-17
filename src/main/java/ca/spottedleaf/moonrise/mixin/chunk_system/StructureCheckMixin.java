@@ -9,7 +9,7 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderGetter;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
@@ -79,7 +79,7 @@ abstract class StructureCheckMixin {
                     value = "RETURN"
             )
     )
-    private void initHook(ChunkScanAccess chunkScanAccess, RegistryAccess registryAccess,
+    private void initHook(ChunkScanAccess chunkScanAccess, HolderGetter.Provider registryAccess,
                           StructureTemplateManager structureTemplateManager, ResourceKey resourceKey,
                           ChunkGenerator chunkGenerator, RandomState randomState, LevelHeightAccessor levelHeightAccessor,
                           BiomeSource biomeSource, long l, DataFixer dataFixer, CallbackInfo ci) {
