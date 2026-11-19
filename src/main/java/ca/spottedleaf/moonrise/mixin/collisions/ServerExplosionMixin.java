@@ -31,10 +31,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Mixin(ServerExplosion.class)
 abstract class ServerExplosionMixin {
@@ -351,7 +349,7 @@ abstract class ServerExplosionMixin {
         cancellable = true
     )
     public void calculateExplodedPositions(CallbackInfoReturnable<List<BlockPos>> cir) {
-        final Set<BlockPos> ret = new HashSet<>();
+        final ObjectArrayList<BlockPos> ret = new ObjectArrayList<>();
 
         final Vec3 center = this.center;
 
@@ -431,7 +429,9 @@ abstract class ServerExplosionMixin {
             } while (power > 0.0f);
         }
 
-        cir.setReturnValue(new ObjectArrayList<>(ret));
+        // note: Vanilla returns its HashSet's hash order here, we return ray order. The list is shuffled with the
+        // same number of draws before use, so only which permutation a given random state picks differs
+        cir.setReturnValue(ret);
     }
 
     /**
