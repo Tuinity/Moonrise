@@ -1138,6 +1138,10 @@ public abstract class StarLightEngine {
                 }
             } else if ((queueValue & FLAG_WRITE_LEVEL) != 0L) {
                 // these are used to restore block sources after a propagation decrease
+                // never dim brighter light written since, as vanilla does
+                if (this.getLightLevel(posX, posY, posZ) > propagatedLightLevel) {
+                    continue;
+                }
                 this.setLightLevel(posX, posY, posZ, propagatedLightLevel);
             }
 
@@ -1306,11 +1310,6 @@ public abstract class StarLightEngine {
                     this.lightEmissionPos.set(offX, offY, offZ);
                     long flags = 0;
                     if (((StarlightAbstractBlockState)blockState).starlight$isConditionallyFullOpaque()) {
-                        final VoxelShape cullingFace = blockState.getFaceOcclusionShape(propagate.getOpposite().nms);
-
-                        if (Shapes.faceShapeOccludes(Shapes.empty(), cullingFace)) {
-                            continue;
-                        }
                         flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
                     }
 
@@ -1359,7 +1358,6 @@ public abstract class StarLightEngine {
                 }
             } else {
                 // we actually need to worry about our state here
-                final BlockState fromBlock = this.getBlockState(posX, posY, posZ);
                 for (final AxisDirection propagate : checkDirections) {
                     final int offX = posX + propagate.x;
                     final int offY = posY + propagate.y;
@@ -1367,12 +1365,6 @@ public abstract class StarLightEngine {
 
                     final int sectionIndex = (offX >> 4) + 5 * (offZ >> 4) + (5 * 5) * (offY >> 4) + sectionOffset;
                     final int localIndex = (offX & 15) | ((offZ & 15) << 4) | ((offY & 15) << 8);
-
-                    final VoxelShape fromShape = (((StarlightAbstractBlockState)fromBlock).starlight$isConditionallyFullOpaque()) ? fromBlock.getFaceOcclusionShape(propagate.nms) : Shapes.empty();
-
-                    if (fromShape != Shapes.empty() && Shapes.faceShapeOccludes(Shapes.empty(), fromShape)) {
-                        continue;
-                    }
 
                     final SWMRNibbleArray currentNibble = this.nibbleCache[sectionIndex];
                     final int lightLevel;
@@ -1389,11 +1381,6 @@ public abstract class StarLightEngine {
                     this.lightEmissionPos.set(offX, offY, offZ);
                     long flags = 0;
                     if (((StarlightAbstractBlockState)blockState).starlight$isConditionallyFullOpaque()) {
-                        final VoxelShape cullingFace = blockState.getFaceOcclusionShape(propagate.getOpposite().nms);
-
-                        if (Shapes.faceShapeOccludes(fromShape, cullingFace)) {
-                            continue;
-                        }
                         flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
                     }
 
