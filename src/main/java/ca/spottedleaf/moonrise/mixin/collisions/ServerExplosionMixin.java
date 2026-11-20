@@ -31,6 +31,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,11 +52,15 @@ abstract class ServerExplosionMixin {
 
     @Shadow
     @Final
+    private Vec3 center;
+
+    @Shadow
+    @Final
     private boolean fire;
 
     @Shadow
     @Final
-    private Vec3 center;
+    private Explosion.BlockInteraction blockInteraction;
 
 
     @Unique
@@ -289,9 +294,8 @@ abstract class ServerExplosionMixin {
             return 0.0f;
         }
 
-        final double offX = (1.0 - Math.floor(1.0 / incX) * incX) * 0.5 + boundingBox.minX;
-        final double offY = boundingBox.minY;
-        final double offZ = (1.0 - Math.floor(1.0 / incZ) * incZ) * 0.5 + boundingBox.minZ;
+        final double offX = (1.0 - Math.floor(1.0 / incX) * incX) * 0.5;
+        final double offZ = (1.0 - Math.floor(1.0 / incZ) * incZ) * 0.5;
 
         final CollisionUtil.LazyEntityCollisionContext context = new CollisionUtil.LazyEntityCollisionContext(target);
 
@@ -299,16 +303,16 @@ abstract class ServerExplosionMixin {
         int missedRays = 0;
 
         for (double dx = 0.0; dx <= 1.0; dx += incX) {
-            final double fromX = Math.fma(dx, diffX, offX);
+            final double fromX = Mth.lerp(dx, boundingBox.minX, boundingBox.maxX) + offX;
             for (double dy = 0.0; dy <= 1.0; dy += incY) {
-                final double fromY = Math.fma(dy, diffY, offY);
+                final double fromY = Mth.lerp(dy, boundingBox.minY, boundingBox.maxY);
                 for (double dz = 0.0; dz <= 1.0; dz += incZ) {
                     ++totalRays;
 
                     final Vec3 from = new Vec3(
                             fromX,
                             fromY,
-                            Math.fma(dz, diffZ, offZ)
+                            Mth.lerp(dz, boundingBox.minZ, boundingBox.maxZ) + offZ
                     );
 
                     if (!this.clipsAnything(from, source, context, blockCache, blockPos)) {
@@ -423,9 +427,7 @@ abstract class ServerExplosionMixin {
                     final boolean shouldExplode = this.damageCalculator.shouldBlockExplode((Explosion)(Object)this, this.level, cachedBlock.immutablePos, cachedBlock.blockState, power);
                     cachedBlock.shouldExplode = shouldExplode ? Boolean.TRUE : Boolean.FALSE;
                     if (shouldExplode) {
-                        if (this.fire || !cachedBlock.blockState.isAir()) {
-                            ret.add(cachedBlock.immutablePos);
-                        }
+                        ret.add(cachedBlock.immutablePos);
                     }
                 }
 
@@ -436,6 +438,17 @@ abstract class ServerExplosionMixin {
             } while (power > 0.0f);
         }
 
+        // note: Vanilla returns its HashSet's order. Where Vanilla uses it as-is we return it too: without block
+        // interaction nothing shuffles the list, so the order decides createFire's ignitions and their block updates,
+        // which are deterministic in Vanilla. Elsewhere Vanilla shuffles the list first, so to avoid hashing every
+        // position we return ray order: only the permutation a given random state produces differs.
+        // Do not use the HashSet copy constructor, it presizes the table and can iterate in a different order
+        if (this.fire && this.blockInteraction == Explosion.BlockInteraction.KEEP) {
+            final HashSet<BlockPos> vanillaOrder = new HashSet<>();
+            vanillaOrder.addAll(ret);
+            cir.setReturnValue(new ObjectArrayList<>(vanillaOrder));
+            return;
+        }
         cir.setReturnValue(ret);
     }
 
