@@ -31,6 +31,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,6 +53,14 @@ abstract class ServerExplosionMixin {
     @Shadow
     @Final
     private Vec3 center;
+
+    @Shadow
+    @Final
+    private boolean fire;
+
+    @Shadow
+    @Final
+    private Explosion.BlockInteraction blockInteraction;
 
 
     @Unique
@@ -338,6 +347,64 @@ abstract class ServerExplosionMixin {
 
 
     /**
+     * Orders the list as a new {@link HashSet} iterates it after the elements were added one at a time in list order,
+     * without building the set: HashMap iterates by bucket, and within a bucket in insertion order, so replaying the
+     * table's growth and stable sorting by the final bucket gives the same order. A HashMap bin that becomes a tree
+     * no longer iterates in insertion order, so fall back to a real set when one would form.
+     * Note: the list's elements must be distinct.
+     */
+    @Unique
+    private static ObjectArrayList<BlockPos> hashSetOrder(final ObjectArrayList<BlockPos> list) {
+        final int size = list.size();
+        final int[] hashes = new int[size];
+        for (int i = 0; i < size; ++i) {
+            final int hash = list.get(i).hashCode();
+            hashes[i] = hash ^ (hash >>> 16); // HashMap#hash
+        }
+
+        int capacity = 16;
+        int[] counts = new int[capacity];
+        for (int i = 0; i < size; ++i) {
+            // appending to a chain of 8 treeifies the bin, or resizes the table while it is smaller than 64
+            if (counts[hashes[i] & (capacity - 1)]++ >= 8) {
+                if (capacity >= 64) {
+                    final HashSet<BlockPos> set = new HashSet<>();
+                    for (int k = 0; k < size; ++k) {
+                        set.add(list.get(k));
+                    }
+                    return new ObjectArrayList<>(set);
+                }
+                counts = countBuckets(hashes, i + 1, capacity <<= 1);
+            }
+            // load factor 0.75
+            if (i + 1 > (capacity >>> 1) + (capacity >>> 2)) {
+                counts = countBuckets(hashes, i + 1, capacity <<= 1);
+            }
+        }
+
+        for (int bucket = 0, start = 0; bucket < capacity; ++bucket) {
+            final int count = counts[bucket];
+            counts[bucket] = start;
+            start += count;
+        }
+
+        final BlockPos[] ret = new BlockPos[size];
+        for (int i = 0; i < size; ++i) {
+            ret[counts[hashes[i] & (capacity - 1)]++] = list.get(i);
+        }
+        return ObjectArrayList.wrap(ret);
+    }
+
+    @Unique
+    private static int[] countBuckets(final int[] hashes, final int len, final int capacity) {
+        final int[] counts = new int[capacity];
+        for (int i = 0; i < len; ++i) {
+            ++counts[hashes[i] & (capacity - 1)];
+        }
+        return counts;
+    }
+
+    /**
      * @reason Rewrite ray casting for performance
      * @author Spottedleaf
      */
@@ -429,8 +496,14 @@ abstract class ServerExplosionMixin {
             } while (power > 0.0f);
         }
 
-        // note: Vanilla returns its HashSet's hash order here, we return ray order. The list is shuffled with the
-        // same number of draws before use, so only which permutation a given random state picks differs
+        // note: Vanilla returns its HashSet's hash order here, we return ray order. When blocks are interacted with,
+        // the list is shuffled with the same number of draws before use, so only which permutation a given random
+        // state picks differs. Without block interaction createFire walks the list unshuffled, so restore Vanilla's
+        // order there
+        if (this.fire && this.blockInteraction == Explosion.BlockInteraction.KEEP) {
+            cir.setReturnValue(hashSetOrder(ret));
+            return;
+        }
         cir.setReturnValue(ret);
     }
 
