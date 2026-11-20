@@ -438,8 +438,11 @@ abstract class ServerExplosionMixin {
             } while (power > 0.0f);
         }
 
-        // note: Vanilla returns HashSet order. Only match it when the list is not shuffled (fire without block
-        // interaction), as createFire then uses it directly. Add one at a time: the copy constructor can reorder
+        // note: Vanilla returns its HashSet's order. Where Vanilla uses it as-is we return it too: without block
+        // interaction nothing shuffles the list, so the order decides createFire's ignitions and their block updates,
+        // which are deterministic in Vanilla. Elsewhere Vanilla shuffles the list first, so to avoid hashing every
+        // position we return ray order: only the permutation a given random state produces differs.
+        // Do not use the HashSet copy constructor, it presizes the table and can iterate in a different order
         if (this.fire && this.blockInteraction == Explosion.BlockInteraction.KEEP) {
             final HashSet<BlockPos> vanillaOrder = new HashSet<>();
             vanillaOrder.addAll(ret);
