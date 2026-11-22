@@ -63,12 +63,12 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
     }
 
     @Override
-    public boolean is(final TagKey<Block> tag) {
+    public final boolean is(final TagKey<Block> tag) {
         return this.reference.is(tag);
     }
 
     @Override
-    public boolean is(final HolderSet<Block> set) {
+    public final boolean is(final HolderSet<Block> set) {
         return set.contains(this.reference);
     }
 
@@ -78,12 +78,12 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
     }
 
     @Override
-    public boolean is(final Holder<Block> type) {
+    public final boolean is(final Holder<Block> type) {
         return this.reference == type;
     }
 
     @Override
-    public boolean is(final ResourceKey<Block> type) {
+    public final boolean is(final ResourceKey<Block> type) {
         return this.reference.is(type);
     }
 }

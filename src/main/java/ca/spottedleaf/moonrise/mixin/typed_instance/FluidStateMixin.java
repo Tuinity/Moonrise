@@ -63,12 +63,12 @@ abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> implements
     }
 
     @Override
-    public boolean is(final TagKey<Fluid> tag) {
+    public final boolean is(final TagKey<Fluid> tag) {
         return this.reference.is(tag);
     }
 
     @Override
-    public boolean is(final HolderSet<Fluid> set) {
+    public final boolean is(final HolderSet<Fluid> set) {
         return set.contains(this.reference);
     }
 
@@ -78,12 +78,12 @@ abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> implements
     }
 
     @Override
-    public boolean is(final Holder<Fluid> type) {
+    public final boolean is(final Holder<Fluid> type) {
         return this.reference == type;
     }
 
     @Override
-    public boolean is(final ResourceKey<Fluid> type) {
+    public final boolean is(final ResourceKey<Fluid> type) {
         return this.reference.is(type);
     }
 }
