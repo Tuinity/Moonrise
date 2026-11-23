@@ -61,7 +61,6 @@ import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -80,9 +79,6 @@ import static net.minecraft.commands.Commands.literal;
 public final class MoonriseCommand {
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final ThreadLocal<DecimalFormat> ONE_DECIMAL_PLACES = ThreadLocal.withInitial(() -> {
-        return new DecimalFormat("#,##0.0");
-    });
 
     private static final TextColor LIGHT_RED = TextColor.fromRgb(0xFF8080);
 
@@ -940,15 +936,15 @@ public final class MoonriseCommand {
         final double expectedMSPT = (double)tickIntervalNS / 1.0E6;
 
         return Component.literal("").withStyle(ChatFormatting.BLUE)
-            .append(Component.literal(ONE_DECIMAL_PLACES.get().format(minMS)).withColor(getMSPTColour(minMS, expectedMSPT)))
+            .append(Component.literal(DecimalFormats.ONE_DECIMAL_PLACES.get().format(minMS)).withColor(getMSPTColour(minMS, expectedMSPT)))
             .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
-            .append(Component.literal(ONE_DECIMAL_PLACES.get().format(medMS)).withColor(getMSPTColour(medMS, expectedMSPT)))
+            .append(Component.literal(DecimalFormats.ONE_DECIMAL_PLACES.get().format(medMS)).withColor(getMSPTColour(medMS, expectedMSPT)))
             .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
-            .append(Component.literal(ONE_DECIMAL_PLACES.get().format(avgMS)).withColor(getMSPTColour(avgMS, expectedMSPT)))
+            .append(Component.literal(DecimalFormats.ONE_DECIMAL_PLACES.get().format(avgMS)).withColor(getMSPTColour(avgMS, expectedMSPT)))
             .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
-            .append(Component.literal(ONE_DECIMAL_PLACES.get().format(percent)).withColor(getMSPTColour(percent, expectedMSPT)))
+            .append(Component.literal(DecimalFormats.ONE_DECIMAL_PLACES.get().format(percent)).withColor(getMSPTColour(percent, expectedMSPT)))
             .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
-            .append(Component.literal(ONE_DECIMAL_PLACES.get().format(max)).withColor(getMSPTColour(max, expectedMSPT)));
+            .append(Component.literal(DecimalFormats.ONE_DECIMAL_PLACES.get().format(max)).withColor(getMSPTColour(max, expectedMSPT)));
     }
 
     public static int tps(final CommandContext<CommandSourceStack> ctx) {
@@ -997,15 +993,15 @@ public final class MoonriseCommand {
             final double expectedTps = (1.0E9 / tickIntervalNS);
 
             return Component.literal(" ").withStyle(ChatFormatting.BLUE)
-                .append(Component.literal(ONE_DECIMAL_PLACES.get().format(tps5s)).withColor(getTPSColour(tps5s, expectedTps)))
+                .append(Component.literal(DecimalFormats.ONE_DECIMAL_PLACES.get().format(tps5s)).withColor(getTPSColour(tps5s, expectedTps)))
                 .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
-                .append(Component.literal(ONE_DECIMAL_PLACES.get().format(tps10s)).withColor(getTPSColour(tps10s, expectedTps)))
+                .append(Component.literal(DecimalFormats.ONE_DECIMAL_PLACES.get().format(tps10s)).withColor(getTPSColour(tps10s, expectedTps)))
                 .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
-                .append(Component.literal(ONE_DECIMAL_PLACES.get().format(tps1m)).withColor(getTPSColour(tps1m, expectedTps)))
+                .append(Component.literal(DecimalFormats.ONE_DECIMAL_PLACES.get().format(tps1m)).withColor(getTPSColour(tps1m, expectedTps)))
                 .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
-                .append(Component.literal(ONE_DECIMAL_PLACES.get().format(tps5m)).withColor(getTPSColour(tps5m, expectedTps)))
+                .append(Component.literal(DecimalFormats.ONE_DECIMAL_PLACES.get().format(tps5m)).withColor(getTPSColour(tps5m, expectedTps)))
                 .append(Component.literal("/").withStyle(ChatFormatting.BLUE))
-                .append(Component.literal(ONE_DECIMAL_PLACES.get().format(tps15m)).withColor(getTPSColour(tps15m, expectedTps)));
+                .append(Component.literal(DecimalFormats.ONE_DECIMAL_PLACES.get().format(tps15m)).withColor(getTPSColour(tps15m, expectedTps)));
         }, false);
 
 

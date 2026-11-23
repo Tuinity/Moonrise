@@ -1,5 +1,6 @@
 package ca.spottedleaf.moonrise.patches.chunk_system.scheduling;
 
+import ca.spottedleaf.common.util.DecimalFormats;
 import ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue;
 import ca.spottedleaf.concurrentutil.lock.ReentrantAreaLock;
 import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2LongHashTable;
@@ -277,7 +278,7 @@ public final class ChunkHolderManager {
             }
         }
 
-        final DecimalFormat format = new DecimalFormat("#0.00");
+        final DecimalFormat format = DecimalFormats.TWO_DECIMAL_PLACES_NO_COMMA.get();
 
         int saved = 0;
 
