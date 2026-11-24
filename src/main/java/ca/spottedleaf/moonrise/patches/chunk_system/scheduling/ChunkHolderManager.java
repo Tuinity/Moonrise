@@ -816,14 +816,16 @@ public final class ChunkHolderManager {
 
             final int lowerChunkX = CoordinateUtils.getChunkX(sectionKey) << sectionShift;
             final int lowerChunkZ = CoordinateUtils.getChunkZ(sectionKey) << sectionShift;
+            final int upperChunkX = lowerChunkX + (1 << sectionShift) - 1;
+            final int upperChunkZ = lowerChunkZ + (1 << sectionShift) - 1;
 
             final int ticketShift = ThreadedTicketLevelPropagator.SECTION_SHIFT;
             final int ticketMask = (1 << ticketShift) - 1;
             final ReentrantAreaLock.Node ticketLock = this.ticketLockArea.lock(
                 ((lowerChunkX >> ticketShift) - 1) << ticketShift,
                 ((lowerChunkZ >> ticketShift) - 1) << ticketShift,
-                (((lowerChunkX >> ticketShift) + 1) << ticketShift) | ticketMask,
-                (((lowerChunkZ >> ticketShift) + 1) << ticketShift) | ticketMask
+                (((upperChunkX >> ticketShift) + 1) << ticketShift) | ticketMask,
+                (((upperChunkZ >> ticketShift) + 1) << ticketShift) | ticketMask
             );
 
             try {
@@ -880,7 +882,16 @@ public final class ChunkHolderManager {
                 // so that we catch any additions to the changed full status list. If an off-thread were to process tickets here, it would not be guaranteed
                 // that it would be added to the full changed status set by the end of the call - possibly allowing ticket level decreases to be processed
                 // outside of this call, which is not an intended or expected of this chunk system.
-                this.processTicketUpdatesNoLock(lowerChunkX >> ThreadedTicketLevelPropagator.SECTION_SHIFT, lowerChunkZ >> ThreadedTicketLevelPropagator.SECTION_SHIFT, scheduledTasks, changedFullStatus);
+                final int minTicketSectionX = lowerChunkX >> ticketShift;
+                final int minTicketSectionZ = lowerChunkZ >> ticketShift;
+                final int maxTicketSectionX = upperChunkX >> ticketShift;
+                final int maxTicketSectionZ = upperChunkZ >> ticketShift;
+
+                for (int ticketSectionZ = minTicketSectionZ; ticketSectionZ <= maxTicketSectionZ; ++ticketSectionZ) {
+                    for (int ticketSectionX = minTicketSectionX; ticketSectionX <= maxTicketSectionX; ++ticketSectionX) {
+                        this.processTicketUpdatesNoLock(ticketSectionX, ticketSectionZ, scheduledTasks, changedFullStatus);
+                    }
+                }
             } finally {
                 this.ticketLockArea.unlock(ticketLock);
             }
