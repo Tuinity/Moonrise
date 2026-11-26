@@ -73,7 +73,7 @@ abstract class FluidStateMixin extends StateHolder<Fluid, FluidState> implements
     }
 
     @Override
-    public final boolean is(final Fluid rawType) {
+    public boolean is(final Fluid rawType) {
         return this.fluidOwner == rawType;
     }
 

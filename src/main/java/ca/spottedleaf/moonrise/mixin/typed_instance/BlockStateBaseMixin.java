@@ -73,7 +73,7 @@ public abstract class BlockStateBaseMixin extends StateHolder<Block, BlockState>
     }
 
     @Override
-    public final boolean is(final Block rawType) {
+    public boolean is(final Block rawType) {
         return this.blockOwner == rawType;
     }
 
